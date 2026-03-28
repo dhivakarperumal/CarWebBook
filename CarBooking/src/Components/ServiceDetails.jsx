@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import api from "../api";
 import PageHeader from "./PageHeader";
 
 const ServiceDetails = () => {
@@ -13,14 +12,10 @@ const ServiceDetails = () => {
   useEffect(() => {
     const fetchService = async () => {
       try {
-        const ref = doc(db, "services", id);
-        const snap = await getDoc(ref);
-
-        if (snap.exists()) {
-          setService(snap.data());
-        }
+        const res = await api.get(`/services/${id}`);
+        setService(res.data);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to load service", error);
       } finally {
         setLoading(false);
       }
@@ -48,6 +43,7 @@ const ServiceDetails = () => {
   return (
     <>
       <PageHeader title={service?.name || "Service Details"} />
+
       <section className="bg-black min-h-screen py-20">
         <div className="max-w-6xl mx-auto px-6">
           {/* BACK BUTTON */}
@@ -84,7 +80,7 @@ const ServiceDetails = () => {
                 {service.description}
               </p>
 
-              {/* FEATURES (OPTIONAL FROM FIREBASE) */}
+              {/* FEATURES */}
               {service.features && (
                 <ul className="space-y-3 mb-10">
                   {service.features.map((item, index) => (
@@ -112,7 +108,7 @@ const ServiceDetails = () => {
             </div>
           </div>
 
-          {/* EXTRA INFO SECTION */}
+          {/* EXTRA INFO */}
           <div className="grid gap-8 md:grid-cols-3">
             <InfoCard title="SERVICE TYPE" value={service.type || "Premium"} />
             <InfoCard
