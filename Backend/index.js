@@ -11,6 +11,26 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Initialize Database Tables
+async function initializeDatabase() {
+  try {
+    const createTableSQL = `
+      CREATE TABLE IF NOT EXISTS pricing_packages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        price DECIMAL(10,2) NOT NULL,
+        features JSON NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `;
+    await db.query(createTableSQL);
+    console.log('✓ pricing_packages table checked/created');
+  } catch (error) {
+    console.error('✗ Error initializing database:', error.message);
+  }
+}
+
 // Routers
 const bookingRouter = require('./src/routers/bookingRouter');
 const serviceRoutes = require('./src/routers/serviceRoutes');
@@ -36,6 +56,12 @@ app.use('/api/all-services', allServiceRouter);
 app.use('/api/service-types', serviceTypeRouter);
 app.use('/api/billings', billingRouter);
 
+const pricingRouter = require('./src/routers/pricingRoutes');
+app.use('/api/pricing_packages', pricingRouter);
+
+const servicesRouter = require("./src/routers/servicesRoutes");
+app.use('/api/services', servicesRouter);
+
 // Basic Route
 app.get('/', (req, res) => {
   res.send('Welcome to Car Booking API');
@@ -46,6 +72,9 @@ app.get('/', (req, res) => {
   try {
     const [rows] = await db.query('SELECT 1');
     console.log('✓ MySQL Connected Successfully');
+    
+    // Initialize database tables
+    await initializeDatabase();
   } catch (error) {
     console.error('✗ Unable to connect to MySQL:', error.message);
   }

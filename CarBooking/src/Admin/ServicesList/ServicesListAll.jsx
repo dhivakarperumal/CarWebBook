@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import api from "../../api";
+import api from "../../api";
 import toast from "react-hot-toast";
 import {
   Trash2,
@@ -27,18 +28,13 @@ const ServicesListAll = () => {
 
   /* ================= FETCH DATA ================= */
   const fetchServices = async () => {
-    setLoading(true);
     try {
-      const response = await api.get("/services");
-      const list = response.data.map(srv => ({
-        ...srv,
-        docId: srv.id
-      }));
-      setServices(list);
+      const res = await api.get("/services");
+      setServices(res.data || []);
+      setLoading(false);
     } catch (err) {
       console.error(err);
       toast.error("Failed to load services");
-    } finally {
       setLoading(false);
     }
   };
@@ -93,7 +89,7 @@ const ServicesListAll = () => {
     });
   }, [services, search, categoryFilter]);
 
-  /* ================= PAGINATION LOGIC ================= */
+  /* ================= PAGINATION ================= */
   const totalPages = Math.ceil(filteredServices.length / itemsPerPage);
 
   const paginatedServices = useMemo(() => {
@@ -134,18 +130,13 @@ const ServicesListAll = () => {
           />
         </div>
 
-
         {/* CONTROLS */}
         <div className="flex flex-wrap items-center gap-2 justify-end">
 
-
-
-          {/* VIEW TOGGLE */}
           <button
             onClick={() => setView("card")}
-            className={`h-[42px] flex-1 sm:flex-none flex items-center justify-center gap-2 px-4
-      rounded-md text-sm border shadow-sm transition
-      ${view === "card"
+            className={`h-[42px] flex items-center gap-2 px-4 rounded-md text-sm border shadow-sm
+              ${view === "card"
                 ? "bg-black text-white border-black"
                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
               }`}
@@ -155,9 +146,8 @@ const ServicesListAll = () => {
 
           <button
             onClick={() => setView("table")}
-            className={`h-[42px] flex-1 sm:flex-none flex items-center justify-center gap-2 px-4
-      rounded-md text-sm border shadow-sm transition
-      ${view === "table"
+            className={`h-[42px] flex items-center gap-2 px-4 rounded-md text-sm border shadow-sm
+              ${view === "table"
                 ? "bg-black text-white border-black"
                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"
               }`}
@@ -165,17 +155,15 @@ const ServicesListAll = () => {
             <List size={18} /> Table
           </button>
 
-          {/* ADD BUTTON */}
           <button
             onClick={() => navigate("/admin/addservices")}
-            className="h-[42px] w-full sm:w-auto flex items-center justify-center gap-2
+            className="h-[42px] flex items-center gap-2
              bg-black text-white px-4 rounded-md font-semibold shadow
              hover:bg-gray-900 transition"
           >
             <Plus size={16} />
             <span className="hidden sm:inline">Add Service</span>
           </button>
-
         </div>
       </div>
 
@@ -184,7 +172,7 @@ const ServicesListAll = () => {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-10">
           {paginatedServices.map((srv) => (
             <div
-              key={srv.docId}
+              key={srv.id}
               className="border border-gray-300 rounded-xl p-4 shadow-sm hover:shadow-md transition bg-white"
             >
               {srv.image && (
@@ -197,12 +185,6 @@ const ServicesListAll = () => {
 
               <h3 className="font-semibold text-sm">{srv.name}</h3>
 
-              {srv.category && (
-                <span className="inline-block mt-1 text-xs bg-gray-100 px-2 py-1 rounded">
-                  {srv.category}
-                </span>
-              )}
-
               <p className="text-sm font-medium mt-2">
                 ₹{Number(srv.price || 0).toLocaleString()}
               </p>
@@ -210,41 +192,34 @@ const ServicesListAll = () => {
               <div className="flex justify-end gap-3 mt-3">
                 <button
                   onClick={() =>
-                    navigate(`/admin/addservices/${srv.docId}`)
+                    navigate(`/admin/addservices/${srv.id}`)
                   }
-                  className="p-3 rounded-full  border border-gray-300  transition"
+                  className="p-3 rounded-full border border-gray-300"
                 >
                   <Pencil size={16} />
                 </button>
 
                 <button
-                  onClick={() => handleDelete(srv.docId)}
-                  className="p-3 rounded-full  border border-gray-300  transition"
+                  onClick={() => handleDelete(srv.id)}
+                  className="p-3 rounded-full border border-gray-300"
                 >
                   <Trash2 size={16} />
                 </button>
               </div>
             </div>
           ))}
-
-          {paginatedServices.length === 0 && (
-            <p className="text-gray-500 col-span-full text-center py-10">
-              No services found
-            </p>
-          )}
         </div>
       )}
 
-      {/* ================= TABLE VIEW ================= */}
+      {/* TABLE VIEW */}
       {view === "table" && (
         <div className="overflow-x-auto bg-white rounded-2xl shadow-sm border border-gray-200 mt-10">
           <table className="w-full text-md">
-           <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
+            <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
               <tr>
                 <th className="px-4 py-4 font-bold">S No</th>
                 <th className="px-4 py-4 font-bold">Image</th>
                 <th className="px-4 py-4 font-bold">Name</th>
-
                 <th className="px-4 py-4 font-bold">Price</th>
                 <th className="px-4 py-4 text-right font-bold">Actions</th>
               </tr>
@@ -252,13 +227,11 @@ const ServicesListAll = () => {
 
             <tbody>
               {paginatedServices.map((srv, i) => (
-                <tr
-                  key={srv.docId}
-                  className="border-t border-gray-300 hover:bg-gray-50"
-                >
+                <tr key={srv.id} className="border-t border-gray-300 hover:bg-gray-50">
                   <td className="px-4 py-4 font-medium">
                     {(currentPage - 1) * itemsPerPage + i + 1}
                   </td>
+
                   <td className="px-4 py-4">
                     {srv.image ? (
                       <img
@@ -273,8 +246,6 @@ const ServicesListAll = () => {
 
                   <td className="px-4 py-4 font-medium">{srv.name}</td>
 
-
-
                   <td className="px-4 py-4">
                     ₹{Number(srv.price || 0).toLocaleString()}
                   </td>
@@ -283,16 +254,16 @@ const ServicesListAll = () => {
                     <div className="flex justify-end gap-3">
                       <button
                         onClick={() =>
-                          navigate(`/admin/addservices/${srv.docId}`)
+                          navigate(`/admin/addservices/${srv.id}`)
                         }
-                        className="p-3 rounded-full  border border-gray-300  transition"
+                        className="p-3 rounded-full border border-gray-300"
                       >
-                        <Pencil size={16} /> 
+                        <Pencil size={16} />
                       </button>
 
                       <button
-                        onClick={() => handleDelete(srv.docId)}
-                        className="p-3 rounded-full  border border-gray-300  transition"
+                        onClick={() => handleDelete(srv.id)}
+                        className="p-3 rounded-full border border-gray-300"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -300,14 +271,6 @@ const ServicesListAll = () => {
                   </td>
                 </tr>
               ))}
-
-              {paginatedServices.length === 0 && (
-                <tr>
-                  <td colSpan="5" className="text-center p-6 text-gray-500">
-                    No services found
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
@@ -317,7 +280,6 @@ const ServicesListAll = () => {
       {totalPages > 1 && (
         <div className="flex justify-center items-center gap-2 mt-6 flex-wrap">
 
-          {/* PREV */}
           <button
             onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
             disabled={currentPage === 1}
@@ -326,21 +288,17 @@ const ServicesListAll = () => {
             <ChevronLeft size={16} />
           </button>
 
-          {/* PAGE NUMBERS */}
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
             <button
               key={page}
               onClick={() => setCurrentPage(page)}
-              className={`px-3 py-1 rounded-lg border text-sm ${currentPage === page
-                ? "bg-black text-white"
-                : "bg-white"
-                }`}
+              className={`px-3 py-1 rounded-lg border text-sm
+                ${currentPage === page ? "bg-black text-white" : "bg-white"}`}
             >
               {page}
             </button>
           ))}
 
-          {/* NEXT */}
           <button
             onClick={() =>
               setCurrentPage((p) => Math.min(p + 1, totalPages))
@@ -352,6 +310,7 @@ const ServicesListAll = () => {
           </button>
         </div>
       )}
+
     </div>
   );
 };
