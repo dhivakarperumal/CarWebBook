@@ -155,13 +155,14 @@ exports.saveBill = async (req, res) => {
   try {
     const { orderId, customer, orderType, shipping, items, subtotal, total, paymentMethod, paymentStatus, status } = req.body;
     const sql = `
-      INSERT INTO product_bills (billId, customerName, customerPhone, items, totalItems, subTotal, grandTotal)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO product_bills 
+      (billId, customerName, customerPhone, orderType, paymentMethod, paymentStatus, status, items, totalItems, subTotal, grandTotal)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     const customerName = customer?.name || '';
     const customerPhone = customer?.phone || '';
     await db.query(sql, [
-      orderId, customerName, customerPhone,
+      orderId, customerName, customerPhone, orderType, paymentMethod, paymentStatus, status,
       JSON.stringify(items), items.length, subtotal, total
     ]);
     res.status(201).json({ message: 'Bill saved', orderId });

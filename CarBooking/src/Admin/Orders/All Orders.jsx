@@ -1,13 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import {
-  collection,
-  onSnapshot,
-  query,
-  orderBy,
-  updateDoc,
-  doc,
-  serverTimestamp,
-} from "firebase/firestore";
+import api from "../../api";
 import {
   FaPrint,
   FaTruck,
@@ -19,8 +11,8 @@ import {
   FaThLarge,
   FaList,
 } from "react-icons/fa";
-import { db } from "../../firebase";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
 /* ================= HELPERS ================= */
 
@@ -41,10 +33,7 @@ const formatStatusLabel = (status) => {
 };
 
 const getCustomerDetails = (o) => {
-  if (normalizeKey(o.orderType) === "pickup") {
-    return { name: o.pickup?.name || "-" };
-  }
-  return { name: o.shipping?.name || "-" };
+  return { name: o.shippingName || o.customerName || "-" };
 };
 
 /* ================= STAT CARD ================= */
@@ -77,19 +66,17 @@ const AllOrders = () => {
   const ordersPerPage = 10;
 
   /* ================= LOAD ================= */
+  const loadOrders = async () => {
+    try {
+      const res = await api.get('/orders');
+      setOrders(res.data);
+    } catch {
+      toast.error("Failed to load orders");
+    }
+  };
+
   useEffect(() => {
-    const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
-
-    const unsub = onSnapshot(q, (snap) => {
-      setOrders(
-        snap.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        }))
-      );
-    });
-
-    return () => unsub();
+    loadOrders();
   }, []);
 
   /* ================= STATS ================= */
@@ -154,14 +141,14 @@ const AllOrders = () => {
     }
 
     try {
-      await updateDoc(doc(db, "orders", orderId), {
+      await api.put(`/orders/${orderId}/status`, {
         status: newStatus,
-        cancelledReason: newStatus === "cancelled" ? reason : null,
-        updatedAt: serverTimestamp(),
+        cancelledReason: newStatus === "cancelled" ? reason : null
       });
+      toast.success("Status updated");
+      loadOrders();
     } catch (err) {
-      console.error(err);
-      alert("Failed to update status");
+      toast.error("Failed to update status");
     }
   };
 

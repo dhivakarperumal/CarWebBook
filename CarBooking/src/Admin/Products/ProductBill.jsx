@@ -61,7 +61,7 @@ const ProductBilling = () => {
 
   /* ORDER ID */
   const generateOrderId = async () => {
-    const res = await api.get("/products/bills/all");
+    const res = await api.get("/orders");
     const count = (res.data?.length || 0) + 1;
     return `ORD${String(count).padStart(3, "0")}`;
   };
@@ -161,7 +161,7 @@ const ProductBilling = () => {
         status: "OrderPlaced",
       };
 
-      await api.post("/products/bills/save", orderData);
+      await api.post("/orders", orderData);
 
       toast.success("Order saved ✅");
       handlePrint(orderData);

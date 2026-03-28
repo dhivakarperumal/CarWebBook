@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { doc, onSnapshot } from "firebase/firestore";
 import { useParams, useNavigate } from "react-router-dom";
-import { db } from "../../firebase";
+import api from "../../api";
+import toast from "react-hot-toast";
 import {
   FaArrowLeft,
   FaUser,
@@ -18,7 +18,7 @@ import {
 
 /* ================= STATUS BADGE ================= */
 const statusBadge = (status) => {
-  switch (status) {
+  switch (status?.toLowerCase()) {
     case "delivered":
       return "bg-emerald-100 text-emerald-700";
     case "cancelled":
@@ -26,6 +26,7 @@ const statusBadge = (status) => {
     case "processing":
       return "bg-amber-100 text-amber-700";
     case "shipped":
+    case "outfordelivery":
       return "bg-blue-100 text-blue-700";
     default:
       return "bg-gray-100 text-gray-700";
@@ -69,13 +70,15 @@ const OrderDetails = () => {
   const [order, setOrder] = useState(null);
 
   useEffect(() => {
-    const ref = doc(db, "orders", id);
-    const unsub = onSnapshot(ref, (snap) => {
-      if (snap.exists()) {
-        setOrder({ id: snap.id, ...snap.data() });
-      }
-    });
-    return () => unsub();
+    const fetchOrder = async () => {
+       try {
+          const res = await api.get(`/orders/${id}`);
+          setOrder(res.data);
+       } catch {
+          toast.error("Failed to load order");
+       }
+    };
+    fetchOrder();
   }, [id]);
 
   if (!order) {
@@ -97,7 +100,7 @@ const OrderDetails = () => {
         <div>
           <h2 className="text-2xl font-bold">{order.orderId}</h2>
           <p className="text-sm text-gray-500">
-            {order.createdAt?.toDate?.().toLocaleString("en-IN")}
+            {new Date(order.createdAt).toLocaleString("en-IN")}
           </p>
         </div>
       </div>
@@ -116,7 +119,7 @@ const OrderDetails = () => {
       {/* ================= ORDER TRACK ================= */}
       <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
         <h3 className="font-semibold mb-6 flex items-center gap-2">
-          <FaTruck /> Order Tracking
+          <FaTruck /> Order Tracking (Syncing...)
         </h3>
 
         <div className="flex flex-col md:flex-row md:items-center">
@@ -133,16 +136,8 @@ const OrderDetails = () => {
             const currentIndex = stepKeys.indexOf(currentKey);
 
             return stepKeys.map((stepKey, idx, arr) => {
-              const entry = order.orderTrack?.find(
-                (t) => normalizeKey(t.status) === stepKey
-              );
-
-              const completed =
-                !!entry?.time || (currentIndex >= 0 && idx <= currentIndex);
-
-              const connectorCompleted =
-                currentIndex > idx || !!entry?.time;
-
+              const completed = currentIndex >= 0 && idx <= currentIndex;
+              const connectorCompleted = currentIndex > idx;
               const isLast = idx === arr.length - 1;
 
               return (
@@ -167,18 +162,6 @@ const OrderDetails = () => {
                       }`}
                     >
                       {formatStatusLabel(stepKey)}
-                    </div>
-
-                    <div className="text-xs text-gray-400 mt-1">
-                      {entry?.time
-                        ? entry.time.toDate().toLocaleDateString("en-IN", {
-                            month: "short",
-                            day: "numeric",
-                            weekday: "short",
-                          })
-                        : currentIndex === idx
-                        ? "Current"
-                        : ""}
                     </div>
                   </div>
 
@@ -211,16 +194,16 @@ const OrderDetails = () => {
             <FaUser /> Customer
           </h3>
 
-          <p>{order.customer?.name || order.shipping?.name || "-"}</p>
+          <p>{order.shippingName || order.customerName || "-"}</p>
 
           <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
             <FaPhone />
-            {order.customer?.phone || order.shipping?.phone || "-"}
+            {order.shippingPhone || order.customerPhone || "-"}
           </p>
 
           <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
             <FaEnvelope />
-            {order.customer?.email || order.shipping?.email || "-"}
+            {order.customerEmail || "-"}
           </p>
         </div>
 
@@ -229,20 +212,20 @@ const OrderDetails = () => {
             <FaMapMarkerAlt /> Shipping Address
           </h3>
 
-          {order.orderType === "pickup" ? (
+          {order.orderType === "shop" ? (
             <p className="text-sm text-gray-400">
-              Store Pickup (No Shipping Address)
+              In-Store Sale (No Shipping)
             </p>
           ) : (
             <>
-              <p>{order.shipping?.address || "-"}</p>
+              <p>{order.shippingAddress || "-"}</p>
               <p>
-                {order.shipping?.city || "-"},{" "}
-                {order.shipping?.state || "-"}
+                {order.shippingCity || "-"},{" "}
+                {order.shippingState || "-"}
               </p>
               <p>
-                {order.shipping?.zip || "-"},{" "}
-                {order.shipping?.country || "-"}
+                {order.shippingZip || "-"},{" "}
+                {order.shippingCountry || "-"}
               </p>
             </>
           )}
@@ -268,7 +251,7 @@ const OrderDetails = () => {
                 <tr key={idx} className="border-t border-gray-200">
                   <td className="px-4 py-3">{i.name}</td>
                   <td className="px-4 py-3 text-center">{i.variant}</td>
-                  <td className="px-4 py-3 text-center">{i.quantity}</td>
+                  <td className="px-4 py-3 text-center">{i.qty}</td>
                   <td className="px-4 py-3 text-right">₹ {i.price}</td>
                   <td className="px-4 py-3 text-right">₹ {i.total}</td>
                 </tr>
