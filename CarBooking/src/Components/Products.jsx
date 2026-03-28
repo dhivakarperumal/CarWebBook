@@ -1,16 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-  collection,
-  getDocs,
-  query,
-  where,
-  serverTimestamp 
-} from "firebase/firestore";
-import { auth, db } from "../firebase";
+import api from "../api";
 import PageContainer from "./PageContainer";
 import { useNavigate } from "react-router-dom";
 import { FaStar, FaRegStar } from "react-icons/fa";
@@ -21,68 +10,62 @@ export default function Products() {
   const [products, setProducts] = useState([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      const q = query(
-        collection(db, "products"),
-        where("isActive", "==", true),
+useEffect(() => {
+  const fetchProducts = async () => {
+    try {
+      const res = await api.get("/products");
+
+      const activeProducts = (res.data || []).filter(
+        (p) => p.isActive === 1 || p.isActive === true
       );
 
-      const snap = await getDocs(q);
+      setProducts(activeProducts);
+    } catch (err) {
+      console.error("Failed to load products", err);
+    }
+  };
 
-      const data = snap.docs.map((doc) => ({
-        docId: doc.id,
-        ...doc.data(),
-      }));
-
-      setProducts(data);
-    };
-
-    fetchProducts();
-  }, []);
+  fetchProducts();
+}, []);
 
 const handleAddToCart = async (product, e) => {
   e.stopPropagation();
 
-  const user = auth.currentUser;
+  const user = JSON.parse(localStorage.getItem("user"));
+
   if (!user) {
     alert("Please login first");
     return;
   }
 
-  // 🚫 Out of stock protection
   if (!product.totalStock || product.totalStock <= 0) {
     alert("Product is out of stock");
     return;
   }
 
-  // 🔑 assume first variant (same as ProductDetails)
   const variant = product.variants?.[0];
+
   if (!variant?.sku) {
     alert("Invalid product variant");
     return;
   }
 
-  const cartRef = doc(db, "users", user.uid, "cart", product.docId);
-  const existing = await getDoc(cartRef);
-
-  if (existing.exists()) {
-    await updateDoc(cartRef, {
-      quantity: existing.data().quantity + 1,
-    });
-  } else {
-    await setDoc(cartRef, {
-      docId: product.docId,          
-      sku: variant.sku,              
+  try {
+    await api.post("/cart/add", {
+      userId: user.id,
+      productId: product.docId,
+      sku: variant.sku,
       name: product.name,
       price: product.offerPrice,
       image: product.thumbnail,
       quantity: 1,
-      createdAt: serverTimestamp(),  // ✅ SAFE
     });
-  }
 
-  alert("Added to cart!");
+    alert("Added to cart!");
+  } catch (err) {
+    console.error("Cart error", err);
+    alert("Error adding to cart");
+  }
 };
 
   return (
