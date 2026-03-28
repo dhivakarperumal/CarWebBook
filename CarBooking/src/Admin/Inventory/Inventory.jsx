@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
@@ -67,7 +61,7 @@ const Inventory = () => {
 
   const [filters, setFilters] = useState({
     category: "",
-    supplier: "",
+    vendor: "",
     search: "",
   });
 
@@ -80,17 +74,17 @@ const Inventory = () => {
 
   const loadInventory = async () => {
     try {
-      const snap = await getDocs(collection(db, "carInventory"));
-      const data = snap.docs.map(d => ({
+      const response = await api.get("/inventory");
+      const data = response.data.map(d => ({
         id: d.id,
-        ...d.data(),
+        ...d,
       }));
 
       setItems(data);
       setFilteredItems(data);
 
       setCategories([...new Set(data.map(i => i.category).filter(Boolean))]);
-      setSuppliers([...new Set(data.map(i => i.supplier).filter(Boolean))]);
+      setSuppliers([...new Set(data.map(i => i.vendor).filter(Boolean))]);
     } catch {
       toast.error("Failed to load inventory");
     }
@@ -119,20 +113,20 @@ const Inventory = () => {
     if (filters.category)
       data = data.filter(i => i.category === filters.category);
 
-    if (filters.supplier)
-      data = data.filter(i => i.supplier === filters.supplier);
+    if (filters.vendor)
+      data = data.filter(i => i.vendor === filters.vendor);
 
     if (filters.search)
       data = data.filter(i =>
-        i.itemName.toLowerCase().includes(filters.search.toLowerCase()) ||
-        i.supplier.toLowerCase().includes(filters.search.toLowerCase())
+        i.partName?.toLowerCase().includes(filters.search.toLowerCase()) ||
+        i.vendor?.toLowerCase().includes(filters.search.toLowerCase())
       );
 
     setFilteredItems(data);
   };
 
   const resetFilter = () => {
-    setFilters({ category: "", supplier: "", search: "" });
+    setFilters({ category: "", vendor: "", search: "" });
     setFilteredItems(items);
   };
 
@@ -146,16 +140,20 @@ const Inventory = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters.category, filters.supplier, filters.search]);
+  }, [filters.category, filters.vendor, filters.search]);
 
   /* =======================
      DELETE
   ======================= */
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this item?")) return;
-    await deleteDoc(doc(db, "inventory", id));
-    toast.success("Item deleted");
-    loadInventory();
+    try {
+      await api.delete(`/inventory/${id}`);
+      toast.success("Item deleted");
+      loadInventory();
+    } catch (e) {
+      toast.error("Failed to delete item");
+    }
   };
 
   /* =======================
@@ -230,8 +228,8 @@ const Inventory = () => {
           </select>
 
           <select
-            name="supplier"
-            value={filters.supplier}
+            name="vendor"
+            value={filters.vendor}
             onChange={handleChange}
             className={inputStyle}
           >

@@ -14,10 +14,12 @@ app.use(express.json());
 const bookingRouter = require('./src/routers/bookingRouter');
 const serviceRoutes = require('./src/routers/serviceRoutes');
 const authRoutes = require('./src/routers/authRoutes');
+const inventoryRouter = require('./src/routers/inventoryRouter');
 
 app.use('/api/bookings', bookingRouter);
 app.use('/api/services', serviceRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/inventory', inventoryRouter);
 
 // Basic Route
 app.get('/', (req, res) => {
