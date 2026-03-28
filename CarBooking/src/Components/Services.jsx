@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
+import api from "../api";
 import ServiceCard from "./ServiceCard";
 import PageContainer from "./PageContainer";
 import PageHeader from "./PageHeader";
@@ -10,12 +9,12 @@ const Services = () => {
 
   useEffect(() => {
     const fetchServices = async () => {
-      const snapshot = await getDocs(collection(db, "services"));
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setServices(data);
+      try {
+        const res = await api.get("/services");
+        setServices(res.data || []);
+      } catch (err) {
+        console.error("Failed to load services", err);
+      }
     };
 
     fetchServices();
@@ -23,11 +22,11 @@ const Services = () => {
 
   return (
     <>
-    <PageHeader title="Our Services" />
+      <PageHeader title="Our Services" />
+
       <section className="bg-black py-24">
         <PageContainer>
-          <div className="">
-
+          <div>
             {/* Grid */}
             <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
               {services.map((service) => (
