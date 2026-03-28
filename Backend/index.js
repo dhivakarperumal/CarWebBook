@@ -8,18 +8,21 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Routers
 const bookingRouter = require('./src/routers/bookingRouter');
 const serviceRoutes = require('./src/routers/serviceRoutes');
 const authRoutes = require('./src/routers/authRoutes');
 const inventoryRouter = require('./src/routers/inventoryRouter');
+const productRouter = require('./src/routers/productRouter');
 
 app.use('/api/bookings', bookingRouter);
 app.use('/api/services', serviceRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/inventory', inventoryRouter);
+app.use('/api/products', productRouter);
 
 // Basic Route
 app.get('/', (req, res) => {

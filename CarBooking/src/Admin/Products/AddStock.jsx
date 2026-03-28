@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { db } from "../../firebase";
-import {
-  collection,
-  onSnapshot,
-  doc,
-  updateDoc,
-} from "firebase/firestore";
+import api from "../../api";
 import toast from "react-hot-toast";
 
 const AddStock = () => {
@@ -16,24 +10,13 @@ const AddStock = () => {
 
   /* FETCH PRODUCTS */
   useEffect(() => {
-    const unsub = onSnapshot(collection(db, "products"), (snap) => {
-      const list = snap.docs.map((doc) => ({
-        docId: doc.id,
-        ...doc.data(),
-      }));
-      setProducts(list);
-    });
-
-    return () => unsub();
+    api.get("/products")
+      .then((res) => setProducts(res.data))
+      .catch(() => toast.error("Failed to load products"));
   }, []);
 
-  const selectedProduct = products.find(
-    (p) => p.docId === selectedProductId
-  );
-
-  const selectedVariant =
-    selectedProduct?.variants?.[selectedVariantIndex];
-
+  const selectedProduct = products.find((p) => String(p.docId) === String(selectedProductId));
+  const selectedVariant = selectedProduct?.variants?.[selectedVariantIndex];
   const currentStock = Number(selectedVariant?.stock || 0);
   const newStock = currentStock + Number(addQty || 0);
 
@@ -43,7 +26,6 @@ const AddStock = () => {
       toast.error("Select product and variant");
       return;
     }
-
     if (Number(addQty) <= 0) {
       toast.error("Enter valid quantity");
       return;
@@ -52,35 +34,33 @@ const AddStock = () => {
     try {
       const updatedVariants = selectedProduct.variants.map((v, i) => {
         if (i === Number(selectedVariantIndex)) {
-          return {
-            ...v,
-            stock: newStock,
-          };
+          return { ...v, stock: Number(v.stock) + Number(addQty) };
         }
         return v;
       });
 
-      const totalStock = updatedVariants.reduce(
-        (sum, v) => sum + Number(v.stock || 0),
-        0
-      );
+      const totalStock = updatedVariants.reduce((sum, v) => sum + Number(v.stock || 0), 0);
 
-      await updateDoc(doc(db, "products", selectedProduct.docId), {
+      await api.put(`/products/stock/${selectedProduct.docId}`, {
         variants: updatedVariants,
-        totalStock: totalStock,
+        totalStock,
       });
 
       toast.success("Stock added successfully");
-
       /* RESET */
       setSelectedProductId("");
       setSelectedVariantIndex("");
       setAddQty("");
+      /* REFRESH */
+      const res = await api.get("/products");
+      setProducts(res.data);
     } catch (error) {
       console.error(error);
       toast.error("Stock update failed");
     }
   };
+
+  const inputClass = "w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm focus:ring-2 focus:ring-black outline-none transition";
 
   return (
     <div className="p-6 max-w-6xl mx-auto bg-white rounded-2xl shadow space-y-5">
@@ -96,7 +76,7 @@ const AddStock = () => {
             setSelectedVariantIndex("");
             setAddQty("");
           }}
-          className="w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm  focus:ring-2 focus:ring-black outline-none transition transition"
+          className={inputClass}
         >
           <option value="">Select Product</option>
           {products.map((p) => (
@@ -110,19 +90,16 @@ const AddStock = () => {
       {/* VARIANT SELECT */}
       {selectedProduct && (
         <div>
-          <label className="text-sm font-medium">
-            Select Variant
-          </label>
+          <label className="text-sm font-medium">Select Variant</label>
           <select
             value={selectedVariantIndex}
             onChange={(e) => setSelectedVariantIndex(e.target.value)}
-            className="w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm  focus:ring-2 focus:ring-black outline-none transition transition"
+            className={inputClass}
           >
             <option value="">Select Variant</option>
             {selectedProduct.variants?.map((v, i) => (
               <option key={i} value={i}>
-                {v.position} | {v.material} | SKU: {v.sku} (Stock:{" "}
-                {v.stock})
+                {v.position} | {v.material} | SKU: {v.sku} (Stock: {v.stock})
               </option>
             ))}
           </select>
@@ -131,12 +108,10 @@ const AddStock = () => {
 
       {/* STOCK DETAILS */}
       {selectedVariant && (
-        <div className="">
+        <div className="space-y-3">
           <div>
             Current Stock:{" "}
-            <span className="font-semibold text-blue-600">
-              {currentStock}
-            </span>
+            <span className="font-semibold text-blue-600">{currentStock}</span>
           </div>
 
           <input
@@ -144,14 +119,12 @@ const AddStock = () => {
             placeholder="Enter quantity to add"
             value={addQty}
             onChange={(e) => setAddQty(e.target.value)}
-            className="w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm  focus:ring-2 focus:ring-black outline-none transition transition"
+            className={inputClass}
           />
 
           <div>
             New Stock:{" "}
-            <span className="font-bold text-green-600">
-              {newStock}
-            </span>
+            <span className="font-bold text-green-600">{newStock}</span>
           </div>
         </div>
       )}
@@ -159,13 +132,7 @@ const AddStock = () => {
       {/* BUTTON */}
       <button
         onClick={handleUpdateStock}
-        className=" 
-bg-gradient-to-r from-black to-cyan-400
-text-white px-6 py-3 rounded
-hover:from-cyan-400 hover:to-black
-transition-all duration-500 ease-in-out
-hover:scale-105 hover:shadow-lg
-"
+        className="bg-gradient-to-r from-black to-cyan-400 text-white px-6 py-3 rounded hover:from-cyan-400 hover:to-black transition-all duration-500 ease-in-out hover:scale-105 hover:shadow-lg"
       >
         Update Stock
       </button>
@@ -174,4 +141,3 @@ hover:scale-105 hover:shadow-lg
 };
 
 export default AddStock;
-
