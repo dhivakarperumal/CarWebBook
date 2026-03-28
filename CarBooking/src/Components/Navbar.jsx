@@ -1,12 +1,7 @@
 import React, { useState,useEffect } from "react";
 import PageContainer from "./PageContainer";
 import { useNavigate, useLocation } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../firebase";
-import { doc, getDoc, collection, onSnapshot } from "firebase/firestore";
-import { User } from "lucide-react";
-import { signOut } from "firebase/auth";
-import { setDoc } from "firebase/firestore";
+import { useAuth } from "../PrivateRouter/AuthContext";
 import { useRef } from "react";
 import LoginModal from "../Auth/LoginModal";
 import RegisterModal from "../Auth/RegisterModal";
@@ -17,8 +12,8 @@ const Navbar = () => {
   const dropdownRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  const [userData, setUserData] = useState(null);
-  const [loadingUser, setLoadingUser] = useState(true);
+  const { user: userData, logout } = useAuth();
+  const loadingUser = false;
   const [showMenu, setShowMenu] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
@@ -26,9 +21,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
-
-      setUserData(null);
+      logout();
       setShowMenu(false);
       setCartCount(0);
 
@@ -40,62 +33,7 @@ const Navbar = () => {
     }
   };
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        setUserData(null);
-        setLoadingUser(false);
-        return;
-      }
 
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-
-      // 🔹 If user exists in Firestore
-      if (userSnap.exists()) {
-        setUserData(userSnap.data());
-      }
-      // 🔹 FIRST TIME GOOGLE LOGIN → SAVE USER
-      else {
-        const newUserData = {
-          uid: user.uid,
-          username: user.displayName || "",
-          displayName: user.displayName || "",
-          email: user.email,
-          photoURL: user.photoURL || "",
-          role: "user",
-          createdAt: new Date(),
-        };
-
-        await setDoc(userRef, newUserData);
-        setUserData(newUserData);
-      }
-
-      setLoadingUser(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    if (!auth.currentUser) {
-      setCartCount(0);
-      return;
-    }
-
-    const unsub = onSnapshot(
-      collection(db, "users", auth.currentUser.uid, "cart"),
-      (snap) => {
-        let count = 0;
-        snap.docs.forEach((doc) => {
-          count += doc.data().quantity || 1;
-        });
-        setCartCount(count);
-      },
-    );
-
-    return () => unsub();
-  }, [userData]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -111,21 +49,7 @@ const Navbar = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (!auth.currentUser) {
-      setCartCount(0);
-      return;
-    }
 
-    const unsub = onSnapshot(
-      collection(db, "users", auth.currentUser.uid, "cart"),
-      (snap) => {
-        setCartCount(snap.size); 
-      }
-    );
-
-    return () => unsub();
-  }, [userData]);
 
   const links = [
     { label: "HOME", path: "/" },
@@ -294,7 +218,7 @@ const Navbar = () => {
                       onClick={() => setShowLogin(true)}
                       className="text-sky-400 cursor-pointer hover:text-white transition"
                     >
-                      <User size={22} />
+                      Login
                     </button>
                   ))}
 

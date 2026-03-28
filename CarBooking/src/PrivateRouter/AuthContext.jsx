@@ -1,7 +1,4 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "../firebase";
 
 const AuthContext = createContext();
 
@@ -10,73 +7,52 @@ export const AuthProvider = ({ children }) => {
   const [profileName, setProfileName] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const logout = async () => {
-    try {
-      await signOut(auth);
-    } catch (error) {
-      console.error("Logout error:", error);
+  const checkAuth = () => {
+    const token = localStorage.getItem("token");
+    const storedUserStr = localStorage.getItem("user");
+
+    if (token && storedUserStr) {
+      try {
+        const storedUser = JSON.parse(storedUserStr);
+        setUser(storedUser);
+        setProfileName({
+          displayName:
+            storedUser.username ||
+            storedUser.email?.split("@")[0] ||
+            "User",
+          email: storedUser.email || "",
+          role: storedUser.role || "user",
+          photoURL: storedUser.photoURL || "",
+        });
+      } catch (error) {
+        setUser(null);
+        setProfileName(null);
+      }
+    } else {
+      setUser(null);
+      setProfileName(null);
     }
+    setLoading(false);
+  };
+
+  const login = (userData, token) => {
+    localStorage.setItem("user", JSON.stringify(userData));
+    localStorage.setItem("token", token);
+    checkAuth();
+  };
+
+  const logoutContext = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    checkAuth();
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (!currentUser) {
-        setUser(null);
-        setProfileName(null);
-        setLoading(false);
-        return;
-      }
-
-      setUser(currentUser);
-
-      try {
-        const snap = await getDoc(doc(db, "users", currentUser.uid));
-
-        let profileData = {
-          displayName:
-            currentUser.displayName ||
-            currentUser.email?.split("@")[0] ||
-            "User",
-          email: currentUser.email || "",
-          role: "user",
-          photoURL: currentUser.photoURL || "",
-        };
-
-        if (snap.exists()) {
-          const data = snap.data();
-
-          profileData = {
-            displayName:
-              data.username ||
-              currentUser.displayName ||
-              currentUser.email?.split("@")[0] ||
-              "User",
-            email: currentUser.email || "",
-            role: data.role || "user",
-            photoURL: data.photoURL || currentUser.photoURL || "",
-          };
-        }
-
-        setProfileName(profileData);
-      } catch (error) {
-        console.error("Auth fetch error:", error);
-
-        setProfileName({
-          displayName: "User",
-          email: currentUser.email || "",
-          role: "user",
-          photoURL: "",
-        });
-      }
-
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    checkAuth();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, profileName, logout }}>
+    <AuthContext.Provider value={{ user, profileName, login, logout: logoutContext }}>
       {!loading && children}
     </AuthContext.Provider>
   );

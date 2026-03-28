@@ -1,13 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  query,
-  orderBy,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import toast from "react-hot-toast";
 import {
   Trash2,
@@ -34,33 +26,25 @@ const ServicesListAll = () => {
   const navigate = useNavigate();
 
   /* ================= FETCH DATA ================= */
-  useEffect(() => {
-    let q;
-
+  const fetchServices = async () => {
+    setLoading(true);
     try {
-      q = query(collection(db, "services"), orderBy("createdAt", "desc"));
-    } catch {
-      q = query(collection(db, "services"));
+      const response = await api.get("/services");
+      const list = response.data.map(srv => ({
+        ...srv,
+        docId: srv.id
+      }));
+      setServices(list);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load services");
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const unsub = onSnapshot(
-      q,
-      (snapshot) => {
-        const list = snapshot.docs.map((d) => ({
-          docId: d.id,
-          ...d.data(),
-        }));
-        setServices(list);
-        setLoading(false);
-      },
-      (err) => {
-        console.error(err);
-        toast.error("Failed to load services");
-        setLoading(false);
-      }
-    );
-
-    return () => unsub();
+  useEffect(() => {
+    fetchServices();
   }, []);
 
   /* ================= RESET PAGE ON FILTER ================= */
@@ -73,8 +57,9 @@ const ServicesListAll = () => {
     if (!window.confirm("Delete this service?")) return;
 
     try {
-      await deleteDoc(doc(db, "services", id));
+      await api.delete(`/services/${id}`);
       toast.success("Service deleted");
+      fetchServices();
     } catch (err) {
       console.error(err);
       toast.error("Delete failed");

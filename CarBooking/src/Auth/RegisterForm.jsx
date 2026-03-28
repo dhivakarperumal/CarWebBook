@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { auth, db } from "../firebase";
+import api from "../api";
 import toast from "react-hot-toast";
 import { MdPerson, MdPhone, MdEmail, MdLock, MdAdminPanelSettings } from "react-icons/md";
 import { Eye, EyeOff } from "lucide-react";
@@ -35,19 +33,15 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
         setLoading(true);
 
         try {
-            const res = await createUserWithEmailAndPassword(auth, email, password);
-
             const isAdmin = adminCode === "ADMIN123DENTAL";
             const role = isAdmin ? "admin" : "user";
 
-            await setDoc(doc(db, "users", res.user.uid), {
-                uid: res.user.uid,
+            await api.post("/auth/register", {
                 username,
                 email,
                 mobile,
+                password,
                 role,
-                active: true,
-                createdAt: serverTimestamp(),
             });
 
             toast.success("Account created successfully");
@@ -132,19 +126,6 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
                     />
                 </div>
 
-                {/* ADMIN CODE */}
-                <div className="relative">
-                    <MdAdminPanelSettings className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Admin Code (optional)"
-                        value={adminCode}
-                        onChange={(e) => setAdminCode(e.target.value)}
-                        className="w-full pl-10 p-2.5 rounded-lg bg-slate-900
-                     border border-slate-700
-                     focus:ring-2 focus:ring-sky-500 outline-none"
-                    />
-                </div>
 
                 {/* PASSWORD */}
                 <div className="relative">
@@ -195,6 +176,7 @@ const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
             <div className="sticky bottom-0 z-10 bg-black px-6 pt-3 pb-5">
 
                 <button
+                    onClick={handleRegister}
                     disabled={loading}
                     className="w-full py-2.5 rounded-lg font-semibold
                    bg-gradient-to-r from-sky-500 to-cyan-400

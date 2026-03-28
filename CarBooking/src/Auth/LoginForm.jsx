@@ -1,19 +1,6 @@
 import { useState } from "react";
-import {
-    signInWithEmailAndPassword,
-    signInWithPopup,
-} from "firebase/auth";
-import {
-    doc,
-    getDoc,
-    setDoc,
-    serverTimestamp,
-    collection,
-    query,
-    where,
-    getDocs,
-} from "firebase/firestore";
-import { auth, db, googleProvider } from "../firebase";
+import api from "../api";
+import { useAuth } from "../PrivateRouter/AuthContext";
 import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
 import { FaCar, FaGoogle } from "react-icons/fa";
@@ -24,21 +11,7 @@ const LoginForm = ({ onSuccess, onOpenRegister }) => {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-
-    // 🔹 Resolve email from username
-    const getEmailFromUsername = async (username) => {
-        const q = query(
-            collection(db, "users"),
-            where("username", "==", username)
-        );
-
-        const snapshot = await getDocs(q);
-        if (snapshot.empty) {
-            throw new Error("Username not found");
-        }
-
-        return snapshot.docs[0].data().email;
-    };
+    const { login } = useAuth();
 
     // 🔹 Email / Username Login
     const handleLogin = async (e) => {
@@ -48,22 +21,16 @@ const LoginForm = ({ onSuccess, onOpenRegister }) => {
         setLoading(true);
 
         try {
-            let emailToLogin = identifier;
+            const res = await api.post("/auth/login", {
+                identifier,
+                password,
+            });
 
-            if (!identifier.includes("@")) {
-                emailToLogin = await getEmailFromUsername(identifier);
-            }
+            login(res.data.user, res.data.token);
 
-            const res = await signInWithEmailAndPassword(
-                auth,
-                emailToLogin,
-                password
-            );
-
-            const snap = await getDoc(doc(db, "users", res.user.uid));
-            onSuccess?.(snap.exists() ? snap.data().role : "user");
+            onSuccess?.(res.data.user.role || "user");
         } catch (err) {
-            toast.error(err.message || "Login failed");
+            toast.error(err.response?.data?.message || err.message || "Login failed");
         } finally {
             setLoading(false);
         }
@@ -71,30 +38,7 @@ const LoginForm = ({ onSuccess, onOpenRegister }) => {
 
     // 🔹 Google Login
     const handleGoogleLogin = async () => {
-        try {
-            const res = await signInWithPopup(auth, googleProvider);
-            const userRef = doc(db, "users", res.user.uid);
-            const snap = await getDoc(userRef);
-
-            let role = "user";
-
-            if (!snap.exists()) {
-                await setDoc(userRef, {
-                    uid: res.user.uid,
-                    email: res.user.email || "",
-                    username: res.user.displayName || "",
-                    role: "user",
-                    photoURL: res.user.photoURL || "",
-                    createdAt: serverTimestamp(),
-                });
-            } else {
-                role = snap.data().role;
-            }
-
-            onSuccess?.(role);
-        } catch (err) {
-            toast.error(err.message);
-        }
+        toast.error("Google Login is disabled. Please use standard login.");
     };
 
     return (

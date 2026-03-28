@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
-import { auth, db } from "../firebase";
+import api from "../api";
 import { useNavigate, Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
@@ -37,26 +35,23 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const res = await createUserWithEmailAndPassword(auth, email, password);
-
-      // Check if admin code is provided
       const isAdmin = adminCode === "ADMIN123DENTAL";
       const userRole = isAdmin ? "admin" : "user";
 
-      await setDoc(doc(db, "users", res.user.uid), {
-        uid: res.user.uid,
+      await api.post("/auth/register", {
         username,
         email,
         mobile,
+        password,
         role: userRole,
-        active: true,
-        createdAt: serverTimestamp(),
       });
 
       toast.success(`Account created successfully as ${userRole}`);
-      onSuccess?.();
+      // If there's an onSuccess prop, we can call it. Otherwise navigate to login.
+      // onSuccess?.();
+      navigate("/login");
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.response?.data?.message || err.message || "Registration failed");
     } finally {
       setLoading(false);
     }

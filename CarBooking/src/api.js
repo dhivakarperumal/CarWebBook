@@ -10,4 +10,5 @@ const api = axios.create({
 export const getBookings = (uid) => api.get("/bookings", { params: { uid } });
 export const createBooking = (bookingData) => api.post("/bookings/create", bookingData);
 
+
 export default api;
