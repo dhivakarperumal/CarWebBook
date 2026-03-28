@@ -1,0 +1,82 @@
+[
+  {
+    "name": "Basic Service",
+    "price": "2499",
+    "features": [
+      "Scheduled servicing",
+      "Oil check",
+      "Brake inspection",
+      "Basic diagnostics"
+    ]
+  },
+  {
+    "name": "Standard Care",
+    "price": "4199",
+    "features": [
+      "Component reminders",
+      "Full inspection",
+      "Fluid top-up",
+      "Priority support"
+    ]
+  },
+  {
+    "name": "Premium Care",
+    "price": "5799",
+    "features": [
+      "Advanced diagnostics",
+      "Detail cleaning",
+      "Engine scan",
+      "24/7 assistance"
+    ]
+  },
+  {
+    "name": "Professional",
+    "price": "8299",
+    "features": [
+      "Routine maintenance",
+      "Performance tuning",
+      "Brake replacement",
+      "Dedicated support"
+    ]
+  },
+  {
+    "name": "Fleet Service",
+    "price": "10799",
+    "features": [
+      "Multi-vehicle care",
+      "Scheduled reports",
+      "Wear alerts",
+      "Priority handling"
+    ]
+  },
+  {
+    "name": "Ultimate Care",
+    "price": "12499",
+    "features": [
+      "Full vehicle care",
+      "Interior detailing",
+      "Road assistance",
+      "Custom servicing"
+    ]
+  },
+  {
+    "name": "Custom Plan",
+    "price": "14899",
+    "features": [
+      "Tailored packages",
+      "Advanced repairs",
+      "Premium parts",
+      "VIP support"
+    ]
+  },
+  {
+    "name": "Enterprise",
+    "price": "16599",
+    "features": [
+      "Business solutions",
+      "Analytics reports",
+      "Dedicated manager",
+      "24/7 hotline"
+    ]
+  }
+]

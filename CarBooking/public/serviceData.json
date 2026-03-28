@@ -1,0 +1,217 @@
+[
+  {
+    "id": "new-tires-repair",
+    "title": "New Tire & Tire Repair",
+    "icon": "/images/flat-tire.svg",
+    "shortDesc": "Complete tire replacement and repair solutions for safe driving.",
+    "details": {
+      "paragraph1": "New tire and tire repair services ensure strong road grip, stability, and driving safety. Our technicians examine tread depth, air pressure, and visible damage to determine whether a tire requires repair or replacement, helping drivers avoid sudden failures and maintain full control in daily and highway driving conditions.",
+      "paragraph2": "The service process starts with a detailed inspection using precision tools. Punctures, uneven wear, or sidewall damage are identified. Based on condition, we perform professional repairs or install new tires, followed by accurate wheel balancing to eliminate vibration and improve steering response.",
+      "paragraph3": "Proper tire servicing improves fuel efficiency, braking performance, and ride comfort. Regular tire maintenance also extends tire lifespan and enhances safety on wet or uneven roads, giving drivers confidence and peace of mind on every journey."
+    },
+    "images": [
+      "/images/services/tires-2.jpg",
+      "/images/services/tires-1.avif",
+      "/images/services/tires-3.webp",
+      "/images/services/tires-4.jpg"
+    ],
+    "reviews": [
+      { "name": "Arjun Mehta", "rating": 5, "comment": "Excellent tire replacement and balancing service." },
+      { "name": "Kiran Patel", "rating": 4, "comment": "Quick repair and professional handling." },
+      { "name": "Rahul Singh", "rating": 5, "comment": "Smooth driving experience after service." },
+      { "name": "Sandeep Verma", "rating": 4, "comment": "Affordable and reliable tire service." }
+    ]
+  },
+
+  {
+    "id": "brakes-repair",
+    "title": "Brakes & Brake Repairs",
+    "icon": "/images/disc-brake.svg",
+    "shortDesc": "Reliable brake inspection, repair, and replacement services.",
+    "details": {
+      "paragraph1": "Brake repair services are essential for maintaining safe stopping performance. Our technicians carefully inspect brake pads, discs, calipers, and fluid systems to identify wear or damage that could reduce braking efficiency or compromise vehicle safety during emergency or everyday driving situations.",
+      "paragraph2": "The repair process includes brake diagnostics, component inspection, and replacement of worn pads or rotors. Brake fluid levels are checked, and the system is tested to ensure balanced pressure and smooth braking response across all wheels.",
+      "paragraph3": "Regular brake servicing reduces stopping distance, prevents costly damage, and improves overall driving confidence. Well-maintained brakes provide quiet operation, long-term reliability, and enhanced safety for both drivers and passengers."
+    },
+    "images": [
+      "/images/services/brakes-1.jpg",
+      "/images/services/brakes-2.jpg",
+      "/images/services/brakes-3.webp",
+      "/images/services/brakes-4.jpg"
+    ],
+    "reviews": [
+      { "name": "Ramesh Kumar", "rating": 5, "comment": "Brakes feel brand new after service." },
+      { "name": "Anita Sharma", "rating": 4, "comment": "Clear explanation and honest pricing." },
+      { "name": "Vijay Nair", "rating": 5, "comment": "Very professional brake work." },
+      { "name": "Manoj Das", "rating": 4, "comment": "Smooth and silent braking now." }
+    ]
+  },
+
+  {
+    "id": "oil-change",
+    "title": "Oil Change",
+    "icon": "/images/oil-can.svg",
+    "shortDesc": "Essential oil replacement to protect engine performance.",
+    "details": {
+      "paragraph1": "Oil change service keeps the engine properly lubricated and protected from excessive wear. Clean oil reduces friction between internal components, helps control engine temperature, and prevents harmful buildup that can reduce engine efficiency over time.",
+      "paragraph2": "Our oil change process involves draining old oil, replacing the oil filter, and refilling with manufacturer-recommended oil. Basic inspections are also performed to ensure overall engine health and consistent performance.",
+      "paragraph3": "Regular oil changes improve fuel efficiency, extend engine life, and reduce the risk of costly repairs. Timely maintenance ensures smooth engine operation and reliable performance in all driving conditions."
+    },
+    "images": [
+      "/images/services/oil-1.avif",
+      "/images/services/oil-2.jpg",
+      "/images/services/oil-3.avif",
+      "/images/services/oil-4.webp"
+    ],
+    "reviews": [
+      { "name": "Amit Joshi", "rating": 5, "comment": "Fast and clean oil change service." },
+      { "name": "Neha Kapoor", "rating": 4, "comment": "Engine feels much smoother now." },
+      { "name": "Rohit Malhotra", "rating": 5, "comment": "Professional service and good quality oil." },
+      { "name": "Deepak Rao", "rating": 4, "comment": "Great value for money." }
+    ]
+  },
+
+  {
+    "id": "engine-diagnostics",
+    "title": "Engine Diagnostics",
+    "icon": "/images/engine-motor.svg",
+    "shortDesc": "Advanced diagnostics for accurate engine fault detection.",
+    "details": {
+      "paragraph1": "Engine diagnostics help identify hidden issues using advanced computerized tools. This service detects sensor failures, emission problems, and performance irregularities early, preventing small issues from developing into major mechanical failures.",
+      "paragraph2": "The diagnostic process involves connecting scanning equipment to the vehicle system. Error codes are analyzed, real-time data is reviewed, and technicians pinpoint the exact cause of warning lights or performance drops.",
+      "paragraph3": "Accurate diagnostics save time and repair costs while improving engine reliability. Early detection ensures optimal performance, better fuel efficiency, and a longer engine lifespan."
+    },
+    "images": [
+      "/images/services/engine-1.webp",
+      "/images/services/engine-2.jpg",
+      "/images/services/engine-3.jpg",
+      "/images/services/engine-4.jpg"
+    ],
+    "reviews": [
+      { "name": "Suresh Iyer", "rating": 5, "comment": "Accurate diagnosis saved money." },
+      { "name": "Pooja Menon", "rating": 4, "comment": "Explained the issue clearly." },
+      { "name": "Ankit Shah", "rating": 5, "comment": "Very skilled technicians." },
+      { "name": "Harish Patel", "rating": 4, "comment": "Quick and reliable diagnostics." }
+    ]
+  },
+
+  {
+    "id": "battery-replacement",
+    "title": "Battery Replacement",
+    "icon": "/images/battery-charge.svg",
+    "shortDesc": "Reliable battery testing and replacement services.",
+    "details": {
+      "paragraph1": "Battery replacement services ensure reliable vehicle starting and electrical performance. Our technicians test battery health, charging capacity, and connections to determine whether replacement is required to avoid unexpected breakdowns.",
+      "paragraph2": "The process includes battery testing, safe removal of the old unit, and installation of a compatible new battery. Electrical connections are secured, and charging systems are checked for proper operation.",
+      "paragraph3": "A healthy battery improves vehicle reliability and prevents starting issues. Timely replacement ensures uninterrupted performance and protects sensitive electrical components."
+    },
+    "images": [
+      "/images/services/battery-1.jpg",
+      "/images/services/battery-2.webp",
+      "/images/services/battery-3.jpg",
+      "/images/services/battery-4.jpg"
+    ],
+    "reviews": [
+      { "name": "Nikhil Jain", "rating": 5, "comment": "Battery replaced quickly." },
+      { "name": "Priya Shah", "rating": 4, "comment": "Car starts perfectly now." },
+      { "name": "Suman Rao", "rating": 5, "comment": "Professional and fast service." },
+      { "name": "Akash Verma", "rating": 4, "comment": "Good quality battery." }
+    ]
+  },
+
+  {
+    "id": "wheel-alignment",
+    "title": "Wheel Alignment",
+    "icon": "/images/wheel.svg",
+    "shortDesc": "Precision wheel alignment for smooth handling.",
+    "details": {
+      "paragraph1": "Wheel alignment ensures proper tire positioning for balanced handling and stability. Misaligned wheels cause uneven tire wear, poor steering control, and reduced fuel efficiency if left uncorrected.",
+      "paragraph2": "Our alignment process uses advanced alignment machines to adjust wheel angles accurately. Steering components are inspected, and precise corrections are applied for optimal vehicle balance.",
+      "paragraph3": "Proper alignment improves handling, extends tire life, and enhances driving comfort. Regular alignment checks help maintain vehicle performance and safety."
+    },
+    "images": [
+      "/images/services/alignment-1.jpg",
+      "/images/services/alignment-2.jpg",
+      "/images/services/alignment-3.jpg",
+      "/images/services/alignment-4.jpg"
+    ],
+    "reviews": [
+      { "name": "Ravi Khanna", "rating": 5, "comment": "Car drives straight now." },
+      { "name": "Manish Gupta", "rating": 4, "comment": "Smooth steering after alignment." },
+      { "name": "Pankaj Yadav", "rating": 5, "comment": "Very accurate alignment work." },
+      { "name": "Deepa Nair", "rating": 4, "comment": "Professional setup and service." }
+    ]
+  },
+
+  {
+    "id": "air-conditioning-service",
+    "title": "Air Conditioning Service",
+    "icon": "/images/circle-heat.svg",
+    "shortDesc": "Complete AC inspection and cooling system service.",
+    "details": {
+      "paragraph1": "Air conditioning service ensures effective cabin cooling and passenger comfort. Our technicians inspect cooling performance, refrigerant levels, and AC components to identify leaks or system inefficiencies.",
+      "paragraph2": "The service process includes system diagnostics, gas refilling if required, and cleaning of AC filters and vents. Components are tested to ensure consistent cooling performance.",
+      "paragraph3": "Regular AC servicing improves cooling efficiency, air quality, and system longevity. Proper maintenance ensures comfort even in extreme weather conditions."
+    },
+    "images": [
+      "/images/services/ac-1.webp",
+      "/images/services/ac-2.avif",
+      "/images/services/ac-3.jpg",
+      "/images/services/ac-4.jpg"
+    ],
+    "reviews": [
+      { "name": "Sunil Verma", "rating": 5, "comment": "Regular AC servicing improves cooling efficiency, air quality, and system longevity. Proper maintenance ensures comfort even in extreme weather conditions." },
+      { "name": "Ritika Malhotra", "rating": 4, "comment": "Fresh air and good cooling." },
+      { "name": "Anil Kumar", "rating": 5, "comment": "Very effective AC service." },
+      { "name": "Sneha Roy", "rating": 4, "comment": "Quick and professional work." }
+    ]
+  },
+
+  {
+    "id": "suspension-repair",
+    "title": "Suspension Repair",
+    "icon": "/images/suspension-cross.svg",
+    "shortDesc": "Expert suspension inspection and repair services.",
+    "details": {
+      "paragraph1": "Suspension repair restores ride comfort and vehicle stability. Worn suspension components can cause rough rides, poor handling, and uneven tire wear if not addressed promptly.",
+      "paragraph2": "The repair process involves inspecting shocks, struts, springs, and joints. Damaged components are replaced, and the suspension system is tested for balance and performance.",
+      "paragraph3": "Proper suspension servicing improves ride quality, steering control, and overall safety. Regular maintenance ensures a smooth and comfortable driving experience."
+    },
+    "images": [
+      "/images/services/suspension-1.jpg",
+      "/images/services/suspension-2.jpg",
+      "/images/services/suspension-3.jpg",
+      "/images/services/suspension-4.jpg"
+    ],
+    "reviews": [
+      { "name": "Vikas Sharma", "rating": 5, "comment": "Ride comfort improved a lot." },
+      { "name": "Nitin Agarwal", "rating": 4, "comment": "Good suspension work." },
+      { "name": "Rajesh Iyer", "rating": 5, "comment": "Very smooth driving now." },
+      { "name": "Alok Mishra", "rating": 4, "comment": "Professional suspension service." }
+    ]
+  },
+
+  {
+    "id": "general-brake-service",
+    "title": "General Brake Service",
+    "icon": "/images/disc-brake.svg",
+    "shortDesc": "Routine brake inspection and maintenance service.",
+    "details": {
+      "paragraph1": "General brake service focuses on maintaining consistent braking performance. Routine inspection helps detect early wear and prevents sudden brake failure during everyday driving conditions.",
+      "paragraph2": "The service includes checking brake pads, discs, fluid levels, and overall system condition. Minor adjustments and cleaning are performed to ensure optimal braking efficiency.",
+      "paragraph3": "Regular brake maintenance improves safety, extends component life, and ensures reliable stopping power. Preventive servicing keeps the braking system dependable."
+    },
+    "images": [
+      "/images/services/general-brakes-1.avif",
+      "/images/services/general-brakes-2.jpg",
+      "/images/services/general-brakes-3.jpg",
+      "/images/services/general-brakes-4.jpg"
+    ],
+    "reviews": [
+      { "name": "Aakash Singh", "rating": 5, "comment": "Reliable brake maintenance." },
+      { "name": "Puneet Arora", "rating": 4, "comment": "Good preventive service." },
+      { "name": "Sonal Desai", "rating": 5, "comment": "Smooth braking performance." },
+      { "name": "Kunal Verma", "rating": 4, "comment": "Professional and timely service." }
+    ]
+  }
+]

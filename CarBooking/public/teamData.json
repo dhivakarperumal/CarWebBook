@@ -1,0 +1,42 @@
+[
+  {
+    "name": "Fernando Alonso",
+    "role": "Consulting Engineer",
+    "image": "/images/team1.jpg"
+  },
+  {
+    "name": "John Carter",
+    "role": "Senior Mechanic",
+    "image": "/images/team2.jpg"
+  },
+  {
+    "name": "Robert Smith",
+    "role": "Auto Engineer",
+    "image": "/images/team3.jpg"
+  },
+  {
+    "name": "Sophia Lee",
+    "role": "Service Manager",
+    "image": "/images/team4.jpg"
+  },
+  {
+    "name": "Michael Brown",
+    "role": "Diagnostics Expert",
+    "image": "/images/team5.jpg"
+  },
+  {
+    "name": "Daniel Wilson",
+    "role": "Engine Specialist",
+    "image": "/images/team6.jpg"
+  },
+  {
+    "name": "Chris Evans",
+    "role": "Workshop Supervisor",
+    "image": "/images/team7.jpg"
+  },
+  {
+    "name": "Emma Watson",
+    "role": "Quality Inspector",
+    "image": "/images/team9.jpg"
+  }
+]

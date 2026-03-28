@@ -1,0 +1,26 @@
+[
+  {
+    "title": "Reliability Meets",
+    "highlight": "the Road",
+    "desc": "Professional car services with trusted mechanics and modern tools.",
+    "image": "/images/Home1.webp"
+  },
+  {
+    "title": "Expert Auto",
+    "highlight": "Diagnostics",
+    "desc": "Advanced diagnostics for faster and smarter repairs.",
+    "image": "/images/Home2.webp"
+  },
+  {
+    "title": "Premium Car",
+    "highlight": "Servicing",
+    "desc": "Complete servicing packages for every vehicle.",
+    "image": "/images/Home3.webp"
+  },
+  {
+    "title": "Trusted Vehicle",
+    "highlight": "Care",
+    "desc": "Your car deserves expert hands and genuine parts.",
+    "image": "/images/Home4.webp"
+  }
+]
