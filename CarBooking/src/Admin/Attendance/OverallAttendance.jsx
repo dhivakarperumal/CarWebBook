@@ -1,12 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  orderBy,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import { Search, Download, Calendar, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
@@ -45,68 +38,25 @@ const OverallAttendance = () => {
   const loadAttendanceData = async () => {
     setLoading(true);
     try {
-      const q = query(
-        collection(db, "attendance", selectedDate, "staff"),
-        orderBy("loginTime", "desc")
-      );
-
-      const snap = await getDocs(q);
-      const data = snap.docs.map((d) => {
-        const docData = d.data();
+      const res = await api.get('/attendance', { params: { date: selectedDate } });
+      const data = res.data.map((docData) => {
         return {
-          id: d.id,
           ...docData,
-          // Ensure loginTime and logoutTime are properly formatted
-          loginTime: docData.loginTime || null,
-          logoutTime: docData.logoutTime || null,
-          // Calculate duration
-          duration: docData.loginTime && docData.logoutTime
-            ? calculateDuration(docData.loginTime, docData.logoutTime)
-            : "Active",
+          loginTime: docData.login_time,
+          logoutTime: docData.logout_time,
+          duration: docData.duration || (docData.login_time && !docData.logout_time ? "Active" : "N/A"),
         };
       });
       setAttendanceData(data);
     } catch (err) {
       console.error("Error loading attendance:", err);
-      // If collection doesn't exist, return empty array (no error)
-      if (err.code === "failed-precondition") {
-        setAttendanceData([]);
-      } else {
-        setAttendanceData([]);
-        toast.error("Failed to load attendance data");
-      }
+      setAttendanceData([]);
+      toast.error("Failed to load attendance data");
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Calculate duration between login and logout
-  const calculateDuration = (loginTime, logoutTime) => {
-    try {
-      const loginDate =
-        loginTime && typeof loginTime.toDate === "function"
-          ? loginTime.toDate()
-          : loginTime instanceof Date
-            ? loginTime
-            : new Date(loginTime);
-
-      const logoutDate =
-        logoutTime && typeof logoutTime.toDate === "function"
-          ? logoutTime.toDate()
-          : logoutTime instanceof Date
-            ? logoutTime
-            : new Date(logoutTime);
-
-      const diffMs = logoutDate - loginDate;
-      const hours = Math.floor(diffMs / (1000 * 60 * 60));
-      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-      return `${hours}h ${minutes}m`;
-    } catch (err) {
-      console.error("Error calculating duration:", err);
-      return "N/A";
-    }
-  };
 
   /* 🔹 FILTER LOGIC */
   const filtered = useMemo(() => {
@@ -394,38 +344,10 @@ const OverallAttendance = () => {
                       <StatusBadge status={item.status} />
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600">
-                      {item.loginTime ? (
-                        (() => {
-                          try {
-                            // Handle Firestore Timestamp
-                            const time = item.loginTime.toDate
-                              ? item.loginTime.toDate()
-                              : new Date(item.loginTime);
-                            return time.toLocaleTimeString();
-                          } catch (e) {
-                            return String(item.loginTime).slice(0, 16);
-                          }
-                        })()
-                      ) : (
-                        "N/A"
-                      )}
+                      {item.loginTime ? dayjs(item.loginTime).format("HH:mm") : "N/A"}
                     </td>
                     <td className="px-4 py-3 text-sm text-slate-600">
-                      {item.logoutTime ? (
-                        (() => {
-                          try {
-                            // Handle Firestore Timestamp
-                            const time = item.logoutTime.toDate
-                              ? item.logoutTime.toDate()
-                              : new Date(item.logoutTime);
-                            return time.toLocaleTimeString();
-                          } catch (e) {
-                            return String(item.logoutTime).slice(0, 16);
-                          }
-                        })()
-                      ) : (
-                        "Active"
-                      )}
+                      {item.logoutTime ? dayjs(item.logoutTime).format("HH:mm") : "Active"}
                     </td>
                     <td className="px-4 py-3 text-sm font-medium text-slate-700">
                       {item.duration || "N/A"}

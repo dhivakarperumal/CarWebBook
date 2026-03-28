@@ -17,12 +17,22 @@ const serviceRoutes = require('./src/routers/serviceRoutes');
 const authRoutes = require('./src/routers/authRoutes');
 const inventoryRouter = require('./src/routers/inventoryRouter');
 const productRouter = require('./src/routers/productRouter');
+const staffRouter = require('./src/routers/staffRouter');
+const carServiceRouter = require('./src/routers/carServiceRouter');
+const attendanceRouter = require('./src/routers/attendanceRouter');
+const allServiceRouter = require('./src/routers/allServiceRouter');
+const serviceTypeRouter = require('./src/routers/serviceTypeRouter');
 
 app.use('/api/bookings', bookingRouter);
 app.use('/api/services', serviceRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/inventory', inventoryRouter);
 app.use('/api/products', productRouter);
+app.use('/api/staff', staffRouter);
+app.use('/api/car-services', carServiceRouter);
+app.use('/api/attendance', attendanceRouter);
+app.use('/api/all-services', allServiceRouter);
+app.use('/api/service-types', serviceTypeRouter);
 
 // Basic Route
 app.get('/', (req, res) => {

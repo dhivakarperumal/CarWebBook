@@ -56,28 +56,6 @@ exports.updateBookingStatus = async (req, res) => {
        const [booking] = await db.query('SELECT * FROM bookings WHERE id = ?', [id]);
        if (booking.length > 0) {
          const b = booking[0];
-         const createSql = `
-          CREATE TABLE IF NOT EXISTS all_services (
-             id INT AUTO_INCREMENT PRIMARY KEY,
-             bookingId VARCHAR(100),
-             bookingDocId INT,
-             uid VARCHAR(255),
-             name VARCHAR(255),
-             phone VARCHAR(20),
-             email VARCHAR(255),
-             brand VARCHAR(100),
-             model VARCHAR(100),
-             issue VARCHAR(255),
-             otherIssue TEXT,
-             location VARCHAR(255),
-             address TEXT,
-             trackNumber VARCHAR(100),
-             serviceStatus VARCHAR(100) DEFAULT 'Pending',
-             createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-          )
-         `;
-         await db.query(createSql);
-         
          const [existing] = await db.query('SELECT * FROM all_services WHERE bookingDocId = ?', [id]);
          if (existing.length === 0) {
            await db.query(`

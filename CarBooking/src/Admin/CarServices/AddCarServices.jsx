@@ -1,15 +1,6 @@
 import React, { useEffect, useState } from "react";
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  getDocs,
-  updateDoc,
-  doc,
-  getDoc,
-} from "firebase/firestore";
+import api from "../../api";
 import { useNavigate, useParams } from "react-router-dom";
-import { db } from "../../firebase";
 
 /* Static Options */
 const serviceTypes = [
@@ -49,52 +40,35 @@ const AddServices = () => {
     carServiceId: "",
   });
 
-  /* 🔄 Load existing service for EDIT */
+  /* Load existing service for EDIT */
   useEffect(() => {
     if (!isEdit) return;
-
     const fetchService = async () => {
       try {
-        const snap = await getDoc(doc(db, "carServices", id));
-        if (!snap.exists()) {
-          alert("Service not found");
-          navigate("/admin/carservices");
-          return;
-        }
-
-        setForm({
-          ...snap.data(),
-          estimatedCost: snap.data().estimatedCost || "",
-        });
+        const res = await api.get(`/car-services/${id}`);
+        setForm({ ...res.data, estimatedCost: res.data.estimatedCost || '' });
       } catch (err) {
         console.error(err);
-        alert("Failed to load service");
+        alert('Failed to load service');
+        navigate('/admin/carservices');
       }
     };
-
     fetchService();
   }, [id, isEdit, navigate]);
 
-  /* 👨‍🔧 Fetch Mechanics (role = Mechanic, department = Admin R) */
+  /* Fetch Mechanics from staff table */
   useEffect(() => {
     const fetchMechanics = async () => {
       try {
-        const snap = await getDocs(collection(db, "employees"));
-        const list = snap.docs
-          .map((doc) => doc.data())
-          .filter(
-            (emp) =>
-              emp.role === "Mechanic" 
-             
-          )
+        const res = await api.get('/staff');
+        const list = res.data
+          .filter((emp) => emp.role === 'Mechanic')
           .map((emp) => emp.name);
-
         setMechanics(list);
       } catch (err) {
-        console.error("Failed to fetch mechanics", err);
+        console.error('Failed to fetch mechanics', err);
       }
     };
-
     fetchMechanics();
   }, []);
 
@@ -103,55 +77,38 @@ const AddServices = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  /* 🚀 Submit (ADD / UPDATE) */
+  /* Submit (ADD / UPDATE) */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (isEdit) {
-        // ✏️ UPDATE
-        await updateDoc(doc(db, "carServices", id), {
-          carNumber: form.carNumber,
-          customerName: form.customerName,
-          mobileNumber: form.mobileNumber,
-          serviceType: form.serviceType,
-          mechanic: form.mechanic,
-          status: form.status,
-          startTime: form.startTime,
-          endTime: form.endTime,
-          spareParts: form.spareParts,
-          estimatedCost: Number(form.estimatedCost || 0),
-          notes: form.notes,
-          updatedAt: serverTimestamp(),
-        });
+      const payload = {
+        carNumber: form.carNumber,
+        customerName: form.customerName,
+        mobileNumber: form.mobileNumber,
+        serviceType: form.serviceType,
+        mechanic: form.mechanic,
+        status: form.status,
+        startTime: form.startTime,
+        endTime: form.endTime,
+        spareParts: form.spareParts,
+        estimatedCost: Number(form.estimatedCost || 0),
+        notes: form.notes,
+      };
 
+      if (isEdit) {
+        await api.put(`/car-services/${id}`, payload);
         alert(`Service Updated (${form.carServiceId})`);
       } else {
-        // ➕ ADD
-        const snap = await getDocs(collection(db, "carServices"));
-        const nextNumber = snap.size + 1;
-        const carServiceId = `SEV${String(nextNumber).padStart(3, "0")}`;
-
-        const docRef = await addDoc(collection(db, "carServices"), {
-          ...form,
-          mechanic: form.mechanic,
-          carServiceId,
-          estimatedCost: Number(form.estimatedCost || 0),
-          createdAt: serverTimestamp(),
-        });
-
-        await updateDoc(doc(db, "carServices", docRef.id), {
-          docId: docRef.id,
-        });
-
-        alert(`Car Service Added 🚗 (${carServiceId})`);
+        const res = await api.post('/car-services', payload);
+        alert(`Car Service Added 🚗 (${res.data.carServiceId})`);
       }
 
-      navigate("/admin/carservices");
+      navigate('/admin/carservices');
     } catch (err) {
       console.error(err);
-      alert("Operation failed ❌");
+      alert('Operation failed ❌');
     } finally {
       setLoading(false);
     }

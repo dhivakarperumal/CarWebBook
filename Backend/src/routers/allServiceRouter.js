@@ -1,0 +1,11 @@
+const express = require('express');
+const router = express.Router();
+const asc = require('../controllers/allServiceController');
+
+router.get('/', asc.getAllServices);
+router.get('/:id', asc.getServiceById);
+router.put('/:id/status', asc.updateServiceStatus);
+router.post('/:id/parts', asc.addServiceParts);
+router.delete('/:id', asc.deleteService);
+
+module.exports = router;

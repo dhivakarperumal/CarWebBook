@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  doc,
-  getDoc,
-  collection,
-  getDocs,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -24,34 +18,15 @@ const ViewService = () => {
     if (!id) return;
 
     const fetchData = async () => {
+      setLoading(true);
       try {
-        // 🔹 Service
-        const serviceRef = doc(db, "carServices", id);
-        const serviceSnap = await getDoc(serviceRef);
-
-        if (!serviceSnap.exists()) {
-          toast.error("Service not found");
-          navigate("/admin/services");
-          return;
-        }
-
-        setService({ id: serviceSnap.id, ...serviceSnap.data() });
-
-        // 🔹 Parts
-        const partsRef = collection(db, "carServices", id, "parts");
-        const partsSnap = await getDocs(partsRef);
-
-        const safeParts = partsSnap.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-          qty: Number(d.data().qty || 0),
-          price: Number(d.data().price || 0),
-        }));
-
-        setParts(safeParts);
+        const res = await api.get(`/all-services/${id}`);
+        const data = res.data;
+        setService(data);
+        setParts(data.parts || []);
       } catch (err) {
-        console.error(err);
         toast.error("Failed to load service details");
+        navigate("/admin/services");
       } finally {
         setLoading(false);
       }
@@ -92,10 +67,10 @@ const ViewService = () => {
       {/* CUSTOMER INFO */}
       <Section title="Customer Information">
         <Grid>
-          <Detail label="Service ID" value={service.carServiceId || "-"} />
-          <Detail label="Customer Name" value={service.customerName || "-"} />
-          <Detail label="Mobile" value={service.customerMobile || "-"} />
-          <Detail label="Car Number" value={service.carNumber || "-"} />
+          <Detail label="Booking ID" value={service.bookingId || "-"} />
+          <Detail label="Customer Name" value={service.name || "-"} />
+          <Detail label="Mobile" value={service.phone || "-"} />
+          <Detail label="Car" value={`${service.brand || ""} ${service.model || ""}`.trim() || "-"} />
         </Grid>
       </Section>
 
@@ -104,23 +79,21 @@ const ViewService = () => {
         <Grid>
           <Detail label="Mechanic" value={service.mechanic || "-"} />
           <Detail
-            label="Status"
+            label="Service Status"
             value={
               <span
                 className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  service.status === "completed"
+                  service.serviceStatus === "Service Completed"
                     ? "bg-green-100 text-green-700"
-                    : service.status === "pending"
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-gray-100 text-gray-600"
+                    : "bg-yellow-100 text-yellow-700"
                 }`}
               >
-                {service.status || "N/A"}
+                {service.serviceStatus || "Booked"}
               </span>
             }
           />
-          <Detail label="Service Type" value={service.serviceType || "-"} />
-          <Detail label="Repair Time" value={service.repairTime || "-"} />
+          <Detail label="Issue" value={service.issue || service.otherIssue || "-"} />
+          <Detail label="Address" value={service.address || "-"} />
         </Grid>
       </Section>
 

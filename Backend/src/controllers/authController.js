@@ -84,7 +84,41 @@ const loginUser = async (req, res) => {
   }
 };
 
+const getAllUsers = async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT id, uid, username, email, mobile, role, active, created_at FROM users');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching users", error: err.message });
+  }
+};
+
+const updateUserRole = async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.body;
+  try {
+    await db.query('UPDATE users SET role = ? WHERE id = ?', [role, id]);
+    res.json({ message: "Role updated successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating role", error: err.message });
+  }
+};
+
+const toggleUserStatus = async (req, res) => {
+  const { id } = req.params;
+  const { active } = req.body;
+  try {
+    await db.query('UPDATE users SET active = ? WHERE id = ?', [active, id]);
+    res.json({ message: "User status updated successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating status", error: err.message });
+  }
+};
+
 module.exports = {
   registerUser,
-  loginUser
+  loginUser,
+  getAllUsers,
+  updateUserRole,
+  toggleUserStatus
 };

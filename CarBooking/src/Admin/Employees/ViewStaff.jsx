@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   FaUsers,
@@ -13,17 +12,29 @@ const ViewStaff = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [staff, setStaff] = useState(null);
-  const [documents, setDocuments] = useState([]);
 
   useEffect(() => {
     const load = async () => {
-      const snap = await getDoc(doc(db, "staff", id));
-      if (snap.exists()) {
-        setStaff(snap.data());
+      try {
+        const res = await api.get(`/staff/${id}`);
+        const data = res.data;
+        // Map backend snake_case to frontend camelCase if needed
+        setStaff({
+          ...data,
+          employeeId: data.employee_id,
+          bloodGroup: data.blood_group,
+          joiningDate: data.joining_date,
+          emergencyName: data.emergency_name,
+          emergencyPhone: data.emergency_phone,
+          timeIn: data.time_in,
+          timeOut: data.time_out,
+          aadharDoc: data.aadhar_doc,
+          idDoc: data.id_doc,
+          certificateDoc: data.certificate_doc
+        });
+      } catch (err) {
+        console.error("Error loading staff:", err);
       }
-
-      const docsSnap = await getDocs(collection(db, "staff", id, "documents"));
-      setDocuments(docsSnap.docs.map((d) => d.data()));
     };
 
     load();
@@ -62,23 +73,15 @@ const ViewStaff = () => {
               Staff Profile
             </h3>
 
-            {/* PROFILE PHOTO */}
             <div className="flex justify-center">
-              {documents.filter(d => d.type === "photo").length > 0 ? (
-                documents
-                  .filter(d => d.type === "photo")
-                  .map((doc, i) => (
-                    <div
-                      key={i}
-                      className="h-40 w-40 rounded-full p-1 bg-gradient-to-tr from-blue-500 to-purple-600 shadow-lg"
-                    >
-                      <img
-                        src={doc.file}
-                        alt="Staff"
-                        className="h-full w-full rounded-full object-cover border-4 border-white"
-                      />
-                    </div>
-                  ))
+              {staff.photo ? (
+                <div className="h-40 w-40 rounded-full p-1 bg-gradient-to-tr from-blue-500 to-purple-600 shadow-lg">
+                  <img
+                    src={staff.photo}
+                    alt="Staff"
+                    className="h-full w-full rounded-full object-cover border-4 border-white"
+                  />
+                </div>
               ) : (
                 <div className="h-40 w-40 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
                   No Photo
@@ -137,6 +140,7 @@ const ViewStaff = () => {
         <Info label="Role" value={staff.role} />
         <Info label="Department" value={staff.department} />
         <Info label="Shift" value={staff.shift} />
+        <Info label="Shift Timing" value={`${staff.timeIn || "--:--"} to ${staff.timeOut || "--:--"}`} />
         <Info label="Salary" value={staff.salary} />
         <Info label="Experience" value={staff.experience} />
         <Info label="Joining Date" value={staff.joiningDate} />
@@ -156,37 +160,28 @@ const ViewStaff = () => {
   </div>
 
   {/* EMERGENCY CONTACT */}
-  <div title="Emergency Contact" accent="red">
+  <TitleSection title="Emergency Contact" accent="red">
     <Info label="Name" value={staff.emergencyName} />
     <Info label="Phone" value={staff.emergencyPhone} />
-  </div>
+  </TitleSection>
 
   {/* DOCUMENTS */}
-  <div title="Documents" accent="blue">
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {documents.map((doc, i) => (
-        <div
-          key={i}
-          className="group border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition"
-        >
-          <img
-            src={doc.file}
-            alt={doc.type}
-            className="h-28 w-full object-cover group-hover:scale-105 transition"
-          />
-          <p className="text-xs py-2 text-center bg-gray-50 capitalize text-gray-600">
-            {doc.type}
-          </p>
-        </div>
-      ))}
-
-      {documents.length === 0 && (
-        <p className="text-sm text-gray-400">
-          No documents uploaded
-        </p>
+  <TitleSection title="Documents" accent="blue">
+    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      {staff.aadharDoc && (
+        <DocumentCard label="Aadhar" src={staff.aadharDoc} />
+      )}
+      {staff.idDoc && (
+        <DocumentCard label="ID Proof" src={staff.idDoc} />
+      )}
+      {staff.certificateDoc && (
+        <DocumentCard label="Certificate" src={staff.certificateDoc} />
+      )}
+      {!staff.aadharDoc && !staff.idDoc && !staff.certificateDoc && (
+        <p className="text-sm text-gray-400">No documents uploaded</p>
       )}
     </div>
-  </div>
+  </TitleSection>
 
 
 
@@ -200,7 +195,7 @@ const ViewStaff = () => {
 
 /* ---------- SMALL UI COMPONENTS ---------- */
 
-const div = ({ title, children, accent }) => {
+const TitleSection = ({ title, children, accent }) => {
   const accentColor = {
     blue: "border-l-blue-500",
     green: "border-l-green-500",
@@ -223,6 +218,25 @@ const div = ({ title, children, accent }) => {
     </div>
   );
 };
+
+const DocumentCard = ({ label, src }) => (
+  <div className="group border rounded-xl overflow-hidden shadow-sm hover:shadow-md transition">
+    {src.startsWith("data:image") ? (
+      <img
+        src={src}
+        alt={label}
+        className="h-28 w-full object-cover group-hover:scale-105 transition"
+      />
+    ) : (
+      <div className="h-28 w-full flex items-center justify-center bg-gray-100 text-gray-400">
+        📄 PDF/Doc
+      </div>
+    )}
+    <p className="text-xs py-2 text-center bg-gray-50 capitalize text-gray-600">
+      {label}
+    </p>
+  </div>
+);
 
 const Info = ({ label, value }) => (
   <div>

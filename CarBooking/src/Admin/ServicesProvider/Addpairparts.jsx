@@ -1,13 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  doc,
-  updateDoc,
-  serverTimestamp,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import toast from "react-hot-toast";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
@@ -31,12 +23,9 @@ const AddServiceParts = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const snap = await getDocs(collection(db, "allServices"));
-        setServices(
-          snap.docs.map((d) => ({ id: d.id, ...d.data() }))
-        );
+        const res = await api.get('/all-services');
+        setServices(res.data);
       } catch (err) {
-        console.error(err);
         toast.error("Failed to load services");
       }
     };
@@ -99,37 +88,10 @@ const AddServiceParts = () => {
 
     try {
       setLoading(true);
-
-      const partsRef = collection(
-        db,
-        "allServices",
-        selectedService.id,
-        "parts"
-      );
-
-      /* 🔹 SAVE PARTS */
-      for (let p of validParts) {
-        await addDoc(partsRef, {
-          partName: p.partName,
-          qty: Number(p.qty),
-          price: Number(p.price),
-          total: Number(p.qty) * Number(p.price),
-          createdAt: serverTimestamp(),
-        });
-      }
-
-      /* 🔹 UPDATE ESTIMATED COST */
-      await updateDoc(doc(db, "allServices", selectedService.id), {
-        estimatedCost:
-          Number(selectedService.estimatedCost || 0) +
-          totalPartsCost,
-        updatedAt: serverTimestamp(),
-      });
-
+      await api.post(`/all-services/${selectedService.id}/parts`, { parts: validParts });
       toast.success("Parts added successfully");
       navigate(-1);
     } catch (err) {
-      console.error(err);
       toast.error("Failed to save parts");
     } finally {
       setLoading(false);

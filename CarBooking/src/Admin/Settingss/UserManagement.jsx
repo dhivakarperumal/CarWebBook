@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  updateDoc,
-  doc,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import toast from "react-hot-toast";
 import {
   FaUsers,
@@ -27,20 +21,32 @@ const UserManagement = () => {
   }, []);
 
   const loadUsers = async () => {
-    const snap = await getDocs(collection(db, "users"));
-    setUsers(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    try {
+      const res = await api.get('/auth/users');
+      setUsers(res.data);
+    } catch (err) {
+      toast.error('Failed to load users');
+    }
   };
 
   const updateRole = async (id, role) => {
-    await updateDoc(doc(db, "users", id), { role });
-    toast.success("Role updated");
-    loadUsers();
+    try {
+      await api.put(`/auth/users/${id}/role`, { role });
+      toast.success("Role updated");
+      loadUsers();
+    } catch (err) {
+      toast.error("Failed to update role");
+    }
   };
 
   const toggleStatus = async (id, active) => {
-    await updateDoc(doc(db, "users", id), { active: !active });
-    toast.success("User status updated");
-    loadUsers();
+    try {
+      await api.put(`/auth/users/${id}/status`, { active: !active });
+      toast.success("User status updated");
+      loadUsers();
+    } catch (err) {
+      toast.error("Failed to update status");
+    }
   };
 
   /* 📊 Stats */

@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
@@ -32,8 +26,12 @@ const Staffs = () => {
 
 
   const loadStaff = async () => {
-    const snap = await getDocs(collection(db, "employees"));
-    setStaff(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    try {
+      const res = await api.get('/staff');
+      setStaff(res.data);
+    } catch {
+      toast.error('Failed to load staff');
+    }
   };
 
   const filteredStaff = staff.filter((s) => {
@@ -71,9 +69,13 @@ const Staffs = () => {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this staff member?")) return;
-    await deleteDoc(doc(db, "staff", id));
-    toast.success("Staff deleted successfully");
-    loadStaff();
+    try {
+      await api.delete(`/staff/${id}`);
+      toast.success("Staff deleted successfully");
+      loadStaff();
+    } catch {
+      toast.error("Failed to delete staff");
+    }
   };
 
   // ===== Stats =====
@@ -234,8 +236,8 @@ const Staffs = () => {
                   <td className="px-4 py-4">{s.phone}</td>
                   <td className="px-4 py-4">{s.role}</td>
                   <td className="px-4 py-4">{s.department}</td>
-                  <td className="px-4 py-4 text-sm">{s.timeIn || "N/A"}</td>
-                  <td className="px-4 py-4 text-sm">{s.timeOut || "N/A"}</td>
+                  <td className="px-4 py-4 text-sm">{s.time_in || "N/A"}</td>
+                  <td className="px-4 py-4 text-sm">{s.time_out || "N/A"}</td>
 
                   <td className="px-4 py-4">
                     <span

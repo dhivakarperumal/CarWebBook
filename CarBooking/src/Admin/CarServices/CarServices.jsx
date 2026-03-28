@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import { useNavigate } from "react-router-dom";
 import { FaEdit, FaTrash, FaSearch,FaEye,FaSpinner } from "react-icons/fa";
 import { FaCar, FaClock, FaCheckCircle, FaTools } from "react-icons/fa";
@@ -27,14 +21,13 @@ const CarServices = () => {
   /* Fetch services */
   useEffect(() => {
     const fetchServices = async () => {
-      const snap = await getDocs(collection(db, "carServices"));
-      const data = snap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      }));
-      setServices(data);
+      try {
+        const res = await api.get('/car-services');
+        setServices(res.data);
+      } catch (err) {
+        console.error('Failed to load services', err);
+      }
     };
-
     fetchServices();
   }, []);
 
@@ -59,9 +52,8 @@ const CarServices = () => {
   /* Delete */
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this service?")) return;
-
     try {
-      await deleteDoc(doc(db, "carServices", id));
+      await api.delete(`/car-services/${id}`);
       setServices(services.filter((s) => s.id !== id));
     } catch (err) {
       console.error(err);

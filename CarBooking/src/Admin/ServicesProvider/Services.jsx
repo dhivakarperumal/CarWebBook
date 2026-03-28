@@ -1,18 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  collection,
-  deleteDoc,
-  doc,
-  updateDoc,
-  serverTimestamp,
-  onSnapshot,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import toast from "react-hot-toast";
 import { FaEdit, FaTrash, FaSearch, FaEye } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
 const BOOKING_STATUS = [
+  "Booked",
   "Approved",
   "Processing",
   "Waiting for Spare",
@@ -35,96 +28,48 @@ const Services = () => {
   const itemsPerPage = 10;
 
   /* =======================
-     REALTIME FETCH
+     FETCH DATA
   ======================= */
-  useEffect(() => {
-    const unsub = onSnapshot(
-      collection(db, "allServices"),
-      (snap) => {
-        const data = snap.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        }));
-        setServices(data);
-      },
-      (error) => {
-        console.error(error);
-        toast.error("Failed to load services");
-      }
-    );
+  const loadServices = async () => {
+    try {
+      const res = await api.get('/all-services');
+      setServices(res.data);
+    } catch {
+      toast.error("Failed to load services");
+    }
+  };
 
-    return () => unsub();
+  useEffect(() => {
+    loadServices();
   }, []);
 
   /* =======================
      STATUS CHANGE
   ======================= */
- const handleStatusChange = async (s, newStatus) => {
-  if (!s?.id) return toast.error("Invalid service ID");
-
-  try {
-    setRowLoading(s.id);
-
-    /* 🔥 1. UPDATE SERVICE STATUS */
-    await updateDoc(doc(db, "allServices", s.id), {
-      serviceStatus: newStatus,
-      updatedAt: serverTimestamp(),
-    });
-
-    /* 🔥 2. MAP SERVICE STATUS → BOOKING STATUS */
-    let bookingStatus = newStatus;
-
-    if (newStatus === "Completed") {
-      bookingStatus = "Service Completed";
-    } else if (newStatus === "Cancelled") {
-      bookingStatus = "Cancelled";
-    } else {
-      bookingStatus = newStatus;
+  const handleStatusChange = async (s, newStatus) => {
+    try {
+      setRowLoading(s.id);
+      await api.put(`/all-services/${s.id}/status`, { serviceStatus: newStatus });
+      toast.success("Status updated");
+      loadServices();
+    } catch {
+      toast.error("Update failed");
+    } finally {
+      setRowLoading(null);
     }
-
-    /* 🔥 3. UPDATE BOOKING STATUS */
-    if (s.bookingDocId) {
-      const bookingRef = doc(db, "bookings", s.bookingDocId);
-
-      await updateDoc(bookingRef, {
-        status: bookingStatus,
-        updatedAt: serverTimestamp(),
-      });
-
-      /* 🔥 4. UPDATE USER SUBCOLLECTION BOOKING */
-      if (s.uid) {
-        await updateDoc(
-          doc(db, "users", s.uid, "bookings", s.bookingDocId),
-          {
-            status: bookingStatus,
-            updatedAt: serverTimestamp(),
-          }
-        );
-      }
-    }
-
-    toast.success("Service & Booking status updated");
-  } catch (error) {
-    console.error(error);
-    toast.error("Status update failed");
-  } finally {
-    setRowLoading(null);
-  }
-};
-
+  };
 
   /* =======================
      DELETE
   ======================= */
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this service?")) return;
-
     try {
       setRowLoading(id);
-      await deleteDoc(doc(db, "allServices", id));
+      await api.delete(`/all-services/${id}`);
       toast.success("Service deleted");
-    } catch (error) {
-      console.error(error);
+      loadServices();
+    } catch {
       toast.error("Delete failed");
     } finally {
       setRowLoading(null);
