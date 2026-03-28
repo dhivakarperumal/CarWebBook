@@ -1,4 +1,4 @@
-const db = require('../config/db.js');
+const db = require('./src/config/db.js');
 
 const migrate = async () => {
   try {
