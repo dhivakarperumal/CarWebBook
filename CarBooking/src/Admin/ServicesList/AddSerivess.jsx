@@ -35,52 +35,37 @@ const AddCarService = () => {
     status: "active",
   });
 
-
-
   /* 🔄 Fetch service when editing */
   useEffect(() => {
     const fetchService = async () => {
       if (!id) return;
 
       try {
-        const response = await api.get(`/services/${id}`);
-        if (response.data) {
-          const data = response.data;
+        const res = await api.get(`/services/${id}`);
+        const data = res.data;
 
-          let parsedBrands = [""];
-          let parsedSpareParts = [""];
+        setForm({
+          name: data.name || "",
+          price: data.price || "",
+          description: data.description || "",
+          bigDescription: data.bigDescription || "",
+          icon: data.icon || "Car",
+          image: data.image || "",
+          supportedBrands: data.supportedBrands?.length
+            ? data.supportedBrands
+            : [""],
+          sparePartsIncluded: data.sparePartsIncluded?.length
+            ? data.sparePartsIncluded
+            : [""],
+          status: data.status || "active",
+        });
 
-          try {
-             parsedBrands = typeof data.supportedBrands === "string" ? JSON.parse(data.supportedBrands) : data.supportedBrands;
-             if (!Array.isArray(parsedBrands) || parsedBrands.length === 0) parsedBrands = [""];
-          } catch(e) {}
-
-          try {
-             parsedSpareParts = typeof data.sparePartsIncluded === "string" ? JSON.parse(data.sparePartsIncluded) : data.sparePartsIncluded;
-             if (!Array.isArray(parsedSpareParts) || parsedSpareParts.length === 0) parsedSpareParts = [""];
-          } catch(e) {}
-
-          setForm({
-            name: data.name || "",
-            price: data.price || "",
-            description: data.description || "",
-            bigDescription: data.bigDescription || "",
-            icon: data.icon || "Car",
-            image: data.image || "",
-            supportedBrands: parsedBrands,
-            sparePartsIncluded: parsedSpareParts,
-            status: data.status || "active",
-          });
-
-          setImagePreview(data.image || "");
-          setEditId(id);
-        } else {
-          toast.error("Service not found");
-          navigate("/admin/services");
-        }
+        setImagePreview(data.image || "");
+        setEditId(id);
       } catch (err) {
         console.error(err);
         toast.error("Error loading service");
+        navigate("/admin/services");
       }
     };
 
@@ -205,17 +190,14 @@ const AddCarService = () => {
   };
 
   return (
+    /* ⚠️ UI NOT CHANGED */
     <div className="p-6 max-w-6xl mx-auto">
       <div className="bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl shadow-xl border border-gray-300">
-
         <h2 className="text-2xl font-bold mb-6">
           {editId ? "Update Car Service" : "Add Car Service"}
         </h2>
 
         <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-5">
-
-
-
           {/* 🔹 SERVICE NAME */}
           <div>
             <label className="block text-sm font-medium mb-1">
@@ -233,9 +215,7 @@ const AddCarService = () => {
 
           {/* 🔹 PRICE */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Price (₹)
-            </label>
+            <label className="block text-sm font-medium mb-1">Price (₹)</label>
             <input
               type="number"
               name="price"
@@ -266,7 +246,6 @@ const AddCarService = () => {
             </select>
           </div>
 
-
           <div>
             <label className="block text-sm font-medium mb-1">
               Description
@@ -280,7 +259,6 @@ const AddCarService = () => {
               className="w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm  focus:ring-2 focus:ring-black outline-none transition"
             />
           </div>
-
 
           {/* 🔹 BIG DESCRIPTION */}
           <div className="md:col-span-2">
@@ -330,7 +308,6 @@ const AddCarService = () => {
             )}
           </div>
 
-
           {/* Submit */}
           <div className="md:col-span-2 flex justify-end gap-3">
             <button
@@ -353,7 +330,6 @@ const AddCarService = () => {
                   : "Add Service"}
             </button>
           </div>
-
         </form>
       </div>
     </div>
@@ -361,4 +337,3 @@ const AddCarService = () => {
 };
 
 export default AddCarService;
-

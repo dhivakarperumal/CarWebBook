@@ -231,16 +231,9 @@
 
 // export default PricingList;
 
-
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  collection,
-  getDocs,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import toast from "react-hot-toast";
 import {
   LayoutGrid,
@@ -249,7 +242,7 @@ import {
   Trash2,
   Pencil,
 } from "lucide-react";
-import { FaTable, } from "react-icons/fa";
+import { FaTable } from "react-icons/fa";
 
 const PricingList = () => {
   const navigate = useNavigate();
@@ -259,17 +252,11 @@ const PricingList = () => {
   const [view, setView] = useState("card");
   const [loading, setLoading] = useState(true);
 
-  const pricingRef = collection(db, "pricingPackages");
-
   /* 🔹 Fetch */
   const fetchPackages = async () => {
     try {
-      const snap = await getDocs(pricingRef);
-      const list = snap.docs.map((d) => ({
-        id: d.id,
-        ...d.data(),
-      }));
-      setPackages(list);
+      const res = await api.get("/pricing_packages");
+      setPackages(res.data);
       setLoading(false);
     } catch (err) {
       console.error(err);
@@ -287,7 +274,7 @@ const PricingList = () => {
     if (!window.confirm("Delete this package?")) return;
 
     try {
-      await deleteDoc(doc(db, "pricingPackages", id));
+      await api.delete(`/pricing_packages/${id}`);
       toast.success("Package deleted");
       fetchPackages();
     } catch (err) {
@@ -339,7 +326,7 @@ const PricingList = () => {
           <div className="flex flex-wrap items-center gap-2 justify-start lg:justify-end">
 
             {/* 🔹 VIEW TOGGLE */}
-            <div className="flex  border border-gray-300 rounded-md overflow-hidden">
+            <div className="flex border border-gray-300 rounded-md overflow-hidden">
               <button
                 onClick={() => setView("card")}
                 className={`flex items-center gap-1 px-3 py-2.5 text-sm transition
@@ -369,13 +356,13 @@ const PricingList = () => {
             <button
               onClick={() => navigate("/admin/addprice")}
               className="inline-flex items-center gap-2
-  bg-black text-white
-  px-4 h-10
-  rounded-md text-sm font-medium
-  hover:bg-gray-900
-  active:scale-95
-  focus:outline-none focus:ring-2 focus:ring-black/40
-  transition"
+              bg-black text-white
+              px-4 h-10
+              rounded-md text-sm font-medium
+              hover:bg-gray-900
+              active:scale-95
+              focus:outline-none focus:ring-2 focus:ring-black/40
+              transition"
             >
               <span className="flex items-center justify-center w-5 h-5">
                 <Plus size={16} />
@@ -386,7 +373,6 @@ const PricingList = () => {
 
           </div>
         </div>
-
 
         {/* 🔹 CARD VIEW */}
         {view === "card" && (
@@ -418,14 +404,14 @@ const PricingList = () => {
                     onClick={() =>
                       navigate(`/admin/addprice/${pkg.id}`, { state: pkg })
                     }
-                    className="p-3 rounded-full  border border-gray-300  transition"
+                    className="p-3 rounded-full border border-gray-300 transition"
                   >
                     <Pencil size={16} />
                   </button>
 
                   <button
                     onClick={() => handleDelete(pkg.id)}
-                    className="p-3 rounded-full  border border-gray-300  transition"
+                    className="p-3 rounded-full border border-gray-300 transition"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -447,11 +433,11 @@ const PricingList = () => {
             <table className="w-full text-md">
               <thead className="bg-gradient-to-r from-black to-cyan-400 text-white text-left">
                 <tr>
-                  <th className="px-4 py-4 text-left font-bold ">S No</th>
-                  <th className="px-4 py-4 text-left font-bold ">Title</th>
-                  <th className="px-4 py-4 text-left font-bold ">Price</th>
-                  <th className="px-4 py-4 text-left font-bold ">Features</th>
-                  <th className="px-4 py-4 text-left font-bold ">Actions</th>
+                  <th className="px-4 py-4 font-bold">S No</th>
+                  <th className="px-4 py-4 font-bold">Title</th>
+                  <th className="px-4 py-4 font-bold">Price</th>
+                  <th className="px-4 py-4 font-bold">Features</th>
+                  <th className="px-4 py-4 font-bold">Actions</th>
                 </tr>
               </thead>
 
@@ -469,27 +455,21 @@ const PricingList = () => {
 
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
-
-                        {/* ✏️ EDIT */}
                         <button
                           onClick={() =>
                             navigate(`/admin/addprice/${pkg.id}`, { state: pkg })
                           }
-                          className="p-3 rounded-full  border border-gray-300  transition"
+                          className="p-3 rounded-full border border-gray-300 transition"
                         >
                           <Pencil size={14} />
-                          
                         </button>
 
-                        {/* 🗑 DELETE */}
                         <button
                           onClick={() => handleDelete(pkg.id)}
-                          className="p-3 rounded-full  border border-gray-300  transition"
+                          className="p-3 rounded-full border border-gray-300 transition"
                         >
                           <Trash2 size={14} />
-                          
                         </button>
-
                       </div>
                     </td>
 
