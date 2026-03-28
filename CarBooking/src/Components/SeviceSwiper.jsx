@@ -3,8 +3,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
 
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
+import api from "../api";
 import ServiceCard from "./ServiceCard";
 import PageContainer from "./PageContainer";
 
@@ -15,14 +14,9 @@ export default function ServiceSwiper() {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const snapshot = await getDocs(collection(db, "services"));
+        const res = await api.get("/services");
 
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        setServices(data);
+        setServices(res.data || []);
       } catch (err) {
         console.error(err);
       } finally {
@@ -48,7 +42,7 @@ export default function ServiceSwiper() {
   return (
     <section className="bg-black py-15">
       <PageContainer>
-        <div className="">
+        <div>
           {/* TITLE */}
           <div className="text-center mb-16">
             <span className="text-sky-400 uppercase tracking-widest text-sm">
