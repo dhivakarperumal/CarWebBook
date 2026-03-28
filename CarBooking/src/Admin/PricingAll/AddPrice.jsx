@@ -1,15 +1,8 @@
 import { useState, useEffect } from "react";
-import {
-  collection,
-  addDoc,
-  updateDoc,
-  doc,
-  getDoc,
-  serverTimestamp,
-} from "firebase/firestore";
-import { db } from "../../firebase";
 import toast from "react-hot-toast";
 import { useParams, useNavigate } from "react-router-dom";
+
+import api from "../../api";
 
 const PricingForm = () => {
   const { id } = useParams();
@@ -21,31 +14,23 @@ const PricingForm = () => {
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const pricingRef = collection(db, "pricingPackages");
-
   /* 🔄 Fetch package for edit */
   useEffect(() => {
     const fetchPackage = async () => {
       if (!id) return;
 
       try {
-        const docRef = doc(db, "pricingPackages", id);
-        const snap = await getDoc(docRef);
+        const res = await api.get(`/pricing_packages/${id}`);
+        const data = res.data;
 
-        if (snap.exists()) {
-          const data = snap.data();
-
-          setTitle(data.title || "");
-          setPrice(data.price || "");
-          setFeatures(data.features?.length ? data.features : [""]);
-          setEditId(id);
-        } else {
-          toast.error("Package not found");
-          navigate("/admin/pricing");
-        }
+        setTitle(data.title || "");
+        setPrice(data.price || "");
+        setFeatures(data.features?.length ? data.features : [""]);
+        setEditId(id);
       } catch (err) {
         console.error(err);
-        toast.error("Error loading package");
+        toast.error("Package not found");
+        navigate("/admin/pricing");
       }
     };
 
@@ -96,22 +81,20 @@ const PricingForm = () => {
     try {
       if (editId) {
         /* 🔄 UPDATE */
-        await updateDoc(doc(db, "pricingPackages", editId), {
+        await api.put(`/pricing_packages/${editId}`, {
           title: title.trim(),
           price: Number(price),
           features: cleanFeatures,
-          updatedAt: serverTimestamp(),
         });
 
         toast.success("Package updated");
         navigate("/admin/pricing");
       } else {
         /* ➕ ADD */
-        await addDoc(pricingRef, {
+        await api.post("/pricing_packages", {
           title: title.trim(),
           price: Number(price),
           features: cleanFeatures,
-          createdAt: serverTimestamp(),
         });
 
         toast.success("Package added");
@@ -142,7 +125,7 @@ const PricingForm = () => {
               placeholder="Package Title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm  focus:ring-2 focus:ring-black outline-none transition"
+              className="w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm focus:ring-2 focus:ring-black outline-none transition"
             />
 
             <input
@@ -150,7 +133,7 @@ const PricingForm = () => {
               placeholder="Price ₹"
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              className="w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm  focus:ring-2 focus:ring-black outline-none transition"
+              className="w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm focus:ring-2 focus:ring-black outline-none transition"
             />
           </div>
 
@@ -177,7 +160,7 @@ const PricingForm = () => {
                   onChange={(e) =>
                     handleFeatureChange(i, e.target.value)
                   }
-                  className="flex-1 w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm  focus:ring-2 focus:ring-black outline-none transition"
+                  className="flex-1 w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm focus:ring-2 focus:ring-black outline-none transition"
                 />
 
                 <button
