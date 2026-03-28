@@ -196,7 +196,6 @@
 //         />
 //       </div>
 
-
 //       {/* Supported Brands */}
 //       <div className="md:col-span-3 bg-white p-4 rounded-xl border border-gray-300">
 //         <h3 className="font-semibold text-gray-700 mb-2">Supported Brands</h3>
@@ -319,7 +318,6 @@
 //   )}
 // </div>
 
-
 // {/* Submit Button */}
 // <div className="md:col-span-3 flex justify-end">
 //   <button
@@ -340,19 +338,8 @@
 
 // export default AddCarService;
 
-
-
 import { useState, useEffect } from "react";
-import {
-  collection,
-  serverTimestamp,
-  doc,
-  runTransaction,
-  setDoc,
-  updateDoc,
-  getDoc,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import toast from "react-hot-toast";
 import { useParams, useNavigate } from "react-router-dom";
 import { Car, Wrench, Settings, ShieldCheck } from "lucide-react";
@@ -385,55 +372,37 @@ const AddCarService = () => {
     status: "active",
   });
 
-  /* 🔢 Generate Code */
-  const generateServiceCode = async () => {
-    const counterRef = doc(db, "counters", "serviceCounter");
-
-    return await runTransaction(db, async (tx) => {
-      const snap = await tx.get(counterRef);
-      const next = (snap.exists() ? snap.data().current : 0) + 1;
-      tx.set(counterRef, { current: next }, { merge: true });
-      return `SE${String(next).padStart(3, "0")}`;
-    });
-  };
-
   /* 🔄 Fetch service when editing */
   useEffect(() => {
     const fetchService = async () => {
       if (!id) return;
 
       try {
-        const docRef = doc(db, "services", id);
-        const snap = await getDoc(docRef);
+        const res = await api.get(`/services/${id}`);
+        const data = res.data;
 
-        if (snap.exists()) {
-          const data = snap.data();
+        setForm({
+          name: data.name || "",
+          price: data.price || "",
+          description: data.description || "",
+          bigDescription: data.bigDescription || "",
+          icon: data.icon || "Car",
+          image: data.image || "",
+          supportedBrands: data.supportedBrands?.length
+            ? data.supportedBrands
+            : [""],
+          sparePartsIncluded: data.sparePartsIncluded?.length
+            ? data.sparePartsIncluded
+            : [""],
+          status: data.status || "active",
+        });
 
-          setForm({
-            name: data.name || "",
-            price: data.price || "",
-            description: data.description || "",
-            bigDescription: data.bigDescription || "",
-            icon: data.icon || "Car",
-            image: data.image || "",
-            supportedBrands:
-              data.supportedBrands?.length ? data.supportedBrands : [""],
-            sparePartsIncluded:
-              data.sparePartsIncluded?.length
-                ? data.sparePartsIncluded
-                : [""],
-            status: data.status || "active",
-          });
-
-          setImagePreview(data.image || "");
-          setEditId(id);
-        } else {
-          toast.error("Service not found");
-          navigate("/admin/services");
-        }
+        setImagePreview(data.image || "");
+        setEditId(id);
       } catch (err) {
         console.error(err);
         toast.error("Error loading service");
+        navigate("/admin/services");
       }
     };
 
@@ -531,35 +500,21 @@ const AddCarService = () => {
     try {
       setLoading(true);
 
+      const payload = {
+        ...form,
+        price: Number(form.price),
+        supportedBrands: form.supportedBrands.filter((b) => b.trim()),
+        sparePartsIncluded: form.sparePartsIncluded.filter((p) => p.trim()),
+      };
+
       if (editId) {
         /* 🔄 UPDATE */
-        const docRef = doc(db, "services", editId);
-
-        await updateDoc(docRef, {
-          ...form,
-          price: Number(form.price),
-          supportedBrands: form.supportedBrands.filter((b) => b.trim()),
-          sparePartsIncluded: form.sparePartsIncluded.filter((p) => p.trim()),
-          updatedAt: serverTimestamp(),
-        });
-
+        await api.put(`/services/${editId}`, payload);
         toast.success("Service updated");
         navigate("/admin/services");
       } else {
         /* ➕ ADD */
-        const serviceCode = await generateServiceCode();
-        const docRef = doc(collection(db, "services"));
-
-        await setDoc(docRef, {
-          docRefId: docRef.id,
-          code: serviceCode,
-          ...form,
-          price: Number(form.price),
-          supportedBrands: form.supportedBrands.filter((b) => b.trim()),
-          sparePartsIncluded: form.sparePartsIncluded.filter((p) => p.trim()),
-          createdAt: serverTimestamp(),
-        });
-
+        await api.post("/services", payload);
         toast.success("Service added");
         resetForm();
       }
@@ -572,17 +527,14 @@ const AddCarService = () => {
   };
 
   return (
+    /* ⚠️ UI NOT CHANGED */
     <div className="p-6 max-w-6xl mx-auto">
       <div className="bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl shadow-xl border border-gray-300">
-
         <h2 className="text-2xl font-bold mb-6">
           {editId ? "Update Car Service" : "Add Car Service"}
         </h2>
 
         <form onSubmit={handleSubmit} className="grid md:grid-cols-2 gap-5">
-
-
-
           {/* 🔹 SERVICE NAME */}
           <div>
             <label className="block text-sm font-medium mb-1">
@@ -600,9 +552,7 @@ const AddCarService = () => {
 
           {/* 🔹 PRICE */}
           <div>
-            <label className="block text-sm font-medium mb-1">
-              Price (₹)
-            </label>
+            <label className="block text-sm font-medium mb-1">Price (₹)</label>
             <input
               type="number"
               name="price"
@@ -633,7 +583,6 @@ const AddCarService = () => {
             </select>
           </div>
 
-
           <div>
             <label className="block text-sm font-medium mb-1">
               Description
@@ -647,7 +596,6 @@ const AddCarService = () => {
               className="w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm  focus:ring-2 focus:ring-black outline-none transition"
             />
           </div>
-
 
           {/* 🔹 BIG DESCRIPTION */}
           <div className="md:col-span-2">
@@ -697,7 +645,6 @@ const AddCarService = () => {
             )}
           </div>
 
-
           {/* Submit */}
           <div className="md:col-span-2 flex justify-end gap-3">
             <button
@@ -720,7 +667,6 @@ const AddCarService = () => {
                   : "Add Service"}
             </button>
           </div>
-
         </form>
       </div>
     </div>
@@ -728,4 +674,3 @@ const AddCarService = () => {
 };
 
 export default AddCarService;
-

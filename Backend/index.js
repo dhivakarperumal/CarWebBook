@@ -37,6 +37,8 @@ app.use('/api/bookings', bookingRouter);
 const pricingRouter = require('./src/routers/pricingRoutes');
 app.use('/api/pricing_packages', pricingRouter);
 
+const servicesRouter = require("./src/routers/servicesRoutes");
+app.use('/api/services', servicesRouter);
 
 // Basic Route
 app.get('/', (req, res) => {
