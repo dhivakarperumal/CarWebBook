@@ -22,6 +22,7 @@ const carServiceRouter = require('./src/routers/carServiceRouter');
 const attendanceRouter = require('./src/routers/attendanceRouter');
 const allServiceRouter = require('./src/routers/allServiceRouter');
 const serviceTypeRouter = require('./src/routers/serviceTypeRouter');
+const billingRouter = require('./src/routers/billingRouter');
 
 app.use('/api/bookings', bookingRouter);
 app.use('/api/services', serviceRoutes);
@@ -33,6 +34,7 @@ app.use('/api/car-services', carServiceRouter);
 app.use('/api/attendance', attendanceRouter);
 app.use('/api/all-services', allServiceRouter);
 app.use('/api/service-types', serviceTypeRouter);
+app.use('/api/billings', billingRouter);
 
 // Basic Route
 app.get('/', (req, res) => {

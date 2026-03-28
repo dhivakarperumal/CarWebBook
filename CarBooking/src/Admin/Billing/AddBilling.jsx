@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  serverTimestamp,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -26,8 +20,8 @@ const AddBillings = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const snap = await getDocs(collection(db, "allServices"));
-        setServices(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        const res = await api.get('/all-services');
+        setServices(res.data);
       } catch {
         toast.error("Failed to load services");
       }
@@ -41,19 +35,17 @@ const AddBillings = () => {
   const selectService = async (s) => {
     try {
       setSelectedService(s);
+      
+      // Fetch parts from backend for this service
+      const res = await api.get(`/all-services/${s.id}`);
+      const data = res.data;
 
-      const partsSnap = await getDocs(
-        collection(db, "allServices", s.id, "parts")
-      );
-
-      const partsData = partsSnap.docs.map((d) => {
-        const data = d.data();
+      const partsData = (data.parts || []).map((p) => {
         return {
-          partName: data.partName,
-          qty: Number(data.qty || 0),
-          price: Number(data.price || 0),
-          total:
-            Number(data.qty || 0) * Number(data.price || 0),
+          partName: p.partName,
+          qty: Number(p.qty || 0),
+          price: Number(p.price || 0),
+          total: Number(p.qty || 0) * Number(p.price || 0),
         };
       });
 
@@ -96,19 +88,14 @@ const AddBillings = () => {
     try {
       const invoiceNo = `INV-${Date.now()}`;
 
-      await addDoc(collection(db, "billings"), {
+      const payload = {
         invoiceNo,
-
-        /* 🔧 SERVICE */
         serviceId: selectedService.id,
         bookingId: selectedService.bookingId,
-
-        /* 👤 CUSTOMER */
+        uid: selectedService.uid,
         customerName: selectedService.name,
         mobileNumber: selectedService.phone,
-        car: `${selectedService.brand || ""} ${selectedService.model || ""}`,
-
-        /* 🧾 BILLING */
+        car: `${selectedService.brand || ""} ${selectedService.model || ""}`.trim(),
         parts,
         partsTotal,
         labour: labourAmount,
@@ -116,19 +103,16 @@ const AddBillings = () => {
         gstAmount,
         subTotal,
         grandTotal,
-
-        /* 💳 PAYMENT */
         paymentStatus: "Pending",
         paymentMode: "",
-        status: "Generated",
+        status: "Generated"
+      };
 
-        createdAt: serverTimestamp(),
-      });
+      await api.post('/billings', payload);
 
       toast.success("Invoice generated successfully 🚗💰");
       navigate("/admin/billing");
     } catch (error) {
-      console.error(error);
       toast.error("Failed to generate invoice");
     }
   };

@@ -1,19 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  collection,
-  getDocs,
-  query,
-  orderBy,
-  deleteDoc,
-  doc,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
   Trash2,
   Plus,
-  Pencil,
   Printer,
 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -28,12 +19,13 @@ const StatusBadge = ({ status }) => {
     pending: "bg-yellow-400",
   };
 
+  const s = status?.toLowerCase() || "pending";
+
   return (
     <span
-      className={`px-3 py-1 rounded-full text-white text-xs capitalize ${map[status] || "bg-gray-400"
-        }`}
+      className={`px-3 py-1 rounded-full text-white text-xs capitalize ${map[s] || "bg-gray-400"}`}
     >
-      {status}
+      {s}
     </span>
   );
 };
@@ -65,30 +57,16 @@ const Billings = () => {
   /* =========================
      LOAD BILLINGS
   ========================= */
+  const loadBills = async () => {
+    try {
+      const res = await api.get('/billings');
+      setBills(res.data);
+    } catch {
+      toast.error("Failed to load bills");
+    }
+  };
+
   useEffect(() => {
-    const loadBills = async () => {
-      const q = query(
-        collection(db, "billings"),
-        orderBy("createdAt", "desc")
-      );
-
-      const snap = await getDocs(q);
-
-      setBills(
-        snap.docs.map((d) => {
-          const data = d.data();
-          return {
-            id: d.id,
-            ...data,
-            invoiceNo: data.invoiceNo || "INV---",
-            customerName: data.customerName || "Unknown",
-            carNumber: data.carNumber || "-",
-            paymentStatus: data.paymentStatus?.toLowerCase(),
-          };
-        })
-      );
-    };
-
     loadBills();
   }, []);
 
@@ -101,7 +79,7 @@ const Billings = () => {
   );
 
   const pendingCount = bills.filter(
-    (b) => b.paymentStatus !== "paid"
+    (b) => b.paymentStatus?.toLowerCase() !== "paid"
   ).length;
 
   /* =========================
@@ -109,11 +87,10 @@ const Billings = () => {
   ========================= */
   const filtered = useMemo(() => {
     let data = bills.filter((b) => {
-      const text = `${b.invoiceNo} ${b.customerName} ${b.carNumber}`.toLowerCase();
+      const text = `${b.invoiceNo} ${b.customerName} ${b.car} ${b.bookingId}`.toLowerCase();
       return (
         text.includes(search.toLowerCase()) &&
-        (statusFilter === "all" ||
-          b.paymentStatus === statusFilter)
+        (statusFilter === "all" || b.paymentStatus?.toLowerCase() === statusFilter)
       );
     });
 
@@ -142,9 +119,25 @@ const Billings = () => {
   ========================= */
   const deleteInvoice = async (id) => {
     if (!window.confirm("Delete this invoice?")) return;
-    await deleteDoc(doc(db, "billings", id));
-    setBills((prev) => prev.filter((b) => b.id !== id));
-    toast.success("Invoice deleted");
+    try {
+      await api.delete(`/billings/${id}`);
+      setBills((prev) => prev.filter((b) => b.id !== id));
+      toast.success("Invoice deleted");
+    } catch {
+      toast.error("Delete failed");
+    }
+  };
+
+  /* =========================
+     PRINT (Fetching detail first)
+  ========================= */
+  const fetchAndPrint = async (id) => {
+    try {
+      const res = await api.get(`/billings/${id}`);
+      printInvoice(res.data);
+    } catch {
+      toast.error("Failed to load invoice details for printing");
+    }
   };
 
   /* =========================
@@ -345,12 +338,9 @@ const Billings = () => {
                   <StatusBadge status={b.paymentStatus} />
                 </td>
                 <td className="px-4 py-4 flex gap-2">
-                  <button onClick={() => printInvoice(b)} className="bg-gray-700 text-white px-2 py-1 rounded">
+                  <button onClick={() => fetchAndPrint(b.id)} className="bg-gray-700 text-white px-2 py-1 rounded">
                     <Printer size={14} />
                   </button>
-                  {/* <button onClick={() => navigate(`/admin/addbillings/${b.id}`)} className="bg-yellow-500 text-white px-2 py-1 rounded">
-                    <Pencil size={14} />
-                  </button> */}
                   <button onClick={() => deleteInvoice(b.id)} className="bg-red-500 text-white px-2 py-1 rounded">
                     <Trash2 size={14} />
                   </button>

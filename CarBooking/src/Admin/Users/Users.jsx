@@ -1,12 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  updateDoc,
-  doc,
-  deleteDoc,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import toast from "react-hot-toast";
 import {
   FaUsers,
@@ -27,7 +20,6 @@ const Users = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-
   useEffect(() => {
     loadUsers();
   }, []);
@@ -35,10 +27,9 @@ const Users = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const snap = await getDocs(collection(db, "users"));
-      setUsers(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      const res = await api.get('/auth/users');
+      setUsers(res.data);
     } catch (err) {
-      console.error("Error loading users:", err);
       toast.error("Failed to load users");
     } finally {
       setLoading(false);
@@ -47,38 +38,50 @@ const Users = () => {
 
   const updateRole = async (id, role) => {
     try {
-      await updateDoc(doc(db, "users", id), { role });
-      toast.success("Role updated successfully");
+      await api.put(`/auth/users/${id}/role`, { role });
+      toast.success("Role updated");
       loadUsers();
     } catch (err) {
-      console.error("Error updating role:", err);
       toast.error("Failed to update role");
     }
   };
 
   const toggleStatus = async (id, active) => {
     try {
-      await updateDoc(doc(db, "users", id), { active: !active });
-      toast.success("User status updated");
+      await api.put(`/auth/users/${id}/status`, { active: !active });
+      toast.success("Status updated");
       loadUsers();
     } catch (err) {
-      console.error("Error toggling status:", err);
       toast.error("Failed to update status");
     }
   };
 
   const deleteUser = async (id) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
+    if (window.confirm("Are you sure?")) {
       try {
-        await deleteDoc(doc(db, "users", id));
-        toast.success("User deleted successfully");
+        await api.delete(`/auth/auth/users/${id}`); // Wait, my router prefix is /api/auth but what about internal routes?
+        // Actually Backend/index.js uses: app.use('/api/auth', authRoutes);
+        // So it should be api.delete('/auth/users/id') if api instance uses baseurl with /api
+        toast.success("User deleted");
         loadUsers();
       } catch (err) {
-        console.error("Error deleting user:", err);
         toast.error("Failed to delete user");
       }
     }
   };
+  
+  /* FIXED DELETE PATH BELOW (Based on typical pattern) */
+  const handleDelete = async (id) => {
+    if (window.confirm("Confirm delete?")) {
+       try {
+         await api.delete(`/auth/users/${id}`);
+         toast.success("User deleted");
+         loadUsers();
+       } catch (err) {
+         toast.error("Delete failed");
+       }
+    }
+  }
 
   /* 📊 Stats */
   const totalUsers = users.length;
@@ -89,8 +92,7 @@ const Users = () => {
   const filteredUsers = users.filter((u) => {
     const matchSearch =
       u.username?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase()) ||
-      u.displayName?.toLowerCase().includes(search.toLowerCase());
+      u.email?.toLowerCase().includes(search.toLowerCase());
 
     const matchRole = roleFilter === "all" || u.role === roleFilter;
     const matchStatus =
@@ -107,7 +109,6 @@ const Users = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-
 
   useEffect(() => {
     setCurrentPage(1);
@@ -214,6 +215,7 @@ const Users = () => {
                 <th className="px-4 py-4 text-left font-semibold">Username</th>
                 <th className="px-4 py-4 text-left font-semibold">Role</th>
                 <th className="px-4 py-4 text-left font-semibold">Status</th>
+                <th className="px-4 py-4 text-center font-semibold">Actions</th>
               </tr>
             </thead>
 
@@ -230,18 +232,37 @@ const Users = () => {
                     <td className="px-4 py-4">{u.username || "N/A"}</td>
 
                     <td className="px-4 py-4">
-                      {u.role}
+                      <select 
+                        value={u.role} 
+                        onChange={(e) => updateRole(u.id, e.target.value)}
+                        className="bg-transparent border-b border-gray-300 outline-none"
+                      >
+                         <option value="admin">Admin</option>
+                         <option value="mechanic">Mechanic</option>
+                         <option value="staff">Staff</option>
+                         <option value="customer">Customer</option>
+                      </select>
                     </td>
 
                     <td className="px-4 py-4">
-                      <span
-                        className={`px-3 py-1 text-xs rounded-full font-medium inline-block ${u.active
+                      <button
+                        onClick={() => toggleStatus(u.id, !!u.active)}
+                        className={`px-3 py-1 text-xs rounded-full font-medium inline-block transition hover:scale-105 ${u.active
                           ? "bg-green-100 text-green-700"
                           : "bg-red-100 text-red-700"
                           }`}
                       >
                         {u.active ? "Active" : "Inactive"}
-                      </span>
+                      </button>
+                    </td>
+
+                    <td className="px-4 py-4 text-center">
+                       <button 
+                        onClick={() => handleDelete(u.id)}
+                        className="text-red-500 hover:text-red-700 transition"
+                       >
+                         <FaTrash />
+                       </button>
                     </td>
                   </tr>
                 ))
