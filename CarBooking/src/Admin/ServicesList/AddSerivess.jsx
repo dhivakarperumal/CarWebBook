@@ -174,7 +174,7 @@ const AddCarService = () => {
         /* 🔄 UPDATE */
         await api.put(`/services/${editId}`, payload);
         toast.success("Service updated");
-        navigate("/admin/services");
+        navigate("/admin/serviceslist");
       } else {
         /* ➕ ADD */
         await api.post("/services", payload);
@@ -275,9 +275,81 @@ const AddCarService = () => {
             />
           </div>
 
-          {/* 🔹 IMAGE UPLOAD */}
-          <div className="md:col-span-2">
+          {/* 🔹 SUPPORTED BRANDS */}
+          <div className="md:col-span-1">
             <label className="block text-sm font-medium mb-1">
+              Supported Brands
+            </label>
+            {form.supportedBrands.map((brand, index) => (
+              <div key={index} className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={brand}
+                  placeholder="e.g. Honda"
+                  onChange={(e) =>
+                    handleArrayChange(index, "supportedBrands", e.target.value)
+                  }
+                  className="w-full bg-white rounded-lg border border-gray-300 px-4 py-2 text-sm shadow-sm focus:ring-1 focus:ring-black outline-none"
+                />
+                {form.supportedBrands.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeField("supportedBrands", index)}
+                    className="text-red-500 p-2"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => addField("supportedBrands")}
+              className="text-xs font-semibold text-sky-600 hover:underline"
+            >
+              + Add Brand
+            </button>
+          </div>
+
+          {/* 🔹 SPARE PARTS INCLUDED */}
+          <div className="md:col-span-1">
+            <label className="block text-sm font-medium mb-1">
+              Spare Parts Included
+            </label>
+            {form.sparePartsIncluded.map((part, index) => (
+              <div key={index} className="flex gap-2 mb-2">
+                <input
+                  type="text"
+                  value={part}
+                  placeholder="e.g. Oil Filter"
+                  onChange={(e) =>
+                    handleArrayChange(index, "sparePartsIncluded", e.target.value)
+                  }
+                  className="w-full bg-white rounded-lg border border-gray-300 px-4 py-2 text-sm shadow-sm focus:ring-1 focus:ring-black outline-none"
+                />
+                {form.sparePartsIncluded.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeField("sparePartsIncluded", index)}
+                    className="text-red-500 p-2"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => addField("sparePartsIncluded")}
+              className="text-xs font-semibold text-sky-600 hover:underline"
+            >
+              + Add Part
+            </button>
+          </div>
+
+          {/* 🔹 IMAGE UPLOAD */}
+          <div className="md:col-span-2 mt-4">
+            <label className="block text-sm font-medium mb-1 font-semibold">
               Service Image
             </label>
 
@@ -285,8 +357,8 @@ const AddCarService = () => {
               type="file"
               accept="image/*"
               onChange={handleImageUpload}
-              className="input file:mr-3 file:py-2 file:px-4 file:border-0 file:rounded-md
-               file:bg-black file:text-white hover:file:bg-gray-900"
+              className="w-full border p-2 rounded-lg file:mr-3 file:py-1 file:px-4 file:border-0 file:rounded-md
+               file:bg-black file:text-white hover:file:bg-gray-900 cursor-pointer"
             />
 
             {imagePreview && (
@@ -294,7 +366,7 @@ const AddCarService = () => {
                 <img
                   src={imagePreview}
                   alt="preview"
-                  className="w-24 h-24 object-cover rounded-lg border"
+                  className="w-24 h-24 object-cover rounded-lg border shadow-sm"
                 />
 
                 <button
@@ -302,18 +374,18 @@ const AddCarService = () => {
                   onClick={removeImage}
                   className="text-sm text-red-600 hover:underline"
                 >
-                  Remove
+                  Remove Image
                 </button>
               </div>
             )}
           </div>
 
           {/* Submit */}
-          <div className="md:col-span-2 flex justify-end gap-3">
+          <div className="md:col-span-2 flex justify-end gap-3 mt-6">
             <button
               type="button"
-              onClick={() => navigate("/admin/services")}
-              className="px-6 py-2 border border-gray-300 rounded-md"
+              onClick={() => navigate("/admin/serviceslist")}
+              className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition"
             >
               Back
             </button>

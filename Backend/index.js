@@ -33,7 +33,7 @@ async function initializeDatabase() {
 
 // Routers
 const bookingRouter = require('./src/routers/bookingRouter');
-const serviceRoutes = require('./src/routers/serviceRoutes');
+// const serviceRoutes = require('./src/routers/serviceRoutes');
 const authRoutes = require('./src/routers/authRoutes');
 const inventoryRouter = require('./src/routers/inventoryRouter');
 const productRouter = require('./src/routers/productRouter');
@@ -46,7 +46,7 @@ const billingRouter = require('./src/routers/billingRouter');
 const orderRouter = require('./src/routers/orderRouter');
 
 app.use('/api/bookings', bookingRouter);
-app.use('/api/services', serviceRoutes);
+// app.use('/api/services', serviceRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/inventory', inventoryRouter);
 app.use('/api/products', productRouter);
