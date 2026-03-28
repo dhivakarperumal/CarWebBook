@@ -1,0 +1,12 @@
+{
+  "name": "car-web-book",
+  "version": "1.0.0",
+  "description": "Root configuration to run backend and frontend concurrently.",
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix Backend\" \"npm run dev --prefix CarBooking\"",
+    "install-all": "concurrently \"npm install --prefix Backend\" \"npm install --prefix CarBooking\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
