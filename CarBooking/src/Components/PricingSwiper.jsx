@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../firebase";
+import api from "../api";
 import PricingCard from "./PricingCard";
 
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -13,12 +12,12 @@ export default function PricingSwiper() {
 
   useEffect(() => {
     const fetchPricingPackages = async () => {
-      const snapshot = await getDocs(collection(db, "pricingPackages"));
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setPackages(data);
+      try {
+        const res = await api.get("/pricing_packages");
+        setPackages(res.data || []);
+      } catch (err) {
+        console.error("Failed to load pricing packages", err);
+      }
     };
 
     fetchPricingPackages();
@@ -27,13 +26,14 @@ export default function PricingSwiper() {
   return (
     <section className="py-15 bg-black text-white">
       <div className="container mx-auto px-6">
+
         {/* Heading */}
         <div className="text-center mb-14">
           <h2 className="text-4xl font-extrabold">Our Pricing Plans</h2>
         </div>
 
         <Swiper
-          className="pricing-swiper !overflow-hidden "
+          className="pricing-swiper !overflow-hidden"
           modules={[Autoplay]}
           autoplay={{ delay: 2500 }}
           loop
@@ -52,6 +52,7 @@ export default function PricingSwiper() {
             </SwiperSlide>
           ))}
         </Swiper>
+
       </div>
     </section>
   );
