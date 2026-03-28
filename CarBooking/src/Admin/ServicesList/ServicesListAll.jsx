@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
 import api from "../../api";
-import api from "../../api";
 import toast from "react-hot-toast";
 import {
   Trash2,
