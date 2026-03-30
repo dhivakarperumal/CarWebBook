@@ -15,7 +15,7 @@ import api from "../../api";
 // Note: backend should provide staff endpoints. Frontend will POST/PUT to `/staff`.
 
 /* ---------------- COMPONENT ---------------- */
-const inputClass = "mt-1 w-full  rounded-lg bg-white/5 border border-white/10 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-orange-500"
+  const inputClass = "mt-1 w-full rounded-xl bg-gray-50 border border-gray-200 px-4 py-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
 
 
 const AddEditStaff = () => {
@@ -128,26 +128,23 @@ const AddEditStaff = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Auto-populate username from email
-    if (name === "email") {
+    // Default update
+    let nextForm = { ...form, [name]: value };
+
+    // Auto-populate username from email only if username is empty or was auto-generated
+    if (name === "email" && value.includes("@")) {
       const usernameFromEmail = value.split("@")[0];
-      setForm((prev) => ({
-        ...prev,
-        [name]: value,
-        username: usernameFromEmail, // Auto-set username from email
-      }));
+      if (!form.username || form.username === form.email.split("@")[0]) {
+        nextForm.username = usernameFromEmail;
+      }
     }
-    // Auto-populate password from phone number
-    else if (name === "phone") {
-      setForm((prev) => ({
-        ...prev,
-        [name]: value,
-        password: value, // Auto-set password from phone number
-      }));
+
+    // Auto-populate password from phone number (strictly for adding new staff)
+    if (!isEdit && (name === "phone" || name === "mobile")) {
+      nextForm.password = value;
     }
-    else {
-      setForm((prev) => ({ ...prev, [name]: value }));
-    }
+
+    setForm(nextForm);
   };
 
   /* ---------------- FILE UPLOAD ---------------- */
@@ -430,40 +427,47 @@ const AddEditStaff = () => {
 
   return (
 
-     <div className="">
-              <div>
+     <div className="p-4">
+              <div className="mb-6">
                 <button
                   onClick={() => navigate(-1)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition"
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-200 hover:bg-gray-50 transition text-gray-600"
                 >
                   <FaArrowLeft /> Back
                 </button>
               </div>
-    <div className="w-full p-5 max-w-6xl backdrop-blur-xl bg-gradient-to-br from-[#0f0c29] via-[#302b63] to-[#24243e] border-white/10 rounded-2xl shadow-2xl p-8">
-      <h3 className="text-lg font-semibold mb-6">
-        {isEdit ? "Edit Staff" : "Add Staff"}
-      </h3>
+    <div className="w-full p-5 max-w-6xl bg-white border border-gray-100 rounded-2xl shadow-sm p-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+            {isEdit ? "Edit Staff Member" : "Register New Staff"}
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">
+            {isEdit ? "Update details for this staff member" : "Register staff and auto-create login account"}
+          </p>
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
 
         <div>
-          <label className="text-sm font-medium">Name *</label>
+          <label className="text-sm font-medium text-gray-700">Name *</label>
           <input name="name" placeholder="Enter Name" value={form.name} onChange={handleChange}
             className={`${inputClass} ${errors.name ? "border-red-500 focus:ring-red-500" : ""}`} />
           <ErrorText field="name" />
         </div>
         {/* USERNAME */}
         <div>
-          <label className="text-sm font-medium">Username (Auto from Email)</label>
-          <input name="username" placeholder="Auto-populated from email" value={form.username} onChange={handleChange}
-            className={`${inputClass} ${errors.username ? "border-red-500 focus:ring-red-500" : ""}`} disabled readOnly />
+          <label className="text-sm font-medium text-gray-700">Display Name (Visible to all)</label>
+          <input name="username" placeholder="Display name" value={form.username} onChange={handleChange}
+            className={`${inputClass} ${errors.username ? "border-red-500 focus:ring-red-500" : ""}`} />
           <ErrorText field="username" />
         </div>
 
         {/* EMAIL */}
         <div>
-          <label className="text-sm font-medium">Email *</label>
+          <label className="text-sm font-medium text-gray-700">Email *</label>
           <input name="email" placeholder="Enter Email Address" value={form.email} onChange={handleChange}
             className={`${inputClass} ${errors.email ? "border-red-500 focus:ring-red-500" : ""}`} />
           <ErrorText field="email" />
@@ -472,20 +476,20 @@ const AddEditStaff = () => {
         {/* PASSWORD (ADD ONLY) */}
         {!isEdit && (
           <div>
-            <label className="text-sm font-medium">
-              Password <span className="text-xs text-gray-300">(set equal to phone number)</span>
+            <label className="text-sm font-medium text-gray-700">
+              Login Password <span className="text-xs text-blue-500">(Auto-set from Phone)</span>
             </label>
-            <input type="password" name="password" value={form.password}
-              onChange={handleChange} placeholder="Auto-populated from phone"
-              className={`${inputClass} ${errors.password ? "border-red-500 focus:ring-red-500" : ""}`} disabled readOnly />
-            <p className="text-xs text-gray-400 mt-1">Login credentials for the staff account will use this value.</p>
+            <input type="text" name="password" value={form.password}
+              onChange={handleChange} placeholder="Credential password"
+              className={`${inputClass} ${errors.password ? "border-red-500 focus:ring-red-500" : ""}`} />
+            <p className="text-[10px] text-gray-400 mt-1">Defaults to phone number. You can change it if needed.</p>
             <ErrorText field="password" />
           </div>
         )}
 
         {/* PHONE */}
         <div>
-          <label className="text-sm font-medium">Phone *</label>
+          <label className="text-sm font-medium text-gray-700">Phone *</label>
           <input name="phone" placeholder="Enter Phone Number" value={form.phone} onChange={handleChange}
             className={`${inputClass} ${errors.phone ? "border-red-500 focus:ring-red-500" : ""}`} />
           <ErrorText field="phone" />
@@ -518,38 +522,21 @@ const AddEditStaff = () => {
 
         {/* ROLE */}
         <div>
-          <label className="text-sm text-white/70 mb-1 block">
+          <label className="text-sm text-gray-600 mb-1 block">
             Role *
           </label>
-
           <select
             name="role"
             value={form.role}
             onChange={handleChange}
-            className={`${inputClass} text-white ${errors.role ? "border-red-500 focus:ring-red-500" : ""}`}
+            className={`${inputClass} ${errors.role ? "border-red-500 focus:ring-red-500" : ""}`}
           >
-            <option value="" className="text-gray-400 bg-[#0f172a]">
-              Select role
-            </option>
-
-            <option value="trainer" className="text-black bg-white">
-              Trainer
-            </option>
-            <option value="personal_trainer" className="text-black bg-white">
-              Personal Trainer
-            </option>
-            <option value="gym_manager" className="text-black bg-white">
-              Gym Manager
-            </option>
-            <option value="receptionist" className="text-black bg-white">
-              Receptionist
-            </option>
-            <option value="nutritionist" className="text-black bg-white">
-              Nutritionist
-            </option>
-            <option value="security" className="text-black bg-white">
-              Security
-            </option>
+            <option value="">Select role</option>
+            <option value="mechanic" className="text-black bg-white">Mechanic</option>
+            <option value="receptionist" className="text-black bg-white">Receptionist</option>
+            <option value="manager" className="text-black bg-white">Manager</option>
+            <option value="staff" className="text-black bg-white">General Staff</option>
+            <option value="admin" className="text-black bg-white">Admin</option>
           </select>
 
           <ErrorText field="role" />
@@ -580,7 +567,7 @@ const AddEditStaff = () => {
 
         {/* BLOOD GROUP */}
         <div>
-          <label className="text-sm text-white/70 mb-1 block">
+          <label className="text-sm text-gray-600 mb-1 block">
             Blood Group *
           </label>
 
