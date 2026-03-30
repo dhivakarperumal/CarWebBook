@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import toast from "react-hot-toast";
-import { Plus, X, UserCheck } from "lucide-react";
+import { Plus, X, UserCheck, Calendar, Clock, LayoutGrid, List } from "lucide-react";
 import api from "../../api";
 
 export default function AdminAssignServices() {
@@ -17,16 +17,16 @@ export default function AdminAssignServices() {
   const [assigning, setAssigning] = useState(false);
   const [loadingEmployees, setLoadingEmployees] = useState(false);
 
-  const [mainTab, setMainTab] = useState("booked"); // booked | addVehicle
-  const [tab, setTab] = useState("unassigned");
+  const [mainTab, setMainTab] = useState("all"); // all | booked | addVehicle
+  const [tab, setTab] = useState("all");
   const [searchText, setSearchText] = useState("");
+  const [viewMode, setViewMode] = useState("card"); // card | table
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const res = await api.get("/bookings");
-      const list = res.data.filter((b) => b.status !== "Service Completed");
-      setBookings(list);
+      setBookings(res.data);
     } catch (error) {
       toast.error("Failed to fetch bookings");
     } finally {
@@ -56,14 +56,16 @@ export default function AdminAssignServices() {
 
   const currentMainList = useMemo(() => {
     return bookings.filter(b => {
+      if (mainTab === "all") return true;
       const isAddVehicle = b.uid === 'admin-created';
       return mainTab === "booked" ? !isAddVehicle : isAddVehicle;
     });
   }, [bookings, mainTab]);
 
-  const assignedCount = currentMainList.filter((b) => b.assignedEmployeeId).length;
+  const assignedCount = currentMainList.filter((b) => b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed").length;
   const unassignedCount = currentMainList.filter((b) => !b.assignedEmployeeId).length;
   const bookedCount = currentMainList.filter((b) => (b.status || "").toLowerCase() === "booked").length;
+  const completedCount = currentMainList.filter((b) => (b.status || "").toLowerCase() === "service completed").length;
   const allCount = currentMainList.length;
 
   /* 🔍 SEARCH */
@@ -77,13 +79,14 @@ export default function AdminAssignServices() {
         b.brand?.toLowerCase().includes(search) ||
         b.model?.toLowerCase().includes(search) ||
         b.vehicleNumber?.toLowerCase().includes(search) ||
-        b.bookingId?.toLowerCase().includes(search);
+        b.bookingId?.toLowerCase().includes(search) ||
+        b.assignedEmployeeName?.toLowerCase().includes(search);
 
       if (!matches) return false;
 
       // Status filter
       if (tab === "unassigned") return !b.assignedEmployeeId;
-      if (tab === "assigned") return !!b.assignedEmployeeId;
+      if (tab === "assigned") return !!b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed";
       if (tab === "booked") return (b.status || "").toLowerCase() === "booked";
       if (tab === "completed") return (b.status || "").toLowerCase() === "service completed";
       
@@ -120,6 +123,7 @@ export default function AdminAssignServices() {
       await api.put(`/bookings/assign/${bookingId}`, {
         assignedEmployeeId: selectedEmployee.id,
         assignedEmployeeName: selectedEmployee.name,
+        status: "Assigned"
       });
 
       toast.success(`Mechanic ${selectedEmployee.name} assigned successfully`);
@@ -150,7 +154,17 @@ export default function AdminAssignServices() {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* HEADER */}
         {/* MAIN TABS (Separating Booked from Add Service Vehicle) */}
-        <div className="flex w-full space-x-2 md:w-auto flex-1 max-w-lg bg-gray-100 p-1 rounded-xl">
+        <div className="flex w-full space-x-2 md:w-auto flex-1 max-w-xl bg-gray-100 p-1 rounded-xl">
+          <button
+            onClick={() => setMainTab("all")}
+            className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${
+              mainTab === "all"
+                ? "bg-white text-blue-600 shadow"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            All Services
+          </button>
           <button
             onClick={() => setMainTab("booked")}
             className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${
@@ -159,7 +173,7 @@ export default function AdminAssignServices() {
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
-            Booked
+            Customer Bookings
           </button>
           <button
             onClick={() => setMainTab("addVehicle")}
@@ -169,18 +183,18 @@ export default function AdminAssignServices() {
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
-            Add Service Vehicle
+            Walk-ins
           </button>
         </div>
 
         {/* HEADER ACTIONS */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-6">
           <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-900 to-cyan-500 bg-clip-text text-transparent uppercase">
-              {mainTab === "booked" ? "Booked Services" : "Service Vehicles"}
+            <h1 className="text-2xl font-black bg-gradient-to-r from-blue-900 to-cyan-500 bg-clip-text text-transparent uppercase tracking-tight">
+              {mainTab === "all" ? "All Service Management" : mainTab === "booked" ? "Customer Bookings" : "Walk-in Vehicles"}
             </h1>
-            <p className="text-gray-500 text-sm mt-1">
-              Manage and assign mechanics for {mainTab === "booked" ? "customer bookings" : "walk-in services"}
+            <p className="text-gray-500 text-sm font-bold mt-1 uppercase tracking-widest opacity-60">
+              {mainTab === "all" ? "Overview of all active and pending services" : mainTab === "booked" ? "Managing reservations and appointments" : "Handling on-site vehicle check-ins"}
             </p>
           </div>
 
@@ -196,6 +210,16 @@ export default function AdminAssignServices() {
             <Plus className="w-5 h-5" />
             Assign Service
           </button>
+          
+          {mainTab === "addVehicle" && (
+            <button
+              onClick={() => window.location.href = "/admin/addservicevehicle"}
+              className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-xl hover:shadow-lg transition-all font-semibold"
+            >
+              <Plus className="w-5 h-5" />
+              Register New Vehicle
+            </button>
+          )}
         </div>
 
         {/* CONTROLS (TABS & SEARCH) */}
@@ -244,7 +268,7 @@ export default function AdminAssignServices() {
                   : "text-gray-500 hover:text-gray-700"
               }`}
             >
-              Completed
+              Completed ({completedCount})
             </button>
             {/* All */}
             <button
@@ -260,118 +284,248 @@ export default function AdminAssignServices() {
           </div>
 
           {/* SEARCH */}
-          <div className="w-full md:w-72 relative">
-            <input
-              type="text"
-              placeholder="Search bookings..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              className="w-full bg-white border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all"
-            />
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="w-full md:w-72 relative">
+              <input
+                type="text"
+                placeholder="Search bookings..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                className="w-full bg-white border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all font-medium"
+              />
+            </div>
+            
+            <div className="hidden sm:flex p-1 bg-gray-200/50 rounded-xl">
+              <button
+                onClick={() => setViewMode("card")}
+                className={`p-2 rounded-lg transition-all ${
+                  viewMode === "card" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
+                }`}
+              >
+                <LayoutGrid size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                className={`p-2 rounded-lg transition-all ${
+                  viewMode === "table" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
+                }`}
+              >
+                <List size={18} />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* LIST */}
         {filteredBookings.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 rounded-2xl border border-gray-100 border-dashed">
-            <p className="text-gray-500 font-medium">No bookings found</p>
+          <div className="text-center py-12 bg-gray-50 rounded-2xl border border-gray-100 border-dashed animate-fadeIn">
+            <p className="text-gray-500 font-medium font-inter">No bookings found for this category</p>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        ) : viewMode === "card" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
             {filteredBookings.map((item) => (
               <div
                 key={item.id}
-                className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:border-cyan-200 transition-all duration-300 flex flex-col group"
+                className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all duration-500 flex flex-col group relative overflow-hidden"
               >
-                {/* 🔹 TOP ROW → ID + STATUS */}
-                <div className="flex justify-between items-start mb-4">
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                   <LayoutGrid size={80} className="text-blue-900" />
+                </div>
+
+                <div className="flex justify-between items-start mb-6">
                   <div>
-                    <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                      Booking ID
+                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest leading-none">
+                      ID: {item.id}
                     </span>
-                    <p className="text-sm font-bold text-blue-900 mt-0.5">
-                      {item.bookingId || "N/A"}
+                    <p className="text-sm font-black text-blue-900 mt-1">
+                      {item.bookingId || "BKG-" + item.id}
                     </p>
                   </div>
 
                   <div
-                    className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-wide ${
-                      item.assignedEmployeeId
-                        ? "bg-green-100 text-green-700"
-                        : "bg-amber-100 text-amber-700"
+                    className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest border transition-all ${
+                      (item.status || "").toLowerCase() === "service completed"
+                        ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                        : item.assignedEmployeeId
+                        ? "bg-blue-100 text-blue-700 border-blue-200"
+                        : "bg-amber-100 text-amber-700 border-amber-200"
                     }`}
                   >
-                    {item.assignedEmployeeId ? "ASSIGNED" : "UNASSIGNED"}
+                    {(item.status || "").toLowerCase() === "service completed" 
+                      ? "COMPLETED" 
+                      : item.assignedEmployeeId 
+                      ? "ASSIGNED" 
+                      : "UNASSIGNED"}
                   </div>
                 </div>
 
-                {/* 🚗 VEHICLE & CUSTOMER */}
-                <div className="space-y-3 flex-1">
+                <div className="space-y-4 flex-1 relative z-10">
                   <div>
-                    <div className="flex items-center gap-2">
-                       <h3 className="text-lg font-extrabold text-gray-900 leading-tight">
+                    <div className="flex items-center gap-2 flex-wrap">
+                       <h3 className="text-xl font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
                         {item.brand} {item.model}
                       </h3>
                       {item.uid === 'admin-created' && (
-                        <span className="bg-cyan-100 text-cyan-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase">Walk-in</span>
+                        <span className="bg-cyan-100 text-cyan-700 text-[10px] px-2 py-0.5 rounded-lg font-black uppercase tracking-wider">Walk-in</span>
                       )}
                     </div>
                     {item.vehicleNumber && (
-                      <p className="text-blue-600 text-sm font-bold mt-1 bg-blue-50 w-fit px-2 py-0.5 rounded-md border border-blue-100">
+                      <p className="text-blue-600 text-xs font-black mt-2 bg-blue-50 w-fit px-3 py-1 rounded-xl border border-blue-100 uppercase tracking-widest">
                         {item.vehicleNumber}
                       </p>
                     )}
+                    
+                    <div className="flex flex-wrap gap-4 mt-4 py-3 border-y border-gray-50">
+                       {item.createdDate && (
+                        <div className="flex items-center gap-2">
+                           <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
+                              <Calendar className="w-4 h-4 text-gray-400" />
+                           </div>
+                           <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">{item.createdDate}</span>
+                        </div>
+                      )}
+                      {item.createdTime && (
+                         <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
+                               <Clock className="w-4 h-4 text-gray-400" />
+                            </div>
+                            <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">{item.createdTime}</span>
+                         </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 space-y-1">
-                    <p className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                      <span className="text-gray-400">👤</span> {item.name}
-                    </p>
+                  <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400 text-xs">👤</div>
+                      <div>
+                        <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Customer</p>
+                        <p className="text-sm font-black text-gray-800">{item.name}</p>
+                      </div>
+                    </div>
+                    
                     {item.phone && (
-                      <p className="text-sm text-gray-500 flex items-center gap-2">
-                        <span className="text-gray-400">📞</span> {item.phone}
-                      </p>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400 text-xs">📞</div>
+                        <div>
+                          <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Contact</p>
+                          <p className="text-sm font-bold text-gray-500">{item.phone}</p>
+                        </div>
+                      </div>
                     )}
+
                     {item.address && (
-                      <p className="text-sm text-gray-500 flex items-start gap-2 mt-1">
-                        <span className="text-gray-400 mt-0.5">📍</span>{" "}
-                        <span className="line-clamp-2">{item.address}</span>
-                      </p>
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400 text-xs shrink-0">📍</div>
+                        <div className="overflow-hidden">
+                          <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Location</p>
+                          <p className="text-[11px] font-bold text-gray-400 leading-snug line-clamp-2">{item.address}</p>
+                        </div>
+                      </div>
                     )}
                   </div>
 
-                  {/* 🛠 ISSUE */}
                   {item.issue && (
-                    <div className="mt-3">
-                      <p className="text-xs font-bold text-gray-400 uppercase">
-                        Issue Reported
-                      </p>
-                      <p className="text-sm text-gray-700 font-medium mt-1">
-                        {item.issue}
-                      </p>
+                    <div className="bg-amber-50/30 p-4 rounded-2xl border border-amber-100/50">
+                       <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Reported Issue</p>
+                       <p className="text-sm font-bold text-gray-700 leading-snug">{item.issue}</p>
                     </div>
                   )}
 
-                  {/* 👨🔧 ASSIGNED EMPLOYEE */}
                   {item.assignedEmployeeName && (
-                    <div className="mt-4 flex items-center gap-2 bg-green-50 text-green-700 p-2.5 rounded-xl border border-green-100 font-semibold text-sm">
-                      <UserCheck className="w-4 h-4" />
-                      Assigned to: {item.assignedEmployeeName}
+                    <div className="flex items-center gap-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 group/staff">
+                       <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-200">
+                          <UserCheck className="w-5 h-5 text-white" />
+                       </div>
+                       <div>
+                          <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Assigned Technician</p>
+                          <p className="text-sm font-black text-emerald-800">{item.assignedEmployeeName}</p>
+                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* 🔘 ASSIGN BUTTON */}
                 {!item.assignedEmployeeId && (
                   <button
                     onClick={() => openAssignModal(item)}
-                    className="mt-6 w-full bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white font-bold py-2.5 rounded-xl transition-colors duration-300"
+                    className="mt-8 w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-500/25 hover:bg-blue-700 hover:-translate-y-1 transition-all duration-300 uppercase tracking-widest text-xs"
                   >
                     Assign Mechanic
                   </button>
                 )}
               </div>
             ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto animate-fadeIn">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50/50">
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Job Details</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Vehicle</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Technician</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {filteredBookings.map((item) => (
+                  <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
+                    <td className="px-8 py-6">
+                       <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none">#{item.id}</span>
+                       <span className="text-xs font-black text-blue-900 block mt-1">{item.bookingId || "BKG-NEW"}</span>
+                       <span className="text-[10px] font-bold text-gray-400 mt-1 block">{item.createdDate}</span>
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-black text-gray-800">{item.name}</p>
+                      <p className="text-xs font-bold text-gray-400 mt-0.5">{item.phone}</p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-black text-gray-900 font-inter">{item.brand} {item.model}</p>
+                        {item.uid === 'admin-created' && <span className="bg-cyan-100 text-cyan-600 text-[9px] px-2 py-0.5 rounded font-black uppercase">Walk-in</span>}
+                      </div>
+                      <p className="text-[10px] font-black text-blue-500 mt-1 uppercase tracking-widest">{item.vehicleNumber || "N/A"}</p>
+                    </td>
+                    <td className="px-8 py-6">
+                      {item.assignedEmployeeName ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center">
+                            <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+                          </div>
+                          <span className="text-xs font-black text-emerald-700">{item.assignedEmployeeName}</span>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] font-black text-amber-500 border border-amber-200 bg-amber-50 px-3 py-1 rounded-full uppercase tracking-widest">Pending</span>
+                      )}
+                    </td>
+                    <td className="px-8 py-6">
+                       <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest border ${
+                        (item.status || "").toLowerCase() === "service completed"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                          : item.assignedEmployeeId
+                          ? "bg-blue-50 text-blue-700 border-blue-100"
+                          : "bg-amber-50 text-amber-700 border-amber-100"
+                      }`}>
+                        {(item.status || "Booked").toUpperCase()}
+                      </span>
+                    </td>
+                    <td className="px-8 py-6 text-right">
+                      {!item.assignedEmployeeId ? (
+                        <button
+                          onClick={() => openAssignModal(item)}
+                          className="bg-black text-white text-[10px] font-black px-4 py-2.5 rounded-xl hover:bg-blue-600 transition-all uppercase tracking-widest shadow-lg shadow-black/10"
+                        >
+                          Assign
+                        </button>
+                      ) : (
+                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Locked</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
