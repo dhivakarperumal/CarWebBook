@@ -20,7 +20,8 @@ const EmpDashboard = () => {
   const [stats, setStats] = useState({
     pending: 0,
     inProgress: 0,
-    completed: 0
+    completed: 0,
+    totalStaff: 0
   });
   const [myTasks, setMyTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,10 +47,15 @@ const EmpDashboard = () => {
 
       setMyTasks(filtered.slice(0, 5)); // Latest 5 tasks
       
+      // Fetch total staff count
+      const staffRes = await api.get("/staff");
+      const totalStaffCount = (staffRes.data || []).length;
+
       setStats({
-        pending: filtered.filter(b => b.status === "Pending").length,
-        inProgress: filtered.filter(b => b.status === "Assigned" || b.status === "In Progress").length,
-        completed: filtered.filter(b => b.status === "Service Completed" || b.status === "Completed").length
+        pending: filtered.filter(b => b.status === "Pending" || b.status === "Approved").length,
+        inProgress: filtered.filter(b => b.status === "Assigned" || b.status === "Service Going on" || b.status === "In Progress" || b.status === "Processing").length,
+        completed: filtered.filter(b => b.status === "Service Completed" || b.status === "Completed").length,
+        totalStaff: totalStaffCount
       });
     } catch (err) {
       console.error("Error fetching tasks:", err);
@@ -112,7 +118,7 @@ const EmpDashboard = () => {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
-              Hello, {userProfile?.name?.split(" ")[0] || "Technician"}!
+              Hello, {userProfile?.displayName?.split(" ")[0] || "Technician"}!
             </h1>
             <p className="text-gray-500 font-medium capitalize">
               {userProfile?.role || "Staff Member"} • Welcome back to your workspace.
@@ -130,7 +136,7 @@ const EmpDashboard = () => {
       </div>
 
       {/* ===== QUICK STATS ===== */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
           <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl">
             <Clock size={24} />
@@ -145,7 +151,7 @@ const EmpDashboard = () => {
             <Wrench size={24} />
           </div>
           <div>
-            <p className="text-sm text-gray-500 font-medium">Assigned/In Progress</p>
+            <p className="text-sm text-gray-500 font-medium">In Progress</p>
             <h3 className="text-2xl font-bold text-gray-800">{stats.inProgress}</h3>
           </div>
         </div>
@@ -156,6 +162,15 @@ const EmpDashboard = () => {
           <div>
             <p className="text-sm text-gray-500 font-medium">Jobs Completed</p>
             <h3 className="text-2xl font-bold text-gray-800">{stats.completed}</h3>
+          </div>
+        </div>
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
+          <div className="p-4 bg-purple-50 text-purple-600 rounded-2xl">
+            <User size={24} />
+          </div>
+          <div>
+            <p className="text-sm text-gray-500 font-medium">Total Staff</p>
+            <h3 className="text-2xl font-bold text-gray-800">{stats.totalStaff}</h3>
           </div>
         </div>
       </div>

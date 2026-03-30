@@ -148,7 +148,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   {userProfile?.role || "Staff"}
                 </p>
                 <p className="text-[10px] text-gray-500 truncate">
-                  {userProfile?.username || userProfile?.name || "Member"}
+                  {userProfile?.displayName || "Member"}
                 </p>
               </div>
             </div>

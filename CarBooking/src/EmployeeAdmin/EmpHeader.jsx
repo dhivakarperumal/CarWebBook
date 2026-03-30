@@ -16,24 +16,14 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase";
 
 const pageTitles = {
-  "/admin": "Dashboard",
-  "/admin/services": "Services",
-  "/admin/bookings": "Bookings Service",
-  "/admin/carservies": "Car Services",
-  "/admin/addcarservies": "Add Car Services",
-  "/admin/addserviceparts": "Add Service Parts",
-  "/admin/employees": "Employees",
-  "/admin/addstaff": "Add Employees",
-  "/admin/customers": "Customers",
-  "/admin/billing": "Billing",
-  "/admin/addbillings": "Add Billing",
-  "/admin/inventory": "Inventory",
-  "/admin/additemsinventory": "Add Inventory",
-  "/admin/overall-attendance": "Overall Attendance",
-
-  "/admin/reports": "Reports",
-  "/admin/settings": "Settings",
-  "/admin/users": "Users",
+  "/employee": "Employee Dashboard",
+  "/employee/cars": "Vehicle Management",
+  "/employee/assignservices": "Assign Services",
+  "/employee/services": "Service",
+  "/employee/billing": "Billing",
+  "/employee/addbillings": "Add Billing",
+  "/employee/reports": "Reports",
+  "/employee/settings": "Settings",
 };
 
 
@@ -61,13 +51,11 @@ const Header = ({ onMenuClick }) => {
   const [customers, setCustomers] = useState([]);
 
   const sidebarMenus = [
-    { title: "Dashboard", path: "/admin" },
-    { title: "Bookings Service", path: "/admin/bookings" },
-    { title: "Customers", path: "/admin/customers" },
-    { title: "Billing", path: "/admin/billing" },
-    { title: "Inventory", path: "/admin/inventory" },
-    { title: "Reports", path: "/admin/reports" },
-    { title: "Settings", path: "/admin/settings" },
+    { title: "Dashboard", path: "/employee" },
+    { title: "Assign Services", path: "/employee/assignservices" },
+    { title: "Vehicle Management", path: "/employee/cars" },
+    { title: "Service", path: "/employee/services" },
+    { title: "Billing", path: "/employee/billing" },
   ];
 
   const searchResults = searchTerm
@@ -288,11 +276,11 @@ const Header = ({ onMenuClick }) => {
 
                               if (item.type === "menu") navigate(item.path);
                               if (item.type === "booking")
-                                navigate(`/admin/bookings/${item.id}`);
+                                navigate(`/employee/assignservices`);
                               if (item.type === "customer")
-                                navigate(`/admin/customers/${item.id}`);
+                                navigate(`/employee/assignservices`);
                               if (item.type === "order")
-                                navigate(`/admin/orders/${item.id}`);
+                                navigate(`/employee/billing`);
                             }}
                             className="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
                           >
@@ -503,7 +491,7 @@ const Header = ({ onMenuClick }) => {
                       {profileName?.displayName || "Admin"}
                     </p>
                     <p className="text-xs text-slate-500">
-                      {profileName?.email || "admin@clinic.com"}
+                      {profileName?.email || "staff@carbooking.com"}
                     </p>
                   </div>
 
