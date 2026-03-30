@@ -23,15 +23,25 @@ exports.createBooking = async (req, res) => {
     const { 
       bookingId, uid, name, email, phone, altPhone, 
       brand, model, issue, otherIssue, address, 
-      location, latitude, longitude, status 
+      location, latitude, longitude, status, vehicleType, vehicleNumber 
     } = req.body;
 
     const [result] = await db.query(
       `INSERT INTO bookings 
-      (bookingId, uid, name, email, phone, altPhone, brand, model, issue, otherIssue, address, location, latitude, longitude, status) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [bookingId, uid, name, email, phone, altPhone, brand, model, issue, otherIssue, address, location, latitude, longitude, status]
+      (bookingId, uid, name, email, phone, altPhone, brand, model, issue, otherIssue, address, location, latitude, longitude, status, vehicleType, vehicleNumber) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [bookingId, uid, name, email, phone, altPhone, brand, model, issue, otherIssue, address, location, latitude, longitude, status, vehicleType, vehicleNumber]
     );
+    
+    // Auto cascade admin walk-ins dynamically to all_services for the Services layout
+    if (uid === 'admin-created') {
+      await db.query(`
+        INSERT INTO all_services (
+          bookingId, bookingDocId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, trackNumber, vehicleNumber, addVehicle, serviceStatus
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `, [bookingId, result.insertId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, '', vehicleNumber || '', 1, 'Booked']);
+    }
+
     res.status(201).json({ id: result.insertId, message: 'Booking created' });
   } catch (error) {
     res.status(500).json({ message: 'Error creating booking', error: error.message });
@@ -57,12 +67,12 @@ exports.updateBookingStatus = async (req, res) => {
        if (booking.length > 0) {
          const b = booking[0];
          const [existing] = await db.query('SELECT * FROM all_services WHERE bookingDocId = ?', [id]);
-         if (existing.length === 0) {
+          if (existing.length === 0) {
            await db.query(`
              INSERT INTO all_services (
-               bookingId, bookingDocId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, trackNumber
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-           `, [b.bookingId, b.id, b.uid, b.name, b.phone, b.email, b.brand, b.model, b.issue, b.otherIssue, b.location, b.address, trackNumber || '']);
+               bookingId, bookingDocId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, trackNumber, vehicleNumber, addVehicle
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           `, [b.bookingId, b.id, b.uid, b.name, b.phone, b.email, b.brand, b.model, b.issue, b.otherIssue, b.location, b.address, trackNumber || '', b.vehicleNumber || '', b.vehicleType ? 1 : 0]);
          }
        }
     }
@@ -87,9 +97,9 @@ exports.assignEmployee = async (req, res) => {
       if (existing.length === 0) {
         await db.query(`
           INSERT INTO all_services (
-            bookingId, bookingDocId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, trackNumber, assignedEmployeeId, assignedEmployeeName, serviceStatus
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [b.bookingId, b.id, b.uid, b.name, b.phone, b.email, b.brand, b.model, b.issue, b.otherIssue, b.location, b.address, '', assignedEmployeeId, assignedEmployeeName, 'Approved']);
+            bookingId, bookingDocId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, trackNumber, vehicleNumber, addVehicle, assignedEmployeeId, assignedEmployeeName, serviceStatus
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [b.bookingId, b.id, b.uid, b.name, b.phone, b.email, b.brand, b.model, b.issue, b.otherIssue, b.location, b.address, '', b.vehicleNumber || '', b.vehicleType ? 1 : 0, assignedEmployeeId, assignedEmployeeName, 'Approved']);
       } else {
         await db.query('UPDATE all_services SET assignedEmployeeId = ?, assignedEmployeeName = ?, serviceStatus = ? WHERE bookingDocId = ?', [assignedEmployeeId, assignedEmployeeName, 'Approved', id]);
       }

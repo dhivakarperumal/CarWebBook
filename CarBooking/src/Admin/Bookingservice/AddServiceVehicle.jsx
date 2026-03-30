@@ -75,15 +75,18 @@ const AddServiceVehicle = () => {
 
     const now = new Date();
     const serviceData = {
+      bookingId: `BKG${now.getTime()}`, // Generate unique ID
+      uid: "admin-created",
       name: form.name,
       phone: form.phone,
-      email: form.email,
-      address: form.address,
+      email: form.email || "N/A",
+      address: form.address || "Shop Address",
+      location: "Shop",
       vehicleType: form.vehicleType,
       vehicleNumber: form.vehicleNumber.toUpperCase(),
-      brand: form.brand,
-      model: form.model,
-      issue: form.issue === "Others" ? form.otherIssue : form.issue,
+      brand: form.brand || "Unknown",
+      model: form.model || "Unknown",
+      issue: form.issue === "Others" ? form.otherIssue : form.issue || "General Service",
       status: "Booked",
       createdDate: now.toLocaleDateString("en-GB"),
       createdTime: now.toLocaleTimeString("en-GB", {
@@ -94,8 +97,8 @@ const AddServiceVehicle = () => {
 
     try {
       setSubmitting(true);
-      const res = await api.post("/bookings/create", serviceData);
-      const bookingId = res.data?.bookingId || res.data?.data?.bookingId || "—";
+      await api.post("/bookings/create", serviceData);
+      const bookingId = serviceData.bookingId;
       setSuccess(bookingId);
       toast.success(`Service added! ID: ${bookingId}`);
     } catch (err) {
