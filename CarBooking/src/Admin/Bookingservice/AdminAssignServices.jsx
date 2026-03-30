@@ -17,6 +17,7 @@ export default function AdminAssignServices() {
   const [assigning, setAssigning] = useState(false);
   const [loadingEmployees, setLoadingEmployees] = useState(false);
 
+  const [mainTab, setMainTab] = useState("booked"); // booked | addVehicle
   const [tab, setTab] = useState("unassigned");
   const [searchText, setSearchText] = useState("");
 
@@ -53,29 +54,42 @@ export default function AdminAssignServices() {
 
   const availableEmployees = employees; // Assuming all returned staff are available
 
+  const currentMainList = useMemo(() => {
+    return bookings.filter(b => {
+      const isAddVehicle = b.uid === 'admin-created';
+      return mainTab === "booked" ? !isAddVehicle : isAddVehicle;
+    });
+  }, [bookings, mainTab]);
+
+  const assignedCount = currentMainList.filter((b) => b.assignedEmployeeId).length;
+  const unassignedCount = currentMainList.filter((b) => !b.assignedEmployeeId).length;
+  const bookedCount = currentMainList.filter((b) => (b.status || "").toLowerCase() === "booked").length;
+  const allCount = currentMainList.length;
+
   /* 🔍 SEARCH */
   const filteredBookings = useMemo(() => {
-    return bookings.filter((b) => {
+    return currentMainList.filter((b) => {
       const search = searchText.toLowerCase();
 
       const matches =
         b.name?.toLowerCase().includes(search) ||
         b.phone?.toLowerCase().includes(search) ||
         b.brand?.toLowerCase().includes(search) ||
-        b.model?.toLowerCase().includes(search);
+        b.model?.toLowerCase().includes(search) ||
+        b.vehicleNumber?.toLowerCase().includes(search) ||
+        b.bookingId?.toLowerCase().includes(search);
 
       if (!matches) return false;
 
+      // Status filter
       if (tab === "unassigned") return !b.assignedEmployeeId;
       if (tab === "assigned") return !!b.assignedEmployeeId;
-      // tab === "all" → return everything
+      if (tab === "booked") return (b.status || "").toLowerCase() === "booked";
+      if (tab === "completed") return (b.status || "").toLowerCase() === "service completed";
+      
       return true;
     });
-  }, [bookings, searchText, tab]);
-
-  const assignedCount = bookings.filter((b) => b.assignedEmployeeId).length;
-  const unassignedCount = bookings.filter((b) => !b.assignedEmployeeId).length;
-  const allCount = bookings.length;
+  }, [currentMainList, searchText, tab]);
 
   /* 🔥 OPEN CARD MODAL */
   const openAssignModal = async (booking) => {
@@ -135,13 +149,38 @@ export default function AdminAssignServices() {
     <div className="min-h-screen bg-white text-gray-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* HEADER */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* MAIN TABS (Separating Booked from Add Service Vehicle) */}
+        <div className="flex w-full space-x-2 md:w-auto flex-1 max-w-lg bg-gray-100 p-1 rounded-xl">
+          <button
+            onClick={() => setMainTab("booked")}
+            className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${
+              mainTab === "booked"
+                ? "bg-white text-blue-600 shadow"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Booked
+          </button>
+          <button
+            onClick={() => setMainTab("addVehicle")}
+            className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${
+              mainTab === "addVehicle"
+                ? "bg-white text-blue-600 shadow"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Add Service Vehicle
+          </button>
+        </div>
+
+        {/* HEADER ACTIONS */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-6">
           <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-900 to-cyan-500 bg-clip-text text-transparent">
-              Assign Services
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-900 to-cyan-500 bg-clip-text text-transparent uppercase">
+              {mainTab === "booked" ? "Booked Services" : "Service Vehicles"}
             </h1>
             <p className="text-gray-500 text-sm mt-1">
-              Manage and assign mechanics to service bookings
+              Manage and assign mechanics for {mainTab === "booked" ? "customer bookings" : "walk-in services"}
             </p>
           </div>
 
@@ -163,6 +202,17 @@ export default function AdminAssignServices() {
         <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-gray-50 p-2 rounded-2xl border border-gray-100">
           {/* TABS */}
           <div className="flex w-full md:w-auto gap-1 bg-gray-200/50 p-1 rounded-xl">
+            {/* Booked */}
+            <button
+              onClick={() => setTab("booked")}
+              className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                tab === "booked"
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Booked ({bookedCount})
+            </button>
             {/* Unassigned */}
             <button
               onClick={() => setTab("unassigned")}
@@ -184,6 +234,17 @@ export default function AdminAssignServices() {
               }`}
             >
               Assigned ({assignedCount})
+            </button>
+            {/* Completed */}
+            <button
+              onClick={() => setTab("completed")}
+              className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                tab === "completed"
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Completed
             </button>
             {/* All */}
             <button
@@ -247,11 +308,16 @@ export default function AdminAssignServices() {
                 {/* 🚗 VEHICLE & CUSTOMER */}
                 <div className="space-y-3 flex-1">
                   <div>
-                    <h3 className="text-lg font-extrabold text-gray-900 leading-tight">
-                      {item.brand} {item.model}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                       <h3 className="text-lg font-extrabold text-gray-900 leading-tight">
+                        {item.brand} {item.model}
+                      </h3>
+                      {item.uid === 'admin-created' && (
+                        <span className="bg-cyan-100 text-cyan-700 text-[10px] px-2 py-0.5 rounded font-bold uppercase">Walk-in</span>
+                      )}
+                    </div>
                     {item.vehicleNumber && (
-                      <p className="text-cyan-600 text-sm font-bold mt-1">
+                      <p className="text-blue-600 text-sm font-bold mt-1 bg-blue-50 w-fit px-2 py-0.5 rounded-md border border-blue-100">
                         {item.vehicleNumber}
                       </p>
                     )}

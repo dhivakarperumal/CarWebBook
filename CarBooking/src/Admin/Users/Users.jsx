@@ -27,10 +27,73 @@ const Users = () => {
   const loadUsers = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/auth/users');
-      setUsers(res.data);
+      const [authRes, bookingsRes] = await Promise.all([
+        api.get('/auth/users'),
+        api.get('/bookings')
+      ]);
+      
+      const authUsers = authRes.data || [];
+      const bookings = bookingsRes.data || [];
+
+      // Unified Map to merge by email or phone
+      const customerMap = new Map();
+
+      // 1. Add Registered Users
+      authUsers.forEach(user => {
+        const key = user.email ? user.email.toLowerCase() : `user-${user.id}`;
+        customerMap.set(key, {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          phone: user.phone || "-",
+          role: user.role,
+          active: !!user.active,
+          type: "registered",
+          bookingsCount: 0
+        });
+      });
+
+      // 2. Merge Service Bookings
+      bookings.forEach(b => {
+        const emailKey = b.email ? b.email.toLowerCase() : null;
+        let customer = null;
+        
+        if (emailKey && customerMap.has(emailKey)) {
+          customer = customerMap.get(emailKey);
+        } else {
+          // Look by phone if email doesn't match
+          for (let c of customerMap.values()) {
+             if (c.phone === b.phone && b.phone && b.phone !== "-") {
+               customer = c;
+               break;
+             }
+          }
+        }
+
+        if (customer) {
+          customer.bookingsCount++;
+          if (customer.phone === "-" && b.phone) customer.phone = b.phone;
+          if (!customer.username && b.name) customer.username = b.name;
+        } else {
+          // Create new guest customer entry
+          const newKey = emailKey || `guest-${b.phone || b.id}`;
+          customerMap.set(newKey, {
+            id: `guest-${b.id}`,
+            username: b.name,
+            email: b.email || "No Email",
+            phone: b.phone || "-",
+            role: "customer",
+            active: true,
+            type: "guest",
+            bookingsCount: 1
+          });
+        }
+      });
+
+      setUsers(Array.from(customerMap.values()));
     } catch (err) {
-      toast.error("Failed to load users");
+      toast.error("Failed to load customers data");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -153,8 +216,8 @@ const Users = () => {
 
         <div className="bg-white rounded-md border border-gray-300 shadow p-5 flex justify-between items-center">
           <div>
-            <p className="text-gray-500 text-sm">Admin Users</p>
-            <h2 className="text-2xl font-bold">{adminUsers}</h2>
+            <p className="text-gray-500 text-sm">Registered Accounts</p>
+            <h2 className="text-2xl font-bold">{users.filter(u => u.type === "registered").length}</h2>
           </div>
           <div className="h-12 w-12 bg-purple-600 text-white rounded-lg flex items-center justify-center">
             <FaShieldAlt />
@@ -210,11 +273,11 @@ const Users = () => {
             <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
               <tr>
                 <th className="px-4 py-4 text-left font-semibold">S No</th>
-                <th className="px-4 py-4 text-left font-semibold">Name</th>
-                <th className="px-4 py-4 text-left font-semibold">Email</th>
-                <th className="px-4 py-4 text-left font-semibold">Username</th>
+                <th className="px-4 py-4 text-left font-semibold">Name / Username</th>
+                <th className="px-4 py-4 text-left font-semibold">Contact Details</th>
+                <th className="px-4 py-4 text-left font-semibold">Type</th>
                 <th className="px-4 py-4 text-left font-semibold">Role</th>
-                <th className="px-4 py-4 text-left font-semibold">Status</th>
+                <th className="px-4 py-4 text-left font-semibold">Orders / Bookings</th>
                 <th className="px-4 py-4 text-center font-semibold">Actions</th>
               </tr>
             </thead>
@@ -227,33 +290,44 @@ const Users = () => {
                     className="border-b border-gray-300 hover:bg-gray-50 transition"
                   >
                     <td className="px-4 py-4 font-medium">{index + 1}</td>
-                    <td className="px-4 py-4 font-medium">{u.username || "N/A"}</td>
-                    <td className="px-4 py-4">{u.email}</td>
-                    <td className="px-4 py-4">{u.username || "N/A"}</td>
-
+                    <td className="px-4 py-4 font-medium">
+                      <div className="text-gray-900">{u.username || "Anonymous"}</div>
+                      {u.type === "guest" && (
+                         <span className="text-[10px] bg-cyan-50 text-cyan-700 px-1.5 py-0.5 rounded font-bold uppercase border border-cyan-100">Walk-in</span>
+                      )}
+                    </td>
                     <td className="px-4 py-4">
-                      <select 
-                        value={u.role} 
-                        onChange={(e) => updateRole(u.id, e.target.value)}
-                        className="bg-transparent border-b border-gray-300 outline-none"
-                      >
-                         <option value="admin">Admin</option>
-                         <option value="mechanic">Mechanic</option>
-                         <option value="staff">Staff</option>
-                         <option value="customer">Customer</option>
-                      </select>
+                       <div className="text-sm">{u.email}</div>
+                       <div className="text-xs text-blue-600 font-bold">{u.phone !== "-" ? u.phone : ""}</div>
+                    </td>
+                    <td className="px-4 py-4">
+                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${u.type === 'registered' ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-700'}`}>
+                         {u.type === 'registered' ? 'ACCOUNT' : 'SERVICE GUEST'}
+                       </span>
                     </td>
 
                     <td className="px-4 py-4">
-                      <button
-                        onClick={() => toggleStatus(u.id, !!u.active)}
-                        className={`px-3 py-1 text-xs rounded-full font-medium inline-block transition hover:scale-105 ${u.active
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                          }`}
-                      >
-                        {u.active ? "Active" : "Inactive"}
-                      </button>
+                      {u.type === "registered" ? (
+                        <select 
+                          value={u.role} 
+                          onChange={(e) => updateRole(u.id, e.target.value)}
+                          className="bg-transparent border-b border-gray-100 outline-none text-xs font-semibold"
+                        >
+                           <option value="admin">Admin</option>
+                           <option value="mechanic">Mechanic</option>
+                           <option value="staff">Staff</option>
+                           <option value="customer">Customer</option>
+                        </select>
+                      ) : (
+                        <span className="text-xs font-semibold text-gray-500 uppercase">Customer</span>
+                      )}
+                    </td>
+
+                    <td className="px-4 py-4">
+                        <div className="flex items-center gap-2">
+                           <span className="text-xs font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded-md">{u.bookingsCount || 0}</span>
+                           <span className="text-[10px] text-gray-400 font-medium">Bookings</span>
+                        </div>
                     </td>
 
                     <td className="px-4 py-4 text-center">

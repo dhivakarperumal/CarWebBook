@@ -59,6 +59,9 @@ const AddServiceVehicle = () => {
     if (!form.phone.trim()) errs.phone = "Phone number is required";
     if (form.phone && !/^\d{6,15}$/.test(form.phone.trim()))
       errs.phone = "Enter a valid phone number";
+    if (!form.email.trim()) errs.email = "Email is required for creating customer login";
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
+      errs.email = "Enter a valid email address";
     if (!form.vehicleType) errs.vehicleType = "Vehicle type is required";
     if (!form.vehicleNumber.trim()) errs.vehicleNumber = "Vehicle number is required";
     return errs;
@@ -97,8 +100,28 @@ const AddServiceVehicle = () => {
 
     try {
       setSubmitting(true);
-      await api.post("/bookings/create", serviceData);
+      
+      // 1. Create Booking
+      const bookRes = await api.post("/bookings/create", serviceData);
       const bookingId = serviceData.bookingId;
+
+      // 2. Automatically Create User Account (ignore error if already exists)
+      if (form.email && form.phone) {
+        try {
+          await api.post("/auth/register", {
+            username: form.name,
+            email: form.email,
+            mobile: form.phone,
+            password: form.phone, // Phone number is password
+            role: "customer"
+          });
+          toast.success("Customer account created automatically");
+        } catch (authErr) {
+          // If email exists, we just skip account creation
+          console.log("Account already exists or failed to create", authErr);
+        }
+      }
+
       setSuccess(bookingId);
       toast.success(`Service added! ID: ${bookingId}`);
     } catch (err) {
@@ -156,7 +179,7 @@ const AddServiceVehicle = () => {
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-800 leading-none">Add Service Vehicle</h1>
-            <p className="text-xs text-gray-400 mt-0.5">Register a new vehicle for service</p>
+            <p className="text-xs text-gray-400 mt-0.5 whitespace-pre-line">Register a new vehicle for service (Auto-creates login using Email & Phone)</p>
           </div>
         </div>
       </div>
@@ -188,7 +211,7 @@ const AddServiceVehicle = () => {
               />
             </Field>
 
-            <Field label="Email (Optional)">
+            <Field label="Customer Email (User Login)" required error={errors.email}>
               <input
                 className={baseInput}
                 placeholder="customer@email.com"

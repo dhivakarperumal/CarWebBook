@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   FaTools,
   FaCalendarCheck,
@@ -6,7 +6,6 @@ import {
   FaMoneyBillWave,
   FaUserCog,
   FaBoxes
-
 } from "react-icons/fa";
 
 import {
@@ -22,11 +21,8 @@ import {
   Legend,
 } from "recharts";
 
-
-import { collection, query, where, onSnapshot, Timestamp, orderBy, limit, } from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import { useNavigate } from "react-router-dom";
-
 
 /* -------------------- COMPONENTS -------------------- */
 
@@ -43,18 +39,12 @@ const GradientStatCard = ({
     <div
       className={`relative overflow-hidden rounded text-white p-8 shadow-md ${gradient}`}
     >
-      {/* TITLE */}
       <p className="text-xs font-semibold opacity-90 tracking-wide">
         {title}
       </p>
-
-      {/* VALUE */}
       <h2 className="text-2xl font-bold mt-2">{value}</h2>
-
-      {/* CHANGE ROW */}
       <div className="flex items-center justify-between mt-2 text-sm opacity-95">
         <span>Compared to last week</span>
-
         <span className="flex items-center gap-1 font-semibold">
           {isUp ? (
             <ArrowUp size={16} className="bg-white/20 rounded-full p-1" />
@@ -64,8 +54,6 @@ const GradientStatCard = ({
           {change}
         </span>
       </div>
-
-      {/* SPARKLINE */}
       <div className="absolute bottom-0 top-28 left-0 w-full h-16 opacity-30">
         <svg viewBox="0 0 100 30" className="w-full h-full">
           <polyline
@@ -83,170 +71,20 @@ const GradientStatCard = ({
 /* -------------------- DASHBOARD -------------------- */
 
 const Dashboard = () => {
+  const navigate = useNavigate();
 
-const [topStats, setTopStats] = useState({
-  todayBookings: 0,
-  todayCustomers: 0,
-  totalServices: 0,
-  totalCustomers: 0,
-  totalEmployees: 0,
-  totalOrders: 0,
-  totalDeliveryOrders: 0,
-  totalProducts: 0,
-  totalEarnings: 0,
-});
-
-useEffect(() => {
-  const start = Timestamp.fromDate(
-    new Date(new Date().setHours(0, 0, 0, 0))
-  );
-  const end = Timestamp.fromDate(
-    new Date(new Date().setHours(23, 59, 59, 999))
-  );
-
-  // ✅ TODAY BOOKINGS
-  const unsubTodayBookings = onSnapshot(
-    query(
-      collection(db, "bookings"),
-      where("createdAt", ">=", start),
-      where("createdAt", "<=", end)
-    ),
-    (snap) =>
-      setTopStats((p) => ({ ...p, todayBookings: snap.size }))
-  );
-
-  // ✅ TODAY CUSTOMERS (unique mobile created today)
-  const unsubTodayCustomers = onSnapshot(
-    query(
-      collection(db, "users"),
-      where("createdAt", ">=", start),
-      where("createdAt", "<=", end)
-    ),
-    (snap) => {
-      const unique = new Set();
-      snap.forEach((d) => {
-        const data = d.data();
-        if (data.mobileNumber) unique.add(data.mobileNumber);
-      });
-
-      setTopStats((p) => ({
-        ...p,
-        todayCustomers: unique.size,
-      }));
-    }
-  );
-
-  // ✅ TOTAL SERVICES
-  const unsubServices = onSnapshot(
-    collection(db, "services"),
-    (snap) =>
-      setTopStats((p) => ({ ...p, totalServices: snap.size }))
-  );
-
-  // ✅ TOTAL CUSTOMERS (unique mobile)
-  const unsubCustomers = onSnapshot(
-  collection(db, "users"),
-  (snap) =>
-    setTopStats((p) => ({
-      ...p,
-      totalCustomers: snap.size,
-    }))
-);
-
-
-  // ✅ TOTAL EMPLOYEES
-  const unsubEmployees = onSnapshot(
-    collection(db, "employees"),
-    (snap) =>
-      setTopStats((p) => ({ ...p, totalEmployees: snap.size }))
-  );
-
-  // ✅ TOTAL ORDERS
-  const unsubOrders = onSnapshot(
-    collection(db, "orders"),
-    (snap) =>
-      setTopStats((p) => ({ ...p, totalOrders: snap.size }))
-  );
-
-// ✅ TOTAL DELIVERY ORDERS (status === "delivered")
-const unsubDeliveryOrders = onSnapshot(
-  query(
-    collection(db, "orders"),
-    where("status", "==", "delivered")
-  ),
-  (snap) =>
-    setTopStats((p) => ({
-      ...p,
-      totalDeliveryOrders: snap.size,
-    }))
-);
-
-
-  // ✅ TOTAL EARNINGS (paid + partial)
-  const unsubEarnings = onSnapshot(
-    collection(db, "billings"),
-    (snap) => {
-      let total = 0;
-
-      snap.forEach((doc) => {
-        const data = doc.data();
-        const status = (data.paymentStatus || "").toLowerCase();
-
-        if (status === "paid") {
-          total += Number(data.grandTotal || 0);
-        }
-
-        if (status === "partial") {
-          total += Number(data.paidAmount || 0);
-        }
-      });
-
-      setTopStats((p) => ({ ...p, totalEarnings: total }));
-    }
-  );
-
-  // ✅ TOTAL PRODUCTS
-  const unsubProducts = onSnapshot(
-    collection(db, "products"),
-    (snap) =>
-      setTopStats((p) => ({ ...p, totalProducts: snap.size }))
-  );
-
-  // ✅ CLEANUP
-  return () => {
-    unsubTodayBookings();
-    unsubTodayCustomers();
-    unsubServices();
-    unsubCustomers();
-    unsubEmployees();
-    unsubProducts();
-    unsubOrders();
-    unsubDeliveryOrders();
-    unsubEarnings();
-  };
-}, []);
-
-
-
-
-  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-  const getWeekRange = (offset = 0) => {
-    const today = new Date();
-    const day = today.getDay() || 7;
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - day + 1 - offset * 7);
-    monday.setHours(0, 0, 0, 0);
-
-    const sunday = new Date(monday);
-    sunday.setDate(monday.getDate() + 6);
-    sunday.setHours(23, 59, 59, 999);
-
-    return {
-      start: Timestamp.fromDate(monday),
-      end: Timestamp.fromDate(sunday),
-    };
-  };
+  const [topStats, setTopStats] = useState({
+    todayBookings: 0,
+    todayCustomers: 0,
+    totalServices: 0,
+    totalCustomers: 0,
+    totalEmployees: 0,
+    totalOrders: 0,
+    totalDeliveryOrders: 0,
+    totalProducts: 0,
+    totalEarnings: 0,
+    totalBilling: 0,
+  });
 
   const [appointmentData, setAppointmentData] = useState([]);
   const [counts, setCounts] = useState({
@@ -255,14 +93,126 @@ const unsubDeliveryOrders = onSnapshot(
     cancelled: 0,
   });
 
+  const [revenueData, setRevenueData] = useState([]);
+  const [monthlyTotal, setMonthlyTotal] = useState(0);
+
+  const [patients, setPatients] = useState([]);
+  const [stats1, setStats1] = useState({});
+  const [total, setTotal] = useState(0);
+  const [rows, setRows] = useState([]);
+
   useEffect(() => {
-    const thisWeek = getWeekRange(0);
-    const lastWeek = getWeekRange(1);
+    fetchDashboardData();
+  }, []);
 
-    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    const q = query(collection(db, "bookings"));
+  const fetchDashboardData = async () => {
+    try {
+      // Due to the absence of a unified dashboard backend route,
+      // we'll parallel fetch from the MySQL APIs we have available.
+      // We will catch individual errors to prevent complete dashboard crash if one API is missing
+      const fetchSafe = async (endpoint) => {
+        try {
+          const res = await api.get(endpoint);
+          return res.data;
+        } catch (err) {
+          console.warn(`Failed to fetch ${endpoint} for dashboard`, err);
+          return [];
+        }
+      };
 
-    const unsub = onSnapshot(q, (snap) => {
+      const [
+        bookingsData,
+        servicesData,
+        staffData,
+        ordersData,
+        billingsData,
+        productsData,
+        inventoryData,
+      ] = await Promise.all([
+        fetchSafe("/bookings"),
+        fetchSafe("/all-services"),
+        fetchSafe("/staff"),
+        fetchSafe("/orders"),
+        fetchSafe("/billings"),
+        fetchSafe("/products"),
+        fetchSafe("/inventory"),
+      ]);
+
+      // Users might be available indirectly from bookings or a direct users endpoint.
+      // We'll estimate from bookings for now if users endpoint doesn't exist
+      const usersData = await fetchSafe("/auth/users") || []; 
+
+      // Date calculations
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const isToday = (dateStr) => {
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        return d >= todayStart && d <= todayEnd;
+      };
+
+      // 1. TOP STATS
+      
+      const todayBookingsCount = bookingsData.filter(b => isToday(b.created_at || b.createdAt)).length;
+      
+      // Calculate total earnings & billing
+      let earnings = 0;
+      let totalBilling = 0;
+      billingsData.forEach((b) => {
+        const grandTotal = Number(b.grandTotal || 0);
+        totalBilling += grandTotal;
+        
+        const status = (b.paymentStatus || "").toLowerCase();
+        if (status === "paid") earnings += grandTotal;
+        if (status === "partial") earnings += Number(b.paidAmount || 0);
+      });
+
+      const todayCustomers = new Set();
+      const allCustomers = new Set();
+
+      bookingsData.forEach(b => {
+        if (b.phone) {
+          allCustomers.add(b.phone);
+          if (isToday(b.created_at || b.createdAt)) todayCustomers.add(b.phone);
+        }
+      });
+
+      setTopStats({
+        todayBookings: todayBookingsCount,
+        todayCustomers: todayCustomers.size,
+        totalServices: servicesData.length,
+        totalCustomers: allCustomers.size > 0 ? allCustomers.size : usersData.length,
+        totalEmployees: staffData.length,
+        totalOrders: ordersData.length,
+        totalDeliveryOrders: ordersData.filter(o => ["delivered", "shipped", "completed"].includes((o.status || "").toLowerCase())).length,
+        totalProducts: productsData.length,
+        totalEarnings: earnings,
+        totalBilling: totalBilling,
+      });
+
+      // 2. APPOINTMENTS CHART
+      
+      const getWeekRange = (offset = 0) => {
+        const today = new Date();
+        const day = today.getDay() || 7;
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - day + 1 - offset * 7);
+        monday.setHours(0, 0, 0, 0);
+
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        sunday.setHours(23, 59, 59, 999);
+
+        return { start: monday, end: sunday };
+      };
+
+      const thisWeek = getWeekRange(0);
+      const lastWeek = getWeekRange(1);
+      const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      
       const baseData = days.map((d) => ({
         day: d,
         thisWeek: 0,
@@ -272,269 +222,139 @@ const unsubDeliveryOrders = onSnapshot(
         cancelled: 0,
       }));
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const tempCounts = { pending: 0, completed: 0, cancelled: 0 };
 
-      const tempCounts = {
-        pending: 0,
-        completed: 0,
-        cancelled: 0,
-      };
+      // Process Model/Brand pie chart stats while iterating
+      const pieCounts = {};
+      let pieSum = 0;
 
-      snap.forEach((doc) => {
-        const data = doc.data();
+      bookingsData.forEach((data) => {
         if (!data.status) return;
 
         const rawStatus = String(data.status).toLowerCase().trim();
-
-        /* 🔹 MAP TO DASHBOARD STATUS */
         let status = "pending";
 
         if (rawStatus === "service completed") status = "completed";
         if (rawStatus === "cancelled") status = "cancelled";
 
-        /* ✅ SAFE DATE PICK */
-        const baseDate =
-          status === "completed" || status === "cancelled"
-            ? data.updatedAt?.toDate() || data.createdAt?.toDate()
-            : data.createdAt?.toDate();
+        const baseDateStr = (status === "completed" || status === "cancelled")
+            ? (data.updatedAt || data.updated_at || data.createdAt || data.created_at)
+            : (data.createdAt || data.created_at);
 
-        if (!baseDate) return;
+        if (baseDateStr) {
+          const date = new Date(baseDateStr);
+          date.setHours(0, 0, 0, 0);
 
-        const date = new Date(baseDate);
-        date.setHours(0, 0, 0, 0);
+          const dayIndex = date.getDay() === 0 ? 6 : date.getDay() - 1;
 
-        const dayIndex = date.getDay() === 0 ? 6 : date.getDay() - 1;
+          if (date.getTime() === todayStart.getTime()) {
+            if (status === "pending") tempCounts.pending++;
+            if (status === "completed") tempCounts.completed++;
+            if (status === "cancelled") tempCounts.cancelled++;
+          }
 
-        /* =====================
-           TODAY COUNTS
-        ===================== */
-        if (date.getTime() === today.getTime()) {
-          if (status === "pending") tempCounts.pending++;
-          if (status === "completed") tempCounts.completed++;
-          if (status === "cancelled") tempCounts.cancelled++;
+          if (date >= thisWeek.start && date <= thisWeek.end) {
+            baseData[dayIndex].thisWeek++;
+            if (status === "pending") baseData[dayIndex].pending++;
+            if (status === "completed") baseData[dayIndex].completed++;
+            if (status === "cancelled") baseData[dayIndex].cancelled++;
+          }
+
+          if (date >= lastWeek.start && date <= lastWeek.end) {
+            baseData[dayIndex].lastWeek++;
+          }
         }
 
-        /* =====================
-           THIS WEEK
-        ===================== */
-        if (
-          date >= thisWeek.start.toDate() &&
-          date <= thisWeek.end.toDate()
-        ) {
-          baseData[dayIndex].thisWeek++;
-
-          if (status === "pending") baseData[dayIndex].pending++;
-          if (status === "completed") baseData[dayIndex].completed++;
-          if (status === "cancelled") baseData[dayIndex].cancelled++;
-        }
-
-        /* =====================
-           LAST WEEK
-        ===================== */
-        if (
-          date >= lastWeek.start.toDate() &&
-          date <= lastWeek.end.toDate()
-        ) {
-          baseData[dayIndex].lastWeek++;
+        // Pie Chart processing
+        if (rawStatus !== "cancelled") {
+          const brand = data.brand || data.model || "Unknown";
+          pieCounts[brand] = (pieCounts[brand] || 0) + 1;
+          pieSum += 1;
         }
       });
 
-
       setAppointmentData(baseData);
       setCounts(tempCounts);
-    });
+      
+      setStats1(pieCounts);
+      setTotal(pieSum);
 
-    return () => unsub();
-  }, []);
-
-
-
-  const [revenueData, setRevenueData] = useState([]);
-  const [monthlyTotal, setMonthlyTotal] = useState(0);
-
-  useEffect(() => {
-    const now = new Date();
-
-    const yearStart = new Date(now.getFullYear(), 0, 1);
-    const yearEnd = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
-
-    const q = query(
-      collection(db, "billings"),
-      where("createdAt", ">=", Timestamp.fromDate(yearStart)),
-      where("createdAt", "<=", Timestamp.fromDate(yearEnd))
-    );
-
-    const unsub = onSnapshot(q, (snap) => {
-      const months = [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-      ];
-
-      const monthly = months.map((m) => ({
-        month: m,
-        revenue: 0,
-      }));
-
-      let thisMonthTotal = 0;
+      // 3. REVENUE CHART
+      const now = new Date();
       const currentMonth = now.getMonth();
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const monthly = months.map((m) => ({ month: m, revenue: 0 }));
+      let thisMonthTotal = 0;
 
-      snap.forEach((doc) => {
-        const data = doc.data();
+      billingsData.forEach((data) => {
+        if (!data.created_at && !data.createdAt) return;
+        const billedAmount = Number(data.grandTotal || 0);
 
-        if (!data.createdAt) return;
-
-        const status = (data.paymentStatus || "").toLowerCase();
-
-        let paidAmount = 0;
-
-        /* ✅ PAID → FULL GRAND TOTAL */
-        if (status === "paid") {
-          paidAmount = Number(data.grandTotal || 0);
-        }
-
-        /* ✅ PARTIAL → USE paidAmount FIELD */
-        else if (status === "partial") {
-          paidAmount = Number(data.paidAmount || 0);
-        }
-
-        /* ❌ PENDING → IGNORE */
-        else {
-          return;
-        }
-
-        if (paidAmount <= 0) return;
-
-        const date = data.createdAt.toDate();
-        const monthIndex = date.getMonth();
-
-        monthly[monthIndex].revenue += paidAmount;
-
-        if (monthIndex === currentMonth) {
-          thisMonthTotal += paidAmount;
+        if (billedAmount > 0) {
+          const date = new Date(data.created_at || data.createdAt);
+          if (date.getFullYear() === now.getFullYear()) {
+            const monthIndex = date.getMonth();
+            monthly[monthIndex].revenue += billedAmount;
+            if (monthIndex === currentMonth) {
+              thisMonthTotal += billedAmount;
+            }
+          }
         }
       });
 
       setRevenueData(monthly);
       setMonthlyTotal(thisMonthTotal);
-    });
 
-    return () => unsub();
-  }, []);
+      // 4. LATEST BOOKINGS
+      const sortedBookings = [...bookingsData].sort((a, b) => new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0));
+      setPatients(sortedBookings.slice(0, 5));
 
-  const [patients, setPatients] = useState([]);
-  const navigate = useNavigate();
+      // 5. INVENTORY PREVIEW
+      const sortedInventory = [...inventoryData].sort((a, b) => new Date(b.updatedAt || b.updated_at || 0) - new Date(a.updatedAt || a.updated_at || 0));
+      setRows(sortedInventory.slice(0, 5));
 
-  useEffect(() => {
-    const q = query(
-      collection(db, "bookings"),
-      orderBy("createdAt", "desc"),
-      limit(5)
-    );
-
-    const unsub = onSnapshot(q, (snap) => {
-      const list = snap.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setPatients(list);
-    });
-
-    return () => unsub();
-  }, []);
+    } catch (error) {
+      console.error("Dashboard fetch error:", error);
+    }
+  };
 
   const formatDate = (ts) => {
     if (!ts) return "-";
-
-    if (ts.seconds) {
-      return ts.toDate().toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
-    }
-
-    if (ts instanceof Date) {
-      return ts.toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-      });
-    }
-
-    return new Date(ts).toLocaleDateString("en-IN");
+    const date = new Date(ts);
+    return date.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   const BRAND_COLORS = {
-    BMW: "#2563eb",        // blue
-    Audi: "#111827",       // black
-    Benz: "#6b7280",       // silver
+    BMW: "#2563eb",        
+    Audi: "#111827",       
+    Benz: "#6b7280",       
     Mercedes: "#6b7280",
-    Toyota: "#dc2626",     // red
-    Honda: "#16a34a",      // green
-    Hyundai: "#0891b2",    // teal
-    Kia: "#7c3aed",        // violet
-    Ford: "#1d4ed8",       // dark blue
-    Tata: "#0f766e",       // dark teal
-    Mahindra: "#92400e",   // brown
-    Renault: "#f59e0b",    // yellow
-    Nissan: "#374151",     // gray
-    Volkswagen: "#0ea5e9", // light blue
-    Skoda: "#15803d",      // green
+    Toyota: "#dc2626",     
+    Honda: "#16a34a",      
+    Hyundai: "#0891b2",    
+    Kia: "#7c3aed",        
+    Ford: "#1d4ed8",       
+    Tata: "#0f766e",       
+    Mahindra: "#92400e",   
+    Renault: "#f59e0b",    
+    Nissan: "#374151",     
+    Volkswagen: "#0ea5e9", 
+    Skoda: "#15803d",      
   };
 
+  const colors = [
+    "#2563eb", "#16a34a", "#f97316", "#dc2626",
+    "#7c3aed", "#0891b2", "#db2777", "#65a30d",
+  ];
 
   const getColor = (name, index) => {
     if (BRAND_COLORS[name]) return BRAND_COLORS[name];
     return colors[index % colors.length];
   };
-
-
-  const [stats1, setStats1] = useState({});
-  const [total, setTotal] = useState(0);
-
-  useEffect(() => {
-    const q = query(collection(db, "bookings"));
-
-    const unsub = onSnapshot(q, (snap) => {
-      const counts = {};
-      let sum = 0;
-
-      snap.forEach((doc) => {
-        const data = doc.data();
-
-        // ❗ use model instead of brand
-        const brand = data.model || "Unknown";
-
-        // ❗ count bookings instead of stock
-        const value = 1;
-
-        // ❗ ignore cancelled (optional)
-        if (data.status === "Cancelled") return;
-
-        counts[brand] = (counts[brand] || 0) + value;
-        sum += value;
-      });
-
-      setStats1(counts);
-      setTotal(sum);
-    });
-
-    return () => unsub();
-  }, []);
-
-
-  const colors = [
-    "#2563eb", // royal blue
-    "#16a34a", // emerald green
-    "#f97316", // vivid orange
-    "#dc2626", // crimson red
-    "#7c3aed", // rich violet
-    "#0891b2", // teal cyan
-    "#db2777", // rose pink
-    "#65a30d", // lime green
-  ];
-
 
   const gradient = (() => {
     let current = 0;
@@ -545,45 +365,19 @@ const unsubDeliveryOrders = onSnapshot(
     }
 
     const gap = 0.4;
-
     const parts = entries.map(([name, count], i) => {
       const percent = (count / total) * 100;
       const start = current + gap;
       current += percent;
       const end = current - gap;
-
       return `${getColor(name, i)} ${start}% ${end}%`;
     });
 
     return `conic-gradient(${parts.join(", ")})`;
   })();
 
-
-
-  const [rows, setRows] = useState([]);
-
-  useEffect(() => {
-    const q = query(
-      collection(db, "carInventory"),
-      orderBy("updatedAt", "desc"),
-      limit(5)
-    );
-
-    const unsub = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setRows(data);
-    });
-
-    return () => unsub();
-  }, []);
-
-
-
   return (
-    <div className="min-h-screen  p-2">
+    <div className="min-h-screen p-2">
       {/* ===== QUICK ACCESS ===== */}
       <div className="mb-6">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-3">Quick Access</h2>
@@ -609,9 +403,7 @@ const unsubDeliveryOrders = onSnapshot(
       </div>
 
       {/* STATS */}
-
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-6">
-
         <GradientStatCard
           title="TODAY BOOKINGS"
           value={topStats.todayBookings}
@@ -619,7 +411,6 @@ const unsubDeliveryOrders = onSnapshot(
           isUp={true}
           gradient="bg-gradient-to-r from-blue-500 to-blue-300"
         />
-
         <GradientStatCard
           title="TOTAL SERVICES"
           value={topStats.totalServices}
@@ -627,7 +418,6 @@ const unsubDeliveryOrders = onSnapshot(
           isUp={true}
           gradient="bg-gradient-to-r from-indigo-500 to-indigo-300"
         />
-
         <GradientStatCard
           title="TOTAL CUSTOMERS"
           value={topStats.totalCustomers}
@@ -635,7 +425,6 @@ const unsubDeliveryOrders = onSnapshot(
           isUp={true}
           gradient="bg-gradient-to-r from-purple-500 to-violet-400"
         />
-
         <GradientStatCard
           title="TOTAL EMPLOYEES"
           value={topStats.totalEmployees}
@@ -643,7 +432,6 @@ const unsubDeliveryOrders = onSnapshot(
           isUp={true}
           gradient="bg-gradient-to-r from-cyan-500 to-sky-400"
         />
-
         <GradientStatCard
           title="TOTAL PRODUCTS"
           value={topStats.totalProducts}
@@ -651,7 +439,6 @@ const unsubDeliveryOrders = onSnapshot(
           isUp={true}
           gradient="bg-gradient-to-r from-pink-500 to-rose-400"
         />
-
         <GradientStatCard
           title="TOTAL ORDERS"
           value={topStats.totalOrders}
@@ -659,15 +446,20 @@ const unsubDeliveryOrders = onSnapshot(
           isUp={true}
           gradient="bg-gradient-to-r from-orange-500 to-amber-400"
         />
-
         <GradientStatCard
-          title="TOTAL EARNINGS"
-          value={`₹ ${topStats.totalEarnings.toLocaleString("en-IN")}`}
+          title="TOTAL BILLING"
+          value={`₹ ${(topStats.totalBilling || 0).toLocaleString("en-IN")}`}
+          change="+"
+          isUp={true}
+          gradient="bg-gradient-to-r from-green-600 to-emerald-500"
+        />
+        <GradientStatCard
+          title="TOTAL EARNINGS (PAID)"
+          value={`₹ ${(topStats.totalEarnings || 0).toLocaleString("en-IN")}`}
           change="+"
           isUp={true}
           gradient="bg-gradient-to-r from-green-500 to-emerald-400"
         />
-
         <GradientStatCard
           title="DELIVERY ORDERS"
           value={topStats.totalDeliveryOrders}
@@ -675,227 +467,95 @@ const unsubDeliveryOrders = onSnapshot(
           isUp={true}
           gradient="bg-gradient-to-r from-pink-500 to-rose-400"
         />
-
       </div>
-      <div >
 
-
-        {/* TWO COLUMNS INSIDE */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* APPOINTMENTS */}
-          <div className="bg-white rounded-2xl mb-9 shadow-sm border border-gray-100 p-5">
-            {/* HEADER */}
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-4">
-              <h4 className="font-semibold text-gray-800 text-lg">
-                Booking Services
-              </h4>
-
-              {/* LEGEND */}
-              <div className="flex flex-wrap gap-3 text-xs">
-                {[
-                  { color: "bg-blue-500", label: "This Week" },
-                  { color: "bg-green-500", label: "Last Week" },
-                  { color: "bg-yellow-500", label: "Pending" },
-                  { color: "bg-emerald-600", label: "Completed" },
-                  { color: "bg-red-600", label: "Cancelled" },
-                ].map((item) => (
-                  <span key={item.label} className="flex items-center gap-1">
-                    <span className={`w-3 h-3 rounded-full ${item.color}`} />
-                    {item.label}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            {/* BAR CHART */}
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={appointmentData || []} barGap={4}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-
-                  <XAxis
-                    dataKey="day"
-                    tick={{ fontSize: 12 }}
-                    stroke="#94a3b8"
-                  />
-
-                  <YAxis
-                    allowDecimals={false}
-                    tick={{ fontSize: 12 }}
-                    stroke="#94a3b8"
-                    domain={[0, "dataMax + 2"]}
-                  />
-
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "10px",
-                      border: "none",
-                      boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-                    }}
-                  />
-
-                  {/* THIS WEEK */}
-                  <Bar
-                    dataKey="thisWeek"
-                    fill="#3b82f6"
-                    radius={[4, 4, 0, 0]}
-                    barSize={24}
-                  />
-
-                  {/* LAST WEEK */}
-                  <Bar
-                    dataKey="lastWeek"
-                    fill="#22c55e"
-                    radius={[4, 4, 0, 0]}
-                    barSize={24}
-                  />
-
-                  {/* PENDING */}
-                  <Bar
-                    dataKey="pending"
-                    fill="#eab308"
-                    radius={[4, 4, 0, 0]}
-                    barSize={24}
-                  />
-
-                  {/* COMPLETED */}
-                  <Bar
-                    dataKey="completed"
-                    fill="#16a34a"
-                    radius={[4, 4, 0, 0]}
-                    barSize={24}
-                  />
-
-                  {/* CANCELLED */}
-                  <Bar
-                    dataKey="cancelled"
-                    fill="#dc2626"
-                    radius={[4, 4, 0, 0]}
-                    barSize={14}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* STATUS CARDS */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 mt-5 gap-3 text-center">
-              <div className="bg-yellow-50 text-yellow-600 rounded-xl py-3 font-semibold shadow-sm">
-                Pending: {counts?.pending ?? 0}
-              </div>
-
-              <div className="bg-green-50 text-green-600 rounded-xl py-3 font-semibold shadow-sm">
-                Completed: {counts?.completed ?? 0}
-              </div>
-
-              <div className="bg-red-50 text-red-600 rounded-xl py-3 font-semibold shadow-sm">
-                Cancelled: {counts?.cancelled ?? 0}
-              </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* APPOINTMENTS */}
+        <div className="bg-white rounded-2xl mb-9 shadow-sm border border-gray-100 p-5">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2 mb-4">
+            <h4 className="font-semibold text-gray-800 text-lg">Booking Services</h4>
+            <div className="flex flex-wrap gap-3 text-xs">
+              {[
+                { color: "bg-blue-500", label: "This Week" },
+                { color: "bg-green-500", label: "Last Week" },
+                { color: "bg-yellow-500", label: "Pending" },
+                { color: "bg-emerald-600", label: "Completed" },
+                { color: "bg-red-600", label: "Cancelled" },
+              ].map((item) => (
+                <span key={item.label} className="flex items-center gap-1">
+                  <span className={`w-3 h-3 rounded-full ${item.color}`} />
+                  {item.label}
+                </span>
+              ))}
             </div>
           </div>
 
-
-
-          <div className="bg-white rounded-2xl mb-9 shadow-sm border border-gray-100 p-6">
-            {/* HEADER */}
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="font-semibold text-gray-800">
-                Financial Overview
-              </h4>
-
-              <span className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full">
-                This Year
-              </span>
-            </div>
-
-            {/* TOTAL */}
-            <h2 className="text-3xl font-bold text-gray-900 mb-6">
-              ₹ {(monthlyTotal || 0).toLocaleString("en-IN")}
-            </h2>
-
-            {/* CHART */}
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={revenueData}>
-                  {/* GRID */}
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#f1f5f9"
-                    vertical={false}
-                  />
-
-                  {/* X AXIS */}
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fontSize: 12, fill: "#64748b" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-
-                  {/* Y AXIS */}
-                  <YAxis
-                    tickFormatter={(v) =>
-                      `₹${Number(v).toLocaleString("en-IN")}`
-                    }
-                    tick={{ fontSize: 12, fill: "#64748b" }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={80}
-                  />
-
-                  {/* TOOLTIP */}
-                  <Tooltip
-                    formatter={(v) =>
-                      `₹ ${Number(v).toLocaleString("en-IN")}`
-                    }
-                    cursor={{ fill: "rgba(14,165,233,0.08)" }}
-                    contentStyle={{
-                      borderRadius: "12px",
-                      border: "none",
-                      boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
-                    }}
-                  />
-
-                  {/* GRADIENT */}
-                  <defs>
-                    <linearGradient
-                      id="revenueGradient"
-                      x1="0"
-                      y1="0"
-                      x2="0"
-                      y2="1"
-                    >
-                      <stop offset="0%" stopColor="#0ea5e9" stopOpacity={0.9} />
-                      <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0.3} />
-                    </linearGradient>
-                  </defs>
-
-                  {/* BAR */}
-                  <Bar
-                    dataKey="revenue"
-                    fill="url(#revenueGradient)"
-                    radius={[8, 8, 0, 0]}
-                    barSize={52}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={appointmentData || []} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="day" tick={{ fontSize: 12 }} stroke="#94a3b8" />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} stroke="#94a3b8" domain={[0, "dataMax + 2"]} />
+                <Tooltip contentStyle={{ borderRadius: "10px", border: "none", boxShadow: "0 4px 20px rgba(0,0,0,0.08)" }} />
+                <Bar dataKey="thisWeek" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={24} />
+                <Bar dataKey="lastWeek" fill="#22c55e" radius={[4, 4, 0, 0]} barSize={24} />
+                <Bar dataKey="pending" fill="#eab308" radius={[4, 4, 0, 0]} barSize={24} />
+                <Bar dataKey="completed" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={24} />
+                <Bar dataKey="cancelled" fill="#dc2626" radius={[4, 4, 0, 0]} barSize={14} />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-3 mt-5 gap-3 text-center">
+            <div className="bg-yellow-50 text-yellow-600 rounded-xl py-3 font-semibold shadow-sm">
+              Pending: {counts?.pending ?? 0}
+            </div>
+            <div className="bg-green-50 text-green-600 rounded-xl py-3 font-semibold shadow-sm">
+              Completed: {counts?.completed ?? 0}
+            </div>
+            <div className="bg-red-50 text-red-600 rounded-xl py-3 font-semibold shadow-sm">
+              Cancelled: {counts?.cancelled ?? 0}
+            </div>
+          </div>
+        </div>
 
+        {/* REVENUE */}
+        <div className="bg-white rounded-2xl mb-9 shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="font-semibold text-gray-800">Financial Overview</h4>
+            <span className="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded-full">This Year</span>
+          </div>
+
+          <h2 className="text-3xl font-bold text-gray-900 mb-6">
+            ₹ {(monthlyTotal || 0).toLocaleString("en-IN")}
+          </h2>
+
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={revenueData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={(v) => `₹${Number(v || 0).toLocaleString("en-IN")}`} tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} width={80} />
+                <Tooltip formatter={(v) => `₹ ${Number(v || 0).toLocaleString("en-IN")}`} cursor={{ fill: "rgba(14,165,233,0.08)" }} contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 10px 25px rgba(0,0,0,0.08)" }} />
+                <defs>
+                  <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#0ea5e9" stopOpacity={0.9} />
+                    <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0.3} />
+                  </linearGradient>
+                </defs>
+                <Bar dataKey="revenue" fill="url(#revenueGradient)" radius={[8, 8, 0, 0]} barSize={52} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
 
-
-      {/* PATIENT + TREATMENT */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* PATIENT LIST */}
+        {/* PATIENT/BOOKING LIST */}
         <div className="bg-white rounded-xl shadow p-5 lg:col-span-2">
           <div className="flex justify-between mb-4">
             <h3 className="font-semibold">Booking List</h3>
-            <span
-              className="text-blue-600 cursor-pointer hover:underline"
-              onClick={() => navigate("/carservies")}
-            >
+            <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => navigate("/admin/bookings")}>
               View All
             </span>
           </div>
@@ -903,159 +563,81 @@ const unsubDeliveryOrders = onSnapshot(
           <div className="bg-white rounded-2xl shadow border border-gray-200 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm text-gray-700 border-collapse">
-
-                {/* TABLE HEAD */}
                 <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
                   <tr>
                     <th className="px-3 py-4 text-left font-bold">S No</th>
                     <th className="px-3 py-4 text-left font-bold">Customer</th>
                     <th className="px-3 py-4 text-left font-bold">Contact</th>
                     <th className="px-3 py-4 text-left font-bold">Car</th>
-                    <th className="px-3 py-4 text-left font-bold">Last Visit</th>
+                    <th className="px-3 py-4 text-left font-bold">Booking Date</th>
                   </tr>
                 </thead>
-
-                {/* TABLE BODY */}
                 <tbody>
                   {patients.map((item, index) => (
                     <tr
                       key={item.id}
                       className="border-b border-gray-300 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => navigate(`/services/view/${item.id}`)}
+                      onClick={() => navigate(`/admin/services/${item.id}`)}
                     >
-                      {/* S No */}
-                      <td className="px-3 py-3 font-semibold">
-                        {index + 1}
-                      </td>
-
-                      {/* CUSTOMER NAME + BOOKING ID */}
+                      <td className="px-3 py-3 font-semibold">{index + 1}</td>
                       <td className="px-3 py-3">
                         <div className="font-medium">{item.name || "-"}</div>
-                        <div className="text-xs text-gray-500">
-                          {item.bookingId || "-"}
-                        </div>
+                        <div className="text-xs text-gray-500">{item.bookingId || "-"}</div>
                       </td>
-
-                      {/* CONTACT */}
                       <td className="px-3 py-3">
                         {item.phone || "-"}
-                        {item.altPhone && (
-                          <div className="text-xs text-gray-400">
-                            Alt: {item.altPhone}
-                          </div>
-                        )}
+                        {item.altPhone && <div className="text-xs text-gray-400">Alt: {item.altPhone}</div>}
                       </td>
-
-                      {/* CAR */}
-                      <td className="px-3 py-3">
-                        {item.brand || "-"} {item.model || ""}
-                      </td>
-
-                      {/* LAST VISIT */}
-                      <td className="px-3 py-3">
-                        {item.createdAt
-                          ? formatDate(item.createdAt)
-                          : "-"}
-                      </td>
+                      <td className="px-3 py-3">{item.brand || "-"} {item.model || ""}</td>
+                      <td className="px-3 py-3">{item.created_at || item.createdAt ? formatDate(item.created_at || item.createdAt) : "-"}</td>
                     </tr>
                   ))}
-
                   {patients.length === 0 && (
                     <tr>
-                      <td
-                        colSpan="5"
-                        className="text-center py-6 text-gray-400"
-                      >
-                        No services found
-                      </td>
+                      <td colSpan="5" className="text-center py-6 text-gray-400">No bookings found</td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
           </div>
-
         </div>
 
-
-        {/* TREATMENT STATS */}
+        {/* CAR MODELS STATS */}
         <div className="bg-white rounded-xl shadow p-6">
-          <h3 className="font-semibold text-gray-800 mb-5">
-            Car Products by Brand
-          </h3>
-
+          <h3 className="font-semibold text-gray-800 mb-5">Bookings by Car Model</h3>
           <div className="flex-1 w-full space-y-3 text-sm">
             {Object.entries(stats1).map(([brand, stock], index) => {
-              const percent = total
-                ? Math.round((stock / total) * 100)
-                : 0;
-
+              const percent = total ? Math.round((stock / total) * 100) : 0;
               return (
-                <div
-                  key={brand}
-                  className="flex items-center justify-between"
-                >
+                <div key={brand} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span
-                      className="w-3 h-3 rounded-full"
-                      style={{
-                        backgroundColor: getColor(brand, index),
-                      }}
-                    />
-                    <span className="font-medium text-gray-700">
-                      {brand}
-                    </span>
+                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: getColor(brand, index) }} />
+                    <span className="font-medium text-gray-700">{brand}</span>
                   </div>
-
-                  {/* STOCK + % */}
-                  <span className="text-gray-600">
-                    {stock} • {percent}%
-                  </span>
+                  <span className="text-gray-600">{stock} • {percent}%</span>
                 </div>
               );
             })}
-
-            {total === 0 && (
-              <div className="text-center text-gray-400 py-6">
-                No products found
-              </div>
-            )}
+            {total === 0 && <div className="text-center text-gray-400 py-6">No data found</div>}
           </div>
 
           <div className="relative flex mt-10 items-center justify-center">
-            {/* OUTER DONUT */}
-            <div
-              className="w-40 h-40 rounded-full"
-              style={{ background: gradient }}
-            />
-
-            {/* INNER CIRCLE */}
+            <div className="w-40 h-40 rounded-full" style={{ background: gradient }} />
             <div className="absolute w-24 h-24 bg-slate-900 rounded-full flex flex-col items-center justify-center shadow-inner">
-              <p className="text-2xl font-bold text-white leading-none">
-                {total}
-              </p>
-              <p className="text-[10px] text-gray-300 leading-none">
-                Total Bookings
-              </p>
+              <p className="text-2xl font-bold text-white leading-none">{total}</p>
+              <p className="text-[10px] text-gray-300 leading-none">Total Bookings</p>
             </div>
           </div>
-
         </div>
       </div>
 
-      {/* FOLLOW UPS + EQUIPMENT */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* FOLLOW UPS */}
-
-
         {/* INVENTORY PREVIEW */}
         <div className="bg-white rounded-xl shadow p-5 lg:col-span-2">
           <div className="flex justify-between mb-4">
             <h3 className="font-semibold">Inventory Status</h3>
-            <span
-              className="text-blue-600 cursor-pointer hover:underline"
-              onClick={() => navigate("/inventory")}
-            >
+            <span className="text-blue-600 cursor-pointer hover:underline" onClick={() => navigate("/admin/inventory")}>
               View All
             </span>
           </div>
@@ -1073,70 +655,33 @@ const unsubDeliveryOrders = onSnapshot(
                     <th className="px-3 py-4 text-left font-bold">Supplier</th>
                   </tr>
                 </thead>
-
                 <tbody>
-                  {/* EMPTY STATE */}
                   {rows.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="text-center p-4 text-gray-400">
-                        No inventory found
-                      </td>
+                      <td colSpan={6} className="text-center p-4 text-gray-400">No inventory found</td>
                     </tr>
                   )}
-
-                  {/* TABLE ROWS */}
                   {rows.map((r, index) => (
                     <tr
                       key={r.id}
-                      className={`border-b  border-gray-300 ${r.stockQty <= r.minStock
-                        ? "bg-red-50 text-red-700"
-                        : "hover:bg-gray-50"
-                        }`}
+                      className={`border-b border-gray-300 ${(r.stockQty || r.quantity) <= (r.minStock || 0) ? "bg-red-50 text-red-700" : "hover:bg-gray-50"}`}
                     >
-                      {/* S No */}
                       <td className="px-3 py-4">{index + 1}</td>
-
-                      {/* PART NAME */}
-                      <td className="px-3 py-4">
-                        {r.partName}
-                      </td>
-
-                      {/* CATEGORY */}
-                      <td className="px-3 py-4">
-                        {r.category}
-                      </td>
-
-                      {/* STOCK QTY */}
-                      <td className="px-3 py-4 ">
-                        {r.stockQty}
-                      </td>
-
-                      {/* MIN STOCK */}
-                      <td className="px-3 py-4 ">
-                        {r.minStock}
-                      </td>
-
-                      {/* VENDOR */}
-                      <td className="px-3 py-4">
-                        {r.vendor}
-                      </td>
+                      <td className="px-3 py-4">{r.partName || r.name}</td>
+                      <td className="px-3 py-4">{r.category}</td>
+                      <td className="px-3 py-4">{r.stockQty || r.quantity}</td>
+                      <td className="px-3 py-4">{r.minStock || 0}</td>
+                      <td className="px-3 py-4">{r.vendor || r.supplier || '-'}</td>
                     </tr>
                   ))}
                 </tbody>
-
-
               </table>
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );
 };
 
 export default Dashboard;
-
-
-
-
