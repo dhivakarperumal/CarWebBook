@@ -164,7 +164,7 @@ const AddServiceVehicle = () => {
 
   /* ===== FORM ===== */
   return (
-    <div className="max-w-4xl mx-auto p-4 pb-16">
+    <div className="max-w-6xl bg-white rounded-xl shadow-lg mx-auto p-9 pb-16">
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button
@@ -174,9 +174,7 @@ const AddServiceVehicle = () => {
           <ArrowLeft className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-black to-cyan-400 flex items-center justify-center shadow">
-            <Car className="w-5 h-5 text-white" />
-          </div>
+         
           <div>
             <h1 className="text-lg font-bold text-gray-800 leading-none">Add Service Vehicle</h1>
             <p className="text-xs text-gray-400 mt-0.5 whitespace-pre-line">Register a new vehicle for service (Auto-creates login using Email & Phone)</p>
