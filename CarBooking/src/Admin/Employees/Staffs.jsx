@@ -14,12 +14,12 @@ import {
 
 
 const Staffs = () => {
+  const { userProfile } = useAuth();
   const [staff, setStaff] = useState([]);
   const navigate = useNavigate();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [departmentFilter, setDepartmentFilter] = useState("all");
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -43,10 +43,7 @@ const Staffs = () => {
     const matchesStatus =
       statusFilter === "all" || s.status === statusFilter;
 
-    const matchesDepartment =
-      departmentFilter === "all" || s.department === departmentFilter;
-
-    return matchesSearch && matchesStatus && matchesDepartment;
+    return matchesSearch && matchesStatus;
   });
 
   const totalPages = Math.ceil(filteredStaff.length / itemsPerPage);
@@ -57,14 +54,10 @@ const Staffs = () => {
   );
 
 
-  // useEffect(() => {
-  //   loadStaff();
-  // }, []);
-
   useEffect(() => {
     loadStaff();
     setCurrentPage(1);
-  }, [search, statusFilter, departmentFilter]);
+  }, [search, statusFilter]);
 
 
   const handleDelete = async (id) => {
@@ -82,25 +75,26 @@ const Staffs = () => {
   const totalStaff = staff.length;
   const activeStaff = staff.filter(s => s.status === "active").length;
   const inactiveStaff = staff.filter(s => s.status !== "active").length;
-  const departments = new Set(staff.map(s => s.department)).size;
 
   return (
     <div className="p-4 min-h-screen space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-        <h3 className="text-lg font-semibold"></h3>
-        <button
-          onClick={() => navigate("/admin/addstaff")}
-          className="inline-flex items-center gap-2
-  bg-black text-white
-  px-4 h-10
-  rounded-md border border-gray-300 text-sm font-medium
-  hover:bg-gray-900
-  active:scale-95
-  focus:outline-none focus:ring-2 focus:ring-black/40
-  transition"
-        >
-          + Add Employees
-        </button>
+        <h3 className="text-lg font-semibold text-gray-800">Technicians Management</h3>
+        {(userProfile?.role === "admin" || userProfile?.role === "manager") && (
+          <button
+            onClick={() => navigate("/admin/addstaff")}
+            className="inline-flex items-center gap-2
+    bg-black text-white
+    px-4 h-10
+    rounded-md border border-gray-300 text-sm font-medium
+    hover:bg-gray-900
+    active:scale-95
+    focus:outline-none focus:ring-2 focus:ring-black/40
+    transition"
+          >
+            + Add Employees
+          </button>
+        )}
       </div>
 
       {/* ===== TOP CARDS ===== */}
@@ -139,17 +133,6 @@ const Staffs = () => {
           </div>
         </div>
 
-        {/* Departments */}
-        <div className="bg-white rounded-md border border-gray-300 shadow-sm  p-5 flex justify-between items-center">
-          <div>
-            <p className="text-sm text-gray-500">Departments</p>
-            <h2 className="text-3xl font-bold text-gray-900">{departments}</h2>
-          </div>
-          <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center">
-            <FaBuilding className="text-white text-xl" />
-          </div>
-        </div>
-
       </div>
 
 
@@ -178,19 +161,6 @@ const Staffs = () => {
             <option value="inactive">Inactive</option>
           </select>
 
-          {/* DEPARTMENT FILTER */}
-          <select
-            value={departmentFilter}
-            onChange={(e) => setDepartmentFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg bg-white"
-          >
-            <option value="all">All Departments</option>
-            {[...new Set(staff.map(s => s.department))].map((dept) => (
-              <option key={dept} value={dept}>
-                {dept}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 
@@ -208,11 +178,12 @@ const Staffs = () => {
                 <th className="px-4 py-4 text-left font-semibold">Email</th>
                 <th className="px-4 py-4 text-left font-semibold">Phone</th>
                 <th className="px-4 py-4 text-left font-semibold">Role</th>
-                <th className="px-4 py-4 text-left font-semibold">Department</th>
                 <th className="px-4 py-4 text-left font-semibold">Time In</th>
                 <th className="px-4 py-4 text-left font-semibold">Time Out</th>
                 <th className="px-4 py-4 text-left font-semibold">Status</th>
-                <th className="px-4 py-4 text-left font-semibold">Actions</th>
+                {(userProfile?.role === "admin" || userProfile?.role === "manager") && (
+                  <th className="px-4 py-4 text-left font-semibold">Actions</th>
+                )}
               </tr>
             </thead>
 
@@ -235,7 +206,6 @@ const Staffs = () => {
                   <td className="px-4 py-4">{s.email}</td>
                   <td className="px-4 py-4">{s.phone}</td>
                   <td className="px-4 py-4">{s.role}</td>
-                  <td className="px-4 py-4">{s.department}</td>
                   <td className="px-4 py-4 text-sm">{s.time_in || "N/A"}</td>
                   <td className="px-4 py-4 text-sm">{s.time_out || "N/A"}</td>
 
@@ -250,26 +220,31 @@ const Staffs = () => {
                     </span>
                   </td>
 
-                  <td className="px-4 py-4 flex gap-2">
-                    <button
-                      onClick={() => navigate(`/admin/viewstaff/${s.id}`)}
-                      className="p-3 rounded-full  border border-gray-300  transition"
-                    >
-                      <FaEye />
-                    </button>
-                    <button
-                      onClick={() => navigate(`/admin/addstaff/${s.id}`)}
-                      className="p-3  border border-gray-300 rounded-full  transition"
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(s.id)}
-                      className="p-3 rounded-full  border border-gray-300 transition"
-                    >
-                      <FaTrash />
-                    </button>
-                  </td>
+                   {(userProfile?.role === "admin" || userProfile?.role === "manager") && (
+                    <td className="px-4 py-4 flex gap-2">
+                      <button
+                        onClick={() => navigate(`/admin/viewstaff/${s.id}`)}
+                        className="p-3 rounded-full  border border-gray-200  transition hover:bg-gray-100"
+                        title="View Details"
+                      >
+                        <FaEye />
+                      </button>
+                      <button
+                        onClick={() => navigate(`/admin/addstaff/${s.id}`)}
+                        className="p-3  border border-gray-200 rounded-full  transition hover:bg-gray-100"
+                        title="Edit Staff"
+                      >
+                        <FaEdit />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(s.id)}
+                        className="p-3 rounded-full  border border-gray-200 transition hover:bg-red-50 hover:text-red-600"
+                        title="Delete Staff"
+                      >
+                        <FaTrash />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>

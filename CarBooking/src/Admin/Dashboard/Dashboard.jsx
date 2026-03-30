@@ -23,6 +23,7 @@ import {
 
 import api from "../../api";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 
 /* -------------------- COMPONENTS -------------------- */
 
@@ -376,20 +377,30 @@ const Dashboard = () => {
     return `conic-gradient(${parts.join(", ")})`;
   })();
 
+  const { profileName: userProfile } = useAuth();
+  
+  const quickActions = useMemo(() => {
+    const role = (userProfile?.role || "").toLowerCase();
+    const actions = [
+      { label: "Add Service Vehicle", icon: "🚗", path: "/admin/addservicevehicle", color: "from-sky-500 to-cyan-400", roles: ["admin", "manager", "receptionist", "mechanic"] },
+      { label: "Add Booking", icon: "📅", path: "/admin/addbooking", color: "from-blue-500 to-indigo-400", roles: ["admin", "manager", "receptionist"] },
+      { label: "Add Billing", icon: "🧾", path: "/admin/addbillings", color: "from-emerald-500 to-green-400", roles: ["admin", "manager", "receptionist"] },
+      { label: "Add Staff", icon: "👨‍🔧", path: "/admin/addstaff", color: "from-violet-500 to-purple-400", roles: ["admin", "manager"] },
+      { label: "Add Inventory", icon: "📦", path: "/admin/additemsinventory", color: "from-orange-500 to-amber-400", roles: ["admin", "manager", "mechanic"] },
+      { label: "Add Product", icon: "🛒", path: "/admin/addproducts", color: "from-rose-500 to-pink-400", roles: ["admin", "manager"] },
+    ];
+
+    if (role === "admin" || role === "manager") return actions;
+    return actions.filter(a => a.roles.includes(role));
+  }, [userProfile?.role]);
+
   return (
     <div className="min-h-screen p-2">
       {/* ===== QUICK ACCESS ===== */}
       <div className="mb-6">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-3">Quick Access</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          {[
-            { label: "Add Service Vehicle", icon: "🚗", path: "/admin/addservicevehicle", color: "from-sky-500 to-cyan-400" },
-            { label: "Add Booking", icon: "📅", path: "/admin/addbooking", color: "from-blue-500 to-indigo-400" },
-            { label: "Add Billing", icon: "🧾", path: "/admin/addbillings", color: "from-emerald-500 to-green-400" },
-            { label: "Add Staff", icon: "👨‍🔧", path: "/admin/addstaff", color: "from-violet-500 to-purple-400" },
-            { label: "Add Inventory", icon: "📦", path: "/admin/additemsinventory", color: "from-orange-500 to-amber-400" },
-            { label: "Add Product", icon: "🛒", path: "/admin/addproducts", color: "from-rose-500 to-pink-400" },
-          ].map((action) => (
+          {quickActions.map((action) => (
             <button
               key={action.label}
               onClick={() => navigate(action.path)}

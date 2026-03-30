@@ -25,69 +25,16 @@ import {
 import { useAuth } from "../PrivateRouter/AuthContext";
 
 /* ================= ROLE PERMISSIONS ================= */
-const ROLE_PERMISSIONS = {
-  mechanic: [
-    "Dashboard",
-    "Service Bookings",
-    "Assign Services",
-    "Service",
-    "Parts Inventory",
-    "Service Reports",
-    "Back Home"
-  ],
-  receptionist: [
-    "Dashboard",
-    "Service Bookings",
-    "Assign Services",
-    "Service",
-    "Customers",
-    "Billing",
-    "Service Packages",
-    "Service Pricing",
-    "Products",
-    "Orders",
-    "Staff Attendance",
-    "Back Home"
-  ],
-  // Admin and Manager see everything
-};
 
-/* ================= NAV ITEMS ================= */
 const navItems = [
-  { path: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { path: "/employee", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { path: "/employee/cars", label: "Vehicle Management", icon: CarFront },
 
-  { path: "/admin/bookings", label: "Service Bookings", icon: CalendarCheck },
-  { path: "/admin/assignservices", label: "Assign Services", icon: UserCheck },
-  { path: "/admin/services", label: "Service", icon: Wrench },
-  { path: "/admin/customers", label: "Customers", icon: Users },
-  { path: "/admin/billing", label: "Billing", icon: Receipt },
+  // { path: "/employee/bookings", label: "Service Bookings", icon: CalendarCheck },
+  { path: "/employee/assignservices", label: "Assign Services", icon: UserCheck },
+  { path: "/employee/services", label: "Service", icon: Wrench },
 
-  { path: "/admin/serviceslist", label: "Service Packages", icon: ShieldCheck },
-  { path: "/admin/priceslist", label: "Service Pricing", icon: BarChart3 },
-
-  {
-    label: "Products",
-    icon: Car,
-    children: [
-      { path: "/admin/allProducts", label: "Products", icon: CarFront },
-      { path: "/admin/productbilling", label: "Product Billing", icon: Receipt },
-      { path: "/admin/stockdetails", label: "Spare Parts Stock", icon: Boxes },
-    ],
-  },
-
-  { path: "/admin/orders", label: "Orders", icon: ClipboardList },
-
-  { path: "/admin/employees", label: "Technicians", icon: UserCog },
-
-  { path: "/admin/inventory", label: "Parts Inventory", icon: PackageSearch },
-
-  {
-    path: "/admin/overall-attendance",
-    label: "Staff Attendance",
-    icon: ClipboardList,
-  },
-
-  { path: "/admin/reports", label: "Service Reports", icon: FileText },
+  { path: "/employee/billing", label: "Billing", icon: Receipt },
 
   { path: "/", label: "Back Home", icon: Home },
 ];
@@ -100,16 +47,12 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
   /* ================= HELPERS ================= */
   const routeMappings = {
-    "/admin/addserviceparts": "/admin/services",
-    "/admin/addbillings": "/admin/billing",
-    "/admin/addprice": "/admin/priceslist",
-    "/admin/addproducts": "/admin/allProducts",
-    "/admin/addstock": "/admin/stockdetails",
-    "/admin/addstaff": "/admin/employees",
-    "/admin/addbooking": "/admin/bookings",
-    "/admin/additemsinventory": "/admin/inventory",
-    "/admin/addcarservies": "/admin/carservies",
-    "/admin/addservices": "/admin/serviceslist",
+    "/employee/addserviceparts": "/employee/services",
+    "/employee/addbillings": "/employee/billing",
+    "/employee/addprice": "/employee/priceslist",
+    "/employee/addproducts": "/employee/allProducts",
+    "/employee/addcarservies": "/employee/carservies",
+    "/employee/addservices": "/employee/serviceslist",
   };
 
   const isRouteActive = (path, exact) => {
@@ -130,35 +73,35 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const isChildActive = (children) =>
     children?.some((child) => isRouteActive(child.path, false));
 
-  /* ===== AUTO OPEN DROPDOWN WHEN CHILD ACTIVE ===== */
-  useEffect(() => {
-    navItems.forEach((item) => {
-      if (item.children && isChildActive(item.children)) {
-        setOpenMenu(item.label);
-      }
-    });
-  }, [location.pathname]);
-
-  const toggleMenu = (label) => {
-    setOpenMenu(openMenu === label ? null : label);
-  };
-
   /* ===== FILTER NAV BY ROLE ===== */
   const dashboardPath = useMemo(() => {
     const role = (userProfile?.role || "").toLowerCase();
     if (role === "mechanic" || role === "staff") return "/employee";
-    return "/admin";
+    return "/employee";
+  }, [userProfile?.role]);
+
+  const assignPath = useMemo(() => {
+    const role = (userProfile?.role || "").toLowerCase();
+    if (role === "mechanic" || role === "staff") return "/employee/assignservices";
+    return "/employee/assignservices";
   }, [userProfile?.role]);
 
   const filteredNavItems = useMemo(() => {
-    const role = (userProfile?.role || "").toLowerCase();
-    if (role === "admin" || role === "manager") return navItems;
-    
-    const allowed = ROLE_PERMISSIONS[role];
-    if (!allowed) return [navItems[0], navItems[navItems.length - 1]]; // Default to dashboard and home
-    
-    return navItems.filter((item) => allowed.includes(item.label));
-  }, [userProfile?.role]);
+    return navItems;
+  }, []);
+
+  /* ===== AUTO OPEN DROPDOWN WHEN CHILD ACTIVE ===== */
+  useEffect(() => {
+    filteredNavItems.forEach((item) => {
+      if (item.children && isChildActive(item.children)) {
+        setOpenMenu(item.label);
+      }
+    });
+  }, [location.pathname, filteredNavItems]);
+
+  const toggleMenu = (label) => {
+    setOpenMenu(openMenu === label ? null : label);
+  };
 
   return (
     <>
@@ -288,7 +231,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
             }
 
             /* ===== NORMAL ITEM ===== */
-            const itemPath = item.label === "Dashboard" ? dashboardPath : item.path;
+            let itemPath = item.path;
+            if (item.label === "Dashboard") itemPath = dashboardPath;
+            if (item.label === "Assign Services") itemPath = assignPath;
+
             const isActive = isRouteActive(itemPath, item.exact);
 
             return (

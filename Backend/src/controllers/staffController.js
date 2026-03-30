@@ -47,18 +47,18 @@ exports.addStaff = async (req, res) => {
     } = req.body;
 
     // Hash password
-    const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
+    // 🔹 Fallback: Auto-set password to phone number if missing
+    const finalPassword = password || phone;
+    const hashedPassword = await bcrypt.hash(finalPassword, 10);
     
     // Generate unique user ID
     const uid = crypto.randomUUID();
 
     // 1. Insert into users table for login
-    if (password) {
-      await db.query(
-        'INSERT INTO users (uid, username, email, mobile, password, role) VALUES (?, ?, ?, ?, ?, ?)',
-        [uid, name, email, phone, hashedPassword, role || 'staff']
-      );
-    }
+    await db.query(
+      'INSERT INTO users (uid, username, email, mobile, password, role) VALUES (?, ?, ?, ?, ?, ?)',
+      [uid, name, email, phone, hashedPassword, role || 'staff']
+    );
 
     // 2. Insert into staff table
     const sql = `

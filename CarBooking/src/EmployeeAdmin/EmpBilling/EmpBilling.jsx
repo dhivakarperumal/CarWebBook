@@ -1,0 +1,264 @@
+import { useEffect, useMemo, useState } from "react";
+import api from "../../api";
+import {
+  Search,
+  Printer,
+  FileText,
+  Clock,
+  CheckCircle2,
+  AlertCircle
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { useAuth } from "../../PrivateRouter/AuthContext";
+
+const StatusBadge = ({ status }) => {
+  const map = {
+    paid: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    partial: "bg-orange-100 text-orange-700 border-orange-200",
+    pending: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  };
+  const s = status?.toLowerCase() || "pending";
+  return (
+    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${map[s] || "bg-gray-100 text-gray-700 border-gray-200"}`}>
+      {s}
+    </span>
+  );
+};
+
+const EmpBilling = () => {
+  const { profileName: userProfile } = useAuth();
+  const [bills, setBills] = useState([]);
+  const [myBookings, setMyBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  useEffect(() => {
+    loadData();
+  }, [userProfile]);
+
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [billRes, bookRes] = await Promise.all([
+        api.get('/billings'),
+        api.get('/bookings')
+      ]);
+
+      const mechanicName = userProfile?.displayName || "";
+      const assignedBookings = bookRes.data.filter(b => 
+        (b.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase()
+      );
+      
+      const assignedBookingIds = new Set(assignedBookings.map(b => b.bookingId));
+      
+      // Filter bills that belong to this technician's assigned bookings
+      const myBills = billRes.data.filter(bill => 
+        assignedBookingIds.has(bill.bookingId)
+      );
+
+      setBills(myBills);
+      setMyBookings(assignedBookings);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load billing history");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredBills = useMemo(() => {
+    return bills.filter((b) => {
+      const text = `${b.invoiceNo} ${b.customerName} ${b.carNumber} ${b.bookingId}`.toLowerCase();
+      const matchesSearch = text.includes(search.toLowerCase());
+      const matchesStatus = statusFilter === "all" || b.paymentStatus?.toLowerCase() === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [bills, search, statusFilter]);
+
+  const fetchAndPrint = async (id) => {
+    try {
+      const res = await api.get(`/billings/${id}`);
+      printInvoice(res.data);
+    } catch {
+      toast.error("Failed to load invoice for printing");
+    }
+  };
+
+  const printInvoice = (bill) => {
+    const win = window.open("", "", "width=900,height=650");
+    win.document.write(`
+      <html>
+      <head>
+        <title>Invoice ${bill.invoiceNo}</title>
+        <style>
+          body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; }
+          .header { border-bottom: 2px solid #f1f5f9; padding-bottom: 20px; margin-bottom: 30px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { text-align: left; padding: 12px; border-bottom: 1px solid #f1f5f9; }
+          th { font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 800; }
+          .total-box { margin-top: 30px; text-align: right; }
+          .total-row { display: flex; justify-content: flex-end; gap: 20px; font-weight: 800; margin-bottom: 5px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>INVOICE</h1>
+          <p>#${bill.invoiceNo} | Date: ${new Date(bill.createdAt).toLocaleDateString()}</p>
+        </div>
+        <p><b>Customer:</b> ${bill.customerName}</p>
+        <p><b>Vehicle:</b> ${bill.carNumber} (${bill.bookingId})</p>
+        
+        <table>
+          <thead>
+            <tr><th>Description</th><th>Qty</th><th>Price</th><th>Total</th></tr>
+          </thead>
+          <tbody>
+            ${(bill.parts || []).map(p => `
+              <tr><td>${p.partName}</td><td>${p.qty}</td><td>₹${p.price}</td><td>₹${p.total}</td></tr>
+            `).join("")}
+          </tbody>
+        </table>
+
+        <div class="total-box">
+          <div class="total-row"><span>Subtotal:</span> <span>₹${bill.subTotal}</span></div>
+          <div class="total-row"><span>GST:</span> <span>₹${bill.gstAmount}</span></div>
+          <div class="total-row" style="font-size: 20px; color: #020617; margin-top: 10px;"><span>Grand Total:</span> <span>₹${bill.grandTotal}</span></div>
+        </div>
+        <script>window.print(); window.close();</script>
+      </body>
+      </html>
+    `);
+    win.document.close();
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 animate-pulse">
+        <FileText className="w-12 h-12 text-blue-500 animate-spin mb-4" />
+        <p className="text-gray-500 font-medium font-inter tracking-wide">Fetching your billing records...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
+      
+      {/* HEADER */}
+      <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div>
+          <div className="flex items-center gap-4 mb-4">
+            <button 
+              onClick={() => navigate("/employee/addbillings")}
+              className="bg-gray-900 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-gray-200 hover:bg-black transition-all flex items-center gap-2"
+            >
+              <FileText size={16} /> Create Invoice
+            </button>
+          </div>
+          <h1 className="text-3xl font-black text-gray-900 flex items-center gap-3">
+            <FileText className="w-8 h-8 text-blue-600" />
+            Job Billing
+          </h1>
+          <p className="text-sm text-gray-500 font-medium mt-1">Status of payments for your assigned services</p>
+        </div>
+
+        <div className="flex gap-4">
+           <div className="bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100">
+              <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">Total Billings</p>
+              <p className="text-2xl font-black text-emerald-600">₹{bills.reduce((sum, b) => sum + Number(b.grandTotal), 0).toLocaleString()}</p>
+           </div>
+           <div className="bg-amber-50 px-6 py-3 rounded-2xl border border-amber-100">
+              <p className="text-[10px] text-amber-400 font-black uppercase tracking-widest">Pending</p>
+              <p className="text-2xl font-black text-amber-600">{bills.filter(b => b.paymentStatus !== 'Paid').length}</p>
+           </div>
+        </div>
+      </div>
+
+      {/* FILTERS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2 relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search invoice, customer or plate..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-gray-700"
+          />
+        </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none appearance-none transition-all font-bold text-gray-700 cursor-pointer"
+        >
+          <option value="all">All Payment Status</option>
+          <option value="paid">Paid</option>
+          <option value="pending">Pending</option>
+          <option value="partial">Partial</option>
+        </select>
+      </div>
+
+      {/* LIST */}
+      {filteredBills.length === 0 ? (
+        <div className="bg-white rounded-[2rem] p-24 text-center border-2 border-dashed border-gray-100">
+          <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="w-10 h-10 text-gray-200" />
+          </div>
+          <h3 className="text-xl font-black text-gray-800">No Billings Found</h3>
+          <p className="text-gray-400 font-medium max-w-sm mx-auto mt-2">
+            Once bills are generated for your assigned services, they will appear here.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredBills.map((bill) => (
+            <div key={bill.id} className="group bg-white rounded-[2rem] border border-gray-100 p-8 hover:shadow-2xl hover:border-blue-100 transition-all duration-500 flex flex-col">
+              <div className="flex justify-between items-start mb-6">
+                 <StatusBadge status={bill.paymentStatus} />
+                 <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">INV: {bill.invoiceNo}</span>
+              </div>
+
+              <div className="mb-6">
+                <h3 className="text-2xl font-black text-gray-900 group-hover:text-blue-600 transition-colors leading-tight">{bill.customerName}</h3>
+                <p className="text-sm font-black text-blue-500 mt-1 uppercase tracking-wider">{bill.carNumber || "SERVICE JOB"}</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase mt-1 tracking-widest">Job ID: {bill.bookingId}</p>
+              </div>
+
+              <div className="bg-gray-50 rounded-2xl p-4 space-y-2 mb-6">
+                 <div className="flex justify-between items-center text-xs font-bold text-gray-400">
+                    <span>Parts & Labour</span>
+                    <span>₹{bill.subTotal}</span>
+                 </div>
+                 <div className="flex justify-between items-center text-xs font-bold text-gray-400">
+                    <span>Service Tax</span>
+                    <span>₹{bill.gstAmount}</span>
+                 </div>
+                 <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                    <span className="text-xs font-black text-gray-900 uppercase">Total Amount</span>
+                    <span className="text-xl font-black text-emerald-600">₹{Number(bill.grandTotal).toLocaleString()}</span>
+                 </div>
+              </div>
+
+              <div className="mt-auto flex items-center gap-3">
+                 <button 
+                  onClick={() => fetchAndPrint(bill.id)}
+                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 text-white rounded-xl text-xs font-black hover:bg-black transition-all shadow-lg shadow-gray-200"
+                 >
+                    <Printer size={16} /> Print Copy
+                 </button>
+                 <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs" title="View Detail">
+                    <History size={16} />
+                 </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* Using History icon from lucide-react, I'll import it */
+import { History } from "lucide-react";
+
+export default EmpBilling;

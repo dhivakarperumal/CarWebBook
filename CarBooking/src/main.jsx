@@ -17,7 +17,7 @@ import Checkout from "./Components/Checkout.jsx";
 // // Admin
 import AdminPanel from "./Admin/AdminPanel.jsx";
 import Dashboard from "./Admin/Dashboard/Dashboard.jsx";
-import Billings  from "./Admin/Billing/Billins.jsx";
+import Billings from "./Admin/Billing/Billins.jsx";
 import Inventory from "./Admin/Inventory/Inventory.jsx";
 
 import Reports from "./Admin/Reports/Reports.jsx";
@@ -26,7 +26,7 @@ import BookingService from "./Admin/Bookingservice/BookingService.jsx";
 import AddBilling from "./Admin/Billing/AddBilling.jsx";
 import AddInventoryItem from "./Admin/Inventory/AddInventoryItem.jsx";
 import ProfileSettings from "./Admin/Settingss/ProfileSettings.jsx";
-import UserManagement  from "./Admin/Settingss/UserManagement.jsx";
+import UserManagement from "./Admin/Settingss/UserManagement.jsx";
 import Staffs from "./Admin/Employees/Staffs.jsx";
 import AddEditStaff from "./Admin/Employees/AddStaff.jsx";
 import ViewStaff from "./Admin/Employees/ViewStaff.jsx";
@@ -63,6 +63,16 @@ import OrderDetails from "./Admin/Orders/OrderDetails.jsx";
 import AdminAssignServices from "./Admin/Bookingservice/AdminAssignServices.jsx";
 
 
+
+import EmpAdminLayout from "./EmployeeAdmin/EmpAdminPanel.jsx";
+import EmpDashboard from "./EmployeeAdmin/Dashboard/EmpDashboard.jsx";
+import EmpCars from "./EmployeeAdmin/EmpCars/EmpCars.jsx";
+import EmpAssingCars from "./EmployeeAdmin/EmpBookAssingcar/EmpAssingCars.jsx";
+import EmpBilling from "./EmployeeAdmin/EmpBilling/EmpBilling.jsx";
+import EmpAddBilling from "./EmployeeAdmin/EmpBilling/EmpAddBilling.jsx";
+import EmpBookings from "./EmployeeAdmin/EmpBookings/EmpBookings.jsx";
+
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -71,7 +81,7 @@ const router = createBrowserRouter([
       { index: true, element: <Home /> },
       { path: "/services", element: <Services /> },
       { path: "/pricing", element: <Pricing /> },
-      { path: "/checkout", element: <Checkout/> },
+      { path: "/checkout", element: <Checkout /> },
       { path: "/products", element: <Products /> },
       { path: "/products/:slug", element: <ProductDetails /> },
       { path: "/services/:id", element: <ServiceDetails /> },
@@ -79,8 +89,26 @@ const router = createBrowserRouter([
       { path: "/contact", element: <ContactUs /> },
       { path: "/cart", element: <Cart /> },
       { path: "/bookservice", element: <BookService /> },
-      { path: "/account", element: <Account /> },       
+      { path: "/account", element: <Account /> },
     ],
+  },
+
+  {
+    path: "/employee",
+    element: (
+      <PrivateRoute allowedRoles={["employee", "manager", "staff", "receptionist", "gym_manager", "mechanic"]}>
+        <EmpAdminLayout />
+      </PrivateRoute>
+    ),
+    children: [
+      { index: true, element: <EmpDashboard /> },
+      { path: "cars", element: <EmpCars /> },
+      { path: "assignservices", element: <EmpAssingCars /> },
+      { path: "bookings", element: <EmpBookings /> },
+      { path: "services", element: <Servicestype /> },
+      { path: "billing", element: <EmpBilling /> },
+      { path: "addbillings", element: <EmpAddBilling /> },
+    ]
   },
 
   {
@@ -93,10 +121,10 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Dashboard /> },
       { path: "services", element: <Servicestype /> },
-      { path: "services/:id", element: <ViewService/> },
+      { path: "services/:id", element: <ViewService /> },
       { path: "addservicestype", element: <AddServicesType /> },
       { path: "addserviceparts", element: <AddServiceParts /> },
-      { path: "bookings", element: <ShowAllBookings/> },
+      { path: "bookings", element: <ShowAllBookings /> },
       { path: "addbooking", element: <BookingService /> },
       { path: "assignservices", element: <AdminAssignServices /> },
       { path: "addservicevehicle", element: <AddServiceVehicle /> },
@@ -122,13 +150,13 @@ const router = createBrowserRouter([
       { path: "priceslist", element: <PricingList /> },
       { path: "addprice", element: <PricingForm /> },
       { path: "addprice/:id", element: <PricingForm /> },
-     
-      
+
+
 
       { path: "carservies", element: <CarServices /> },
       { path: "addcarservies", element: <AddServices /> },
       { path: "addcarservies/:id", element: <AddServices /> },
-      
+
 
 
       // { path: "treatments", element: <Treatments /> },
@@ -158,7 +186,7 @@ const router = createBrowserRouter([
       { path: "customers", element: <Users /> },
       // { path: "addupdateuser", element: <AddEditUser /> },
       // { path: "addupdateuser/:id", element: <AddEditUser /> },
-// 
+      // 
       { path: "settings", element: <Settings /> },
       { path: "settings/profile", element: <ProfileSettings /> },
       // { path: "settings/billing", element: <BillingSettings /> },
@@ -180,7 +208,7 @@ const router = createBrowserRouter([
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <AuthProvider>
-       {/* 🔔 GLOBAL TOASTER */}
+      {/* 🔔 GLOBAL TOASTER */}
       <Toaster
         position="top-left"
         reverseOrder={false}
