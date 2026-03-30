@@ -8,8 +8,10 @@ import {
   CheckCircle2,
   AlertCircle,
   LayoutGrid,
-  List
+  List,
+  Plus
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 
@@ -29,6 +31,7 @@ const StatusBadge = ({ status }) => {
 
 const EmpBilling = () => {
   const { profileName: userProfile } = useAuth();
+  const navigate = useNavigate();
   const [bills, setBills] = useState([]);
   const [myBookings, setMyBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -188,6 +191,14 @@ const EmpBilling = () => {
               <p className="text-[10px] text-amber-400 font-black uppercase tracking-widest">Pending</p>
               <p className="text-2xl font-black text-amber-600">{bills.filter(b => b.paymentStatus !== 'Paid').length}</p>
            </div>
+           
+           <button
+             onClick={() => navigate("/employee/addbillings")}
+             className="flex flex-col items-center justify-center gap-1 bg-black text-white px-5 py-3 rounded-2.5xl hover:bg-blue-600 transition-all shadow-xl shadow-gray-200 group"
+           >
+              <Plus className="w-5 h-5 group-hover:scale-125 transition-transform" />
+              <span className="text-[9px] font-black uppercase tracking-widest leading-none">Create<br/>Billing</span>
+           </button>
         </div>
       </div>
 
