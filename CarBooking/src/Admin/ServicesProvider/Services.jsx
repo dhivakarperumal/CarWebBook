@@ -3,6 +3,7 @@ import api from "../../api";
 import toast from "react-hot-toast";
 import { FaEdit, FaTrash, FaEye, FaThLarge, FaList } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 
 const BOOKING_STATUS = [
   "Booked",
@@ -28,11 +29,14 @@ const STATUS_STEPS = [
 
 export default function Services() {
   const navigate = useNavigate();
+  const { profileName: userProfile } = useAuth();
+  const userRole = (userProfile?.role || "").toLowerCase();
+  const isMechanic = userRole === "mechanic" || userRole === "staff";
 
   const [viewMode, setViewMode] = useState("card"); // "card" | "table"
 
   const [mainTab, setMainTab] = useState("booked"); // booked | addVehicle
-  const [subTab, setSubTab] = useState("unassigned"); // assigned | unassigned
+  const [subTab, setSubTab] = useState(isMechanic ? "assigned" : "unassigned"); // assigned | unassigned
 
   const [services, setServices] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -87,10 +91,20 @@ export default function Services() {
   const currentMainList =
     mainTab === "booked" ? bookedServices : addVehicleServices;
 
-  const assignedServices = currentMainList.filter((s) => s.assignedEmployeeId);
-  const unassignedServices = currentMainList.filter(
-    (s) => !s.assignedEmployeeId
-  );
+  const assignedServices = currentMainList.filter((s) => {
+    const isAssigned = !!s.assignedEmployeeId;
+    if (!isAssigned) return false;
+    
+    // If mechanic, only see their own assigned tasks
+    if (isMechanic) {
+      return (s.assignedEmployeeName || "").toLowerCase() === (userProfile?.displayName || "").toLowerCase();
+    }
+    return true;
+  });
+
+  const unassignedServices = isMechanic 
+    ? [] // Mechanics don't see unassigned tasks (usually)
+    : currentMainList.filter((s) => !s.assignedEmployeeId);
 
   const listData =
     subTab === "assigned" ? assignedServices : unassignedServices;
@@ -281,35 +295,44 @@ export default function Services() {
           </button>
         </div>
 
+        
         {/* 🔹 SUB TABS */}
-        <div className="mb-8 flex space-x-2">
-          <button
-            onClick={() => {
-              setSubTab("assigned");
-              setCurrentPage(1);
-            }}
-            className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${
-              subTab === "assigned"
-                ? "bg-blue-600 text-white shadow-md"
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-            }`}
-          >
-            Assigned ({assignedCount})
-          </button>
-          <button
-            onClick={() => {
-              setSubTab("unassigned");
-              setCurrentPage(1);
-            }}
-            className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${
-              subTab === "unassigned"
-                ? "bg-blue-600 text-white shadow-md"
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-            }`}
-          >
-            Unassigned ({unassignedCount})
-          </button>
-        </div>
+        {!isMechanic ? (
+          <div className="mb-8 flex space-x-2">
+            <button
+              onClick={() => {
+                setSubTab("assigned");
+                setCurrentPage(1);
+              }}
+              className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${
+                subTab === "assigned"
+                  ? "bg-blue-600 text-white shadow-md"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              Assigned ({assignedCount})
+            </button>
+            <button
+              onClick={() => {
+                setSubTab("unassigned");
+                setCurrentPage(1);
+              }}
+              className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${
+                subTab === "unassigned"
+                  ? "bg-blue-600 text-white shadow-md"
+                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+              }`}
+            >
+              Unassigned ({unassignedCount})
+            </button>
+          </div>
+        ) : (
+          <div className="mb-8 flex space-x-2">
+            <div className="rounded-full bg-blue-600 px-5 py-2 text-sm font-bold text-white shadow-md">
+              My Assigned Tasks ({assignedCount})
+            </div>
+          </div>
+        )}
 
         {/* 📋 DYNAMIC VIEW (CARD OR TABLE) */}
         {viewMode === "card" ? (

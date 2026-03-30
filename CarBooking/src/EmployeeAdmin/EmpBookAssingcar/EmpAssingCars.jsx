@@ -9,7 +9,9 @@ import {
   Mail, 
   AlertCircle,
   IndianRupee,
-  Calendar
+  Calendar,
+  LayoutGrid,
+  List
 } from "lucide-react";
 import api from "../../api";
 import { useAuth } from "../../PrivateRouter/AuthContext";
@@ -21,6 +23,7 @@ const EmpAssingCars = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [viewMode, setViewMode] = useState("card"); // 'card' or 'table'
 
   useEffect(() => {
     fetchAssignedServices();
@@ -86,7 +89,7 @@ const EmpAssingCars = () => {
     <div className="max-w-7xl mx-auto space-y-6 animate-fadeIn p-4 sm:p-6 lg:p-8">
       
       {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
         <div>
           <h1 className="text-3xl font-black text-gray-900 flex items-center gap-3">
             <History className="w-8 h-8 text-blue-600" />
@@ -95,17 +98,40 @@ const EmpAssingCars = () => {
           <p className="text-sm text-gray-500 font-medium mt-1">Review all services linked to your account</p>
         </div>
 
-        <div className="flex gap-4">
-           {/* Summary Stats */}
-           <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-2xl border border-blue-100">
-              <span className="text-2xl font-black text-blue-600">{services.length}</span>
-              <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider leading-tight">Total<br/>Services</span>
+        <div className="flex flex-wrap items-center gap-6">
+           {/* View Mode Toggle */}
+           <div className="hidden sm:flex p-1 bg-gray-100 rounded-xl w-fit h-fit">
+              <button
+                onClick={() => setViewMode("card")}
+                className={`p-2 rounded-lg transition-all ${
+                  viewMode === "card" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                }`}
+                title="Card View"
+              >
+                <LayoutGrid size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                className={`p-2 rounded-lg transition-all ${
+                  viewMode === "table" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                }`}
+                title="Table View"
+              >
+                <List size={18} />
+              </button>
            </div>
-           <div className="flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-2xl border border-emerald-100">
-              <span className="text-2xl font-black text-emerald-600">
-                {services.filter(s => s.status === "Service Completed" || s.status === "Completed").length}
-              </span>
-              <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider leading-tight">Jobs<br/>Done</span>
+
+           <div className="flex gap-4">
+              <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-2xl border border-blue-100">
+                  <span className="text-2xl font-black text-blue-600">{services.length}</span>
+                  <span className="text-[10px] text-blue-400 font-bold uppercase tracking-wider leading-tight">Total<br/>Services</span>
+              </div>
+              <div className="flex items-center gap-2 bg-emerald-50 px-4 py-2 rounded-2xl border border-emerald-100">
+                  <span className="text-2xl font-black text-emerald-600">
+                    {services.filter(s => s.status === "Service Completed" || s.status === "Completed").length}
+                  </span>
+                  <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider leading-tight">Jobs<br/>Done</span>
+              </div>
            </div>
         </div>
       </div>
@@ -150,7 +176,7 @@ const EmpAssingCars = () => {
             Try adjusting your search terms or filters to find what you're looking for.
           </p>
         </div>
-      ) : (
+      ) : viewMode === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredServices.map((item) => (
             <div 
@@ -158,7 +184,7 @@ const EmpAssingCars = () => {
               className="group relative bg-white rounded-[2rem] border border-gray-100 p-8 hover:shadow-2xl hover:border-blue-100 transition-all duration-500 overflow-hidden"
             >
               <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity translate-x-4 -translate-y-4">
-                 <Car size={120} weight="fill" className="text-blue-900" />
+                 <Car size={120} className="text-blue-900 mt-2" />
               </div>
 
               <div className="flex justify-between items-start mb-6">
@@ -176,7 +202,6 @@ const EmpAssingCars = () => {
               </div>
 
               <div className="space-y-4 mb-8">
-                {/* Issue */}
                 <div className="flex items-start gap-4">
                   <div className="w-10 h-10 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0 border border-amber-100">
                     <AlertCircle className="w-5 h-5 text-amber-500" />
@@ -187,7 +212,6 @@ const EmpAssingCars = () => {
                   </div>
                 </div>
 
-                {/* Customer */}
                 <div className="flex items-center gap-4 pt-4 border-t border-gray-50">
                   <div className="w-10 h-10 rounded-2xl bg-sky-50 flex items-center justify-center shrink-0 border border-sky-100 transition-colors group-hover:bg-blue-600">
                     <User className="w-5 h-5 text-sky-500 group-hover:text-white transition-colors" />
@@ -220,11 +244,48 @@ const EmpAssingCars = () => {
                   <span className="text-[11px] font-bold">Assigned {new Date(item.created_at).toLocaleDateString()}</span>
                 </div>
                 <button className="text-[11px] font-black text-blue-600 uppercase tracking-widest hover:underline">
-                  View full history
+                  View history
                 </button>
               </div>
             </div>
           ))}
+        </div>
+      ) : (
+        <div className="overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-gray-50/50">
+              <tr>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Job ID</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Vehicle</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Assigned Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filteredServices.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 text-xs font-bold text-gray-400">#{item.id}</td>
+                  <td className="px-6 py-4">
+                    <p className="font-black text-gray-800">{item.customer_name || item.name}</p>
+                    <p className="text-[10px] text-gray-400 font-bold">{item.phone || "No Phone"}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="font-black text-gray-900">{item.brand} {item.model}</p>
+                    <p className="text-xs font-bold text-blue-500">{item.vehicle_number || "N/A"}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusColor(item.status)}`}>
+                        {item.status || "Assigned"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-xs font-bold text-gray-500">{new Date(item.created_at).toLocaleDateString()}</p>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

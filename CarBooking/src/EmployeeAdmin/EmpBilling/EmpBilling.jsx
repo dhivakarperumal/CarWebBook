@@ -6,7 +6,9 @@ import {
   FileText,
   Clock,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  LayoutGrid,
+  List
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
@@ -32,6 +34,7 @@ const EmpBilling = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [viewMode, setViewMode] = useState("card"); // 'card' or 'table'
 
   useEffect(() => {
     loadData();
@@ -145,29 +148,43 @@ const EmpBilling = () => {
     <div className="max-w-7xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
       
       {/* HEADER */}
-      <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <div className="flex items-center gap-4 mb-4">
-            <button 
-              onClick={() => navigate("/employee/addbillings")}
-              className="bg-gray-900 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-gray-200 hover:bg-black transition-all flex items-center gap-2"
-            >
-              <FileText size={16} /> Create Invoice
-            </button>
-          </div>
           <h1 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-            <FileText className="w-8 h-8 text-blue-600" />
-            Job Billing
+             <FileText className="w-8 h-8 text-blue-600" />
+             Job Billing
           </h1>
           <p className="text-sm text-gray-500 font-medium mt-1">Status of payments for your assigned services</p>
         </div>
 
-        <div className="flex gap-4">
-           <div className="bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100">
+        <div className="flex flex-wrap items-center gap-4">
+           {/* View Mode Toggle */}
+           <div className="hidden sm:flex p-1 bg-gray-100 rounded-xl w-fit">
+              <button
+                onClick={() => setViewMode("card")}
+                className={`p-2 rounded-lg transition-all ${
+                  viewMode === "card" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                }`}
+                title="Card View"
+              >
+                <LayoutGrid size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                className={`p-2 rounded-lg transition-all ${
+                  viewMode === "table" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+                }`}
+                title="Table View"
+              >
+                <List size={18} />
+              </button>
+           </div>
+           
+           <div className="bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100 min-w-[140px]">
               <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">Total Billings</p>
               <p className="text-2xl font-black text-emerald-600">₹{bills.reduce((sum, b) => sum + Number(b.grandTotal), 0).toLocaleString()}</p>
            </div>
-           <div className="bg-amber-50 px-6 py-3 rounded-2xl border border-amber-100">
+           <div className="bg-amber-50 px-6 py-3 rounded-2xl border border-amber-100 min-w-[120px]">
               <p className="text-[10px] text-amber-400 font-black uppercase tracking-widest">Pending</p>
               <p className="text-2xl font-black text-amber-600">{bills.filter(b => b.paymentStatus !== 'Paid').length}</p>
            </div>
@@ -209,7 +226,7 @@ const EmpBilling = () => {
             Once bills are generated for your assigned services, they will appear here.
           </p>
         </div>
-      ) : (
+      ) : viewMode === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredBills.map((bill) => (
             <div key={bill.id} className="group bg-white rounded-[2rem] border border-gray-100 p-8 hover:shadow-2xl hover:border-blue-100 transition-all duration-500 flex flex-col">
@@ -252,6 +269,54 @@ const EmpBilling = () => {
               </div>
             </div>
           ))}
+        </div>
+      ) : (
+        <div className="overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-gray-50/50">
+              <tr>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Invoice</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Vehicle</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Amount</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filteredBills.map((bill) => (
+                <tr key={bill.id} className="hover:bg-gray-50 transition-colors group">
+                  <td className="px-6 py-4">
+                    <p className="font-black text-gray-900">#{bill.invoiceNo}</p>
+                    <p className="text-[10px] font-bold text-gray-400">ID: {bill.bookingId}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="font-black text-gray-800">{bill.customerName}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="font-bold text-blue-600">{bill.carNumber || "SERVICE"}</p>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <p className="font-black text-emerald-600">₹{Number(bill.grandTotal).toLocaleString()}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <StatusBadge status={bill.paymentStatus} />
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                       <button 
+                        onClick={() => fetchAndPrint(bill.id)}
+                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        title="Print"
+                       >
+                          <Printer size={16} />
+                       </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

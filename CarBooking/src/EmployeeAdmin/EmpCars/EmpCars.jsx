@@ -12,7 +12,9 @@ import {
   Wrench, 
   AlertCircle,
   Package,
-  FileText
+  FileText,
+  LayoutGrid,
+  List
 } from "lucide-react";
 import api from "../../api";
 import { useAuth } from "../../PrivateRouter/AuthContext";
@@ -32,6 +34,7 @@ const EmpCars = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [mainTab, setMainTab] = useState("booked"); // 'booked' or 'direct'
+  const [viewMode, setViewMode] = useState("card"); // 'card' or 'table'
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
@@ -54,14 +57,7 @@ const EmpCars = () => {
       setLoading(true);
       // For now fetching all, ideally backend should filter by staff name/id
       const res = await api.get("/bookings");
-      
-      // Client-side filter for the logged-in mechanic
-      const mechanicName = userProfile?.displayName || "";
-      const filtered = res.data.filter(t => 
-        (t.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase()
-      );
-      
-      setTasks(filtered);
+      setTasks(res.data || []);
     } catch (err) {
       console.error("Fetch tasks failed", err);
       toast.error("Failed to load your tasks");
@@ -223,23 +219,46 @@ const EmpCars = () => {
           <p className="text-sm text-gray-500">Track and update assigned service vehicles</p>
         </div>
 
-        <div className="flex p-1 bg-gray-100 rounded-xl w-fit">
-          <button
-            onClick={() => setMainTab("booked")}
-            className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
-              mainTab === "booked" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Booked ({tasks.filter(t => !(t.intake_type === "direct_intake" || t.is_direct_intake)).length})
-          </button>
-          <button
-            onClick={() => setMainTab("direct")}
-            className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
-              mainTab === "direct" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Direct Intake ({tasks.filter(t => (t.intake_type === "direct_intake" || t.is_direct_intake)).length})
-          </button>
+        <div className="flex items-center gap-4">
+          <div className="flex p-1 bg-gray-100 rounded-xl w-fit">
+            <button
+              onClick={() => setMainTab("booked")}
+              className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                mainTab === "booked" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Booked ({tasks.filter(t => !(t.intake_type === "direct_intake" || t.is_direct_intake)).length})
+            </button>
+            <button
+              onClick={() => setMainTab("direct")}
+              className={`px-5 py-2 rounded-lg text-sm font-bold transition-all ${
+                mainTab === "direct" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              Direct Intake ({tasks.filter(t => (t.intake_type === "direct_intake" || t.is_direct_intake)).length})
+            </button>
+          </div>
+
+          <div className="hidden sm:flex p-1 bg-gray-100 rounded-xl w-fit">
+            <button
+              onClick={() => setViewMode("card")}
+              className={`p-2 rounded-lg transition-all ${
+                viewMode === "card" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              }`}
+              title="Card View"
+            >
+              <LayoutGrid size={18} />
+            </button>
+            <button
+              onClick={() => setViewMode("table")}
+              className={`p-2 rounded-lg transition-all ${
+                viewMode === "table" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              }`}
+              title="Table View"
+            >
+              <List size={18} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -289,7 +308,7 @@ const EmpCars = () => {
               : "You currenty have no vehicles assigned in this category."}
           </p>
         </div>
-      ) : (
+      ) : viewMode === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredTasks.map((task) => (
             <div 
@@ -307,7 +326,7 @@ const EmpCars = () => {
                 <h3 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors">
                   {task.brand} {task.model}
                 </h3>
-                <p className="text-sm font-bold text-blue-500">{task.vehicle_number || "NO PLATE"}</p>
+                <p className="text-sm font-black text-blue-500">{task.vehicle_number || "NO PLATE"}</p>
               </div>
 
               <div className="space-y-3 mb-6">
@@ -388,6 +407,66 @@ const EmpCars = () => {
               </div>
             </div>
           ))}
+        </div>
+      ) : (
+        <div className="overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-gray-50/50">
+              <tr>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">ID</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Vehicle</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Issue</th>
+                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {filteredTasks.map((task) => (
+                <tr key={task.id} className="hover:bg-gray-50 transition-colors group">
+                  <td className="px-6 py-4 text-xs font-bold text-gray-400">{task.id}</td>
+                  <td className="px-6 py-4">
+                    <p className="font-black text-gray-900">{task.brand} {task.model}</p>
+                    <p className="text-xs font-bold text-blue-500">{task.vehicle_number || "NO PLATE"}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="font-bold text-gray-700">{task.customer_name || task.name}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                     <span className={`px-3 py-1 text-[10px] font-black uppercase tracking-wider rounded-full border shadow-sm ${getStatusColor(task.status)}`}>
+                        {task.status || "Pending"}
+                      </span>
+                  </td>
+                  <td className="px-6 py-4 max-w-xs">
+                    <p className="text-xs font-medium text-gray-500 truncate">{task.carIssue || "N/A"}</p>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                       <select
+                        disabled={task.status === "Service Completed"}
+                        value={task.status || "Pending"}
+                        onChange={(e) => updateStatus(task, e.target.value)}
+                        className="bg-gray-100/50 border-none rounded-lg px-2 py-1 text-xs font-bold text-gray-600 outline-none focus:ring-1 focus:ring-blue-500 transition-all"
+                      >
+                        {getNextStatuses(task.status).map(s => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                      {task.status === "Service Going on" && !task.parts_added && (
+                         <button 
+                          onClick={() => openPartsModal(task)}
+                          className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                          title="Add Parts"
+                         >
+                            <Plus size={16} />
+                         </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
