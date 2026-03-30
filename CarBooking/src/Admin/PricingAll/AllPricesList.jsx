@@ -243,6 +243,9 @@ import {
   Pencil,
 } from "lucide-react";
 import { FaTable } from "react-icons/fa";
+import Pagination from "../../Components/Pagination";
+
+const ITEMS_PER_PAGE = 8;
 
 const PricingList = () => {
   const navigate = useNavigate();
@@ -251,6 +254,7 @@ const PricingList = () => {
   const [search, setSearch] = useState("");
   const [view, setView] = useState("card");
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
 
   /* 🔹 Fetch */
   const fetchPackages = async () => {
@@ -283,12 +287,18 @@ const PricingList = () => {
     }
   };
 
-  /* 🔹 Filter */
   const filteredPackages = useMemo(() => {
     return packages.filter((pkg) =>
       pkg.title?.toLowerCase().includes(search.toLowerCase())
     );
   }, [packages, search]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  const totalPages = Math.ceil(filteredPackages.length / ITEMS_PER_PAGE);
+  const paginatedPackages = filteredPackages.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   if (loading) {
     return (
@@ -377,7 +387,7 @@ const PricingList = () => {
         {/* 🔹 CARD VIEW */}
         {view === "card" && (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-10">
-            {filteredPackages.map((pkg) => (
+            {paginatedPackages.map((pkg) => (
               <div
                 key={pkg.id}
                 className="border border-gray-300 rounded-xl p-4 shadow-sm hover:shadow-md transition bg-white"
@@ -488,6 +498,11 @@ const PricingList = () => {
           </div>
         )}
       </div>
+      <Pagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 };

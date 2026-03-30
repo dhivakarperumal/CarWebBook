@@ -13,6 +13,7 @@ import {
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import Pagination from "../../Components/Pagination";
 
 /* ================= HELPERS ================= */
 
@@ -130,6 +131,10 @@ const AllOrders = () => {
     const start = (currentPage - 1) * ordersPerPage;
     return filteredOrders.slice(start, start + ordersPerPage);
   }, [filteredOrders, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, paymentFilter, deliveryOnly]);
 
   /* ================= UPDATE STATUS ================= */
   const updateStatus = async (orderId, newStatus) => {
@@ -459,36 +464,11 @@ const AllOrders = () => {
       )}
 
       {/* ================= PAGINATION ================= */}
-      <div className="flex justify-end gap-2">
-        <button
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage((p) => p - 1)}
-          className="px-3 py-1 bg-white/10 border border-white/20 rounded-lg disabled:opacity-50"
-        >
-          Prev
-        </button>
-
-        {[...Array(totalPages)].map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrentPage(i + 1)}
-            className={`px-3 py-1 rounded-lg border ${currentPage === i + 1
-              ? "bg-orange-500 text-white border-orange-500"
-              : "bg-white/10 border-white/20"
-              }`}
-          >
-            {i + 1}
-          </button>
-        ))}
-
-        <button
-          disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage((p) => p + 1)}
-          className="px-3 py-1 bg-white/10 border border-white/20 rounded-lg disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };

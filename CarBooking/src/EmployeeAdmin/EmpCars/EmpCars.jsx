@@ -19,6 +19,9 @@ import {
 import api from "../../api";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import toast from "react-hot-toast";
+import Pagination from "../../Components/Pagination";
+
+const ITEMS_PER_PAGE = 6;
 
 const STATUS_FLOW = [
   "Pending",
@@ -37,6 +40,7 @@ const EmpCars = () => {
   const [viewMode, setViewMode] = useState("card"); // 'card' or 'table'
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [page, setPage] = useState(1);
 
   /* MODAL STATES */
   const [selectedTask, setSelectedTask] = useState(null);
@@ -50,7 +54,8 @@ const EmpCars = () => {
 
   useEffect(() => {
     fetchTasks();
-  }, [userProfile]);
+    setPage(1);
+  }, [userProfile, mainTab]);
 
   const fetchTasks = async () => {
     try {
@@ -88,6 +93,9 @@ const EmpCars = () => {
       return matchesSearch && matchesStatus;
     });
   }, [currentList, search, filterStatus]);
+
+  const totalPages = Math.ceil(filteredTasks.length / ITEMS_PER_PAGE);
+  const paginatedTasks = filteredTasks.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   /* STATUS LOGIC */
   const getNextStatuses = (current) => {
@@ -270,7 +278,7 @@ const EmpCars = () => {
             type="text"
             placeholder="Search brand, model, plate or customer..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all"
           />
         </div>
@@ -279,7 +287,7 @@ const EmpCars = () => {
           <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <select
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
             className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none appearance-none transition-all"
           >
             <option value="all">All Statuses</option>
@@ -310,7 +318,7 @@ const EmpCars = () => {
         </div>
       ) : viewMode === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTasks.map((task) => (
+          {paginatedTasks.map((task) => (
             <div 
               key={task.id} 
               className="group bg-white rounded-2xl border border-gray-100 p-6 hover:shadow-xl hover:border-blue-200 transition-all duration-300 transform hover:-translate-y-1"
@@ -422,7 +430,7 @@ const EmpCars = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filteredTasks.map((task) => (
+              {paginatedTasks.map((task) => (
                 <tr key={task.id} className="hover:bg-gray-50 transition-colors group">
                   <td className="px-6 py-4 text-xs font-bold text-gray-400">{task.id}</td>
                   <td className="px-6 py-4">
@@ -469,6 +477,12 @@ const EmpCars = () => {
           </table>
         </div>
       )}
+
+      <Pagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
 
       {/* PARTS MODAL */}
       {showPartsModal && (

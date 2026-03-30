@@ -16,6 +16,9 @@ import {
 import api from "../../api";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import toast from "react-hot-toast";
+import Pagination from "../../Components/Pagination";
+
+const ITEMS_PER_PAGE = 6;
 
 const EmpAssingCars = () => {
   const { profileName: userProfile } = useAuth();
@@ -24,6 +27,7 @@ const EmpAssingCars = () => {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [viewMode, setViewMode] = useState("card"); // 'card' or 'table'
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     fetchAssignedServices();
@@ -62,6 +66,9 @@ const EmpAssingCars = () => {
       return matchesStatus && matchesSearch;
     });
   }, [services, search, filterStatus]);
+
+  const totalPages = Math.ceil(filteredServices.length / ITEMS_PER_PAGE);
+  const paginatedServices = filteredServices.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   const getStatusColor = (status) => {
     const map = {
@@ -144,7 +151,7 @@ const EmpAssingCars = () => {
             type="text"
             placeholder="Search by vehicle, ID, or customer name..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold text-gray-700"
           />
         </div>
@@ -153,7 +160,7 @@ const EmpAssingCars = () => {
           <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <select
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
+            onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
             className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none appearance-none transition-all font-bold text-gray-700 cursor-pointer"
           >
             <option value="all">Any Status</option>
@@ -178,7 +185,7 @@ const EmpAssingCars = () => {
         </div>
       ) : viewMode === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredServices.map((item) => (
+          {paginatedServices.map((item) => (
             <div 
               key={item.id} 
               className="group relative bg-white rounded-[2rem] border border-gray-100 p-8 hover:shadow-2xl hover:border-blue-100 transition-all duration-500 overflow-hidden"
@@ -263,7 +270,7 @@ const EmpAssingCars = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filteredServices.map((item) => (
+              {paginatedServices.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 text-xs font-bold text-gray-400">#{item.id}</td>
                   <td className="px-6 py-4">
@@ -288,6 +295,12 @@ const EmpAssingCars = () => {
           </table>
         </div>
       )}
+
+      <Pagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 };

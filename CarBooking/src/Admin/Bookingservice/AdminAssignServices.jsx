@@ -2,6 +2,9 @@ import React, { useEffect, useState, useMemo } from "react";
 import toast from "react-hot-toast";
 import { Plus, X, UserCheck, Calendar, Clock, LayoutGrid, List } from "lucide-react";
 import api from "../../api";
+import Pagination from "../../Components/Pagination";
+
+const ITEMS_PER_PAGE = 8;
 
 export default function AdminAssignServices() {
   const [bookings, setBookings] = useState([]);
@@ -21,6 +24,7 @@ export default function AdminAssignServices() {
   const [tab, setTab] = useState("all");
   const [searchText, setSearchText] = useState("");
   const [viewMode, setViewMode] = useState("card"); // card | table
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchData = async () => {
     try {
@@ -93,6 +97,15 @@ export default function AdminAssignServices() {
       return true;
     });
   }, [currentMainList, searchText, tab]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchText, tab, mainTab]);
+
+  const totalPages = Math.ceil(filteredBookings.length / ITEMS_PER_PAGE);
+  const paginatedBookings = useMemo(() => {
+    return filteredBookings.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+  }, [filteredBookings, currentPage]);
 
   /* 🔥 OPEN CARD MODAL */
   const openAssignModal = async (booking) => {
@@ -322,7 +335,7 @@ export default function AdminAssignServices() {
           </div>
         ) : viewMode === "card" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
-            {filteredBookings.map((item) => (
+            {paginatedBookings.map((item) => (
               <div
                 key={item.id}
                 className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all duration-500 flex flex-col group relative overflow-hidden"
@@ -469,7 +482,7 @@ export default function AdminAssignServices() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {filteredBookings.map((item) => (
+                {paginatedBookings.map((item) => (
                   <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
                     <td className="px-8 py-6">
                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none">#{item.id}</span>
@@ -528,6 +541,11 @@ export default function AdminAssignServices() {
             </table>
           </div>
         )}
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* 🔥 GLOBAL MODAL */}

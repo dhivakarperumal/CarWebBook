@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { FaTable, FaThLarge } from "react-icons/fa";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import Pagination from "../../Components/Pagination";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -213,19 +214,11 @@ const AllProducts = () => {
       )}
 
       {/* PAGINATION */}
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-8 gap-2 flex-wrap">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
-            <button
-              key={num}
-              onClick={() => setPage(num)}
-              className={`px-4 py-2 rounded-xl text-sm transition ${page === num ? "bg-black text-white shadow" : "bg-white border border-gray-300 hover:bg-gray-100"}`}
-            >
-              {num}
-            </button>
-          ))}
-        </div>
-      )}
+      <Pagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 };

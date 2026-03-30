@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../api";
+import Pagination from "../../Components/Pagination";
+
+const ITEMS_PER_PAGE = 8;
 
 import {
   FaThLarge,
@@ -42,6 +45,7 @@ const ShowAllBookings = () => {
   const [view, setView] = useState("card");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [page, setPage] = useState(1);
 
   /* 🔴 POPUP STATE */
   const [popup, setPopup] = useState(null);
@@ -68,11 +72,16 @@ const ShowAllBookings = () => {
       b.bookingId?.toLowerCase().includes(search.toLowerCase()) ||
       b.name?.toLowerCase().includes(search.toLowerCase()) ||
       b.phone?.includes(search);
-
     const matchStatus = statusFilter === "All" || b.status === statusFilter;
-
     return matchSearch && matchStatus;
   });
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter]);
+
+  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+  const paginatedData = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   /* 🎨 STATUS COLOR */
   const statusColor = (status) => {
@@ -234,7 +243,7 @@ const ShowAllBookings = () => {
       {/* 🟦 CARD VIEW */}
       {view === "card" && (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filtered.map((b) => (
+          {paginatedData.map((b) => (
             <div
               key={b.id}
               className={`p-5 rounded-2xl border ${cardBgColor(b.status)}`}
@@ -295,7 +304,7 @@ const ShowAllBookings = () => {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((b, i) => (
+              {paginatedData.map((b, i) => (
                 <tr key={b.id} className="border-t border-gray-300">
                   <td className="px-4 py-3">{i + 1}</td>
                   <td className="px-4 py-3">{b.bookingId}</td>
@@ -327,6 +336,12 @@ const ShowAllBookings = () => {
           </table>
         </div>
       )}
+
+      <Pagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
 
       {/* 🔴 POPUP MODAL */}
       {popup && (

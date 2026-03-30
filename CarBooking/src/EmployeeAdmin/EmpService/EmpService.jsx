@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
+import Pagination from "../../Components/Pagination";
 import {
   Wrench,
   Clock,
@@ -16,11 +17,14 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+const ITEMS_PER_PAGE = 5;
+
 const EmpService = () => {
   const { profileName: userProfile } = useAuth();
   const [activeServices, setActiveServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("card"); // 'card' or 'table'
+  const [page, setPage] = useState(1);
   const navigate = useNavigate();
 
   const fetchActiveServices = async () => {
@@ -84,6 +88,9 @@ const EmpService = () => {
     return map[status] || "bg-gray-50 text-gray-600 border-gray-100";
   };
 
+  const totalPages = Math.ceil(activeServices.length / ITEMS_PER_PAGE);
+  const paginatedServices = activeServices.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
@@ -109,7 +116,7 @@ const EmpService = () => {
         <div className="flex items-center gap-4">
           <div className="hidden sm:flex p-1 bg-gray-100 rounded-xl w-fit">
             <button
-              onClick={() => setViewMode("card")}
+              onClick={() => { setViewMode("card"); setPage(1); }}
               className={`p-2 rounded-lg transition-all ${
                 viewMode === "card" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
               }`}
@@ -118,7 +125,7 @@ const EmpService = () => {
               <LayoutGrid size={18} />
             </button>
             <button
-              onClick={() => setViewMode("table")}
+              onClick={() => { setViewMode("table"); setPage(1); }}
               className={`p-2 rounded-lg transition-all ${
                 viewMode === "table" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
               }`}
@@ -149,7 +156,7 @@ const EmpService = () => {
         </div>
       ) : viewMode === "card" ? (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {activeServices.map((service) => (
+          {paginatedServices.map((service) => (
             <div 
               key={service.id}
               className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 group"
@@ -241,7 +248,7 @@ const EmpService = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {activeServices.map((service) => (
+              {paginatedServices.map((service) => (
                 <tr key={service.id} className="hover:bg-gray-50 transition-colors group">
                   <td className="px-6 py-4 text-xs font-bold text-gray-400">#{service.id}</td>
                   <td className="px-6 py-4">
@@ -282,6 +289,12 @@ const EmpService = () => {
           </table>
         </div>
       )}
+      
+      <Pagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 };

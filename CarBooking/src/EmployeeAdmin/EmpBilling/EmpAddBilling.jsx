@@ -12,7 +12,8 @@ import {
   User, 
   ShieldCheck,
   Package,
-  ArrowRight
+  ArrowRight,
+  List
 } from "lucide-react";
 
 const EmpAddBilling = () => {
@@ -24,6 +25,7 @@ const EmpAddBilling = () => {
   const [selectedService, setSelectedService] = useState(null);
   const [parts, setParts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectionMode, setSelectionMode] = useState("search"); // 'search' or 'select'
 
   const [labour, setLabour] = useState("");
   const [gstPercent, setGstPercent] = useState(18);
@@ -144,7 +146,7 @@ const EmpAddBilling = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="max-w-6xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
       
       {/* HEADER */}
       <div className="flex items-center gap-4">
@@ -168,15 +170,54 @@ const EmpAddBilling = () => {
           {/* SEARCH & SELECT */}
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
             <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Vehicle Selection</h2>
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                placeholder="Search your assigned cars by name, plate or ID..."
-                className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold text-gray-700"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
+            <div className="flex gap-2 p-1 bg-gray-50 rounded-2xl w-fit">
+              <button 
+                onClick={() => setSelectionMode('search')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${selectionMode === 'search' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <Search size={14} /> Search
+              </button>
+              <button 
+                onClick={() => setSelectionMode('select')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${selectionMode === 'select' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+              >
+                <List size={14} /> Select
+              </button>
             </div>
+
+            {selectionMode === 'search' ? (
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  placeholder="Search your assigned cars by name, plate or ID..."
+                  className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold text-gray-700"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+            ) : (
+              <div className="relative">
+                <Car className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <select
+                  className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold text-gray-700 appearance-none cursor-pointer"
+                  onChange={(e) => {
+                    const selected = services.find(s => s.id.toString() === e.target.value);
+                    if (selected) selectService(selected);
+                  }}
+                  value={selectedService?.id || ""}
+                >
+                  <option value="" disabled>Choose a vehicle from list...</option>
+                  {services.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.bookingId} - {s.name} ({s.brand} {s.model})
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+                   <ArrowRight className="w-4 h-4 text-gray-400 rotate-90" />
+                </div>
+              </div>
+            )}
 
             {search && (
               <div className="mt-2 bg-white rounded-2xl border border-gray-100 shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">

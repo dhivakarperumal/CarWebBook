@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { FaEdit, FaTrash, FaEye, FaThLarge, FaList } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
+import Pagination from "../../Components/Pagination";
 
 const BOOKING_STATUS = [
   "Booked",
@@ -603,42 +604,11 @@ export default function Services() {
         )}
 
         {/* 📚 PAGINATION */}
-        {totalPages > 1 && (
-          <div className="mt-8 flex flex-wrap items-center justify-between pb-12 gap-4">
-            <span className="text-sm text-gray-500">
-              Showing <span className="font-bold">{currentPage}</span> of <span className="font-bold">{totalPages}</span>
-            </span>
-            <div className="flex space-x-2">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => p - 1)}
-                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm transition-all hover:bg-gray-50 disabled:opacity-50"
-              >
-                Prev
-              </button>
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`rounded-lg px-4 py-2 text-sm font-bold transition-all ${
-                    currentPage === i + 1
-                      ? "bg-blue-600 text-white shadow"
-                      : "border border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-gray-50"
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => p + 1)}
-                className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm transition-all hover:bg-gray-50 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
+        <Pagination 
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* 🪟 ASSIGN MODAL */}

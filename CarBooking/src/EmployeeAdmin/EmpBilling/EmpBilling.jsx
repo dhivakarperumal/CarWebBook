@@ -14,6 +14,9 @@ import {
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../../PrivateRouter/AuthContext";
+import Pagination from "../../Components/Pagination";
+
+const ITEMS_PER_PAGE = 6;
 
 const StatusBadge = ({ status }) => {
   const map = {
@@ -38,6 +41,7 @@ const EmpBilling = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState("card"); // 'card' or 'table'
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     loadData();
@@ -81,6 +85,9 @@ const EmpBilling = () => {
       return matchesSearch && matchesStatus;
     });
   }, [bills, search, statusFilter]);
+
+  const totalPages = Math.ceil(filteredBills.length / ITEMS_PER_PAGE);
+  const paginatedBills = filteredBills.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   const fetchAndPrint = async (id) => {
     try {
@@ -210,13 +217,13 @@ const EmpBilling = () => {
             type="text"
             placeholder="Search invoice, customer or plate..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-gray-700"
           />
         </div>
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
           className="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none appearance-none transition-all font-bold text-gray-700 cursor-pointer"
         >
           <option value="all">All Payment Status</option>
@@ -239,7 +246,7 @@ const EmpBilling = () => {
         </div>
       ) : viewMode === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredBills.map((bill) => (
+          {paginatedBills.map((bill) => (
             <div key={bill.id} className="group bg-white rounded-[2rem] border border-gray-100 p-8 hover:shadow-2xl hover:border-blue-100 transition-all duration-500 flex flex-col">
               <div className="flex justify-between items-start mb-6">
                  <StatusBadge status={bill.paymentStatus} />
@@ -295,7 +302,7 @@ const EmpBilling = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filteredBills.map((bill) => (
+              {paginatedBills.map((bill) => (
                 <tr key={bill.id} className="hover:bg-gray-50 transition-colors group">
                   <td className="px-6 py-4">
                     <p className="font-black text-gray-900">#{bill.invoiceNo}</p>
@@ -330,6 +337,12 @@ const EmpBilling = () => {
           </table>
         </div>
       )}
+
+      <Pagination 
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </div>
   );
 };

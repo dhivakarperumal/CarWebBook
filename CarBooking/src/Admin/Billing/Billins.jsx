@@ -8,6 +8,7 @@ import {
   Printer,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import Pagination from "../../Components/Pagination";
 
 /* =========================
    STATUS BADGE
@@ -358,6 +359,11 @@ const Billings = () => {
           </tbody>
         </table>
       </div>
+      <Pagination 
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };

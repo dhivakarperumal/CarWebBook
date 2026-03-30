@@ -11,10 +11,12 @@ import {
   FaTrash,
   FaEye
 } from "react-icons/fa";
+import Pagination from "../../Components/Pagination";
+import { useAuth } from "../../PrivateRouter/AuthContext.jsx";
 
 
 const Staffs = () => {
-  const { userProfile } = useAuth();
+  const { profileName: userProfile } = useAuth();
   const [staff, setStaff] = useState([]);
   const navigate = useNavigate();
 
@@ -22,7 +24,7 @@ const Staffs = () => {
   const [statusFilter, setStatusFilter] = useState("all");
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 8;
 
 
   const loadStaff = async () => {
@@ -252,48 +254,12 @@ const Staffs = () => {
           </table>
         </div>
         {totalPages > 1 && (
-          <div className="flex justify-between items-center px-4 py-4 bg-white ">
-
-            <span className="text-sm text-gray-500">
-              Page {currentPage} of {totalPages}
-            </span>
-
-            <div className="flex gap-2 flex-wrap">
-              <button
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => p - 1)}
-                className={`px-3 py-1 rounded-lg border
-          ${currentPage === 1
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white hover:bg-gray-100"}`}
-              >
-                Prev
-              </button>
-
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setCurrentPage(i + 1)}
-                  className={`px-3 py-1 rounded-lg border
-            ${currentPage === i + 1
-                      ? "bg-blue-600 text-white"
-                      : "bg-white hover:bg-gray-100"}`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-
-              <button
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(p => p + 1)}
-                className={`px-3 py-1 rounded-lg border
-          ${currentPage === totalPages
-                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                    : "bg-white hover:bg-gray-100"}`}
-              >
-                Next
-              </button>
-            </div>
+          <div className="flex justify-center p-4 bg-white border-t border-gray-100">
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         )}
 
