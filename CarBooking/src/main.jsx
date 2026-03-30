@@ -53,12 +53,14 @@ import PricingList from "./Admin/PricingAll/AllPricesList.jsx";
 import PricingForm from "./Admin/PricingAll/AddPrice.jsx";
 import ProductBilling from "./Admin/Products/ProductBill.jsx";
 import ShowAllBookings from "./Admin/Bookingservice/BookingShowAll.jsx";
+import AddServiceVehicle from "./Admin/Bookingservice/AddServiceVehicle.jsx";
 import Contact from "./Components/ContactUs.jsx";
 import BookService from "./Components/BookService.jsx";
 import Account from "./Components/Account.jsx";
 import Cart from "./Components/Cart.jsx";
 import AllOrders from "./Admin/Orders/All Orders.jsx";
 import OrderDetails from "./Admin/Orders/OrderDetails.jsx";
+import AdminAssignServices from "./Admin/Bookingservice/AdminAssignServices.jsx";
 
 
 const router = createBrowserRouter([
@@ -96,6 +98,8 @@ const router = createBrowserRouter([
       { path: "addserviceparts", element: <AddServiceParts /> },
       { path: "bookings", element: <ShowAllBookings/> },
       { path: "addbooking", element: <BookingService /> },
+      { path: "assignservices", element: <AdminAssignServices /> },
+      { path: "addservicevehicle", element: <AddServiceVehicle /> },
       // { path: "contact", element: <Contact /> },
 
       { path: "orders", element: <AllOrders /> },

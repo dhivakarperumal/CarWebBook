@@ -72,3 +72,31 @@ exports.updateBookingStatus = async (req, res) => {
     res.status(500).json({ message: 'Error updating booking status', error: error.message });
   }
 };
+
+exports.assignEmployee = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { assignedEmployeeId, assignedEmployeeName } = req.body;
+    
+    await db.query('UPDATE bookings SET assignedEmployeeId = ?, assignedEmployeeName = ?, status = ? WHERE id = ?', [assignedEmployeeId, assignedEmployeeName, 'Approved', id]);
+    
+    const [booking] = await db.query('SELECT * FROM bookings WHERE id = ?', [id]);
+    if (booking.length > 0) {
+      const b = booking[0];
+      const [existing] = await db.query('SELECT * FROM all_services WHERE bookingDocId = ?', [id]);
+      if (existing.length === 0) {
+        await db.query(`
+          INSERT INTO all_services (
+            bookingId, bookingDocId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, trackNumber, assignedEmployeeId, assignedEmployeeName, serviceStatus
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [b.bookingId, b.id, b.uid, b.name, b.phone, b.email, b.brand, b.model, b.issue, b.otherIssue, b.location, b.address, '', assignedEmployeeId, assignedEmployeeName, 'Approved']);
+      } else {
+        await db.query('UPDATE all_services SET assignedEmployeeId = ?, assignedEmployeeName = ?, serviceStatus = ? WHERE bookingDocId = ?', [assignedEmployeeId, assignedEmployeeName, 'Approved', id]);
+      }
+    }
+    
+    res.json({ message: 'Mechanic assigned successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error assigning mechanic', error: error.message });
+  }
+};

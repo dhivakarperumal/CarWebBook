@@ -49,6 +49,21 @@ exports.updateServiceStatus = async (req, res) => {
   }
 };
 
+/* 🧑🔧 ASSIGN MECHANIC */
+exports.assignMechanic = async (req, res) => {
+  const { id } = req.params;
+  const { assignedEmployeeId, assignedEmployeeName, serviceStatus } = req.body;
+  try {
+    await db.query(
+      'UPDATE all_services SET assignedEmployeeId = ?, assignedEmployeeName = ?, serviceStatus = ? WHERE id = ?',
+      [assignedEmployeeId, assignedEmployeeName, serviceStatus || 'Processing', id]
+    );
+    res.json({ message: 'Mechanic assigned' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error assigning mechanic', error: err.message });
+  }
+};
+
 /* ⚙️ ADD PARTS */
 exports.addServiceParts = async (req, res) => {
   const { id } = req.params;

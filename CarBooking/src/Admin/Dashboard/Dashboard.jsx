@@ -584,6 +584,30 @@ const unsubDeliveryOrders = onSnapshot(
 
   return (
     <div className="min-h-screen  p-2">
+      {/* ===== QUICK ACCESS ===== */}
+      <div className="mb-6">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-3">Quick Access</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          {[
+            { label: "Add Service Vehicle", icon: "🚗", path: "/admin/addservicevehicle", color: "from-sky-500 to-cyan-400" },
+            { label: "Add Booking", icon: "📅", path: "/admin/addbooking", color: "from-blue-500 to-indigo-400" },
+            { label: "Add Billing", icon: "🧾", path: "/admin/addbillings", color: "from-emerald-500 to-green-400" },
+            { label: "Add Staff", icon: "👨‍🔧", path: "/admin/addstaff", color: "from-violet-500 to-purple-400" },
+            { label: "Add Inventory", icon: "📦", path: "/admin/additemsinventory", color: "from-orange-500 to-amber-400" },
+            { label: "Add Product", icon: "🛒", path: "/admin/addproducts", color: "from-rose-500 to-pink-400" },
+          ].map((action) => (
+            <button
+              key={action.label}
+              onClick={() => navigate(action.path)}
+              className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-gradient-to-br ${action.color} text-white shadow-md hover:scale-105 hover:shadow-lg transition-all duration-200 group`}
+            >
+              <span className="text-2xl group-hover:scale-110 transition-transform duration-200">{action.icon}</span>
+              <span className="text-xs font-semibold text-center leading-tight">{action.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* STATS */}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-6">

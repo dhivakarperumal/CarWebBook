@@ -19,6 +19,7 @@ import {
   Fuel,
   X, ChevronDown, ChevronLeft,
   Boxes,
+  UserCheck,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -28,6 +29,7 @@ const navItems = [
   { path: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
 
   { path: "/admin/bookings", label: "Service Bookings", icon: CalendarCheck },
+  { path: "/admin/assignservices", label: "Assign Services", icon: UserCheck },
   { path: "/admin/services", label: "Service", icon: Wrench },
   { path: "/admin/customers", label: "Customers", icon: Users },
   { path: "/admin/billing", label: "Billing", icon: Receipt },
@@ -77,13 +79,36 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const [openMenu, setOpenMenu] = useState(null);
 
   /* ================= HELPERS ================= */
+  const routeMappings = {
+    "/admin/addserviceparts": "/admin/services",
+    "/admin/addbillings": "/admin/billing",
+    "/admin/addprice": "/admin/priceslist",
+    "/admin/addproducts": "/admin/allProducts",
+    "/admin/addstock": "/admin/stockdetails",
+    "/admin/addstaff": "/admin/employees",
+    "/admin/addbooking": "/admin/bookings",
+    "/admin/additemsinventory": "/admin/inventory",
+    "/admin/addcarservies": "/admin/carservies",
+    "/admin/addservices": "/admin/serviceslist",
+  };
 
-  // ✅ exact route match only
-  const isRouteActive = (path) => location.pathname === path;
+  const isRouteActive = (path, exact) => {
+    const currentPath = location.pathname;
+    
+    // Direct match
+    if (currentPath === path) return true;
+    
+    // Mapping match (usually for Add/Edit forms)
+    if (routeMappings[currentPath] === path) return true;
 
-  // ✅ check if any child is active (for auto open only)
+    // For non-exact routes (like categories or lists with sub-pages)
+    if (!exact && currentPath.startsWith(path + "/")) return true;
+    
+    return false;
+  };
+
   const isChildActive = (children) =>
-    children?.some((child) => location.pathname === child.path);
+    children?.some((child) => isRouteActive(child.path, false));
 
   /* ===== AUTO OPEN DROPDOWN WHEN CHILD ACTIVE ===== */
   useEffect(() => {
@@ -166,13 +191,13 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 <div key={item.label}>
                   <button
                     onClick={() => toggleMenu(item.label)}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300
                     ${hasActiveChild
-                        ? "text-black font-semibold"
-                        : "text-black/80 hover:bg-white/20"
+                        ? "bg-sky-50 text-sky-700 font-semibold"
+                        : "text-black/80 hover:bg-gray-100"
                       }`}
                   >
-                    <Icon className="w-5 h-5 shrink-0" />
+                    <Icon className={`w-5 h-5 shrink-0 ${hasActiveChild ? "text-sky-600" : ""}`} />
 
                     {!collapsed && (
                       <>
@@ -180,8 +205,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                           {item.label}
                         </span>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform ${isMenuOpen ? "rotate-180" : ""
-                            }`}
+                          className={`w-4 h-4 transition-transform ${isMenuOpen ? "rotate-180" : ""} ${hasActiveChild ? "text-sky-600" : ""}`}
                         />
                       </>
                     )}
@@ -206,7 +230,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                           onClick={() => isOpen && onClose()}
                           className={`flex items-center gap-3 px-4 py-2.5 rounded transition-all duration-300
   ${isActive
-                              ? "bg-gradient-to-r from-black to-cyan-400 text-white"
+                              ? "bg-gradient-to-r from-black to-cyan-400 text-white shadow-md shadow-cyan-100"
                               : "text-black/80 hover:bg-gradient-to-r hover:from-cyan-400 hover:to-black/30 hover:text-white"
                             }`}
                         >
@@ -222,7 +246,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
             }
 
             /* ===== NORMAL ITEM ===== */
-            const isActive = isRouteActive(item.path);
+            const isActive = isRouteActive(item.path, item.exact);
 
             return (
               <NavLink
@@ -232,11 +256,11 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 onClick={() => isOpen && onClose()}
                 className={`flex items-center gap-3 px-4 py-2.5 rounded transition-all duration-300
   ${isActive
-                    ? "bg-gradient-to-r from-black to-cyan-400 text-white"
+                    ? "bg-gradient-to-r from-black to-cyan-400 text-white shadow-md shadow-cyan-100"
                     : "text-black/80 hover:bg-gradient-to-r hover:from-cyan-400 hover:to-black/30 hover:text-white"
                   }`}
               >
-                <Icon className="w-5 h-5 shrink-0" />
+                <Icon className={`w-5 h-5 shrink-0 ${isActive ? "text-white" : ""}`} />
                 {!collapsed && <span>{item.label}</span>}
               </NavLink>
             );

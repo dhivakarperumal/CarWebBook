@@ -5,6 +5,7 @@ const asc = require('../controllers/allServiceController');
 router.get('/', asc.getAllServices);
 router.get('/:id', asc.getServiceById);
 router.put('/:id/status', asc.updateServiceStatus);
+router.put('/:id/assign', asc.assignMechanic);
 router.post('/:id/parts', asc.addServiceParts);
 router.delete('/:id', asc.deleteService);
 
