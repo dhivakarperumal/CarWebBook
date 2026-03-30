@@ -46,7 +46,6 @@ const AddEditStaff = () => {
     phone: "",
     employeeId: "",
     role: "",
-    department: "",
     gender: "",
     bloodGroup: "",
     dob: "",
@@ -93,7 +92,6 @@ const AddEditStaff = () => {
           phone: data.phone || "",
           employeeId: data.employee_id || "",
           role: data.role || "",
-          department: data.department || "",
           gender: data.gender || "",
           bloodGroup: data.blood_group || "",
           dob: data.dob || "",
@@ -246,11 +244,6 @@ const AddEditStaff = () => {
       newErrors.role = "Role is required";
     }
 
-    // Department validation
-    if (!form.department?.trim()) {
-      newErrors.department = "Department is required";
-    }
-
     // Salary validation
     if (!form.salary?.trim()) {
       newErrors.salary = "Salary is required";
@@ -381,7 +374,7 @@ const AddEditStaff = () => {
 
     } catch (err) {
       console.error(err);
-      toast.error(err.message || "Failed to save staff");
+      toast.error(err.response?.data?.message || err.message || "Failed to save staff");
     } finally {
       setLoading(false);
     }
@@ -544,23 +537,15 @@ const AddEditStaff = () => {
 
 
 
-        {/* DEPARTMENT */}
-        <div>
-          <label className="text-sm font-medium">Department *</label>
-          <input name="department" placeholder="Enter Department" value={form.department} onChange={handleChange}
-            className={`${inputClass} ${errors.department ? "border-red-500 focus:ring-red-500" : ""}`} />
-          <ErrorText field="department" />
-        </div>
-
         {/* GENDER */}
         <div>
           <label className="text-sm font-medium">Gender *</label>
           <select name="gender" value={form.gender} onChange={handleChange}
-            className={`${inputClass} text-white ${errors.gender ? "border-red-500 focus:ring-red-500" : ""}`}>
-            <option className="text-gray-400 bg-[#0f172a]" value="">Select gender</option>
-            <option className="text-gray-400 bg-[#0f172a]" >Male</option>
-            <option className="text-gray-400 bg-[#0f172a]" >Female</option>
-            <option className="text-gray-400 bg-[#0f172a]" >Other</option>
+            className={`${inputClass} ${errors.gender ? "border-red-500 focus:ring-red-500" : ""}`}>
+            <option value="">Select gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
           </select>
           <ErrorText field="gender" />
         </div>
@@ -575,23 +560,11 @@ const AddEditStaff = () => {
             name="bloodGroup"
             value={form.bloodGroup}
             onChange={handleChange}
-            className={`${inputClass} text-white ${errors.bloodGroup ? "border-red-500 focus:ring-red-500" : ""
-              }`}
+            className={`${inputClass} ${errors.bloodGroup ? "border-red-500 focus:ring-red-500" : ""}`}
           >
-            {/* Placeholder */}
-            <option value="" className="text-gray-400 bg-[#0f172a]">
-              Select blood group
-            </option>
-
-            {/* Options */}
+            <option value="">Select blood group</option>
             {bloodGroups.map((bg) => (
-              <option
-                key={bg}
-                value={bg}
-                className="text-black bg-white"
-              >
-                {bg}
-              </option>
+              <option key={bg} value={bg}>{bg}</option>
             ))}
           </select>
 

@@ -73,10 +73,10 @@ exports.addStaff = async (req, res) => {
 
     const [result] = await db.query(sql, [
       uid, employee_id, name, username, email, hashedPassword, phone,
-      role, department, gender, blood_group,
+      role, department || '', gender, blood_group,
       dob || null, joining_date || null,
-      qualification, experience, shift, salary || null, address,
-      emergency_name, emergency_phone, status || 'active', time_in, time_out,
+      qualification || '', experience || '', shift || '', salary || null, address || '',
+      emergency_name || '', emergency_phone || '', status || 'active', time_in || null, time_out || null,
       photo || null, aadhar_doc || null, id_doc || null, certificate_doc || null
     ]);
 
