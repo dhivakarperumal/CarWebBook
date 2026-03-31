@@ -403,7 +403,7 @@ export default function Services() {
                     </div>
 
                     {/* 🔹 TIMELINE */}
-                    <div className="mt-6 border-t border-gray-100 pt-5">
+                    <div className="mt-6 border-t border-gray-100 pt-5 overflow-hidden">
                       <div className="flex items-center justify-between pb-2">
                         {STATUS_STEPS.map((step, index) => {
                           const active = index <= currentStepIndex;
@@ -469,7 +469,7 @@ export default function Services() {
                   </div>
 
                   {/* 🔹 ACTIONS (Card View) */}
-                  <div className="mt-6 border-t border-gray-100 pt-4 flex gap-2">
+                  <div className="mt-6 border-t border-gray-100 pt-4 flex flex-wrap gap-2">
                     {/* 🔹 ASSIGN BUTTON */}
                     {!item.assignedEmployeeId && (
                       <button
