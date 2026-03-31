@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import PageContainer from "./PageContainer";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -216,7 +216,13 @@ const Navbar = () => {
                   ) : (
                     <button
                       onClick={() => setShowLogin(true)}
-                      className="text-sky-400 cursor-pointer hover:text-white transition"
+                      className="relative px-4 py-2 rounded-full
+  font-bold text-sm  
+  border border-sky-400/60
+  transition-all duration-300
+  text-white bg-gradient-to-r from-blue-600 to-cyan-400 hover:text-black 
+  hover:shadow-[0_0_25px_rgba(56,189,248,0.7)]
+  active:scale-95 cursor-pointer"
                     >
                       Login
                     </button>

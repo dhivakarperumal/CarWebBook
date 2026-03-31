@@ -94,6 +94,9 @@ exports.addServiceParts = async (req, res) => {
   }
 
   try {
+    // Ensure schema has required columns
+    await ensureServicePartsSchema();
+
     // Verify service exists
     const [serviceCheck] = await db.query('SELECT * FROM all_services WHERE id = ?', [id]);
     console.log(`🔍 [addServiceParts] Service ${id} exists?`, serviceCheck.length > 0);
@@ -118,8 +121,8 @@ exports.addServiceParts = async (req, res) => {
       console.log(`📝 [addServiceParts] Inserting: ${p.partName} x${qty} @ ₹${price} = ₹${total}`);
 
       await db.query(
-        'INSERT INTO service_parts (all_service_id, partName, qty, price, total) VALUES (?, ?, ?, ?, ?)',
-        [id, p.partName, qty, price, total]
+        'INSERT INTO service_parts (all_service_id, partName, qty, price, total, status) VALUES (?, ?, ?, ?, ?, ?)',
+        [id, p.partName, qty, price, total, p.status || 'pending']
       );
       totalAddedCost += total;
       insertCount++;
@@ -144,37 +147,89 @@ exports.addServiceParts = async (req, res) => {
   }
 };
 
+async function ensureServicePartsSchema() {
+  const [columns] = await db.query('SHOW COLUMNS FROM service_parts');
+  const colNames = columns.map((c) => c.Field);
+
+  if (!colNames.includes('status')) {
+    await db.query("ALTER TABLE service_parts ADD COLUMN status VARCHAR(50) DEFAULT 'pending'");
+  }
+  if (!colNames.includes('approvedBy')) {
+    await db.query("ALTER TABLE service_parts ADD COLUMN approvedBy VARCHAR(255) NULL");
+  }
+  if (!colNames.includes('approvalNotes')) {
+    await db.query("ALTER TABLE service_parts ADD COLUMN approvalNotes TEXT NULL");
+  }
+  if (!colNames.includes('approvalDate')) {
+    await db.query("ALTER TABLE service_parts ADD COLUMN approvalDate TIMESTAMP NULL");
+  }
+}
+
 /* ✅ APPROVE/REJECT SERVICE PART */
 exports.approveServicePart = async (req, res) => {
   const { serviceId, partId } = req.params;
   const { status, approvedBy, approvalNotes } = req.body; // status: "approved" or "rejected"
 
+  console.log(`\n✅ [approveServicePart] Approving part ${partId} for service ${serviceId}`);
+  console.log(`📝 [approveServicePart] Status: ${status}, Approved by: ${approvedBy}`);
+
   try {
+    // Ensure required columns exist to avoid Unknown column errors in older DBs
+    const columns = await db.query("SHOW COLUMNS FROM service_parts");
+    const colNames = columns[0].map((c) => c.Field);
+
+    if (!colNames.includes('status')) {
+      await db.query("ALTER TABLE service_parts ADD COLUMN status VARCHAR(50) DEFAULT 'pending'");
+      console.log('✅ [approveServicePart] Added missing column service_parts.status');
+    }
+    if (!colNames.includes('approvedBy')) {
+      await db.query("ALTER TABLE service_parts ADD COLUMN approvedBy VARCHAR(255) NULL");
+      console.log('✅ [approveServicePart] Added missing column service_parts.approvedBy');
+    }
+    if (!colNames.includes('approvalNotes')) {
+      await db.query("ALTER TABLE service_parts ADD COLUMN approvalNotes TEXT NULL");
+      console.log('✅ [approveServicePart] Added missing column service_parts.approvalNotes');
+    }
+    if (!colNames.includes('approvalDate')) {
+      await db.query("ALTER TABLE service_parts ADD COLUMN approvalDate TIMESTAMP NULL");
+      console.log('✅ [approveServicePart] Added missing column service_parts.approvalDate');
+    }
+
     const approvalDate = status === 'approved' ? new Date() : null;
-    
+
     // Update the specific part's status
-    await db.query(
+    const [updateResult] = await db.query(
       'UPDATE service_parts SET status = ?, approvedBy = ?, approvalNotes = ?, approvalDate = ? WHERE id = ? AND all_service_id = ?',
       [status, approvedBy, approvalNotes, approvalDate, partId, serviceId]
     );
 
-    // Check if all parts are now approved
+    if (updateResult.affectedRows === 0) {
+      console.warn(`⚠️ [approveServicePart] No part found for id=${partId}, all_service_id=${serviceId}`);
+      return res.status(404).json({ message: 'Part not found' });
+    }
+
+    console.log(`✅ [approveServicePart] Updated rows: ${updateResult.affectedRows}`);
+
+    // Check if all parts are now approved or rejected
     const [pendingParts] = await db.query(
       'SELECT COUNT(*) as count FROM service_parts WHERE all_service_id = ? AND status = "pending"',
       [serviceId]
     );
 
-    // If all parts are approved, update service status to "Service Going on"
+    console.log(`✅ [approveServicePart] Pending parts count: ${pendingParts[0].count}`);
+
+    // If all parts are approved/rejected, update service status to "Service Going on" only when no pending left
     if (pendingParts[0].count === 0) {
       await db.query(
         'UPDATE all_services SET serviceStatus = "Service Going on" WHERE id = ?',
         [serviceId]
       );
+      console.log(`✅ [approveServicePart] All parts cleared, service status updated to "Service Going on"`);
     }
 
     res.json({ message: `Part ${status} successfully` });
   } catch (err) {
-    console.error("ApproveServicePart Error:", err);
+    console.error("❌ [approveServicePart] Error:", err);
     res.status(500).json({ message: 'Error updating part status', error: err.message });
   }
 };
