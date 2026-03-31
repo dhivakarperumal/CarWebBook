@@ -455,6 +455,17 @@ export default function Services() {
                         </select>
                       </div>
                     )}
+
+                    {/* 🔹 ADD SPARE BUTTON - Full Width below dropdown */}
+                    {item.serviceStatus === "Processing" && item.assignedEmployeeId && (
+                      <button
+                        onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })}
+                        className="mt-3 w-full rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 px-4 transition-all shadow-md"
+                        title="Add Spare Parts"
+                      >
+                        + Add Spare Parts
+                      </button>
+                    )}
                   </div>
 
                   {/* 🔹 ACTIONS (Card View) */}

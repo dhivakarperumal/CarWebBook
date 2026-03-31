@@ -1,6 +1,9 @@
 import StatusTracker from "./StatusTracker";
 
-const BookingModal = ({ booking, onClose }) => {
+const BookingModal = ({ booking, spareParts, onClose, onApprove  }) => {
+  const bookingSpare = spareParts?.find(
+    (sp) => sp.serviceName === booking.bookingId
+  );
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-3 sm:px-6">
       {/* MODAL */}
@@ -58,6 +61,89 @@ const BookingModal = ({ booking, onClose }) => {
           </p>
         </div>
 
+        {/* SPARE PARTS */}
+        {bookingSpare?.parts?.length > 0 && (
+          <div className="mt-6">
+            <h4 className="text-sky-400 font-bold mb-3">
+              🔧 Spare Parts
+            </h4>
+
+           {bookingSpare.parts.map((part) => {
+  const status = part.status || "pending";
+
+  return (
+    <div
+      key={part.id}
+      className="bg-slate-800 rounded-lg p-3 mb-2"
+    >
+      <p className="text-white font-semibold">
+        {part.partName}
+      </p>
+
+      <p className="text-sm text-gray-400">
+        {part.qty} × ₹{part.price} ={" "}
+        <span className="text-orange-400 font-bold">
+          ₹{part.total}
+        </span>
+      </p>
+
+      {/* STATUS */}
+      <p
+        className={`text-xs font-bold mt-1 ${
+          status === "pending"
+            ? "text-yellow-400"
+            : status === "approved"
+            ? "text-green-400"
+            : "text-red-400"
+        }`}
+      >
+        {status.toUpperCase()}
+      </p>
+
+      {/* 🔥 ACTION BUTTONS */}
+      {status === "pending" && (
+        <div className="flex gap-2 mt-3">
+          <button
+            onClick={() =>
+              onApprove(
+                bookingSpare.serviceId,
+                part.id,
+                "approved"
+              )
+            }
+            className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-bold transition"
+          >
+            Approve
+          </button>
+
+          <button
+            onClick={() =>
+              onApprove(
+                bookingSpare.serviceId,
+                part.id,
+                "rejected"
+              )
+            }
+            className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-bold transition"
+          >
+            Reject
+          </button>
+        </div>
+      )}
+    </div>
+  );
+})}
+
+            {/* TOTAL */}
+            <div className="mt-3 text-right font-bold text-sky-400">
+              Total: ₹
+              {bookingSpare.parts
+                .reduce((sum, p) => sum + Number(p.total), 0)
+                .toFixed(2)}
+            </div>
+          </div>
+        )}
+
         {/* STATUS TRACKER */}
         <div className="mt-6">
           {booking.status !== "CANCELLED" ? (
@@ -68,6 +154,8 @@ const BookingModal = ({ booking, onClose }) => {
             </p>
           )}
         </div>
+
+
       </div>
     </div>
   );
