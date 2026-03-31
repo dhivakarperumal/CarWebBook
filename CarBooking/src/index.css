@@ -329,5 +329,11 @@ table img:hover {
   transform: scale(1.1) !important;
 }
 
-
-
+/* Hide scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
