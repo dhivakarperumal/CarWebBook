@@ -26,7 +26,7 @@ const EmpAssingCars = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [viewMode, setViewMode] = useState("card"); // 'card' or 'table'
+  const [viewMode, setViewMode] = useState("table"); // 'card' or 'table'
   const [page, setPage] = useState(1);
 
   useEffect(() => {

@@ -182,7 +182,7 @@ const EmpDashboard = () => {
             </button>
           </div>
  
-          <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden">
+          <div className=" overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
