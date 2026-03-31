@@ -85,7 +85,8 @@ async function initializeDatabase() {
     const createCartTableSQL = `
       CREATE TABLE IF NOT EXISTS cart (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        userId INT NOT NULL,
+        userId INT NULL,
+        userUid VARCHAR(100) NULL,
         productId INT NOT NULL,
         sku VARCHAR(100),
         name VARCHAR(255),
@@ -95,7 +96,6 @@ async function initializeDatabase() {
         quantity INT DEFAULT 1,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (userId) REFERENCES users(id),
         FOREIGN KEY (productId) REFERENCES products(docId)
       )
     `;
@@ -200,6 +200,9 @@ app.use('/api/reviews', reviewRouter);
 
 const bikeRouter = require('./src/routers/bikeRouter');
 app.use('/api/bikes', bikeRouter);
+
+const addressRouter = require('./src/routers/addressRouter');
+app.use('/api/addresses', addressRouter);
 
 // Basic Route
 app.get('/', (req, res) => {

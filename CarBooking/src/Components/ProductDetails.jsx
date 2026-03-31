@@ -133,14 +133,15 @@ export default function ProductDetails() {
 
     try {
       await api.post("/cart/add", {
-        userId: user.id || user.uid,
+        userId: user.id || null,
+        userUid: user.uid || null,
         productId: product.docId,
         sku: variant.sku,
         name: product.name,
         variant: variantLabel,
-        price: product.offerPrice,
-        image: product.images?.[0] || product.thumbnail,
-        quantity: qty,
+        price: Number(product.offerPrice) || 0,
+        image: product.images?.[0] || product.thumbnail || "",
+        quantity: Number(qty) || 1,
       });
 
       toast.success("Added to cart 🛒");

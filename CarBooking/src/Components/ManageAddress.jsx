@@ -1,16 +1,5 @@
 import { useEffect, useState } from "react";
-import { auth, db } from "../firebase";
-import {
-  collection,
-  addDoc,
-  getDocs,
-  doc,
-  deleteDoc,
-  updateDoc,
-  serverTimestamp,
-  query,
-  where,
-} from "firebase/firestore";
+import api from "../api";
 import toast from "react-hot-toast";
 
 const INDIAN_STATES = [
@@ -39,84 +28,71 @@ const ManageAddress = () => {
   const [loading, setLoading] = useState(false);
   const [editId, setEditId] = useState(null);
 
-  const user = auth.currentUser;
+  const storedUser = JSON.parse(localStorage.getItem("user"));
 
-  /* ================= FETCH ADDRESSES ================= */
   const fetchAddresses = async () => {
-    if (!user) return;
+    if (!storedUser?.uid) {
+      setAddresses([]);
+      return;
+    }
 
-    const snap = await getDocs(
-      collection(db, "users", user.uid, "addresses")
-    );
-
-    const list = snap.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-    }));
-
-    setAddresses(list);
+    try {
+      const res = await api.get(`/addresses/${storedUser.uid}`);
+      setAddresses(res.data || []);
+    } catch (err) {
+      toast.error("Failed to fetch addresses");
+    }
   };
 
   useEffect(() => {
     fetchAddresses();
   }, []);
 
-  /* ================= HANDLE INPUT ================= */
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
-  /* ================= DUPLICATE CHECK ================= */
-  const isDuplicate = async () => {
-    const q = query(
-      collection(db, "users", user.uid, "addresses"),
-      where("phone", "==", form.phone),
-      where("street", "==", form.street),
-      where("pinCode", "==", form.pinCode)
-    );
-
-    const snap = await getDocs(q);
-
-    if (!snap.empty) {
-      if (editId && snap.docs[0].id === editId) return false;
-      return true;
-    }
-
-    return false;
+  const isDuplicate = () => {
+    return addresses.some((addr) => {
+      if (editId && addr.id === editId) return false;
+      return (
+        addr.phone === form.phone &&
+        addr.street === form.street &&
+        addr.pinCode === form.pinCode
+      );
+    });
   };
 
-  /* ================= ADD / UPDATE ================= */
   const handleSave = async () => {
-    if (!user) return toast.error("Please login");
+    if (!storedUser?.uid) return toast.error("Please login");
 
     const { fullName, phone, street, city, pinCode, state } = form;
     if (!fullName || !phone || !street || !city || !pinCode || !state)
       return toast.error("Fill all required fields");
 
+    if (isDuplicate()) {
+      return toast.error("Duplicate address already exists");
+    }
+
     try {
       setLoading(true);
 
-      if (await isDuplicate()) {
-        return toast.error("Duplicate address already exists");
-      }
-
       if (editId) {
-        await updateDoc(
-          doc(db, "users", user.uid, "addresses", editId),
-          { ...form }
-        );
+        await api.put(`/addresses/${editId}`, {
+          ...form,
+        });
         toast.success("Address updated");
       } else {
-        await addDoc(
-          collection(db, "users", user.uid, "addresses"),
-          { ...form, createdAt: serverTimestamp() }
-        );
+        await api.post("/addresses", {
+          ...form,
+          userUid: storedUser.uid,
+        });
         toast.success("Address added");
       }
 
       setForm(initialForm);
       setEditId(null);
       fetchAddresses();
-    } catch {
+    } catch (err) {
       toast.error("Failed to save address");
     } finally {
       setLoading(false);
@@ -133,9 +109,13 @@ const ManageAddress = () => {
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this address?")) return;
 
-    await deleteDoc(doc(db, "users", user.uid, "addresses", id));
-    toast.success("Address deleted");
-    fetchAddresses();
+    try {
+      await api.delete(`/addresses/${id}`);
+      toast.success("Address deleted");
+      fetchAddresses();
+    } catch (err) {
+      toast.error("Failed to delete address");
+    }
   };
 
   return (

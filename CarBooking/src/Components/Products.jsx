@@ -52,12 +52,13 @@ const handleAddToCart = async (product, e) => {
 
   try {
     await api.post("/cart/add", {
-      userId: user.id,
+      userId: user.id || null,
+      userUid: user.uid || null,
       productId: product.docId,
       sku: variant.sku,
       name: product.name,
-      price: product.offerPrice,
-      image: product.thumbnail,
+      price: Number(product.offerPrice) || 0,
+      image: product.thumbnail || "",
       quantity: 1,
     });
 

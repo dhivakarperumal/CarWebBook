@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { auth } from "../firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import api from "../api";
 import toast from "react-hot-toast";
 
 const PersonalInfo = () => {
@@ -10,20 +8,16 @@ const PersonalInfo = () => {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 🔹 Fetch logged-in user data
   useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (!storedUser?.uid) return;
+
     const fetchUser = async () => {
       try {
-        const user = auth.currentUser;
-        if (!user) return;
-
-        const snap = await getDoc(doc(db, "users", user.uid));
-        if (snap.exists()) {
-          const data = snap.data();
-          setName(data.username || "");
-          setMobile(data.mobile || "");
-          setEmail(data.email || "");
-        }
+        const res = await api.get(`/auth/profile/${storedUser.uid}`);
+        setName(res.data.username || "");
+        setMobile(res.data.mobile || "");
+        setEmail(res.data.email || "");
       } catch (err) {
         toast.error("Failed to load profile");
       }
@@ -32,19 +26,17 @@ const PersonalInfo = () => {
     fetchUser();
   }, []);
 
-  // 🔹 Update NAME + MOBILE only
   const handleUpdate = async () => {
     if (!name.trim()) return toast.error("Name is required");
     if (!mobile.trim()) return toast.error("Mobile number is required");
-    if (mobile.length !== 10)
-      return toast.error("Enter valid 10 digit mobile number");
+    if (mobile.length !== 10) return toast.error("Enter valid 10 digit mobile number");
+
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (!storedUser?.uid) return toast.error("User not logged in");
 
     try {
       setLoading(true);
-      const user = auth.currentUser;
-      if (!user) return toast.error("User not logged in");
-
-      await updateDoc(doc(db, "users", user.uid), {
+      await api.put(`/auth/profile/${storedUser.uid}`, {
         username: name,
         mobile,
       });
