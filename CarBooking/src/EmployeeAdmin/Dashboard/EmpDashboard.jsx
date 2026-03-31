@@ -52,10 +52,9 @@ const EmpDashboard = () => {
       const totalStaffCount = (staffRes.data || []).length;
 
       setStats({
-        pending: filtered.filter(b => b.status === "Pending" || b.status === "Approved").length,
-        inProgress: filtered.filter(b => b.status === "Assigned" || b.status === "Service Going on" || b.status === "In Progress" || b.status === "Processing").length,
-        completed: filtered.filter(b => b.status === "Service Completed" || b.status === "Completed").length,
-        totalStaff: totalStaffCount
+        pending: filtered.filter(b => b.status === "Booked" || b.status === "Pending").length,
+        inProgress: filtered.filter(b => ["Call Verified", "Approved", "Processing", "Service Going on"].includes(b.status)).length,
+        completed: filtered.filter(b => ["Service Completed", "Completed"].includes(b.status)).length,
       });
     } catch (err) {
       console.error("Error fetching tasks:", err);

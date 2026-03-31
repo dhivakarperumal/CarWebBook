@@ -279,8 +279,8 @@ const ShowAllBookings = () => {
                 onChange={(e) => handleStatusChange(b, e.target.value)}
                 className="mt-4 w-full border px-3 py-2 rounded-lg"
               >
-                {BOOKING_STATUS.map((s) => (
-                  <option key={s}>{s}</option>
+                {BOOKING_STATUS.slice(BOOKING_STATUS.indexOf(b.status) === -1 ? 0 : BOOKING_STATUS.indexOf(b.status)).map((s) => (
+                  <option key={s} value={s}>{s}</option>
                 ))}
               </select>
             </div>
@@ -322,8 +322,8 @@ const ShowAllBookings = () => {
                       }
                       className="border px-2 py-1 rounded"
                     >
-                      {BOOKING_STATUS.map((s) => (
-                        <option key={s}>{s}</option>
+                      {BOOKING_STATUS.slice(BOOKING_STATUS.indexOf(b.status) === -1 ? 0 : BOOKING_STATUS.indexOf(b.status)).map((s) => (
+                        <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
                   </td>
