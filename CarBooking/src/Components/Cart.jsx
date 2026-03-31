@@ -56,6 +56,7 @@ export default function Cart() {
       const newQty = item.quantity + 1;
       await api.put(`/cart/item/${item.id}`, { quantity: newQty });
       setItems(items.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
+      window.dispatchEvent(new Event("cart-updated"));
     } catch (err) {
       toast.error("Update failed");
     }
@@ -67,6 +68,7 @@ export default function Cart() {
       const newQty = item.quantity - 1;
       await api.put(`/cart/item/${item.id}`, { quantity: newQty });
       setItems(items.map(i => i.id === item.id ? { ...i, quantity: newQty } : i));
+      window.dispatchEvent(new Event("cart-updated"));
     } catch (err) {
       toast.error("Update failed");
     }
@@ -76,6 +78,7 @@ export default function Cart() {
     try {
       await api.delete(`/cart/item/${item.id}`);
       setItems(items.filter(i => i.id !== item.id));
+      window.dispatchEvent(new Event("cart-updated"));
       toast.success("Item removed");
     } catch (err) {
       toast.error("Remove failed");

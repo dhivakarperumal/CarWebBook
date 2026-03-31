@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { FaStar, FaRegStar } from "react-icons/fa";
 import { FiShoppingCart } from "react-icons/fi";
 import PageHeader from "./PageHeader";
+import toast from "react-hot-toast";
 
 export default function Products() {
   const [products, setProducts] = useState([]);
@@ -34,19 +35,19 @@ const handleAddToCart = async (product, e) => {
   const user = JSON.parse(localStorage.getItem("user"));
 
   if (!user) {
-    alert("Please login first");
+    toast.error("Please login first");
     return;
   }
 
   if (!product.totalStock || product.totalStock <= 0) {
-    alert("Product is out of stock");
+    toast.error("Product is out of stock");
     return;
   }
 
   const variant = product.variants?.[0];
 
   if (!variant?.sku) {
-    alert("Invalid product variant");
+    toast.error("Invalid product variant");
     return;
   }
 
@@ -62,10 +63,11 @@ const handleAddToCart = async (product, e) => {
       quantity: 1,
     });
 
-    alert("Added to cart!");
+    window.dispatchEvent(new Event("cart-updated"));
+    toast.success("Added to cart!");
   } catch (err) {
     console.error("Cart error", err);
-    alert("Error adding to cart");
+    toast.error("Error adding to cart");
   }
 };
 

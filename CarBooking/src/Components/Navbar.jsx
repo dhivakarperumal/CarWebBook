@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import PageContainer from "./PageContainer";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -6,6 +6,7 @@ import { useRef } from "react";
 import LoginModal from "../Auth/LoginModal";
 import RegisterModal from "../Auth/RegisterModal";
 import { FiShoppingCart } from "react-icons/fi";
+import api from "../api";
 
 const Navbar = () => {
   const location = useLocation();
@@ -34,6 +35,31 @@ const Navbar = () => {
   };
 
 
+  // ── FETCH CART COUNT ────────────────────────────────────────────
+  const fetchCartCount = useCallback(async () => {
+    const userId = userData?.id || userData?.uid;
+    if (!userId) { setCartCount(0); return; }
+    try {
+      const res = await api.get(`/cart/${userId}`);
+      const items = res.data || [];
+      const count = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+      setCartCount(count);
+    } catch {
+      setCartCount(0);
+    }
+  }, [userData?.id, userData?.uid]);
+
+  // Fetch on login / route change
+  useEffect(() => {
+    fetchCartCount();
+  }, [fetchCartCount, location.pathname]);
+
+  // Listen for instant updates when items are added/removed from cart
+  useEffect(() => {
+    window.addEventListener("cart-updated", fetchCartCount);
+    return () => window.removeEventListener("cart-updated", fetchCartCount);
+  }, [fetchCartCount]);
+  // ────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const handleClickOutside = (e) => {
