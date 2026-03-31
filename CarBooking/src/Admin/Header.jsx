@@ -194,7 +194,7 @@ const Header = ({ onMenuClick }) => {
     try {
       await logout(); // ✅ from AuthContext
       toast.success("Logged out successfully");
-      navigate("/login");
+      navigate("/");
     } catch (err) {
       toast.error("Logout failed");
       console.error(err);
