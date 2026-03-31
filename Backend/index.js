@@ -57,6 +57,7 @@ app.use('/api/all-services', allServiceRouter);
 app.use('/api/service-types', serviceTypeRouter);
 app.use('/api/billings', billingRouter);
 app.use('/api/orders', orderRouter);
+app.use('/api/cart', require('./src/routers/cartRouter'));
 
 const pricingRouter = require('./src/routers/pricingRoutes');
 app.use('/api/pricing_packages', pricingRouter);

@@ -1,20 +1,8 @@
-import { useParams } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
-import {
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-  collection,
-  getDocs,
-  query,
-  where,
-  serverTimestamp,
-} from "firebase/firestore";
-import { auth, db } from "../firebase";
-import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useMemo } from "react";
 import PageHeader from "./PageHeader";
 import PageContainer from "./PageContainer";
+import api from "../api";
 import toast from "react-hot-toast";
 
 export default function ProductDetails() {
@@ -29,25 +17,83 @@ export default function ProductDetails() {
     setQty(1);
   }, [selectedVariantIndex]);
 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
   useEffect(() => {
     const fetchProduct = async () => {
-      const q = query(collection(db, "products"), where("slug", "==", slug));
+      setLoading(true);
+      setError(null);
 
-      const snap = await getDocs(q);
-
-      if (!snap.empty) {
-        const data = {
-          docId: snap.docs[0].id,
-          ...snap.docs[0].data(),
-        };
-
-        setProduct(data);
+      try {
+        console.debug("ProductDetails fetching", slug);
+        const res = await api.get(`/products/slug/${slug}`);
+        console.debug("ProductDetails response", res.data);
+        setProduct(res.data);
         setSelectedVariantIndex(0);
+        setActiveImage(0);
+      } catch (err) {
+        if (err?.response?.status === 404) {
+          // 1) try trailing-dash trimmed slug
+          const trimmed = slug?.replace(/-+$/, "");
+          if (trimmed && trimmed !== slug) {
+            try {
+              const res2 = await api.get(`/products/slug/${trimmed}`);
+              console.debug("ProductDetails fallback trim response", res2.data);
+              setProduct(res2.data);
+              setSelectedVariantIndex(0);
+              setActiveImage(0);
+              return;
+            } catch (innerErr) {
+              console.warn("ProductDetails fallback trim failed", innerErr);
+            }
+          }
+
+          // 2) try full product list auto-match
+          try {
+            const list = await api.get('/products');
+            const match = (list.data || []).find((p) => {
+              if (!p.slug) return false;
+              return [slug, trimmed, p.slug].some((v) => v && v.toLowerCase() === p.slug.toLowerCase());
+            });
+            if (match) {
+              console.debug('ProductDetails fallback list match', match.slug);
+              setProduct(match);
+              setSelectedVariantIndex(0);
+              setActiveImage(0);
+              return;
+            }
+          } catch (listErr) {
+            console.warn('ProductDetails fallback list failed', listErr);
+          }
+
+          setError('Product not found');
+          setProduct(null);
+        } else {
+          setError('Unable to load product details');
+          console.error('Failed to load product', err);
+          setProduct(null);
+        }
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchProduct();
+    if (slug) fetchProduct();
   }, [slug]);
+
+  const productImages = useMemo(() => {
+    if (Array.isArray(product?.images) && product.images.length > 0) return product.images;
+    if (product?.thumbnail) return [product.thumbnail];
+    return ["https://via.placeholder.com/600x400?text=No+Image+Available"];
+  }, [product]);
+
+  useEffect(() => {
+    setActiveImage((prev) => {
+      if (!productImages.length) return 0;
+      return Math.min(Math.max(prev, 0), productImages.length - 1);
+    });
+  }, [productImages.length]);
 
   const currentStock = product?.variants?.[selectedVariantIndex]?.stock || 0;
 
@@ -60,14 +106,14 @@ export default function ProductDetails() {
   };
 
   const handleAddToCart = async () => {
-    const user = auth.currentUser;
+    const user = JSON.parse(localStorage.getItem("user"));
 
     if (!user) {
       alert("Please login first");
       return;
     }
 
-    // ✅ pick first variant (you have only one now)
+    // ✅ pick selected variant
     const variant = product.variants?.[selectedVariantIndex];
 
     if (!variant?.sku) {
@@ -82,38 +128,27 @@ export default function ProductDetails() {
       return;
     }
 
-    const cartRef = doc(db, "users", user.uid, "cart", product.docId);
-    const existing = await getDoc(cartRef);
-
-    if (existing.exists()) {
-      const newQty = existing.data().quantity + qty;
-
-      if (newQty > currentStock) {
-        alert("Total quantity exceeds stock");
-        return;
-      }
-
-      await updateDoc(cartRef, {
-        quantity: newQty,
-      });
-    } else {
-      await setDoc(cartRef, {
-        docId: product.docId,
+    try {
+      await api.post("/cart/add", {
+        userId: user.id,
+        productId: product.docId,
         sku: variant.sku,
         name: product.name,
         price: product.offerPrice,
-        image: product.images?.[0],
-        quantity: qty, // ✅ use selected quantity
-        createdAt: serverTimestamp(),
+        image: product.images?.[0] || product.thumbnail,
+        quantity: qty,
       });
-    }
-    toast.success("Added to cart 🛒");
 
-    navigate("/cart");
+      toast.success("Added to cart 🛒");
+      navigate("/cart");
+    } catch (err) {
+      console.error("Cart error", err);
+      alert("Error adding to cart");
+    }
   };
 
   const handleBuyNow = () => {
-    const user = auth.currentUser;
+    const user = JSON.parse(localStorage.getItem("user"));
 
     if (!user) {
       alert("Please login first");
@@ -150,8 +185,26 @@ export default function ProductDetails() {
     });
   };
 
-  if (!product)
+  if (loading)
     return <div className="text-white text-center py-40">Loading...</div>;
+
+  if (error)
+    return (
+      <div className="text-white text-center py-40">
+        <p className="text-2xl mb-4">{error}</p>
+        <button
+          onClick={() => navigate("/products")}
+          className="px-6 py-3 rounded-full bg-sky-400 text-black font-semibold"
+        >
+          Back to Products
+        </button>
+      </div>
+    );
+
+  if (!product)
+    return <div className="text-white text-center py-40">Product not found</div>;
+
+  const activeSrc = productImages[activeImage] || productImages[0];
 
   return (
     <>
@@ -168,23 +221,23 @@ export default function ProductDetails() {
           shadow-xl shadow-sky-500/10"
             >
               <img
-                src={product.images?.[activeImage]}
+                src={activeSrc}
                 className="w-full h-[360px] md:h-[420px] object-contain"
               />
             </div>
 
             {/* THUMBNAILS */}
             <div className="grid grid-cols-4 gap-4 mt-6">
-              {product.images?.slice(-4).map((img, i) => {
-                const originalIndex = product.images.length - 4 + i;
+              {productImages.slice(-4).map((img, i) => {
+                const index = productImages.length > 4 ? productImages.length - 4 + i : i;
 
                 return (
                   <button
-                    key={originalIndex}
-                    onClick={() => setActiveImage(originalIndex)}
+                    key={index}
+                    onClick={() => setActiveImage(index)}
                     className={`bg-[#050b14] rounded-xl p-2 border transition
             ${
-              activeImage === originalIndex
+              activeImage === index
                 ? "border-sky-400 shadow-md shadow-sky-400/30"
                 : "border-white/10 hover:border-sky-400/50"
             }`}

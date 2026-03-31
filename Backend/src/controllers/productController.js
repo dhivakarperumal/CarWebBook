@@ -112,6 +112,33 @@ exports.getProductById = async (req, res) => {
   }
 };
 
+/* 🔍 GET PRODUCT BY SLUG */
+exports.getProductBySlug = async (req, res) => {
+  const { slug } = req.params;
+  const normalized = slug ? slug.toLowerCase().trim().replace(/-+$/, '') : '';
+
+  try {
+    const [rows] = await db.query(
+      'SELECT * FROM products WHERE LOWER(slug)=? OR LOWER(slug)=? LIMIT 1',
+      [slug?.toLowerCase(), normalized]
+    );
+
+    if (!rows.length) return res.status(404).json({ message: 'Product not found' });
+
+    const p = rows[0];
+    res.json({
+      ...p,
+      tags: tryParse(p.tags, []),
+      warranty: tryParse(p.warranty, {}),
+      returnPolicy: tryParse(p.returnPolicy, {}),
+      variants: tryParse(p.variants, []),
+      images: tryParse(p.images, []),
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching product', error: err.message });
+  }
+};
+
 /* ❌ DELETE PRODUCT */
 exports.deleteProduct = async (req, res) => {
   const { docId } = req.params;
