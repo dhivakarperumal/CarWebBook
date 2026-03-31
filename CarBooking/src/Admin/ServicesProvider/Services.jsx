@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
-import { FaEdit, FaTrash, FaEye, FaThLarge, FaList } from "react-icons/fa";
+import { FaEdit, FaTrash, FaEye, FaThLarge, FaList, FaPlus } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import Pagination from "../../Components/Pagination";
@@ -472,6 +472,17 @@ export default function Services() {
                       </button>
                     )}
 
+                    {/* 🔹 ADD SPARE BUTTON - Show only when Processing and not Service Going on or later */}
+                    {item.serviceStatus === "Processing" && (
+                      <button
+                        onClick={() => navigate("/employee/addserviceparts", { state: { service: item } })}
+                        className="flex-1 rounded-xl bg-orange-50 p-2.5 text-sm font-bold text-orange-600 hover:bg-orange-600 hover:text-white transition-all border border-orange-100 hover:border-orange-600"
+                        title="Add Spare Parts"
+                      >
+                        Add Spare
+                      </button>
+                    )}
+
                     <button
                       onClick={() => navigate(`${pathPrefix}/services/${item.id}`)}
                       className="flex-1 flex justify-center items-center rounded-xl bg-gray-50 p-2.5 text-gray-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 hover:text-blue-600 transition-all"
@@ -569,6 +580,16 @@ export default function Services() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end space-x-2">
+                          {/* Add Spare Button - Show only when Processing */}
+                          {item.serviceStatus === "Processing" && (
+                            <button
+                              onClick={() => navigate("/employee/addserviceparts", { state: { service: item } })}
+                              className="rounded-lg p-2 text-orange-400 hover:bg-orange-50 hover:text-orange-600 transition-all border border-transparent hover:border-orange-100"
+                              title="Add Spare Parts"
+                            >
+                              <FaPlus />
+                            </button>
+                          )}
                           <button
                             onClick={() => navigate(`${pathPrefix}/services/${item.id}`)}
                             className="rounded-lg p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100"
