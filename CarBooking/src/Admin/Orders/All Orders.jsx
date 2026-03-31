@@ -33,6 +33,15 @@ const formatStatusLabel = (status) => {
   return map[k] || status || "-";
 };
 
+const ORDER_STATUS_LIST = [
+  { id: "orderplaced", label: "Order Placed" },
+  { id: "processing", label: "Processing" },
+  { id: "packing", label: "Packing" },
+  { id: "outfordelivery", label: "Out for Delivery" },
+  { id: "delivered", label: "Delivered" },
+  { id: "cancelled", label: "Cancelled" },
+];
+
 const getCustomerDetails = (o) => {
   return { name: o.shippingName || o.customerName || "-" };
 };
@@ -329,12 +338,15 @@ const AllOrders = () => {
                       onChange={(e) => updateStatus(o.id, e.target.value)}
                       className="bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-xs"
                     >
-                      <option value="orderplaced">Order Placed</option>
-                      <option value="processing">Processing</option>
-                      <option value="packing">Packing</option>
-                      <option value="outfordelivery">Out for Delivery</option>
-                      <option value="delivered">Delivered</option>
-                      <option value="cancelled">Cancelled</option>
+                      {ORDER_STATUS_LIST.slice(
+                        ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status)) === -1
+                          ? 0
+                          : ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status))
+                      ).map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.label}
+                        </option>
+                      ))}
                     </select>
 
 
@@ -436,12 +448,15 @@ const AllOrders = () => {
                     className="bg-white border border-gray-300 rounded-lg px-2 py-1 text-xs w-full
           focus:ring-2 focus:ring-blue-500 outline-none"
                   >
-                    <option value="orderplaced">Order Placed</option>
-                    <option value="processing">Processing</option>
-                    <option value="packing">Packing</option>
-                    <option value="outfordelivery">Out for Delivery</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
+                    {ORDER_STATUS_LIST.slice(
+                      ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status)) === -1
+                        ? 0
+                        : ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status))
+                    ).map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
