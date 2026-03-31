@@ -23,7 +23,7 @@ export default function AdminAssignServices() {
   const [mainTab, setMainTab] = useState("all"); // all | booked | addVehicle
   const [tab, setTab] = useState("all");
   const [searchText, setSearchText] = useState("");
-  const [viewMode, setViewMode] = useState("card"); // card | table
+  const [viewMode, setViewMode] = useState("table"); // card | table
   const [currentPage, setCurrentPage] = useState(1);
 
   const fetchData = async () => {
@@ -202,15 +202,6 @@ export default function AdminAssignServices() {
 
         {/* HEADER ACTIONS */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-6">
-          <div>
-            <h1 className="text-2xl font-black bg-gradient-to-r from-blue-900 to-cyan-500 bg-clip-text text-transparent uppercase tracking-tight">
-              {mainTab === "all" ? "All Service Management" : mainTab === "booked" ? "Customer Bookings" : "Walk-in Vehicles"}
-            </h1>
-            <p className="text-gray-500 text-sm font-bold mt-1 uppercase tracking-widest opacity-60">
-              {mainTab === "all" ? "Overview of all active and pending services" : mainTab === "booked" ? "Managing reservations and appointments" : "Handling on-site vehicle check-ins"}
-            </p>
-          </div>
-
           <button
             onClick={async () => {
               setSelectedBooking(null);
@@ -472,7 +463,7 @@ export default function AdminAssignServices() {
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto animate-fadeIn">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50/50">
+                <tr className="bg-gradient-to-r from-black to-cyan-400 text-white">
                   <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Job Details</th>
                   <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer</th>
                   <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Vehicle</th>

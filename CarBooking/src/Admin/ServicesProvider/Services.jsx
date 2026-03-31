@@ -38,7 +38,7 @@ export default function Services() {
   const isMechanic = userRole === "mechanic" || userRole === "staff";
   const pathPrefix = location.pathname.startsWith("/employee") ? "/employee" : "/admin";
 
-  const [viewMode, setViewMode] = useState("card"); // "card" | "table"
+  const [viewMode, setViewMode] = useState("table"); // "card" | "table"
 
   const [mainTab, setMainTab] = useState("booked"); // booked | addVehicle
   const [subTab, setSubTab] = useState(isMechanic ? "assigned" : "unassigned"); // assigned | unassigned
@@ -506,7 +506,7 @@ export default function Services() {
           </div>
         ) : (
           /* TABLE VIEW */
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+          // <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
               <table className="min-w-full text-left text-sm text-gray-600">
                 <thead className="border-b border-gray-200 bg-gray-50 text-gray-900">
@@ -604,7 +604,7 @@ export default function Services() {
                 </tbody>
               </table>
             </div>
-          </div>
+          // </div>
         )}
 
         {/* 📚 PAGINATION */}
