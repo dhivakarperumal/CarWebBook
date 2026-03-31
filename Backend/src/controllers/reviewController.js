@@ -1,8 +1,16 @@
 const db = require('../config/db');
 
 const getReviews = async (req, res) => {
+  const { productId } = req.query;
   try {
-    const [rows] = await db.query('SELECT * FROM reviews ORDER BY created_at DESC');
+    let query = 'SELECT * FROM reviews';
+    let params = [];
+    if (productId) {
+      query += ' WHERE productId = ?';
+      params.push(productId);
+    }
+    query += ' ORDER BY created_at DESC';
+    const [rows] = await db.query(query, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ message: "Error fetching reviews", error: err.message });
@@ -10,11 +18,11 @@ const getReviews = async (req, res) => {
 };
 
 const addReview = async (req, res) => {
-  const { name, rating, message, image } = req.body;
+  const { name, rating, message, image, productId } = req.body;
   try {
     const [result] = await db.query(
-      'INSERT INTO reviews (name, rating, message, image, status) VALUES (?, ?, ?, ?, ?)',
-      [name, rating, message, image, false]
+      'INSERT INTO reviews (name, rating, message, image, status, productId) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, rating, message, image, false, productId || null]
     );
     res.status(201).json({ message: "Review added successfully", id: result.insertId });
   } catch (err) {

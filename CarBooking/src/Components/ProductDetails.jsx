@@ -4,6 +4,7 @@ import PageHeader from "./PageHeader";
 import PageContainer from "./PageContainer";
 import api from "../api";
 import toast from "react-hot-toast";
+import { FaStar, FaRegStar } from "react-icons/fa";
 
 export default function ProductDetails() {
   const { slug } = useParams();
@@ -12,6 +13,9 @@ export default function ProductDetails() {
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [qty, setQty] = useState(1);
   const navigate = useNavigate();
+  const [reviews, setReviews] = useState([]);
+  const [newReview, setNewReview] = useState({ rating: 0, message: "" });
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   useEffect(() => {
     setQty(1);
@@ -82,6 +86,58 @@ export default function ProductDetails() {
     if (slug) fetchProduct();
   }, [slug]);
 
+  const fetchReviews = async () => {
+    if (!product?.docId) return;
+    try {
+      const res = await api.get(`/reviews?productId=${product.docId}`);
+      // Only show approved reviews
+      setReviews(res.data.filter(r => r.status === 1 || r.status === true));
+    } catch (err) {
+      console.error("Failed to fetch reviews", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, [product]);
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) {
+      toast.error("Please login to leave a review");
+      return;
+    }
+
+    if (newReview.rating === 0) {
+      toast.error("Please select a rating");
+      return;
+    }
+
+    if (!newReview.message.trim()) {
+      toast.error("Please enter a message");
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      await api.post("/reviews", {
+        name: user.name || user.email || "Anonymous",
+        rating: newReview.rating,
+        message: newReview.message,
+        productId: product.docId,
+        image: user.photoURL || ""
+      });
+      toast.success("Review submitted for approval!");
+      setNewReview({ rating: 0, message: "" });
+    } catch (err) {
+      console.error("Review submission error", err);
+      toast.error("Failed to submit review");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   const productImages = useMemo(() => {
     if (Array.isArray(product?.images) && product.images.length > 0) return product.images;
     if (product?.thumbnail) return [product.thumbnail];
@@ -109,7 +165,7 @@ export default function ProductDetails() {
     const user = JSON.parse(localStorage.getItem("user"));
 
     if (!user) {
-      alert("Please login first");
+      toast.error("Please login first");
       return;
     }
 
@@ -120,14 +176,14 @@ export default function ProductDetails() {
         : variant.sku;
 
     if (!variant?.sku) {
-      alert("Product variant not available");
+      toast.error("Product variant not available");
       return;
     }
 
     const currentStock = variant.stock || 0;
 
     if (qty > currentStock) {
-      alert("Selected quantity exceeds stock");
+      toast.error("Selected quantity exceeds stock");
       return;
     }
 
@@ -144,11 +200,12 @@ export default function ProductDetails() {
         quantity: Number(qty) || 1,
       });
 
+      window.dispatchEvent(new Event("cart-updated"));
       toast.success("Added to cart 🛒");
       navigate("/cart");
     } catch (err) {
       console.error("Cart error", err);
-      alert("Error adding to cart");
+      toast.error("Error adding to cart");
     }
   };
 
@@ -156,7 +213,7 @@ export default function ProductDetails() {
     const user = JSON.parse(localStorage.getItem("user"));
 
     if (!user) {
-      alert("Please login first");
+      toast.error("Please login first");
       return;
     }
 
@@ -166,14 +223,14 @@ export default function ProductDetails() {
         : variant.sku;
 
     if (!variant?.sku) {
-      alert("Product variant not available");
+      toast.error("Product variant not available");
       return;
     }
 
     const currentStock = variant.stock || 0;
 
     if (qty > currentStock) {
-      alert("Selected quantity exceeds stock");
+      toast.error("Selected quantity exceeds stock");
       return;
     }
 
@@ -266,7 +323,26 @@ export default function ProductDetails() {
                 {product.name}
               </h1>
 
-              <p className="text-gray-400 mt-2">{product.brand}</p>
+              <div className="flex items-center gap-4 mt-2">
+                <p className="text-gray-400">{product.brand}</p>
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) =>
+                    star <= Number(product.rating || 0) ? (
+                      <FaStar key={star} className="text-sky-400 text-sm" />
+                    ) : (
+                      <FaRegStar
+                        key={star}
+                        className="text-gray-500 text-sm"
+                      />
+                    )
+                  )}
+                  {product.rating && (
+                    <span className="text-gray-400 text-xs ml-1">
+                      ({product.rating})
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* PRICE */}
@@ -428,6 +504,96 @@ shadow-xl shadow-blue-500/40 cursor-pointer"
                 Buy Now
               </button>
             </div>
+          </div>
+        </div>
+        </div>
+
+        {/* REVIEWS SECTION */}
+        <div className="mt-24 border-t border-white/10 pt-16">
+          <div className="grid lg:grid-cols-3 gap-16">
+            {/* LEFT — REVIEWS LIST */}
+            <div className="lg:col-span-2 space-y-8">
+              <h2 className="text-3xl font-bold mb-8">Customer Reviews</h2>
+              
+              {reviews.length === 0 ? (
+                <p className="text-gray-400 italic">No reviews yet. Be the first to review this product!</p>
+              ) : (
+                <div className="space-y-6">
+                  {reviews.map((rev) => (
+                    <div key={rev.id} className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="w-12 h-12 rounded-full bg-sky-400/20 flex items-center justify-center text-sky-400 font-bold overflow-hidden">
+                          {rev.image ? <img src={rev.image} alt="" className="w-full h-full object-cover" /> : (rev.name?.[0] || "A")}
+                        </div>
+                        <div>
+                          <h4 className="font-semibold">{rev.name}</h4>
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              star <= rev.rating ? (
+                                <FaStar key={star} className="text-sky-400 text-xs" />
+                              ) : (
+                                <FaRegStar key={star} className="text-gray-600 text-xs" />
+                              )
+                            ))}
+                          </div>
+                        </div>
+                        <span className="ml-auto text-xs text-gray-500">
+                          {new Date(rev.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <p className="text-gray-300 leading-relaxed">
+                        {rev.message}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT — ADD REVIEW FORM */}
+            <div className="bg-[#050b14] border border-sky-400/20 rounded-3xl p-8 h-fit sticky top-24">
+              <h3 className="text-2xl font-bold mb-6">Write a Review</h3>
+              
+              <form onSubmit={handleSubmitReview} className="space-y-6">
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Rating</label>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setNewReview({ ...newReview, rating: star })}
+                        className="text-2xl transition-transform hover:scale-110"
+                      >
+                        {star <= newReview.rating ? (
+                          <FaStar className="text-sky-400" />
+                        ) : (
+                          <FaRegStar className="text-gray-600" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-gray-400 mb-2">Message</label>
+                  <textarea
+                    value={newReview.message}
+                    onChange={(e) => setNewReview({ ...newReview, message: e.target.value })}
+                    placeholder="Tell us what you think..."
+                    className="w-full bg-white/5 border border-white/10 rounded-xl p-4 min-h-[120px] focus:border-sky-400 outline-none transition"
+                    required
+                  ></textarea>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={submittingReview}
+                  className="w-full py-4 rounded-full font-semibold bg-sky-400 text-black hover:bg-sky-300 disabled:opacity-50 transition-colors"
+                >
+                  {submittingReview ? "Submitting..." : "Submit Review"}
+                </button>
+              </form>
           </div>
         </div>
       </div>

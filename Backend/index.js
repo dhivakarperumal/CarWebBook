@@ -30,6 +30,7 @@ async function initializeDatabase() {
     const createReviewsTableSQL = `
       CREATE TABLE IF NOT EXISTS reviews (
         id INT AUTO_INCREMENT PRIMARY KEY,
+        productId INT DEFAULT NULL,
         name VARCHAR(255) NOT NULL,
         rating INT NOT NULL,
         message TEXT NOT NULL,
