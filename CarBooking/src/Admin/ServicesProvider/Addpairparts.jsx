@@ -168,7 +168,7 @@ const AddServiceParts = () => {
           </div>
           <div className="space-y-1">
             <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Reg Number</p>
-            <p className="font-bold text-blue-900">{selectedService.vehicle_number || "N/A"}</p>
+            <p className="font-bold text-blue-900">{selectedService.vehicleNumber || "N/A"}</p>
           </div>
         </div>
       )}

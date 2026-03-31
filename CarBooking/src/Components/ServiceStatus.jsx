@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../firebase";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  getDocs,
-} from "firebase/firestore";
 import BookingModal from "./BookingModal";
+import api from "../api";
+import { useAuth } from "../PrivateRouter/AuthContext";
 
 /* ===== STATUS LABELS ===== */
 export const STATUS_LABELS = {
@@ -40,49 +33,48 @@ export const STATUS_NORMALIZER = {
 
 const ServiceStatus = () => {
   const [bookings, setBookings] = useState([]);
-  const [user, setUser] = useState(null);
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState(null);
 
-  /* ===== AUTH ===== */
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsub();
-  }, []);
-
-  /* ===== FETCH BOOKINGS ===== */
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchBookings = async () => {
+useEffect(() => {
+  const fetchBookings = async () => {
+    try {
       setLoading(true);
-      const q = query(
-        collection(db, "bookings"),
-        where("uid", "==", user.uid),
-        orderBy("createdAt", "desc")
-      );
 
-      const snapshot = await getDocs(q);
+      if (!user?.email) {
+        console.warn("⚠️ User email not available yet");
+        return;
+      }
 
-      const data = snapshot.docs.map((doc) => {
-        const raw = doc.data();
-        return {
-          id: doc.id,
+      console.log("👉 Logged-in User Email:", user.email);
+
+      const res = await api.get("/bookings");
+
+      const data = (res.data || [])
+        .filter(
+          (b) =>
+            b.email?.toLowerCase() === user.email.toLowerCase()
+        )
+        .map((raw) => ({
+          id: raw.id,
           ...raw,
           normalizedStatus:
             STATUS_NORMALIZER[raw.status] || raw.status,
-        };
-      });
+        }));
+
+      console.log("👉 Filtered Bookings:", data);
 
       setBookings(data);
+    } catch (err) {
+      console.error("Failed to load bookings", err);
+    } finally {
       setLoading(false);
-    };
+    }
+  };
 
-    fetchBookings();
-  }, [user]);
+  fetchBookings();
+}, [user]); // 👈 IMPORTANT
 
   if (loading)
     return <div className="p-6 text-center">Loading...</div>;
