@@ -13,7 +13,8 @@ import {
   User,
   ExternalLink,
   LayoutGrid,
-  List
+  List,
+  PlusCircle
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -23,7 +24,7 @@ const EmpService = () => {
   const { profileName: userProfile } = useAuth();
   const [activeServices, setActiveServices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState("card"); // 'card' or 'table'
+  const [viewMode, setViewMode] = useState("table"); // 'card' or 'table'
   const [page, setPage] = useState(1);
   const navigate = useNavigate();
 
@@ -216,13 +217,22 @@ const EmpService = () => {
                     </button>
                   )}
                   {service.status === "Service Going on" && (
-                    <button 
-                      onClick={() => updateStatus(service.id, "Service Completed")}
-                      className="flex-1 flex items-center justify-center gap-2 py-4 bg-green-600 text-white rounded-2xl font-black text-sm hover:bg-green-700 shadow-lg shadow-green-200 transition-all active:scale-95"
-                    >
-                      <CheckCircle2 size={18} />
-                      COMPLETE SERVICE
-                    </button>
+                    <>
+                      <button 
+                        onClick={() => navigate("/employee/addserviceparts", { state: { service } })}
+                        className="flex-1 flex items-center justify-center gap-2 py-4 bg-slate-800 text-white rounded-2xl font-black text-sm hover:bg-slate-900 shadow-lg shadow-slate-200 transition-all active:scale-95"
+                      >
+                        <PlusCircle size={18} />
+                        ADD PARTS
+                      </button>
+                      <button 
+                        onClick={() => updateStatus(service.id, "Service Completed")}
+                        className="flex-1 flex items-center justify-center gap-2 py-4 bg-green-600 text-white rounded-2xl font-black text-sm hover:bg-green-700 shadow-lg shadow-green-200 transition-all active:scale-95"
+                      >
+                        <CheckCircle2 size={18} />
+                        COMPLETE
+                      </button>
+                    </>
                   )}
                   {service.status === "Service Completed" && (
                     <div className="flex-1 py-4 bg-gray-50 text-gray-400 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border border-gray-100 cursor-default">
@@ -274,12 +284,20 @@ const EmpService = () => {
                         </button>
                       )}
                       {service.status === "Service Going on" && (
-                        <button 
-                          onClick={() => updateStatus(service.id, "Service Completed")}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg text-xs font-black shadow-lg shadow-green-200"
-                        >
-                          COMPLETE
-                        </button>
+                        <>
+                          <button 
+                            onClick={() => navigate("/employee/addserviceparts", { state: { service } })}
+                            className="px-3 py-2 bg-slate-800 text-white rounded-lg text-[10px] font-black shadow-lg shadow-slate-200"
+                          >
+                            PARTS
+                          </button>
+                          <button 
+                            onClick={() => updateStatus(service.id, "Service Completed")}
+                            className="px-3 py-2 bg-green-600 text-white rounded-lg text-[10px] font-black shadow-lg shadow-green-200"
+                          >
+                            COMPLETE
+                          </button>
+                        </>
                       )}
                     </div>
                   </td>

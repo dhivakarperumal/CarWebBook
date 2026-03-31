@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
 import { FaEdit, FaTrash, FaEye, FaThLarge, FaList } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import Pagination from "../../Components/Pagination";
 
@@ -30,9 +30,11 @@ const STATUS_STEPS = [
 
 export default function Services() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { profileName: userProfile } = useAuth();
   const userRole = (userProfile?.role || "").toLowerCase();
   const isMechanic = userRole === "mechanic" || userRole === "staff";
+  const pathPrefix = location.pathname.startsWith("/employee") ? "/employee" : "/admin";
 
   const [viewMode, setViewMode] = useState("card"); // "card" | "table"
 
@@ -289,7 +291,7 @@ export default function Services() {
             className="flex-1 rounded-xl border border-gray-300 bg-white p-4 text-gray-800 placeholder-gray-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all shadow-sm"
           />
           <button
-            onClick={() => navigate("/admin/addserviceparts")}
+            onClick={() => navigate(`${pathPrefix}/addserviceparts`)}
             className="rounded-xl bg-blue-600 px-6 py-4 font-bold text-white transition-all hover:bg-blue-700 shadow-md whitespace-nowrap"
           >
             + Add Service Parts
@@ -469,14 +471,14 @@ export default function Services() {
                     )}
 
                     <button
-                      onClick={() => navigate(`/admin/services/${item.id}`)}
+                      onClick={() => navigate(`${pathPrefix}/services/${item.id}`)}
                       className="flex-1 flex justify-center items-center rounded-xl bg-gray-50 p-2.5 text-gray-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 hover:text-blue-600 transition-all"
                       title="View"
                     >
                       <FaEye />
                     </button>
                     <button
-                      onClick={() => navigate(`/admin/addservices/${item.id}`)}
+                      onClick={() => navigate(`${pathPrefix}/addservices/${item.id}`)}
                       className="flex-1 flex justify-center items-center rounded-xl bg-gray-50 p-2.5 text-gray-600 hover:bg-green-50 border border-gray-200 hover:border-green-200 hover:text-green-600 transition-all"
                       title="Edit"
                     >
@@ -566,14 +568,14 @@ export default function Services() {
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end space-x-2">
                           <button
-                            onClick={() => navigate(`/admin/services/${item.id}`)}
+                            onClick={() => navigate(`${pathPrefix}/services/${item.id}`)}
                             className="rounded-lg p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100"
                             title="View"
                           >
                             <FaEye />
                           </button>
                           <button
-                            onClick={() => navigate(`/admin/addservices/${item.id}`)}
+                            onClick={() => navigate(`${pathPrefix}/addservices/${item.id}`)}
                             className="rounded-lg p-2 text-gray-400 hover:bg-green-50 hover:text-green-600 transition-all border border-transparent hover:border-green-100"
                             title="Edit"
                           >

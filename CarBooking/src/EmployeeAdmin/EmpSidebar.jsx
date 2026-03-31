@@ -32,15 +32,9 @@ const navItems = [
   { path: "/employee/services", label: "Service Center", icon: Wrench },
 
   { path: "/employee/billing", label: "Job Billing", icon: Receipt },
+  // { path: "/employee/addserviceparts", label: "Add Service Parts", icon: Boxes },
   
-  {
-    label: "Bike Marketplace",
-    icon: CarFront,
-    children: [
-      { path: "/admin/bikes", label: "All Bikes", icon: ClipboardList },
-      { path: "/admin/addbike", label: "Add New Bike", icon: Wrench },
-    ],
-  },
+  
 
   { path: "/", label: "Back Home", icon: Home },
 ];

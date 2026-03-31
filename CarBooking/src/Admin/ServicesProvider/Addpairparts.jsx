@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
-import { FaPlus, FaTrash } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { FaPlus, FaTrash, FaArrowLeft } from "react-icons/fa";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const AddServiceParts = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const existingService = location.state?.service;
 
   const [services, setServices] = useState([]);
-  const [selectedService, setSelectedService] = useState(null);
+  const [selectedService, setSelectedService] = useState(existingService || null);
   const [search, setSearch] = useState("");
 
   const [parts, setParts] = useState([
@@ -100,15 +102,30 @@ const AddServiceParts = () => {
 
   return (
     <div className="p-6 max-w-6xl bg-white shadow rounded-lg mx-auto space-y-6">
-      <h2 className="text-xl font-semibold">Add Service Parts</h2>
+      <div className="flex items-center gap-4 mb-2">
+        <button 
+          onClick={() => navigate(-1)}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+        >
+          <FaArrowLeft className="text-gray-600" />
+        </button>
+        <h2 className="text-2xl font-black text-gray-900 tracking-tight">Add Service Parts</h2>
+      </div>
 
-      {/* 🔍 SEARCH SERVICE */}
-      <input
-        placeholder="Search Booking ID / Name / Phone / Car"
-        className="w-full border border-gray-200 px-4 py-3 rounded-lg shadow-sm focus:ring-2 focus:ring-gray-900/40"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+      {/* 🔍 SEARCH SERVICE - Only show if no service passed in state */}
+      {!existingService && (
+        <div className="space-y-4">
+          <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">
+            Search Assigned Booking
+          </label>
+          <input
+            placeholder="Booking ID / Customer Name / Phone..."
+            className="w-full border border-gray-200 px-4 py-4 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      )}
 
       {search && (
         <div className="border rounded max-h-52 overflow-auto">
@@ -134,12 +151,25 @@ const AddServiceParts = () => {
 
       {/* 📋 SELECTED SERVICE */}
       {selectedService && (
-        <div className="bg-gray-50 p-4 rounded-lg text-sm grid grid-cols-2 gap-2">
-          <div><b>Booking ID:</b> {selectedService.bookingId}</div>
-          <div><b>Customer:</b> {selectedService.name}</div>
-          <div><b>Mobile:</b> {selectedService.phone}</div>
-          <div><b>Car:</b> {selectedService.brand} {selectedService.model}</div>
-          <div><b>Issue:</b> {selectedService.issue || selectedService.otherIssue}</div>
+        <div className="bg-blue-50/50 border border-blue-100 p-6 rounded-3xl grid grid-cols-2 lg:grid-cols-4 gap-6 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16" />
+          
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Booking ID</p>
+            <p className="font-bold text-blue-900">{selectedService.bookingId}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Customer</p>
+            <p className="font-bold text-blue-900">{selectedService.name}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Vehicle</p>
+            <p className="font-bold text-blue-900">{selectedService.brand} {selectedService.model}</p>
+          </div>
+          <div className="space-y-1">
+            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Reg Number</p>
+            <p className="font-bold text-blue-900">{selectedService.vehicle_number || "N/A"}</p>
+          </div>
         </div>
       )}
 
@@ -220,17 +250,20 @@ const AddServiceParts = () => {
       </div>
 
       {/* 💰 FOOTER */}
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">
-          Total Parts Cost: ₹{totalPartsCost}
-        </h3>
+      <div className="flex flex-col sm:flex-row justify-between items-center bg-gray-900 p-8 rounded-[2.5rem] shadow-xl text-white gap-6">
+        <div className="space-y-1">
+          <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Parts Valuation</p>
+          <div className="text-3xl font-black text-white">
+            ₹{totalPartsCost.toLocaleString()}
+          </div>
+        </div>
 
         <button
           onClick={handleSave}
           disabled={loading}
-          className="bg-black text-white px-6 py-3 rounded-lg font-bold hover:bg-orange-500"
+          className="w-full sm:w-auto bg-blue-600 text-white px-12 py-5 rounded-2xl font-black text-sm hover:bg-blue-700 shadow-lg shadow-blue-500/30 transition-all active:scale-95 disabled:opacity-50"
         >
-          {loading ? "Saving..." : "Save Parts"}
+          {loading ? "SAVING DATA..." : "CONFIRM & SAVE PARTS"}
         </button>
       </div>
     </div>

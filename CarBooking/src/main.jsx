@@ -112,6 +112,7 @@ const router = createBrowserRouter([
       { path: "services", element: <Servicestype /> },
       { path: "billing", element: <EmpBilling /> },
       { path: "addbillings", element: <EmpAddBilling /> },
+      { path: "addserviceparts", element: <AddServiceParts /> },
     ]
   },
 

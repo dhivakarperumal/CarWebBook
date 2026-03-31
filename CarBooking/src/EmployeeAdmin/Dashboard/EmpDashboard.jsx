@@ -243,7 +243,7 @@ const EmpDashboard = () => {
                              </button>
                            )}
                            <button 
-                            onClick={() => navigate("/admin/assignservices")}
+                            onClick={() => navigate("/employee/assignservices")}
                             className="p-2 text-gray-400 hover:text-blue-600 transition"
                             title="View Details"
                           >
@@ -279,18 +279,18 @@ const EmpDashboard = () => {
             <h3 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wider">Quick Tools</h3>
             <div className="grid grid-cols-1 gap-3">
               <button 
-                onClick={() => navigate("/admin/addservicevehicle")}
+                onClick={() => navigate("/employee/services")}
                 className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 text-gray-700 font-medium hover:bg-gray-50 transition"
               >
                 <div className="p-2 bg-orange-50 text-orange-600 rounded-lg"><Wrench size={16} /></div>
                 New Service Entry
               </button>
               <button 
-                onClick={() => navigate("/admin/inventory")}
+                onClick={() => navigate("/employee/addserviceparts")}
                 className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 text-gray-700 font-medium hover:bg-gray-50 transition"
               >
                 <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><ClipboardList size={16} /></div>
-                Check Parts Stock
+                Add Service Parts
               </button>
               <button 
                 onClick={logout}

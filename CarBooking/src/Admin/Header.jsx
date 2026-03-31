@@ -12,8 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../PrivateRouter/AuthContext";
 import toast from "react-hot-toast";
-import { collection, onSnapshot } from "firebase/firestore";
-import { db } from "../firebase";
+import api from "../api";
 
 const pageTitles = {
   "/admin": "Dashboard",
@@ -42,6 +41,7 @@ const pageTitles = {
 const Header = ({ onMenuClick }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationsSeen, setNotificationsSeen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
 
   const searchInputRef = useRef(null);
@@ -113,23 +113,21 @@ const Header = ({ onMenuClick }) => {
     : [];
 
   useEffect(() => {
-    const unsubBookings = onSnapshot(collection(db, "bookings"), (snap) => {
-      setBookings(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
-
-    const unsubOrders = onSnapshot(collection(db, "orders"), (snap) => {
-      setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
-
-    const unsubCustomers = onSnapshot(collection(db, "customers"), (snap) => {
-      setCustomers(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
-
-    return () => {
-      unsubBookings();
-      unsubOrders();
-      unsubCustomers();
+    const fetchData = async () => {
+      try {
+        const [bookingsRes, ordersRes, customersRes] = await Promise.all([
+          api.get("/bookings"),
+          api.get("/orders"),
+          api.get("/customers")
+        ]);
+        setBookings(bookingsRes.data || []);
+        setOrders(ordersRes.data || []);
+        setCustomers(customersRes.data || []);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
     };
+    fetchData();
   }, []);
 
 
@@ -157,7 +155,7 @@ const Header = ({ onMenuClick }) => {
 
   const isToday = (timestamp) => {
     if (!timestamp) return false;
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const date = new Date(timestamp);
     const today = new Date();
     return (
       date.getDate() === today.getDate() &&
@@ -167,21 +165,22 @@ const Header = ({ onMenuClick }) => {
   };
 
   useEffect(() => {
-    const unsubBookings = onSnapshot(collection(db, "bookings"), (snap) => {
-      const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setTodayBookings(data.filter((b) => isToday(b.createdAt)));
-    });
-
-    const unsubOrders = onSnapshot(collection(db, "orders"), (snap) => {
-      const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setTodayOrders(data.filter((o) => isToday(o.createdAt)));
-    });
-
-    return () => {
-      unsubBookings();
-      unsubOrders();
+    const fetchTodayData = async () => {
+      try {
+        const [bookingsRes, ordersRes] = await Promise.all([
+          api.get("/bookings"),
+          api.get("/orders")
+        ]);
+        const bData = bookingsRes.data || [];
+        const oData = ordersRes.data || [];
+        setTodayBookings(bData.filter((b) => isToday(b.created_at || b.createdAt)));
+        setTodayOrders(oData.filter((o) => isToday(o.created_at || o.createdAt)));
+      } catch (err) {
+        console.error(err);
+      }
     };
-  }, []);
+    fetchTodayData();
+  }, [location.pathname]); // Refetch on navigation to update counts
 
   const getPageTitle = () => {
     if (pageTitles[location.pathname]) return pageTitles[location.pathname];
@@ -344,14 +343,21 @@ const Header = ({ onMenuClick }) => {
           <div className="relative">
             {/* Bell Button */}
             <button
-              onClick={() => setShowNotifications((p) => !p)}
-              className="relative p-2 rounded-xl hover:bg-slate-100 text-slate-600 transition-all duration-200"
+              onClick={() => {
+                setShowNotifications((p) => !p);
+                setNotificationsSeen(true);
+              }}
+              className={`relative p-2 rounded-xl transition-all duration-200 ${
+                showNotifications 
+                  ? "bg-sky-100 text-sky-600 shadow-inner" 
+                  : "hover:bg-slate-100 text-slate-600"
+              }`}
             >
-              <Bell className="w-5 h-5" />
+              <Bell className={`w-5 h-5 ${showNotifications ? "fill-sky-600" : ""}`} />
 
               {/* Count Badge */}
-              {todayBookings.length + todayOrders.length > 0 && (
-                <span className="absolute top-1 right-1 min-w-[16px] h-[16px] text-[10px] flex items-center justify-center bg-red-500 text-white rounded-full px-1">
+              {!notificationsSeen && todayBookings.length + todayOrders.length > 0 && (
+                <span className="absolute top-1 right-1 min-w-[17px] h-[17px] text-[10px] font-bold flex items-center justify-center bg-red-500 text-white rounded-full border-2 border-white shadow-sm px-0.5 animate-pulse">
                   {todayBookings.length + todayOrders.length}
                 </span>
               )}
@@ -368,14 +374,19 @@ const Header = ({ onMenuClick }) => {
                 {/* Dropdown Box */}
                 <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-fadeIn">
 
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                    <h3 className="text-sm font-semibold text-slate-800">
-                      Notifications
-                    </h3>
-                    <span className="text-xs text-slate-400">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
+                      <h3 className="text-sm font-bold text-slate-800">
+                        Notifications
+                      </h3>
+                    </div>
+                    <button 
+                      onClick={() => setNotificationsSeen(true)}
+                      className="text-[10px] font-bold uppercase tracking-wider text-sky-600 hover:text-sky-700 transition-colors"
+                    >
                       {todayBookings.length + todayOrders.length} New
-                    </span>
+                    </button>
                   </div>
 
                   {/* LIST */}

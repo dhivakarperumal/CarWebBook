@@ -12,8 +12,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../PrivateRouter/AuthContext";
 import toast from "react-hot-toast";
-import { collection, onSnapshot } from "firebase/firestore";
-import { db } from "../firebase";
+import api from "../api";
 
 const pageTitles = {
   "/employee": "Employee Dashboard",
@@ -32,6 +31,7 @@ const pageTitles = {
 const Header = ({ onMenuClick }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationsSeen, setNotificationsSeen] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
 
   const searchInputRef = useRef(null);
@@ -101,23 +101,21 @@ const Header = ({ onMenuClick }) => {
     : [];
 
   useEffect(() => {
-    const unsubBookings = onSnapshot(collection(db, "bookings"), (snap) => {
-      setBookings(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
-
-    const unsubOrders = onSnapshot(collection(db, "orders"), (snap) => {
-      setOrders(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
-
-    const unsubCustomers = onSnapshot(collection(db, "customers"), (snap) => {
-      setCustomers(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
-
-    return () => {
-      unsubBookings();
-      unsubOrders();
-      unsubCustomers();
+    const fetchData = async () => {
+      try {
+        const [bookingsRes, ordersRes, customersRes] = await Promise.all([
+          api.get("/bookings"),
+          api.get("/orders"),
+          api.get("/customers")
+        ]);
+        setBookings(bookingsRes.data || []);
+        setOrders(ordersRes.data || []);
+        setCustomers(customersRes.data || []);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+      }
     };
+    fetchData();
   }, []);
 
 
@@ -145,7 +143,7 @@ const Header = ({ onMenuClick }) => {
 
   const isToday = (timestamp) => {
     if (!timestamp) return false;
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    const date = new Date(timestamp);
     const today = new Date();
     return (
       date.getDate() === today.getDate() &&
@@ -155,21 +153,22 @@ const Header = ({ onMenuClick }) => {
   };
 
   useEffect(() => {
-    const unsubBookings = onSnapshot(collection(db, "bookings"), (snap) => {
-      const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setTodayBookings(data.filter((b) => isToday(b.createdAt)));
-    });
-
-    const unsubOrders = onSnapshot(collection(db, "orders"), (snap) => {
-      const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setTodayOrders(data.filter((o) => isToday(o.createdAt)));
-    });
-
-    return () => {
-      unsubBookings();
-      unsubOrders();
+    const fetchTodayData = async () => {
+      try {
+        const [bookingsRes, ordersRes] = await Promise.all([
+          api.get("/bookings"),
+          api.get("/orders")
+        ]);
+        const bData = bookingsRes.data || [];
+        const oData = ordersRes.data || [];
+        setTodayBookings(bData.filter((b) => isToday(b.created_at || b.createdAt)));
+        setTodayOrders(oData.filter((o) => isToday(o.created_at || o.createdAt)));
+      } catch (err) {
+        console.error(err);
+      }
     };
-  }, []);
+    fetchTodayData();
+  }, [location.pathname]); // Refetch on navigation to update counts
 
   const getPageTitle = () => {
     if (pageTitles[location.pathname]) return pageTitles[location.pathname];
@@ -212,7 +211,7 @@ const Header = ({ onMenuClick }) => {
             </h1>
 
             <p className="text-[11px] text-slate-500 truncate max-w-[180px]">
-              {greeting} {profileName?.displayName || "Admin"}
+              {greeting} {profileName?.displayName || "Staff"}
             </p>
           </div>
 
@@ -332,14 +331,21 @@ const Header = ({ onMenuClick }) => {
           <div className="relative">
             {/* Bell Button */}
             <button
-              onClick={() => setShowNotifications((p) => !p)}
-              className="relative p-2 rounded-xl hover:bg-slate-100 text-slate-600 transition-all duration-200"
+              onClick={() => {
+                setShowNotifications((p) => !p);
+                setNotificationsSeen(true);
+              }}
+              className={`relative p-2 rounded-xl transition-all duration-200 ${
+                showNotifications 
+                  ? "bg-sky-100 text-sky-600 shadow-inner" 
+                  : "hover:bg-slate-100 text-slate-600"
+              }`}
             >
-              <Bell className="w-5 h-5" />
+              <Bell className={`w-5 h-5 ${showNotifications ? "fill-sky-600" : ""}`} />
 
               {/* Count Badge */}
-              {todayBookings.length + todayOrders.length > 0 && (
-                <span className="absolute top-1 right-1 min-w-[16px] h-[16px] text-[10px] flex items-center justify-center bg-red-500 text-white rounded-full px-1">
+              {!notificationsSeen && todayBookings.length + todayOrders.length > 0 && (
+                <span className="absolute top-1 right-1 min-w-[17px] h-[17px] text-[10px] font-bold flex items-center justify-center bg-red-500 text-white rounded-full border-2 border-white shadow-sm px-0.5 animate-pulse">
                   {todayBookings.length + todayOrders.length}
                 </span>
               )}
@@ -356,38 +362,44 @@ const Header = ({ onMenuClick }) => {
                 {/* Dropdown Box */}
                 <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-fadeIn">
 
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
-                    <h3 className="text-sm font-semibold text-slate-800">
-                      Notifications
-                    </h3>
-                    <span className="text-xs text-slate-400">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
+                      <h3 className="text-sm font-bold text-slate-800">
+                        Notifications
+                      </h3>
+                    </div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-sky-600">
                       {todayBookings.length + todayOrders.length} New
                     </span>
                   </div>
 
                   {/* LIST */}
-                  <div className="max-h-80 overflow-y-auto">
+                  <div className="max-h-80 overflow-y-auto custom-scrollbar">
 
                     {/* BOOKINGS */}
                     {todayBookings.map((b) => (
                       <div
                         key={b.id}
                         onClick={() => {
-                          navigate("/admin/bookings");
+                          navigate("/employee/bookings");
                           setShowNotifications(false);
                         }}
-
-                        className="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
+                        className="px-4 py-4 border-b border-slate-50 hover:bg-sky-50/50 cursor-pointer transition-colors relative group"
                       >
-                        <p className="text-sm font-semibold text-slate-800">
-                          {b.name}
+                        <div className="flex justify-between items-start mb-1">
+                          <p className="text-sm font-bold text-slate-800 group-hover:text-sky-700 transition-colors">
+                            {b.name}
+                          </p>
+                          {!notificationsSeen && <div className="w-2 h-2 rounded-full bg-sky-500 shadow-sm" />}
+                        </div>
+                        <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5 mb-1.5">
+                          <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">ID: {b.bookingId}</span>
+                          <span className="text-slate-300">•</span>
+                          <span className="text-slate-400">Booking</span>
                         </p>
-                        <p className="text-xs text-slate-500">
-                          Booking ID: {b.bookingId}
-                        </p>
-                        <p className="text-xs text-slate-400 truncate">
-                          {b.address || b.location}
+                        <p className="text-[11px] text-slate-400 truncate opacity-80 italic">
+                          {b.address || b.location || "No address provided"}
                         </p>
                       </div>
                     ))}
@@ -397,21 +409,24 @@ const Header = ({ onMenuClick }) => {
                       <div
                         key={o.id}
                         onClick={() => {
-                          navigate(`/admin/orders/${o.id}`);
+                          navigate(`/employee/billing`);
                           setShowNotifications(false);
                         }}
-                        className="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
+                        className="px-4 py-4 border-b border-slate-50 hover:bg-sky-50/50 cursor-pointer transition-colors relative group"
                       >
-                        <p className="text-sm font-semibold text-slate-800">
-                          {o.shipping?.name || "Unknown Customer"}
+                        <div className="flex justify-between items-start mb-1">
+                          <p className="text-sm font-bold text-slate-800 group-hover:text-sky-700 transition-colors">
+                            {o.shipping?.name || "Unknown Customer"}
+                          </p>
+                          {!notificationsSeen && <div className="w-2 h-2 rounded-full bg-sky-500 shadow-sm" />}
+                        </div>
+                        <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5 mb-1.5">
+                          <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">ID: {o.orderId || o.id}</span>
+                          <span className="text-slate-300">•</span>
+                          <span className="text-slate-400 uppercase">Order</span>
                         </p>
-
-                        <p className="text-xs text-slate-500">
-                          Order ID: {o.orderId || o.id}
-                        </p>
-
-                        <p className="text-xs text-slate-400 truncate">
-                          Total {o.total}
+                        <p className="text-[11px] text-sky-600 font-bold">
+                          Amount: {o.total}
                         </p>
                       </div>
                     ))}
@@ -461,10 +476,10 @@ const Header = ({ onMenuClick }) => {
               {/* Name & Role */}
               <div className="hidden sm:block text-left leading-tight">
                 <p className="text-sm font-semibold text-slate-800 truncate max-w-[120px]">
-                  {profileName?.displayName || "Admin"}
+                  {profileName?.displayName || "Staff"}
                 </p>
                 <p className="text-xs text-slate-500">
-                  {profileName?.role || "Administrator"}
+                  {profileName?.role || "Employee"}
                 </p>
               </div>
 
