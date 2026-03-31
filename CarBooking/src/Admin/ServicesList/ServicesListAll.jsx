@@ -16,7 +16,7 @@ import Pagination from "../../Components/Pagination";
 
 const ServicesListAll = () => {
   const [services, setServices] = useState([]);
-  const [view, setView] = useState("card");
+  const [view, setView] = useState("table");
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [loading, setLoading] = useState(true);

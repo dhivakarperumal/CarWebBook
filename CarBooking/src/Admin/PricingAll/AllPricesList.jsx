@@ -252,7 +252,7 @@ const PricingList = () => {
 
   const [packages, setPackages] = useState([]);
   const [search, setSearch] = useState("");
-  const [view, setView] = useState("card");
+  const [view, setView] = useState("table");
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
 
