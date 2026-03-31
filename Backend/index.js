@@ -26,6 +26,61 @@ async function initializeDatabase() {
     `;
     await db.query(createTableSQL);
     console.log('✓ pricing_packages table checked/created');
+
+    const createReviewsTableSQL = `
+      CREATE TABLE IF NOT EXISTS reviews (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        rating INT NOT NULL,
+        message TEXT NOT NULL,
+        image LONGTEXT,
+        status BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `;
+    await db.query(createReviewsTableSQL);
+    console.log('✓ reviews table checked/created');
+
+    const createBikesTableSQL = `
+      CREATE TABLE IF NOT EXISTS bikes (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        brand VARCHAR(100) NOT NULL,
+        model VARCHAR(100) NOT NULL,
+        variant VARCHAR(100),
+        yom YEAR,
+        reg_year YEAR,
+        engine_cc INT,
+        mileage DECIMAL(10,2),
+        fuel_type ENUM('Petrol', 'Electric', 'Hybrid') DEFAULT 'Petrol',
+        transmission ENUM('Manual', 'Automatic') DEFAULT 'Manual',
+        km_driven INT,
+        owners INT,
+        color VARCHAR(50),
+        city VARCHAR(100),
+        area VARCHAR(255),
+        pincode VARCHAR(10),
+        expected_price DECIMAL(15,2),
+        negotiable BOOLEAN DEFAULT FALSE,
+        insurance_valid DATE,
+        road_tax_paid BOOLEAN DEFAULT FALSE,
+        rc_available BOOLEAN DEFAULT FALSE,
+        insurance_available BOOLEAN DEFAULT FALSE,
+        puc_available BOOLEAN DEFAULT FALSE,
+        loan_status ENUM('Clear', 'Active') DEFAULT 'Clear',
+        images JSON,
+        description TEXT,
+        seller_name VARCHAR(100),
+        seller_phone VARCHAR(20),
+        seller_email VARCHAR(100),
+        status ENUM('draft', 'published', 'sold') DEFAULT 'draft',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `;
+    await db.query(createBikesTableSQL);
+    console.log('✓ bikes table checked/created');
   } catch (error) {
     console.error('✗ Error initializing database:', error.message);
   }
@@ -63,6 +118,12 @@ app.use('/api/pricing_packages', pricingRouter);
 
 const servicesRouter = require("./src/routers/servicesRoutes");
 app.use('/api/services', servicesRouter);
+
+const reviewRouter = require('./src/routers/reviewRouter');
+app.use('/api/reviews', reviewRouter);
+
+const bikeRouter = require('./src/routers/bikeRouter');
+app.use('/api/bikes', bikeRouter);
 
 // Basic Route
 app.get('/', (req, res) => {

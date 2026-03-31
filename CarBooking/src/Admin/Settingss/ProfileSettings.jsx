@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { db } from "../../firebase";
 import toast from "react-hot-toast";
+import api from "../../api";
+import { useAuth } from "../../PrivateRouter/AuthContext";
 import {
   FaUser,
   FaPhone,
@@ -15,9 +14,9 @@ import {
 import { useNavigate } from "react-router-dom";
 
 const ProfileSettings = () => {
-  const auth = getAuth();
+  const { profileName: userProfile } = useAuth();
+  const uid = userProfile?.uid;
 
-  const [uid, setUid] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
@@ -28,26 +27,17 @@ const ProfileSettings = () => {
     email: "",
     role: "",
     active: false,
-    createdAt: null,
+    created_at: null,
   });
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) setUid(user.uid);
-    });
-    return () => unsub();
-  }, [auth]);
 
   useEffect(() => {
     if (!uid) return;
 
     const loadProfile = async () => {
       try {
-        const snap = await getDoc(doc(db, "users", uid));
-        if (snap.exists()) {
-          setForm(snap.data());
-        }
-      } catch {
+        const res = await api.get(`/auth/profile/${uid}`);
+        setForm(res.data);
+      } catch (err) {
         toast.error("Failed to load profile");
       } finally {
         setLoading(false);
@@ -68,10 +58,9 @@ const ProfileSettings = () => {
 
     setSaving(true);
     try {
-      await updateDoc(doc(db, "users", uid), {
+      await api.put(`/auth/profile/${uid}`, {
         username: form.username,
         mobile: form.mobile,
-        updatedAt: new Date(),
       });
       toast.success("Profile updated successfully");
     } catch {
@@ -181,9 +170,7 @@ const ProfileSettings = () => {
           <input
             disabled
             value={
-              form.createdAt?.toDate
-                ? form.createdAt.toDate().toLocaleString()
-                : ""
+              form.created_at ? new Date(form.created_at).toLocaleString() : ""
             }
             className="border rounded-xl pl-11 pr-4 py-3 w-full bg-gray-100 cursor-not-allowed"
           />

@@ -10,16 +10,7 @@ import {
     FaEdit,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import {
-    collection,
-    addDoc,
-    getDocs,
-    deleteDoc,
-    doc,
-    updateDoc,
-    serverTimestamp,
-} from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import toast from "react-hot-toast";
 import imageCompression from "browser-image-compression";
 
@@ -39,8 +30,12 @@ const ReviewsSettings = () => {
 
     /* ================= FETCH ================= */
     const fetchReviews = async () => {
-        const snap = await getDocs(collection(db, "reviews"));
-        setReviews(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        try {
+            const res = await api.get("/reviews");
+            setReviews(res.data);
+        } catch {
+            toast.error("Failed to load reviews");
+        }
     };
 
     useEffect(() => {
@@ -54,8 +49,8 @@ const handleImageUpload = async (e) => {
 
   try {
     const options = {
-      maxSizeMB: 0.2,          // 200 KB (safe for Firestore)
-      maxWidthOrHeight: 800,   // resize
+      maxSizeMB: 0.2,
+      maxWidthOrHeight: 800,
       useWebWorker: true,
     };
 
@@ -86,23 +81,20 @@ const handleImageUpload = async (e) => {
 
   try {
     if (editId) {
-      await updateDoc(doc(db, "reviews", editId), {
+      await api.put(`/reviews/${editId}`, {
         name: form.name,
         rating: Number(form.rating),
         message: form.message,
         image: form.image || "",
-        updatedAt: serverTimestamp(),
       });
 
       toast.success("Review updated successfully");
     } else {
-      await addDoc(collection(db, "reviews"), {
+      await api.post("/reviews", {
         name: form.name,
         rating: Number(form.rating),
         message: form.message,
         image: form.image || "",
-        status: false, // pending
-        createdAt: serverTimestamp(),
       });
 
       toast.success("Review added successfully");
@@ -140,17 +132,25 @@ const handleImageUpload = async (e) => {
     /* ================= DELETE ================= */
     const handleDelete = async (id) => {
         if (!window.confirm("Delete this review?")) return;
-        await deleteDoc(doc(db, "reviews", id));
-        toast.success("Deleted");
-        fetchReviews();
+        try {
+            await api.delete(`/reviews/${id}`);
+            toast.success("Deleted");
+            fetchReviews();
+        } catch {
+            toast.error("Delete failed");
+        }
     };
 
     /* ================= TOGGLE STATUS ================= */
     const toggleStatus = async (id, status) => {
-        await updateDoc(doc(db, "reviews", id), {
-            status: !status,
-        });
-        fetchReviews();
+        try {
+            await api.put(`/reviews/${id}/status`, {
+                status: !status,
+            });
+            fetchReviews();
+        } catch {
+            toast.error("Status update failed");
+        }
     };
 
     const filtered = reviews.filter(

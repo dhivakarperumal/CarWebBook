@@ -175,28 +175,31 @@ const EmpDashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-10">
         {/* ===== MY TASKS LIST ===== */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-800">Your Recent Assignments</h2>
+        <div className="lg:col-span-2 space-y-5">
+          <div className="flex items-center justify-between px-2">
+            <h2 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-blue-600" />
+              Assigned Tasks
+            </h2>
             <button 
-              onClick={() => navigate("/admin/assignservices")}
-              className="text-blue-600 font-semibold text-sm hover:underline"
+              onClick={() => navigate("/employee/bookings")}
+              className="px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-xs font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all"
             >
-              See All Tasks
+              View All
             </button>
           </div>
-
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+ 
+          <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-50">
-                    <th className="px-6 py-4 text-left font-bold text-gray-600">Vehicle Info</th>
-                    <th className="px-6 py-4 text-left font-bold text-gray-600">Status</th>
-                    <th className="px-6 py-4 text-left font-bold text-gray-600">Customer</th>
-                    <th className="px-6 py-4 text-right font-bold text-gray-600">Actions</th>
+                  <tr>
+                    <th className="px-6 py-5 text-left font-bold">Vehicle Info</th>
+                    <th className="px-6 py-5 text-left font-bold">Status</th>
+                    <th className="px-6 py-5 text-left font-bold">Customer</th>
+                    <th className="px-6 py-5 text-right font-bold">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">

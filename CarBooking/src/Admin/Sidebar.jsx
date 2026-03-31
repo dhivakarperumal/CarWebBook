@@ -75,6 +75,16 @@ const navItems = [
     ],
   },
 
+
+  {
+    label: "Bike Marketplace",
+    icon: CarFront, // Using CarFront as a placeholder for Bike
+    children: [
+      { path: "/admin/bikes", label: "All Bikes", icon: ClipboardList },
+      { path: "/admin/addbike", label: "Add New Bike", icon: Wrench },
+    ],
+  },
+
   { path: "/admin/orders", label: "Orders", icon: ClipboardList },
 
   { path: "/admin/employees", label: "Technicians", icon: UserCog },
@@ -200,14 +210,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
               <h1 className="text-lg font-semibold text-black">
                 Services Booking
               </h1>
-              <div className="flex flex-col">
-                <p className="text-xs text-black font-semibold truncate capitalize">
-                  {userProfile?.role || "Staff"}
-                </p>
-                <p className="text-[10px] text-gray-500 truncate">
-                  {userProfile?.username || userProfile?.name || "Member"}
-                </p>
-              </div>
+              
             </div>
           )}
 

@@ -23,6 +23,7 @@ export const AuthProvider = ({ children }) => {
           email: storedUser.email || "",
           role: storedUser.role || "user",
           photoURL: storedUser.photoURL || "",
+          uid: storedUser.uid || "",
         });
       } catch (error) {
         setUser(null);

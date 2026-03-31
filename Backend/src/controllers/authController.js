@@ -125,11 +125,35 @@ const deleteUser = async (req, res) => {
   }
 };
 
+const getProfile = async (req, res) => {
+  const { uid } = req.params;
+  try {
+    const [users] = await db.query('SELECT uid, username, email, mobile, role, active, created_at FROM users WHERE uid = ?', [uid]);
+    if (users.length === 0) return res.status(404).json({ message: "User not found" });
+    res.json(users[0]);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching profile", error: err.message });
+  }
+};
+
+const updateProfile = async (req, res) => {
+  const { uid } = req.params;
+  const { username, mobile } = req.body;
+  try {
+    await db.query('UPDATE users SET username = ?, mobile = ? WHERE uid = ?', [username, mobile, uid]);
+    res.json({ message: "Profile updated successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating profile", error: err.message });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
   getAllUsers,
   updateUserRole,
   toggleUserStatus,
-  deleteUser
+  deleteUser,
+  getProfile,
+  updateProfile
 };

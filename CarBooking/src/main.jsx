@@ -62,6 +62,10 @@ import AllOrders from "./Admin/Orders/All Orders.jsx";
 import OrderDetails from "./Admin/Orders/OrderDetails.jsx";
 import AdminAssignServices from "./Admin/Bookingservice/AdminAssignServices.jsx";
 
+// Bike Marketplace
+import AllBikes from "./Admin/Bikes/AllBikes.jsx";
+import AddBike from "./Admin/Bikes/AddBike.jsx";
+
 
 
 import EmpAdminLayout from "./EmployeeAdmin/EmpAdminPanel.jsx";
@@ -132,6 +136,10 @@ const router = createBrowserRouter([
 
       { path: "orders", element: <AllOrders /> },
       { path: "orders/:id", element: <OrderDetails /> },
+
+      { path: "bikes", element: <AllBikes /> },
+      { path: "addbike", element: <AddBike /> },
+      { path: "addbike/:id", element: <AddBike /> },
 
 
 
