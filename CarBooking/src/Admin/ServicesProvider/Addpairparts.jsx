@@ -105,8 +105,13 @@ const AddServiceParts = () => {
 
     try {
       setLoading(true);
-      // 1. Add parts
-      await api.post(`/all-services/${selectedService.id}/parts`, { parts: validParts });
+      // 1. Add parts (include explicit status)
+      const payloadParts = validParts.map((part) => ({
+        ...part,
+        status: part.status || 'pending',
+      }));
+
+      await api.post(`/all-services/${selectedService.id}/parts`, { parts: payloadParts });
 
       // 2. Update service status to "Waiting for Spare"
       await api.put(`/all-services/${selectedService.id}/status`, {
