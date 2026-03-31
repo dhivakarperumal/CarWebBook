@@ -170,7 +170,7 @@ const Staffs = () => {
       {/* ===== HEADER ===== */}
 
       {/* ===== TABLE ===== */}
-      <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden">
+      {/* <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden"> */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm text-gray-700">
             <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
@@ -264,7 +264,7 @@ const Staffs = () => {
         )}
 
       </div>
-    </div>
+    // </div>
   );
 };
 
