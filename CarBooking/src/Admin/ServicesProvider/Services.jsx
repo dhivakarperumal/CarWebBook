@@ -519,7 +519,7 @@ export default function Services() {
           /* TABLE VIEW */
           // <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
             <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm text-gray-600">
+              <table className="min-w-full text-left text-sm text-gray-600 whitespace-nowrap">
                 <thead className="border-b border-gray-200 bg-gray-50 text-gray-900">
                   <tr>
                     <th className="px-6 py-4 font-bold">ID</th>

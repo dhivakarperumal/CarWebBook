@@ -214,7 +214,7 @@ const ServicesListAll = () => {
       {/* TABLE VIEW */}
       {view === "table" && (
         <div className="overflow-x-auto bg-white rounded-2xl shadow-sm border border-gray-200 mt-10">
-          <table className="w-full text-md">
+          <table className="w-full text-md whitespace-nowrap">
             <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
               <tr>
                 <th className="px-4 py-4 font-bold">S No</th>

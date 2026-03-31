@@ -307,9 +307,9 @@ const AllOrders = () => {
 
       {/* ================= TABLE VIEW ================= */}
       {view === "table" && (
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition">
-
-          <table className="min-w-full text-sm shadow">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
+  <div className="overflow-x-auto">
+    <table className="min-w-[800px] text-sm whitespace-nowrap">
             <thead className="bg-gradient-to-r  from-black to-cyan-400 shadow text-white text-left">
               <tr>
                 <th className="px-4 py-4 text-left">Order ID</th>
@@ -364,6 +364,7 @@ const AllOrders = () => {
               ))}
             </tbody>
           </table>
+        </div>
         </div>
       )}
 

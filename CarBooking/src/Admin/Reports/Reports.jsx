@@ -229,8 +229,9 @@ const Reports = () => {
 
 
       {/* TABLE */}
-      <div className="bg-white rounded-2xl mt-15 shadow overflow-hidden">
-        <table className="min-w-full text-sm">
+    <div className="bg-white rounded-2xl mt-15 shadow">
+  <div className="overflow-x-auto touch-pan-x">
+    <table className="min-w-[700px] text-sm whitespace-nowrap">
           <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
             <tr>
               <th className="p-4">S No</th>
@@ -277,6 +278,7 @@ const Reports = () => {
         {filteredReports.length === 0 && (
           <p className="text-center py-6 text-gray-500">No reports found</p>
         )}
+      </div>
       </div>
 
       {/* MODAL */}

@@ -461,7 +461,7 @@ export default function AdminAssignServices() {
           </div>
         ) : (
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto animate-fadeIn">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
                 <tr className="bg-gradient-to-r from-black to-cyan-400 text-white">
                   <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Job Details</th>

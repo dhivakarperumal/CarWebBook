@@ -169,7 +169,7 @@ const AllBikes = () => {
 
       {/* LIST */}
       <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
             <tr>
               <th className="px-6 py-5 first:pl-10">Bike Detail</th>
