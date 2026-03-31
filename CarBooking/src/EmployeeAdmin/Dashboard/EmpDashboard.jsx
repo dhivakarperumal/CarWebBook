@@ -136,7 +136,7 @@ const EmpDashboard = () => {
       </div>
 
       {/* ===== QUICK STATS ===== */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
           <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl">
             <Clock size={24} />
@@ -164,15 +164,7 @@ const EmpDashboard = () => {
             <h3 className="text-2xl font-bold text-gray-800">{stats.completed}</h3>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="p-4 bg-purple-50 text-purple-600 rounded-2xl">
-            <User size={24} />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium">Total Staff</p>
-            <h3 className="text-2xl font-bold text-gray-800">{stats.totalStaff}</h3>
-          </div>
-        </div>
+        
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-10">
