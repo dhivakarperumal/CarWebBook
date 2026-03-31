@@ -17,8 +17,8 @@ const products = [
       { "sku": "BP-FRONT-001", "position": "Front", "material": "Ceramic", "stock": 50 },
       { "sku": "BP-REAR-001", "position": "Rear", "material": "Ceramic", "stock": 40 }
     ],
-    "images": ["", ""],
-    "thumbnail": "",
+    "images": ["https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=800"],
+    "thumbnail": "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=800",
     "tags": ["brake", "safety", "car parts"],
     "totalStock": 90,
     "isFeatured": true,
@@ -40,8 +40,8 @@ const products = [
       { "sku": "EO-1L", "position": "1 Litre", "material": "Synthetic", "stock": 100 },
       { "sku": "EO-5L", "position": "5 Litre", "material": "Synthetic", "stock": 60 }
     ],
-    "images": [""],
-    "thumbnail": "",
+    "images": ["https://images.unsplash.com/photo-1635816369046-646b9eb936af?w=800"],
+    "thumbnail": "https://images.unsplash.com/photo-1635816369046-646b9eb936af?w=800",
     "tags": ["engine oil", "lubricant"],
     "totalStock": 160,
     "isFeatured": true,
@@ -63,8 +63,8 @@ const products = [
       { "sku": "BAT-55AH", "position": "55Ah", "material": "Lead Acid", "stock": 30 },
       { "sku": "BAT-70AH", "position": "70Ah", "material": "Lead Acid", "stock": 20 }
     ],
-    "images": [""],
-    "thumbnail": "",
+    "images": ["https://images.unsplash.com/photo-1597750587848-18e3923c6f6d?w=800"],
+    "thumbnail": "https://images.unsplash.com/photo-1597750587848-18e3923c6f6d?w=800",
     "tags": ["battery", "power"],
     "totalStock": 50,
     "isFeatured": false,
@@ -85,8 +85,8 @@ const products = [
     "variants": [
       { "sku": "AF-STD", "position": "Standard", "material": "Fiber", "stock": 70 }
     ],
-    "images": [""],
-    "thumbnail": "",
+    "images": ["https://images.unsplash.com/photo-1599256621730-535171e28e50?w=800"],
+    "thumbnail": "https://images.unsplash.com/photo-1599256621730-535171e28e50?w=800",
     "tags": ["filter", "engine"],
     "totalStock": 70,
     "isFeatured": false,
