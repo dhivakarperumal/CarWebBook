@@ -36,6 +36,10 @@ const migrate = async () => {
         qty INT DEFAULT 1,
         price DECIMAL(10,2) DEFAULT 0,
         total DECIMAL(10,2) DEFAULT 0,
+        status VARCHAR(50) DEFAULT 'pending',
+        approvedBy VARCHAR(255),
+        approvalNotes TEXT,
+        approvalDate TIMESTAMP NULL,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (all_service_id) REFERENCES all_services(id) ON DELETE CASCADE
       )

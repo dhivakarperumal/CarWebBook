@@ -31,18 +31,50 @@ const EmpService = () => {
   const fetchActiveServices = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/bookings");
+      console.log("🔍 Fetching all services from /all-services...");
+      const res = await api.get("/all-services");
+      console.log("✅ All services from API:", res.data);
       
       const mechanicName = userProfile?.displayName || "";
+      console.log("🔧 Looking for mechanic:", mechanicName);
       
-      // Filter for services assigned to this mechanic that are NOT cancelled
-      // and typically in a non-final state (though we can show all and label them)
-      const filtered = (res.data || []).filter(s => 
-        (s.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase() &&
-        s.status !== "Cancelled"
+      // Filter for services assigned to this mechanic
+      const filtered = (res.data || []).filter(s => {
+        const assignedName = (s.assignedEmployeeName || "");
+        const isAssigned = assignedName.toLowerCase() === mechanicName.toLowerCase();
+        console.log(`   Service ${s.id}: assignedEmployeeName="${assignedName}", match="${isAssigned}"`);
+        return isAssigned;
+      });
+      
+      console.log(`✅ Filtered to ${filtered.length} assigned services`);
+
+      // Fetch spare parts for each service
+      const servicesWithParts = await Promise.all(
+        filtered.map(async (service) => {
+          try {
+            console.log(`📦 Fetching service details for service ID ${service.id}...`);
+            const partsRes = await api.get(`/all-services/${service.id}`);
+            console.log(`✅ Response for service ${service.id}:`, partsRes.data);
+            const parts = partsRes.data?.parts || [];
+            console.log(`✅ Service ${service.id} has ${parts.length} spare parts`);
+            parts.forEach((p, idx) => {
+              console.log(`    Part ${idx + 1}: ${p.partName} x${p.qty} = ₹${p.total} (${p.status})`);
+            });
+            return {
+              ...service,
+              parts: parts
+            };
+          } catch (err) {
+            console.error(`❌ Failed to fetch parts for service ${service.id}:`, err.message);
+            return {
+              ...service,
+              parts: []
+            };
+          }
+        })
       );
 
-      setActiveServices(filtered);
+      setActiveServices(servicesWithParts);
     } catch (err) {
       console.error("Fetch services error:", err);
       toast.error("Failed to load your services");
@@ -57,22 +89,15 @@ const EmpService = () => {
 
   const updateStatus = async (id, newStatus) => {
     try {
-      const updateData = {
-        status: newStatus,
-        updatedAt: new Date().toISOString()
-      };
-
-      if (newStatus === "Service Going on") {
-        updateData.startedAt = new Date().toISOString();
-      }
-      if (newStatus === "Service Completed") {
-        updateData.completedAt = new Date().toISOString();
-      }
-
-      await api.put(`/bookings/${id}`, updateData);
+      // Update in all_services table
+      await api.put(`/all-services/${id}/status`, {
+        serviceStatus: newStatus
+      });
+      
       toast.success(`Status updated to ${newStatus}`);
       fetchActiveServices();
     } catch (err) {
+      console.error("Update failed:", err);
       toast.error("Update failed");
     }
   };
@@ -82,7 +107,11 @@ const EmpService = () => {
       "Pending": "bg-yellow-50 text-yellow-600 border-yellow-100",
       "Approved": "bg-blue-50 text-blue-600 border-blue-100",
       "Assigned": "bg-blue-50 text-blue-600 border-blue-100",
+      "Processing": "bg-purple-50 text-purple-600 border-purple-100",
+      "Waiting for Spare": "bg-orange-50 text-orange-600 border-orange-100",
       "Service Going on": "bg-indigo-50 text-indigo-600 border-indigo-100",
+      "Bill Pending": "bg-pink-50 text-pink-600 border-pink-100",
+      "Bill Completed": "bg-cyan-50 text-cyan-600 border-cyan-100",
       "Service Completed": "bg-green-50 text-green-600 border-green-100",
       "Completed": "bg-green-50 text-green-600 border-green-100",
     };
@@ -196,6 +225,39 @@ const EmpService = () => {
                   </div>
                 </div>
 
+                {/* Spare Parts Section */}
+                {service.parts && service.parts.length > 0 && (
+                  <div className="mb-8">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      🔧 Spare Parts Added
+                    </p>
+                    <div className="space-y-2">
+                      {service.parts.map((part) => (
+                        <div key={part.id} className="flex justify-between items-center bg-gray-50 rounded-lg p-3 border border-gray-100">
+                          <div className="flex-1">
+                            <p className="text-sm font-bold text-gray-800">{part.partName}</p>
+                            <p className="text-xs text-gray-500">Qty: {part.qty}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-bold text-blue-600">₹{Number(part.total).toFixed(2)}</p>
+                            <span className={`inline-block px-2 py-1 text-[10px] font-bold rounded-full mt-1 ${
+                              part.status === 'approved' ? 'bg-green-100 text-green-700' :
+                              part.status === 'rejected' ? 'bg-red-100 text-red-700' :
+                              'bg-yellow-100 text-yellow-700'
+                            }`}>
+                              {part.status || 'pending'}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 flex justify-between items-center mt-3">
+                        <p className="text-sm font-bold text-blue-700">Total Parts Cost</p>
+                        <p className="text-lg font-black text-blue-600">₹{service.parts.reduce((sum, p) => sum + Number(p.total), 0).toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="mb-8">
                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
                       <AlertCircle size={12} /> Reported Issue
@@ -207,7 +269,7 @@ const EmpService = () => {
 
                 {/* ACTION BUTTONS */}
                 <div className="flex gap-4 pt-2 border-t border-gray-50">
-                  {(service.status === "Assigned" || service.status === "Approved" || service.status === "Pending") && (
+                  {(service.serviceStatus === "Processing" || service.status === "Assigned" || service.status === "Approved" || service.status === "Pending") && (
                     <button 
                       onClick={() => updateStatus(service.id, "Service Going on")}
                       className="flex-1 flex items-center justify-center gap-2 py-4 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95"
@@ -216,7 +278,7 @@ const EmpService = () => {
                       START SERVICE
                     </button>
                   )}
-                  {service.status === "Service Going on" && (
+                  {(service.serviceStatus === "Waiting for Spare" || service.status === "Service Going on") && (
                     <>
                       <button 
                         onClick={() => navigate("/employee/addserviceparts", { state: { service } })}
@@ -269,13 +331,23 @@ const EmpService = () => {
                     <p className="text-xs font-bold text-blue-500">{service.vehicle_number || "NO PLATE"}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusColor(service.status)}`}>
-                        {service.status || "Pending"}
-                    </span>
+                    <div>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusColor(service.serviceStatus || service.status)}`}>
+                          {service.serviceStatus || service.status || "Pending"}
+                      </span>
+                      {service.parts && service.parts.length > 0 && (
+                        <div className="text-xs mt-2">
+                          <p className="text-gray-600 font-bold">₹{service.parts.reduce((sum, p) => sum + Number(p.total), 0).toFixed(2)}</p>
+                          <p className="text-gray-500 text-[10px]">
+                            {service.parts.filter(p => p.status === 'pending').length} pending | {service.parts.filter(p => p.status === 'approved').length} approved
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {(service.status === "Assigned" || service.status === "Approved" || service.status === "Pending") && (
+                      {(service.serviceStatus === "Processing" || service.status === "Assigned" || service.status === "Approved" || service.status === "Pending") && (
                         <button 
                           onClick={() => updateStatus(service.id, "Service Going on")}
                           className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-black shadow-lg shadow-blue-200"
@@ -283,7 +355,7 @@ const EmpService = () => {
                           START
                         </button>
                       )}
-                      {service.status === "Service Going on" && (
+                      {(service.serviceStatus === "Waiting for Spare" || service.status === "Service Going on") && (
                         <>
                           <button 
                             onClick={() => navigate("/employee/addserviceparts", { state: { service } })}

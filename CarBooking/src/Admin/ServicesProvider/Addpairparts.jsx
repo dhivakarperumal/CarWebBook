@@ -90,8 +90,15 @@ const AddServiceParts = () => {
 
     try {
       setLoading(true);
+      // 1. Add parts
       await api.post(`/all-services/${selectedService.id}/parts`, { parts: validParts });
-      toast.success("Parts added successfully");
+      
+      // 2. Update service status to "Waiting for Spare"
+      await api.put(`/all-services/${selectedService.id}/status`, {
+        serviceStatus: "Waiting for Spare"
+      });
+      
+      toast.success("Parts added successfully and status updated to 'Waiting for Spare'");
       navigate(-1);
     } catch (err) {
       toast.error("Failed to save parts");
