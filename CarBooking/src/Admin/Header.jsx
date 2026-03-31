@@ -103,10 +103,9 @@ const Header = ({ onMenuClick }) => {
         .filter(
           (o) =>
             o.orderId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            o.shipping?.phone?.includes(searchTerm) ||
-            o.shipping?.name
-              ?.toLowerCase()
-              .includes(searchTerm.toLowerCase())
+            o.customerPhone?.includes(searchTerm) ||
+            o.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            o.shippingName?.toLowerCase().includes(searchTerm.toLowerCase())
         )
         .map((o) => ({ type: "order", ...o })),
     ]
@@ -298,7 +297,8 @@ const Header = ({ onMenuClick }) => {
                             <p className="text-sm font-semibold text-slate-800">
                               {item.title ||
                                 item.name ||
-                                item.shipping?.name ||
+                                item.customerName ||
+                                item.shippingName ||
                                 "Result"}
                             </p>
 
@@ -426,7 +426,7 @@ const Header = ({ onMenuClick }) => {
                         className="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
                       >
                         <p className="text-sm font-semibold text-slate-800">
-                          {o.shipping?.name || "Unknown Customer"}
+                          {o.customerName || o.shippingName || "Unknown Customer"}
                         </p>
 
                         <p className="text-xs text-slate-500">
