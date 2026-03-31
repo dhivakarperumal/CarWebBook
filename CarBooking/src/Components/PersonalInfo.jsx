@@ -62,7 +62,7 @@ const PersonalInfo = () => {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Full Name"
-          className="w-full p-3 rounded-lg bg-black
+          className="w-full p-3 rounded-lg bg-black text-white
                      border border-slate-700
                      focus:ring-2 focus:ring-sky-500 outline-none"
         />
@@ -73,7 +73,7 @@ const PersonalInfo = () => {
           onChange={(e) => setMobile(e.target.value.replace(/\D/g, ""))}
           maxLength={10}
           placeholder="Mobile Number"
-          className="w-full p-3 rounded-lg bg-black
+          className="w-full p-3 rounded-lg bg-black text-white
                      border border-slate-700
                      focus:ring-2 focus:ring-sky-500 outline-none"
         />
@@ -82,6 +82,7 @@ const PersonalInfo = () => {
         <input
           value={email}
           disabled
+          placeholder="Email Address"
           className="w-full p-3 rounded-lg bg-slate-800
                      border border-slate-700 text-slate-400
                      cursor-not-allowed"

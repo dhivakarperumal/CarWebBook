@@ -44,6 +44,15 @@ export default function Checkout() {
 
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("CASH");
+  const [savedAddresses, setSavedAddresses] = useState([]);
+
+  useEffect(() => {
+    if (user?.id) {
+      api.get(`/addresses/${user.id}`)
+        .then((res) => setSavedAddresses(res.data || []))
+        .catch((err) => console.error("Failed to fetch addresses:", err));
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     if (user) {
@@ -205,10 +214,43 @@ export default function Checkout() {
       <PageContainer>
         <div className="grid lg:grid-cols-2 gap-12 py-16">
           {/* LEFT — SHIPPING */}
-          <div className="border border-sky-400/40 bg-[#050b14] p-8 rounded-3xl shadow-[0_0_40px_rgba(56,189,248,0.15)]">
-            <h2 className="text-sky-400 text-xl mb-6 tracking-widest font-black uppercase">Shipping Details</h2>
-            
-            <div className="space-y-4">
+          <div className="border border-sky-400/40 bg-[#050b14] p-8 rounded-3xl shadow-[0_0_40px_rgba(56,189,248,0.15)] flex flex-col gap-8">
+            {/* SAVED ADDRESSES */}
+            {savedAddresses.length > 0 && (
+              <div>
+                <h2 className="text-sky-400 text-xl mb-4 tracking-widest font-black uppercase">Saved Addresses</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {savedAddresses.map((addr) => (
+                    <div 
+                      key={addr.id}
+                      onClick={() => {
+                        setShipping({
+                          ...shipping,
+                          name: addr.fullName || "",
+                          email: addr.email || user?.email || "",
+                          phone: addr.phone || "",
+                          address: addr.street || "",
+                          city: addr.city || "",
+                          state: addr.state || "",
+                          zip: addr.pinCode || "",
+                        });
+                        toast.success("Address selected");
+                      }}
+                      className="cursor-pointer border border-white/10 bg-black/50 p-4 rounded-xl hover:border-sky-400 hover:bg-sky-400/5 transition-all text-left"
+                    >
+                      <p className="font-bold mb-1">{addr.fullName}</p>
+                      <p className="text-xs text-gray-400 break-words">{addr.street}, {addr.city}</p>
+                      <p className="text-xs text-gray-400">{addr.state} - {addr.pinCode}</p>
+                      <p className="text-xs text-sky-400 mt-2 font-semibold">📞 {addr.phone}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div>
+              <h2 className="text-sky-400 text-xl mb-6 tracking-widest font-black uppercase">Shipping Details</h2>
+              <div className="space-y-4">
               {["name", "email", "phone", "city", "zip"].map((k) => (
                 <div key={k}>
                   <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest ml-2">{k}</label>
@@ -241,6 +283,7 @@ export default function Checkout() {
                   <option value="">Select State</option>
                   {indianStates.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
+              </div>
               </div>
             </div>
           </div>

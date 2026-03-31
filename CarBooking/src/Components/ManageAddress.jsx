@@ -168,8 +168,8 @@ const ManageAddress = () => {
             name={f}
             value={form[f]}
             onChange={handleChange}
-            placeholder={f.replace(/([A-Z])/g," $1")}
-            className="p-3 rounded-lg bg-black border border-slate-700
+            placeholder={(f.charAt(0).toUpperCase() + f.slice(1)).replace(/([A-Z])/g," $1").trim()}
+            className="p-3 rounded-lg bg-black border border-slate-700 text-white
                        focus:ring-2 focus:ring-sky-500 outline-none"
           />
         ))}
@@ -178,7 +178,8 @@ const ManageAddress = () => {
           name="state"
           value={form.state}
           onChange={handleChange}
-          className="p-3 rounded-lg bg-black border border-slate-700"
+          className="p-3 rounded-lg bg-black border border-slate-700 text-white
+                     focus:ring-2 focus:ring-sky-500 outline-none"
         >
           <option value="">Select State</option>
           {INDIAN_STATES.map((s) => (
@@ -189,7 +190,7 @@ const ManageAddress = () => {
         <input
           value="India"
           disabled
-          className="p-3 rounded-lg bg-slate-900 border border-slate-700
+          className="p-3 rounded-lg bg-slate-800 border border-slate-700
                      text-slate-400 cursor-not-allowed"
         />
       </div>
