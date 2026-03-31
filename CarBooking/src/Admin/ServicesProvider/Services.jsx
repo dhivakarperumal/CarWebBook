@@ -8,6 +8,7 @@ import Pagination from "../../Components/Pagination";
 
 const BOOKING_STATUS = [
   "Booked",
+  "Call Verified",
   "Approved",
   "Processing",
   "Waiting for Spare",
@@ -19,6 +20,7 @@ const BOOKING_STATUS = [
 
 const STATUS_STEPS = [
   "Booked",
+  "Call Verified",
   "Approved",
   "Processing",
   "Waiting for Spare",
@@ -445,7 +447,7 @@ export default function Services() {
                           onChange={(e) => handleStatusChange(item, e.target.value)}
                           className="w-full bg-gray-50 p-2 text-sm font-semibold text-gray-800 outline-none focus:ring-1 focus:ring-blue-600"
                         >
-                          {BOOKING_STATUS.map((s) => (
+                          {BOOKING_STATUS.slice(BOOKING_STATUS.indexOf(item.serviceStatus || "Booked") === -1 ? 0 : BOOKING_STATUS.indexOf(item.serviceStatus || "Booked")).map((s) => (
                             <option key={s} value={s}>
                               {s}
                             </option>
@@ -538,7 +540,7 @@ export default function Services() {
                             onChange={(e) => handleStatusChange(item, e.target.value)}
                             className="rounded-lg border border-gray-200 bg-white p-1.5 text-xs text-gray-800 shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                           >
-                            {BOOKING_STATUS.map((s) => (
+                            {BOOKING_STATUS.slice(BOOKING_STATUS.indexOf(item.serviceStatus || "Booked") === -1 ? 0 : BOOKING_STATUS.indexOf(item.serviceStatus || "Booked")).map((s) => (
                               <option key={s} value={s}>{s}</option>
                             ))}
                           </select>
