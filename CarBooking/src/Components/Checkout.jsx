@@ -180,8 +180,10 @@ export default function Checkout() {
       // Reduce stock
       await reduceStockAfterPurchase(items);
 
-      // Clear cart
-      await api.delete(`/cart/user/${user.id}`);
+      // Clear cart ONLY if not buy now
+      if (!isBuyNow) {
+        await api.delete(`/cart/user/${user.id}`);
+      }
 
       toast.success(`Order Placed Successfully! ID: ${newOrderId}`);
       navigate("/account", { state: { tab: "orders", highlightOrderId: newOrderId } });
