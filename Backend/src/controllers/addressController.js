@@ -41,6 +41,22 @@ exports.addAddress = async (req, res) => {
 
   try {
     await ensureAddressTable();
+
+    // Avoid duplicates for same user by key fields (phone+street+pinCode)
+    const [existing] = await db.query(
+      'SELECT * FROM addresses WHERE userUid=? AND phone=? AND street=? AND pinCode=? LIMIT 1',
+      [userUid, phone, street, pinCode]
+    );
+
+    if (existing.length > 0) {
+      const address = existing[0];
+      await db.query(
+        'UPDATE addresses SET fullName=?, email=?, city=?, state=?, country=?, updatedAt=CURRENT_TIMESTAMP WHERE id=?',
+        [fullName, email || '', city, state, country || 'India', address.id]
+      );
+      return res.json({ message: 'Address updated', id: address.id });
+    }
+
     const [result] = await db.query(
       'INSERT INTO addresses (userUid, fullName, phone, email, street, city, pinCode, state, country) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [userUid, fullName, phone, email || '', street, city, pinCode, state, country || 'India']

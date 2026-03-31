@@ -47,12 +47,36 @@ export default function Checkout() {
   const [savedAddresses, setSavedAddresses] = useState([]);
 
   useEffect(() => {
-    if (user?.id) {
-      api.get(`/addresses/${user.id}`)
-        .then((res) => setSavedAddresses(res.data || []))
+    const userKey = user?.uid || user?.id;
+    if (userKey) {
+      api.get(`/addresses/${userKey}`)
+        .then((res) => {
+          const addresses = res.data || [];
+          setSavedAddresses(addresses);
+
+          // Pre-fill shipping with most recent saved address if fields empty
+          if (addresses.length > 0) {
+            setShipping((prev) => {
+              if (prev.address || prev.city || prev.state || prev.zip) {
+                return prev;
+              }
+              const recent = addresses[0];
+              return {
+                ...prev,
+                name: recent.fullName || prev.name,
+                email: recent.email || prev.email,
+                phone: recent.phone || prev.phone,
+                address: recent.street || prev.address,
+                city: recent.city || prev.city,
+                state: recent.state || prev.state,
+                zip: recent.pinCode || prev.zip,
+              };
+            });
+          }
+        })
         .catch((err) => console.error("Failed to fetch addresses:", err));
     }
-  }, [user?.id]);
+  }, [user?.uid, user?.id]);
 
   useEffect(() => {
     if (user) {
@@ -195,6 +219,30 @@ export default function Checkout() {
       }
 
       toast.success(`Order Placed Successfully! ID: ${newOrderId}`);
+
+      // Save shipping address to MySQL address book for next orders
+      if (user?.uid || user?.id) {
+        try {
+          await api.post("/addresses", {
+            userUid: user?.uid || user?.id,
+            fullName: shipping.name,
+            phone: shipping.phone,
+            email: shipping.email,
+            street: shipping.address,
+            city: shipping.city,
+            pinCode: shipping.zip,
+            state: shipping.state,
+            country: shipping.country || "India",
+          });
+          // reload saved addresses after save for immediate availability
+          const userKey = user?.uid || user?.id;
+          const addressRes = await api.get(`/addresses/${userKey}`);
+          setSavedAddresses(addressRes.data || []);
+        } catch (e) {
+          console.warn("Failed to persist shipping address", e);
+        }
+      }
+
       navigate("/account", { state: { tab: "orders", highlightOrderId: newOrderId } });
     } catch (err) {
       console.error("Submit order error", err);
