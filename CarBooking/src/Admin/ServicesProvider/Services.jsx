@@ -483,17 +483,6 @@ export default function Services() {
                       </button>
                     )}
 
-                    {/* 🔹 ADD SPARE BUTTON - Show only when Processing and not Service Going on or later */}
-                    {item.serviceStatus === "Processing" && (
-                      <button
-                        onClick={() => navigate("/employee/addserviceparts", { state: { service: item } })}
-                        className="flex-1 rounded-xl bg-orange-50 p-2.5 text-sm font-bold text-orange-600 hover:bg-orange-600 hover:text-white transition-all border border-orange-100 hover:border-orange-600"
-                        title="Add Spare Parts"
-                      >
-                        Add Spare
-                      </button>
-                    )}
-
                     <button
                       onClick={() => navigate(`${pathPrefix}/services/${item.id}`)}
                       className="flex-1 flex justify-center items-center rounded-xl bg-gray-50 p-2.5 text-gray-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 hover:text-blue-600 transition-all"
