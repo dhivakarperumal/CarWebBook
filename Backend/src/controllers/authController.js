@@ -70,6 +70,7 @@ const loginUser = async (req, res) => {
       message: "Login successful",
       token,
       user: {
+        id: user.id,
         uid: user.uid,
         username: user.username,
         email: user.email,
