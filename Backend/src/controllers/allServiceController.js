@@ -149,14 +149,19 @@ exports.approveServicePart = async (req, res) => {
   const { serviceId, partId } = req.params;
   const { status, approvedBy, approvalNotes } = req.body; // status: "approved" or "rejected"
 
+  console.log(`\n✅ [approveServicePart] Approving part ${partId} for service ${serviceId}`);
+  console.log(`📝 [approveServicePart] Status: ${status}, Approved by: ${approvedBy}`);
+
   try {
     const approvalDate = status === 'approved' ? new Date() : null;
     
     // Update the specific part's status
-    await db.query(
+    const [updateResult] = await db.query(
       'UPDATE service_parts SET status = ?, approvedBy = ?, approvalNotes = ?, approvalDate = ? WHERE id = ? AND all_service_id = ?',
       [status, approvedBy, approvalNotes, approvalDate, partId, serviceId]
     );
+
+    console.log(`✅ [approveServicePart] Update result:`, updateResult);
 
     // Check if all parts are now approved
     const [pendingParts] = await db.query(
@@ -164,17 +169,20 @@ exports.approveServicePart = async (req, res) => {
       [serviceId]
     );
 
+    console.log(`✅ [approveServicePart] Pending parts count: ${pendingParts[0].count}`);
+
     // If all parts are approved, update service status to "Service Going on"
     if (pendingParts[0].count === 0) {
       await db.query(
         'UPDATE all_services SET serviceStatus = "Service Going on" WHERE id = ?',
         [serviceId]
       );
+      console.log(`✅ [approveServicePart] All parts approved, service status updated to "Service Going on"`);
     }
 
     res.json({ message: `Part ${status} successfully` });
   } catch (err) {
-    console.error("ApproveServicePart Error:", err);
+    console.error("❌ [approveServicePart] Error:", err);
     res.status(500).json({ message: 'Error updating part status', error: err.message });
   }
 };
