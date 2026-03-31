@@ -198,6 +198,51 @@ exports.saveBill = async (req, res) => {
   }
 };
 
+/* 📦 REDUCE STOCK AFTER PURCHASE */
+exports.reduceStock = async (req, res) => {
+  const { items } = req.body;
+  
+  if (!items || !items.length) {
+    return res.status(400).json({ message: "No items provided" });
+  }
+
+  try {
+    for (const item of items) {
+      // 1) Find the product
+      const [products] = await db.query('SELECT docId, variants, totalStock FROM products WHERE docId = ?', [item.productId]);
+      if (!products.length) continue;
+
+      const p = products[0];
+      let variants = tryParse(p.variants, []);
+      let totalStock = p.totalStock || 0;
+      const qty = item.qty || item.quantity || 1;
+
+      // 2) Update specific variant stock
+      let updated = false;
+      variants = variants.map(v => {
+        if (v.sku === item.sku) {
+          v.stock = Math.max(0, (v.stock || 0) - qty);
+          updated = true;
+        }
+        return v;
+      });
+
+      // 3) Update totalStock 
+      totalStock = Math.max(0, totalStock - qty);
+
+      // 4) Save back to DB
+      await db.query(
+        'UPDATE products SET variants = ?, totalStock = ? WHERE docId = ?',
+        [JSON.stringify(variants), totalStock, p.docId]
+      );
+    }
+    res.json({ message: 'Stock reduced successfully' });
+  } catch (err) {
+    console.error("Stock reduction error:", err);
+    res.status(500).json({ message: 'Error reducing stock', error: err.message });
+  }
+};
+
 /* 📋 GET ALL BILLS */
 exports.getAllBills = async (req, res) => {
   try {

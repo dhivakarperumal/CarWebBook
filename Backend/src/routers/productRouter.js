@@ -9,6 +9,7 @@ router.get('/:docId', pc.getProductById);
 router.put('/stock/:docId', pc.updateStock);
 router.put('/status/:docId', pc.toggleStatus);
 router.put('/:docId', pc.updateProduct);
+router.post('/reduce-stock', pc.reduceStock);
 router.delete('/:docId', pc.deleteProduct);
 
 // Bills

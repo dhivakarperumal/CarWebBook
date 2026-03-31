@@ -43,7 +43,8 @@ const ORDER_STATUS_LIST = [
 ];
 
 const getCustomerDetails = (o) => {
-  return { name: o.shippingName || o.customerName || "-" };
+  const name = o.customerName || o.customer_name || o.shippingName || o.shipping_name || o.customer?.name || o.shipping?.name || "-";
+  return { name };
 };
 
 /* ================= STAT CARD ================= */
@@ -325,7 +326,7 @@ const AllOrders = () => {
                 <tr key={o.id} className="border-b border-gray-300 ">
                   <td onClick={(e) => { e.stopPropagation(); navigate(`/admin/orders/${o.id}`) }} className="px-4 py-4">{o.orderId}</td>
                   <td onClick={(e) => { e.stopPropagation(); navigate(`/admin/orders/${o.id}`) }} className="px-4 py-4">
-                    {o.shipping?.name || o.customer?.name || "-"}
+                    {o.customerName || o.shippingName || "-"}
                   </td>
                   <td className="px-4 py-4">
                     ₹ {Number(o.total).toLocaleString("en-IN")}
@@ -400,7 +401,7 @@ const AllOrders = () => {
                 }}
                 className="text-sm text-gray-600 cursor-pointer"
               >
-                {o.shipping?.name || o.customer?.name || "-"}
+                {o.customerName || o.shippingName || "-"}
               </p>
 
               {/* META ROW */}

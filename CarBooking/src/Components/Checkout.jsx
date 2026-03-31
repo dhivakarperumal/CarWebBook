@@ -1,34 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { db, auth } from "../firebase";
-import {
-  collection,
-  getDocs,
-  doc,
-  setDoc,
-  deleteDoc,
-  Timestamp,
-  runTransaction,
-} from "firebase/firestore";
-import { useLocation } from "react-router-dom";
-import { onAuthStateChanged } from "firebase/auth";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import PageHeader from "../Components/PageHeader";
 import PageContainer from "../Components/PageContainer";
 import toast from "react-hot-toast";
-import { saveUserAddress } from "./saveUserAddress";
-import { reduceStockAfterPurchase } from "./reduceStockAfterPurchase";
-
-/* 🔥 ORDER COUNTER */
-const generateOrderNumber = async () => {
-  const ref = doc(db, "counters", "current");
-
-  return await runTransaction(db, async (tx) => {
-    const snap = await tx.get(ref);
-    const next = (snap.exists() ? snap.data().current : 0) + 1;
-    tx.set(ref, { current: next }, { merge: true });
-    return `ORD${String(next).padStart(3, "0")}`;
-  });
-};
+import api from "../api";
+import { useAuth } from "../PrivateRouter/AuthContext";
 
 const indianStates = [
   "Tamil Nadu",
@@ -46,52 +22,15 @@ const indianStates = [
 
 export default function Checkout() {
   const navigate = useNavigate();
-
   const location = useLocation();
+  const { user } = useAuth();
 
   const buyNowProduct = location.state?.product;
   const isBuyNow = location.state?.isBuyNow;
 
-  /* ================= AUTH ================= */
-  const [uid, setUid] = useState(null);
-
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
-      setUid(u ? u.uid : null);
-    });
-    return () => unsub();
-  }, []);
-
-  /* ================= CART ================= */
   const [items, setItems] = useState([]);
+  const [loadingItems, setLoadingItems] = useState(true);
 
-  useEffect(() => {
-    if (!uid) return;
-
-    // BUY NOW FLOW
-    if (isBuyNow && buyNowProduct) {
-      setItems([{ id: "buynow", ...buyNowProduct }]);
-      return;
-    }
-
-    // NORMAL CART FLOW
-    getDocs(collection(db, "users", uid, "cart")).then((snap) => {
-      setItems(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
-  }, [uid]);
-
-  /* ================= ADDRESSES ================= */
-  const [savedAddresses, setSavedAddresses] = useState([]);
-  const [selectedAddressId, setSelectedAddressId] = useState(null);
-
-  useEffect(() => {
-    if (!uid) return;
-    getDocs(collection(db, "users", uid, "addresses")).then((snap) => {
-      setSavedAddresses(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
-  }, [uid]);
-
-  /* ================= SHIPPING FORM ================= */
   const [shipping, setShipping] = useState({
     name: "",
     email: "",
@@ -103,37 +42,53 @@ export default function Checkout() {
     country: "India",
   });
 
-  const selectAddress = (addr) => {
-    setShipping({
-      name: addr.fullName,
-      email: addr.email || "",
-      phone: addr.phone,
-      address: addr.street,
-      city: addr.city,
-      state: addr.state,
-      zip: addr.pinCode,
-      country: addr.country || "India",
-    });
-    setSelectedAddressId(addr.id);
-  };
-
-  /* ================= ORDER STATE ================= */
-  const [placing, setPlacing] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("CASH");
-  const [orderType] = useState("DELIVERY");
 
-  const subtotal = items.reduce((a, c) => a + c.price * c.quantity, 0);
+  useEffect(() => {
+    if (user) {
+      setShipping((prev) => ({
+        ...prev,
+        name: user.username || "",
+        email: user.email || "",
+        phone: user.mobile || "",
+      }));
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    if (isBuyNow && buyNowProduct) {
+      setItems([{ ...buyNowProduct, qty: buyNowProduct.quantity, total: buyNowProduct.price * buyNowProduct.quantity }]);
+      setLoadingItems(false);
+      return;
+    }
+
+    const fetchCart = async () => {
+      try {
+        setLoadingItems(true);
+        const res = await api.get(`/cart/${user.id}`);
+        const cartItems = (res.data || []).map(i => ({
+          ...i,
+          qty: i.quantity,
+          total: Number(i.price) * i.quantity
+        }));
+        setItems(cartItems);
+      } catch (err) {
+        console.error("Cart fetch error", err);
+        toast.error("Failed to load items");
+      } finally {
+        setLoadingItems(false);
+      }
+    };
+
+    fetchCart();
+  }, [user?.id, isBuyNow, buyNowProduct]);
+
+  const subtotal = items.reduce((a, c) => a + Number(c.price) * c.qty, 0);
   const total = subtotal;
 
-  /* ================= CLEAR CART ================= */
-  const clearCart = async () => {
-    const snap = await getDocs(collection(db, "users", uid, "cart"));
-    await Promise.all(
-      snap.docs.map((d) => deleteDoc(doc(db, "users", uid, "cart", d.id))),
-    );
-  };
-
-  /* ================= RAZORPAY LOADER ================= */
   const loadRazorpay = () =>
     new Promise((resolve) => {
       if (window.Razorpay) return resolve(true);
@@ -144,277 +99,207 @@ export default function Checkout() {
       document.body.appendChild(s);
     });
 
-  /* ================= SAVE ORDER ================= */
-  const saveOrder = async (paymentId = null) => {
-    if (!uid) throw new Error("User not logged in");
-
-    await reduceStockAfterPurchase(items);
-
-    const orderNumber = await generateOrderNumber();
-    const orderRef = doc(collection(db, "orders"));
-    const userOrderRef = doc(db, "users", uid, "orders", orderRef.id);
-
-    const orderData = {
-      docId: orderRef.id,
-      orderId: orderNumber,
-      uid,
-      items,
-      orderType,
-      shipping,
-      subtotal,
-      total,
-      paymentMethod,
-      paymentStatus: paymentMethod === "CASH" ? "Pending" : "Paid",
-      status: "orderplaced",
-      paymentId,
-      createdAt: Timestamp.now(),
-    };
-
-    try {
-      await saveUserAddress(uid, {
-        fullName: shipping.name,
-        email: shipping.email,
-        phone: shipping.phone,
-        street: shipping.address,
-        city: shipping.city,
-        state: shipping.state,
-        pinCode: shipping.zip,
-        country: shipping.country,
-      });
-    } catch (err) {
-      if (err.message !== "DUPLICATE_ADDRESS") throw err;
-    }
-
-    await Promise.all([
-      setDoc(orderRef, orderData),
-      setDoc(userOrderRef, orderData),
-    ]);
-
-    if (!isBuyNow) {
-      await clearCart();
-    }
-
-    toast.success(`Order ${orderNumber} placed 🎉`);
-    navigate("/account", { state: { tab: "orders" } });
-  };
-
-  /* ================= PLACE ORDER ================= */
   const placeOrder = async () => {
     if (!items.length) return toast.error("Cart is empty");
-
-    if (
-      !shipping.name ||
-      !shipping.phone ||
-      !shipping.address ||
-      !shipping.state
-    ) {
+    if (!shipping.name || !shipping.phone || !shipping.address || !shipping.state) {
       return toast.error("Fill all delivery details");
     }
 
-    setPlacing(true);
+    setLoading(true);
 
     try {
-      if (paymentMethod === "CASH") {
-        await saveOrder();
+      if (paymentMethod === "ONLINE") {
+        const loaded = await loadRazorpay();
+        if (!loaded) throw new Error("Razorpay failed to load");
+
+        const amountPaise = Math.round(Number(total) * 100);
+        if (amountPaise < 100) throw new Error("Order amount too low for online payment");
+
+        const options = {
+          key: "rzp_test_SGj8n5SyKSE10b",
+          amount: amountPaise,
+          currency: "INR",
+          name: "Car Store",
+          handler: async (response) => {
+            await submitOrder(response.razorpay_payment_id);
+          },
+          prefill: {
+            name: shipping.name,
+            email: shipping.email,
+            contact: shipping.phone,
+          },
+          theme: { color: "#38bdf8" },
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.open();
         return;
       }
 
-      const loaded = await loadRazorpay();
-      if (!loaded) throw new Error("Razorpay failed");
-
-      // Validate amount
-      const amountPaise = Math.round(Number(total) * 100);
-      if (!amountPaise || amountPaise < 100) {
-        throw new Error("Invalid order amount for payment");
-      }
-
-      const options = {
-        key: "rzp_test_SGj8n5SyKSE10b",
-        amount: amountPaise,
-        currency: "INR",
-        name: "Your Store",
-        handler: async (res) => {
-          try {
-            await saveOrder(res.razorpay_payment_id);
-          } catch (e) {
-            console.error("Failed to save order after payment:", e);
-            toast.error("Payment was successful but saving the order failed. Contact support.");
-          }
-        },
-        prefill: {
-          name: shipping.name,
-          email: shipping.email,
-          contact: shipping.phone,
-        },
-        theme: { color: "#38bdf8" },
-        modal: {
-          ondismiss: function () {
-            toast('Payment cancelled', { icon: '⚠️' });
-          },
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-
-      // Better failure handling to map Razorpay messages to user-friendly text
-      rzp.on('payment.failed', function (response) {
-        console.error('Razorpay payment failed:', response);
-
-        // Extract message
-        const errMsg = response?.error?.description || response?.error?.reason || response?.error || 'Payment failed';
-
-        // Map common gateway message to helpful guidance
-        const mapped = (typeof errMsg === 'string' && errMsg.toLowerCase().includes('please use another method'))
-          ? 'Payment declined by gateway. Try a different card/UPI or choose Cash on Delivery.'
-          : errMsg;
-
-        toast.error(mapped);
-      });
-
-      rzp.open();
+      await submitOrder();
     } catch (err) {
-      toast.error(err.message || "Payment failed");
+      console.error("Order error", err);
+      toast.error(err.message || "Failed to place order");
     } finally {
-      setPlacing(false);
+      setLoading(false);
     }
   };
+
+  const reduceStockAfterPurchase = async (items) => {
+    try {
+      await api.post("/products/reduce-stock", { items });
+    } catch (err) {
+      console.error("Stock reduction error", err);
+    }
+  };
+
+  const submitOrder = async (paymentId = null) => {
+    try {
+      setLoading(true);
+
+      const orderData = {
+        uid: user.id,
+        customerName: shipping.name,
+        customerPhone: shipping.phone,
+        customerEmail: shipping.email,
+        orderType: "DELIVERY",
+        paymentMethod,
+        paymentStatus: paymentId ? "Paid" : "Pending",
+        status: "orderplaced",
+        shipping,
+        subtotal,
+        total,
+        items: items.map(i => ({
+          ...i,
+          variant: i.variant || "" 
+        }))
+      };
+
+      const res = await api.post("/orders", orderData);
+      const newOrderId = res.data.orderId;
+
+      // Reduce stock
+      await reduceStockAfterPurchase(items);
+
+      // Clear cart
+      await api.delete(`/cart/user/${user.id}`);
+
+      toast.success(`Order Placed Successfully! ID: ${newOrderId}`);
+      navigate("/account", { state: { tab: "orders", highlightOrderId: newOrderId } });
+    } catch (err) {
+      console.error("Submit order error", err);
+      throw new Error("Could not save your order. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!user) {
+    return <div className="bg-black text-white py-40 text-center">Please login to checkout</div>;
+  }
 
   return (
     <div className="bg-black text-white min-h-screen">
       <PageHeader title="Checkout" />
-
       <PageContainer>
         <div className="grid lg:grid-cols-2 gap-12 py-16">
-          {/* LEFT */}
-          <div className="border border-sky-400/40 bg-black/80 p-8 rounded-3xl backdrop-blur-xl shadow-[0_0_40px_rgba(56,189,248,0.25)]">
-            {savedAddresses.length > 0 && (
-              <div className="mb-6 space-y-3">
-                <h3 className="text-sky-400 text-sm tracking-widest">
-                  SAVED ADDRESSES
-                </h3>
-
-                {savedAddresses.map((addr) => (
-                  <div
-                    key={addr.id}
-                    onClick={() => selectAddress(addr)}
-                    className={`p-4 rounded-xl border cursor-pointer
-                      ${
-                        selectedAddressId === addr.id
-                          ? "border-sky-400 bg-sky-400/10"
-                          : "border-sky-400/30"
-                      }`}
-                  >
-                    <p className="font-semibold text-sm">{addr.fullName}</p>
-                    <p className="text-xs text-gray-300">
-                      {addr.street}, {addr.city}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {addr.state} - {addr.pinCode}
-                    </p>
-                    <p className="text-xs mt-1">📞 {addr.phone}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <h2 className="text-sky-400 text-xl mb-4 tracking-widest">
-              SHIPPING
-            </h2>
-
-            {["name", "email", "phone", "city", "zip"].map((k) => (
-              <input
-                key={k}
-                value={shipping[k]}
-                onChange={(e) =>
-                  setShipping({ ...shipping, [k]: e.target.value })
-                }
-                placeholder={k.toUpperCase()}
-                className="w-full mb-4 bg-black border border-sky-400/40 px-4 py-3 rounded-xl"
-              />
-            ))}
-
-            <textarea
-              value={shipping.address}
-              onChange={(e) =>
-                setShipping({ ...shipping, address: e.target.value })
-              }
-              placeholder="ADDRESS"
-              className="w-full mb-4 bg-black border border-sky-400/40 px-4 py-3 rounded-xl"
-            />
-
-            <select
-              value={shipping.state}
-              onChange={(e) =>
-                setShipping({ ...shipping, state: e.target.value })
-              }
-              className="w-full bg-black border border-sky-400/40 px-4 py-3 rounded-xl"
-            >
-              <option value="">Select State</option>
-              {indianStates.map((s) => (
-                <option key={s}>{s}</option>
+          {/* LEFT — SHIPPING */}
+          <div className="border border-sky-400/40 bg-[#050b14] p-8 rounded-3xl shadow-[0_0_40px_rgba(56,189,248,0.15)]">
+            <h2 className="text-sky-400 text-xl mb-6 tracking-widest font-black uppercase">Shipping Details</h2>
+            
+            <div className="space-y-4">
+              {["name", "email", "phone", "city", "zip"].map((k) => (
+                <div key={k}>
+                  <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest ml-2">{k}</label>
+                  <input
+                    value={shipping[k]}
+                    onChange={(e) => setShipping({ ...shipping, [k]: e.target.value })}
+                    placeholder={`Enter your ${k}`}
+                    className="w-full bg-black/50 border border-white/10 px-4 py-3 rounded-xl focus:border-sky-400 focus:outline-none transition-colors"
+                  />
+                </div>
               ))}
-            </select>
+              
+              <div>
+                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest ml-2">Address</label>
+                <textarea
+                  value={shipping.address}
+                  onChange={(e) => setShipping({ ...shipping, address: e.target.value })}
+                  placeholder="Full delivery address"
+                  className="w-full bg-black/50 border border-white/10 px-4 py-3 rounded-xl focus:border-sky-400 focus:outline-none h-24"
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] text-gray-500 font-bold uppercase tracking-widest ml-2">State</label>
+                <select
+                  value={shipping.state}
+                  onChange={(e) => setShipping({ ...shipping, state: e.target.value })}
+                  className="w-full bg-black/50 border border-white/10 px-4 py-3 rounded-xl focus:border-sky-400 focus:outline-none"
+                >
+                  <option value="">Select State</option>
+                  {indianStates.map((s) => <option key={s} value={s}>{s}</option>)}
+                </select>
+              </div>
+            </div>
           </div>
 
-          {/* RIGHT */}
-          <div className="border border-sky-400/40 bg-black/80 p-8 rounded-3xl backdrop-blur-xl shadow-[0_0_40px_rgba(56,189,248,0.25)]">
-            <h2 className="text-sky-400 text-xl mb-6 tracking-widest">
-              SUMMARY
-            </h2>
+          {/* RIGHT — SUMMARY */}
+          <div className="border border-sky-400/40 bg-[#050b14] p-8 rounded-3xl shadow-[0_0_40px_rgba(56,189,248,0.15)] h-fit">
+            <h2 className="text-sky-400 text-xl mb-6 tracking-widest font-black uppercase">Order Summary</h2>
+            
+            <div className="space-y-4 mb-8">
+              {items.map((i, idx) => (
+                <div key={idx} className="flex justify-between items-center bg-white/5 p-4 rounded-xl">
+                  <div>
+                    <p className="font-bold">{i.name}</p>
+                    <p className="text-xs text-gray-400">{i.sku} × {i.qty}</p>
+                  </div>
+                  <p className="font-black text-sky-400">₹{i.price * i.qty}</p>
+                </div>
+              ))}
+            </div>
 
-            {items.map((i) => (
-              <div key={i.id} className="flex justify-between mb-3">
-                <span>
-                  {i.name} × {i.quantity}
-                </span>
-                <span>₹{i.price * i.quantity}</span>
+            <div className="border-t border-white/10 pt-6 space-y-2">
+              <div className="flex justify-between text-gray-400">
+                <span>Subtotal</span>
+                <span>₹{subtotal}</span>
               </div>
-            ))}
-
-            <div className="border-t border-sky-400/40 mt-6 pt-4">
-              <div className="flex justify-between font-bold text-lg">
-                <span>Total</span>
+              <div className="flex justify-between text-white text-xl font-black pt-2">
+                <span>Total Amount</span>
                 <span className="text-sky-400">₹{total}</span>
               </div>
             </div>
 
             {/* PAYMENT */}
-            <div className="mt-6 space-y-4">
-              <h3 className="text-sky-400 text-sm tracking-widest">
-                PAYMENT METHOD
-              </h3>
-
-              <label className="flex items-center gap-3">
-                <input
-                  type="radio"
-                  checked={paymentMethod === "CASH"}
-                  onChange={() => setPaymentMethod("CASH")}
-                  className="accent-sky-400"
-                />
-                Cash on Delivery
-              </label>
-
-              <label className="flex items-center gap-3">
-                <input
-                  type="radio"
-                  checked={paymentMethod === "ONLINE"}
-                  onChange={() => setPaymentMethod("ONLINE")}
-                  className="accent-sky-400"
-                />
-                Online Payment (Razorpay)
-              </label>
+            <div className="mt-8 pt-8 border-t border-white/10 space-y-4">
+              <h3 className="text-sky-400 text-[10px] font-black uppercase tracking-widest mb-2">Payment Method</h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => setPaymentMethod("CASH")}
+                  className={`p-4 rounded-2xl border text-sm font-bold transition-all ${
+                    paymentMethod === "CASH" ? "border-sky-400 bg-sky-400/10 text-sky-400" : "border-white/10 text-gray-500"
+                  }`}
+                >
+                  Cash on Delivery
+                </button>
+                <button
+                  onClick={() => setPaymentMethod("ONLINE")}
+                  className={`p-4 rounded-2xl border text-sm font-bold transition-all ${
+                    paymentMethod === "ONLINE" ? "border-sky-400 bg-sky-400/10 text-sky-400" : "border-white/10 text-gray-500"
+                  }`}
+                >
+                  Online Payment
+                </button>
+              </div>
             </div>
 
             <button
               onClick={placeOrder}
-              disabled={placing}
-              className="w-full mt-6 py-3 rounded-full
-              bg-gradient-to-r from-sky-500 to-cyan-400
-              text-black font-semibold tracking-widest
-              hover:scale-105 transition
-              shadow-[0_0_30px_rgba(56,189,248,0.6)] cursor-pointer"
+              disabled={loading || loadingItems}
+              className="w-full mt-8 py-4 rounded-full bg-gradient-to-r from-sky-500 to-cyan-400 text-black font-black tracking-widest hover:scale-[1.02] transition shadow-[0_0_40px_rgba(56,189,248,0.4)] disabled:opacity-50"
             >
-              {placing ? "Processing..." : "PLACE ORDER"}
+              {loading ? "PLACING ORDER..." : "CONFIRM ORDER"}
             </button>
           </div>
         </div>

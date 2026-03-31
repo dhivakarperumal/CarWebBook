@@ -2,18 +2,23 @@ const db = require('../config/db.js');
 
 /* ➕ ADD TO CART */
 exports.addToCart = async (req, res) => {
-  const { userId, productId, sku, name, price, image, quantity } = req.body;
+  let { userId, productId, sku, name, variant, price, image, quantity } = req.body;
+  if (!userId) userId = req.body.uid || req.body.id;
+
+  if (!userId) {
+     return res.status(400).json({ message: "UserId is required" });
+  }
 
   try {
     // Check if item already in cart
     const [existing] = await db.query(
-      'SELECT * FROM cart WHERE userId = ? AND productId = ? AND sku = ?',
-      [userId, productId, sku]
+      'SELECT * FROM cart WHERE userId = ? AND productId = ? AND sku = ? AND variant <=> ?',
+      [userId, productId, sku, variant]
     );
 
     if (existing.length > 0) {
       // Update quantity
-      const newQty = existing[0].quantity + quantity;
+      const newQty = (existing[0].quantity || 0) + (quantity || 1);
       await db.query(
         'UPDATE cart SET quantity = ? WHERE id = ?',
         [newQty, existing[0].id]
@@ -21,8 +26,8 @@ exports.addToCart = async (req, res) => {
     } else {
       // Insert new item
       await db.query(
-        'INSERT INTO cart (userId, productId, sku, name, price, image, quantity) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [userId, productId, sku, name, price, image, quantity]
+        'INSERT INTO cart (userId, productId, sku, name, variant, price, image, quantity) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [userId, productId, sku, name, variant, price, image, quantity]
       );
     }
 

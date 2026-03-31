@@ -114,7 +114,10 @@ export default function ProductDetails() {
     }
 
     // ✅ pick selected variant
-    const variant = product.variants?.[selectedVariantIndex];
+    const variant = product.variants?.[selectedVariantIndex] || {};
+    const variantLabel = (variant.position || variant.material) 
+        ? `${variant.position || ''} ${variant.material || ''}`.trim() 
+        : variant.sku;
 
     if (!variant?.sku) {
       alert("Product variant not available");
@@ -130,10 +133,11 @@ export default function ProductDetails() {
 
     try {
       await api.post("/cart/add", {
-        userId: user.id,
+        userId: user.id || user.uid,
         productId: product.docId,
         sku: variant.sku,
         name: product.name,
+        variant: variantLabel,
         price: product.offerPrice,
         image: product.images?.[0] || product.thumbnail,
         quantity: qty,
@@ -155,7 +159,10 @@ export default function ProductDetails() {
       return;
     }
 
-    const variant = product.variants?.[selectedVariantIndex];
+    const variant = product.variants?.[selectedVariantIndex] || {};
+    const variantLabel = (variant.position || variant.material) 
+        ? `${variant.position || ''} ${variant.material || ''}`.trim() 
+        : variant.sku;
 
     if (!variant?.sku) {
       alert("Product variant not available");
@@ -177,6 +184,7 @@ export default function ProductDetails() {
           docId: product.docId,
           sku: variant.sku,
           name: product.name,
+          variant: variantLabel,
           price: product.offerPrice,
           image: product.images?.[0],
           quantity: qty,
