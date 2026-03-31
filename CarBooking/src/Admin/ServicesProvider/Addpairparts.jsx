@@ -13,6 +13,21 @@ const AddServiceParts = () => {
   const [selectedService, setSelectedService] = useState(existingService || null);
   const [search, setSearch] = useState("");
 
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await api.get("/products"); // adjust API
+        setProducts(res.data);
+      } catch (err) {
+        toast.error("Failed to load products");
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   const [parts, setParts] = useState([
     { partName: "", qty: 1, price: 0 },
   ]);
@@ -90,14 +105,19 @@ const AddServiceParts = () => {
 
     try {
       setLoading(true);
-      // 1. Add parts
-      await api.post(`/all-services/${selectedService.id}/parts`, { parts: validParts });
-      
+      // 1. Add parts (include explicit status)
+      const payloadParts = validParts.map((part) => ({
+        ...part,
+        status: part.status || 'pending',
+      }));
+
+      await api.post(`/all-services/${selectedService.id}/parts`, { parts: payloadParts });
+
       // 2. Update service status to "Waiting for Spare"
       await api.put(`/all-services/${selectedService.id}/status`, {
         serviceStatus: "Waiting for Spare"
       });
-      
+
       toast.success("Parts added successfully and status updated to 'Waiting for Spare'");
       navigate(-1);
     } catch (err) {
@@ -110,7 +130,7 @@ const AddServiceParts = () => {
   return (
     <div className="p-6 max-w-6xl bg-white shadow rounded-lg mx-auto space-y-6">
       <div className="flex items-center gap-4 mb-2">
-        <button 
+        <button
           onClick={() => navigate(-1)}
           className="p-2 hover:bg-gray-100 rounded-full transition-colors"
         >
@@ -160,7 +180,7 @@ const AddServiceParts = () => {
       {selectedService && (
         <div className="bg-blue-50/50 border border-blue-100 p-6 rounded-3xl grid grid-cols-2 lg:grid-cols-4 gap-6 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full -mr-16 -mt-16" />
-          
+
           <div className="space-y-1">
             <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Booking ID</p>
             <p className="font-bold text-blue-900">{selectedService.bookingId}</p>
@@ -198,13 +218,38 @@ const AddServiceParts = () => {
               <tr key={i} className="border-b">
                 <td className="px-4 py-3">
                   <input
+                    list={`products-${i}`}
                     className="border px-3 py-2 rounded w-full"
-                    placeholder="Part name"
+                    placeholder="Type or select product"
                     value={p.partName}
-                    onChange={(e) =>
-                      handlePartChange(i, "partName", e.target.value)
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+
+                      // Find product
+                      const selectedProduct = products.find(
+                        (prod) => prod.name.toLowerCase() === value.toLowerCase()
+                      );
+
+                      const copy = [...parts];
+                      copy[i].partName = value;
+
+                      // ✅ Autofill price if matched
+                      if (selectedProduct) {
+                        copy[i].price = selectedProduct.offerPrice;
+                      }
+
+                      setParts(copy);
+                    }}
                   />
+
+                  {/* Dropdown list */}
+                  <datalist id={`products-${i}`}>
+                    {products.map((prod) => (
+                      <option key={prod.id} value={prod.name}>
+                        {prod.name} - ₹{prod.offerPrice}
+                      </option>
+                    ))}
+                  </datalist>
                 </td>
 
                 <td className="px-4 py-3">
