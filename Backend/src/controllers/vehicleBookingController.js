@@ -46,8 +46,42 @@ const getAllBookings = async (req, res) => {
   }
 };
 
+const cancelBooking = async (req, res) => {
+  const { id } = req.params;
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // Get vehicleId from the booking
+    const [booking] = await connection.query('SELECT vehicleId FROM vehicle_bookings WHERE id = ?', [id]);
+    if (booking.length === 0) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    const vehicleId = booking[0].vehicleId;
+
+    // Update booking status
+    await connection.query('UPDATE vehicle_bookings SET status = "Cancelled" WHERE id = ?', [id]);
+
+    // Update bike status back to published
+    if (vehicleId) {
+      await connection.query('UPDATE bikes SET status = "published" WHERE id = ?', [vehicleId]);
+    }
+
+    await connection.commit();
+    res.json({ message: "Booking cancelled and vehicle republished successfully" });
+  } catch (err) {
+    if (connection) await connection.rollback();
+    console.error("Error cancelling vehicle booking:", err);
+    res.status(500).json({ message: "Error cancelling booking", error: err.message });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 module.exports = {
   addBooking,
   getBookingsByUser,
-  getAllBookings
+  getAllBookings,
+  cancelBooking
 };

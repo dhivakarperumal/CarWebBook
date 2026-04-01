@@ -67,6 +67,7 @@ import ServiceAreas from "./Admin/ServiceAreas.jsx";
 // Bike Marketplace
 import AllBikes from "./Admin/Bikes/AllBikes.jsx";
 import AddBike from "./Admin/Bikes/AddBike.jsx";
+import BookedVehicles from "./Admin/Bikes/BookedVehicles.jsx";
 
 
 
@@ -145,6 +146,7 @@ const router = createBrowserRouter([
       { path: "inventory-list", element: <AllBikes defaultType="all" /> },
       { path: "add-vehicle", element: <AddBike defaultType="Car" /> },
       { path: "add-vehicle/:id", element: <AddBike defaultType="all" /> },
+      { path: "booked-vehicles", element: <BookedVehicles /> },
 
 
 

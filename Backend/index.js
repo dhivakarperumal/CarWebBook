@@ -108,6 +108,7 @@ async function initializeDatabase() {
     // Ensure columns exist in bikes
     try {
       await db.query("ALTER TABLE bikes MODIFY COLUMN fuel_type ENUM('Petrol', 'Diesel', 'Electric', 'Hybrid', 'CNG') DEFAULT 'Petrol'");
+      await db.query("ALTER TABLE bikes MODIFY COLUMN status ENUM('draft', 'published', 'sold', 'booked') DEFAULT 'draft'");
       await db.query("ALTER TABLE bikes ADD COLUMN IF NOT EXISTS type ENUM('Bike', 'Car') DEFAULT 'Bike' AFTER loan_status");
       await db.query("ALTER TABLE bikes ADD COLUMN IF NOT EXISTS advance_amount_paid DECIMAL(15,2) DEFAULT 0 AFTER expected_price");
       console.log('✓ bikes table schema synchronized');

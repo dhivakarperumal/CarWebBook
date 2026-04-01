@@ -87,6 +87,7 @@ const Dashboard = () => {
     totalBilling: 0,
     totalCars: 0,
     totalBikes: 0,
+    totalVehicleBookings: 0,
   });
 
   const [appointmentData, setAppointmentData] = useState([]);
@@ -132,6 +133,7 @@ const Dashboard = () => {
         productsData,
         inventoryData,
         bikesData,
+        vehicleBookingsData,
       ] = await Promise.all([
         fetchSafe("/bookings"),
         fetchSafe("/all-services"),
@@ -141,6 +143,7 @@ const Dashboard = () => {
         fetchSafe("/products"),
         fetchSafe("/inventory"),
         fetchSafe("/bikes"),
+        fetchSafe("/vehicle-bookings"),
       ]);
 
       // Users might be available indirectly from bookings or a direct users endpoint.
@@ -198,6 +201,7 @@ const Dashboard = () => {
         totalBilling: totalBilling,
         totalCars: (bikesData || []).filter(b => b.type === "Car").length,
         totalBikes: (bikesData || []).filter(b => b.type === "Bike").length,
+        totalVehicleBookings: (vehicleBookingsData || []).length, 
       });
 
       // 2. APPOINTMENTS CHART
@@ -491,6 +495,13 @@ const Dashboard = () => {
           change="+"
           isUp={true}
           gradient="bg-gradient-to-r from-blue-600 to-sky-400"
+        />
+        <GradientStatCard
+          title="TOTAL VEHICLE BOOKINGS"
+          value={topStats.totalVehicleBookings}
+          change="+"
+          isUp={true}
+          gradient="bg-gradient-to-r from-orange-400 to-amber-500"
         />
       </div>
 
