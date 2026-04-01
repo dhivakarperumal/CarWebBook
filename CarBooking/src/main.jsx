@@ -61,6 +61,7 @@ import Cart from "./Components/Cart.jsx";
 import AllOrders from "./Admin/Orders/All Orders.jsx";
 import OrderDetails from "./Admin/Orders/OrderDetails.jsx";
 import AdminAssignServices from "./Admin/Bookingservice/AdminAssignServices.jsx";
+import ServiceAreas from "./Admin/ServiceAreas.jsx";
 
 // Bike Marketplace
 import AllBikes from "./Admin/Bikes/AllBikes.jsx";
@@ -133,6 +134,7 @@ const router = createBrowserRouter([
       { path: "addbooking", element: <BookingService /> },
       { path: "assignservices", element: <AdminAssignServices /> },
       { path: "addservicevehicle", element: <AddServiceVehicle /> },
+      { path: "service-areas", element: <ServiceAreas /> },
       // { path: "contact", element: <Contact /> },
 
       { path: "orders", element: <AllOrders /> },

@@ -207,6 +207,9 @@ app.use('/api/bikes', bikeRouter);
 const addressRouter = require('./src/routers/addressRouter');
 app.use('/api/addresses', addressRouter);
 
+const serviceAreaRouter = require('./src/routers/serviceAreaRouter');
+app.use('/api/service-areas', serviceAreaRouter);
+
 // Basic Route
 app.get('/', (req, res) => {
   res.send('Welcome to Car Booking API');
