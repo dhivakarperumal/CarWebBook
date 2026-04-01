@@ -201,8 +201,7 @@ export default function ProductDetails() {
       });
 
       window.dispatchEvent(new Event("cart-updated"));
-      toast.success("Added to cart 🛒");
-      navigate("/cart");
+      toast.success("Added to cart");
     } catch (err) {
       console.error("Cart error", err);
       toast.error("Error adding to cart");
