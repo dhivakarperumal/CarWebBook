@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { forwardRef } from "react";
 import PageHeader from "./PageHeader";
 import { createBooking } from "../api";
+import toast from "react-hot-toast";
 
 const BOOKING_STATUS = {
   BOOKED: "Booked",
@@ -80,6 +81,7 @@ const Select = forwardRef(
 
 const BookService = () => {
   const [vehicleType, setVehicleType] = useState("car");
+  const [selectedPincode, setSelectedPincode] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -149,11 +151,13 @@ const BookService = () => {
       place.address?.village ||
       "";
 
+    const pincode = place.address?.postcode || "";
+    setSelectedPincode(pincode);
+
     setIsChennai(["chennai", "tirupattur"].includes(city.toLowerCase()));
 
     setLocationResults([]);
   };
-
 
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState("");
@@ -162,7 +166,6 @@ const BookService = () => {
   const [submitError, setSubmitError] = useState("");
 
   const [errors, setErrors] = useState({});
-
 
   const handleUseCurrentLocation = async () => {
     setLocationLoading(true);
@@ -202,6 +205,9 @@ const BookService = () => {
             lng: longitude,
           });
 
+          const pincode = data.address?.postcode || "";
+          setSelectedPincode(pincode);
+
           setIsChennai(["chennai", "tirupattur"].includes(city.toLowerCase()));
         } catch (err) {
           console.error(err);
@@ -230,7 +236,6 @@ const BookService = () => {
       },
     );
   };
-
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -317,6 +322,22 @@ const BookService = () => {
         // Status tracking
         status: BOOKING_STATUS.BOOKED,
       };
+
+      // CHECK SERVICE AREA PINCODE
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/service-areas`);
+      const areas = await res.json();
+
+      const validArea = areas.find(
+        (area) =>
+          String(area.pincode).trim() === String(selectedPincode).trim() &&
+          area.status === "active",
+      );
+
+      if (!validArea) {
+        toast.error("Service not available for your area");
+        setSubmitting(false);
+        return;
+      }
 
       const response = await createBooking(bookingData);
       console.log("✅ Booking Successful:", response.data.bookingId);
