@@ -173,7 +173,7 @@ const AllBikes = ({ defaultType = "all" }) => {
         <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
             <tr>
-              <th className="px-6 py-5 first:pl-10">Vehicle Detail</th>
+              <th className="px-6 py-5 first:pl-10">{defaultType === 'all' ? 'Vehicle Details' : `${defaultType} Details`}</th>
               <th className="px-6 py-5">Specs</th>
               <th className="px-6 py-5">Location</th>
               <th className="px-6 py-5">Price</th>
@@ -258,7 +258,7 @@ const AllBikes = ({ defaultType = "all" }) => {
                            <Eye size={16} />
                         </button>
                        <button 
-                         onClick={() => navigate(`/admin/addbike/${bike.id}`)}
+                         onClick={() => navigate(bike.type === "Car" ? `/admin/addcar/${bike.id}` : `/admin/addbike/${bike.id}`)}
                          className="p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:bg-black hover:text-white transition-all shadow-sm"
                        >
                           <Edit size={16} />
@@ -380,12 +380,12 @@ const AllBikes = ({ defaultType = "all" }) => {
 
             {/* Modal Footer */}
             <div className="p-6 border-t bg-gray-50 flex gap-4">
-               <button 
-                 onClick={() => { setSelectedBike(null); navigate(`/admin/addbike/${selectedBike.id}`); }}
-                 className="flex-1 bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl"
-               >
+                <button 
+                  onClick={() => { setSelectedBike(null); navigate(selectedBike.type === "Car" ? `/admin/addcar/${selectedBike.id}` : `/admin/addbike/${selectedBike.id}`); }}
+                  className="flex-1 bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl"
+                >
                   Edit Listing
-               </button>
+                </button>
                <button 
                  onClick={() => setSelectedBike(null)}
                  className="px-8 py-4 bg-white text-gray-500 rounded-2xl font-black uppercase tracking-widest border hover:bg-gray-100 transition-all"

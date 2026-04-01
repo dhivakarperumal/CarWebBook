@@ -43,7 +43,7 @@ const AddBike = ({ defaultType = "Bike" }) => {
         images: typeof data.images === 'string' ? JSON.parse(data.images) : data.images
       });
     } catch (err) {
-      toast.error("Failed to load bike details");
+      toast.error(`Failed to load ${form.type.toLowerCase()} details`);
     }
   };
 
@@ -132,14 +132,14 @@ const AddBike = ({ defaultType = "Bike" }) => {
       
       if (id) {
         await api.put(`/bikes/${id}`, payload);
-        toast.success("Bike updated successfully");
+        toast.success(`${form.type} updated successfully`);
       } else {
         await api.post("/bikes", payload);
-        toast.success("Bike listed successfully");
+        toast.success(`${form.type} listed successfully`);
       }
-      navigate("/admin/bikes");
+      navigate(form.type === "Car" ? "/admin/cars" : "/admin/bikes");
     } catch (error) {
-      toast.error("Failed to save bike");
+      toast.error(`Failed to save ${form.type.toLowerCase()}`);
     } finally {
       setLoading(false);
     }
@@ -557,7 +557,7 @@ const AddBike = ({ defaultType = "Bike" }) => {
         </div>
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => navigate("/admin/bikes")}
+            onClick={() => navigate(form.type === "Car" ? "/admin/cars" : "/admin/bikes")}
             className="px-6 py-3 rounded-2xl font-black text-gray-500 uppercase tracking-widest hover:bg-gray-50 transition-all"
           >
             Cancel

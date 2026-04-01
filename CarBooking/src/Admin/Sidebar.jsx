@@ -93,10 +93,18 @@ const navItems = [
 
   {
     label: "Bike Marketplace",
-    icon: CarFront, // Using CarFront as a placeholder for Bike
+    icon: Bike, 
     children: [
-      { path: "/admin/bikes", label: "All Bikes", icon: ClipboardList },
-      { path: "/admin/addbike", label: "Add New Bike", icon: Wrench },
+      { path: "/admin/bikes", label: "Bike Inventory", icon: ClipboardList },
+      { path: "/admin/addbike", label: "Add Bike Details", icon: PlusCircle },
+    ],
+  },
+  {
+    label: "Car Marketplace",
+    icon: Car, 
+    children: [
+      { path: "/admin/cars", label: "Car Inventory", icon: ClipboardList },
+      { path: "/admin/addcar", label: "Add Car Details", icon: PlusCircle },
     ],
   },
 
@@ -143,8 +151,6 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
     "/admin/additemsinventory": "/admin/inventory",
     "/admin/addcarservies": "/admin/carservies",
     "/admin/addservices": "/admin/serviceslist",
-    "/admin/addbike": "/admin/bikes",
-    "/admin/addcar": "/admin/cars",
   };
 
   const isRouteActive = (path, exact) => {

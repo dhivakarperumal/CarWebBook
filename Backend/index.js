@@ -54,7 +54,7 @@ async function initializeDatabase() {
         reg_year YEAR,
         engine_cc INT,
         mileage DECIMAL(10,2),
-        fuel_type ENUM('Petrol', 'Electric', 'Hybrid') DEFAULT 'Petrol',
+        fuel_type ENUM('Petrol', 'Diesel', 'Electric', 'Hybrid', 'CNG') DEFAULT 'Petrol',
         transmission ENUM('Manual', 'Automatic') DEFAULT 'Manual',
         km_driven INT,
         owners INT,
@@ -70,6 +70,7 @@ async function initializeDatabase() {
         insurance_available BOOLEAN DEFAULT FALSE,
         puc_available BOOLEAN DEFAULT FALSE,
         loan_status ENUM('Clear', 'Active') DEFAULT 'Clear',
+        type ENUM('Bike', 'Car') DEFAULT 'Bike',
         images JSON,
         description TEXT,
         seller_name VARCHAR(100),
@@ -103,12 +104,13 @@ async function initializeDatabase() {
     await db.query(createCartTableSQL);
     console.log('✓ cart table checked/created');
 
-    // Ensure variant column exists in cart (for older tables)
+    // Ensure columns exist in bikes
     try {
-      await db.query('ALTER TABLE cart ADD COLUMN variant LONGTEXT');
-      console.log('✓ cart table updated with variant column');
+      await db.query("ALTER TABLE bikes MODIFY COLUMN fuel_type ENUM('Petrol', 'Diesel', 'Electric', 'Hybrid', 'CNG') DEFAULT 'Petrol'");
+      await db.query("ALTER TABLE bikes ADD COLUMN IF NOT EXISTS type ENUM('Bike', 'Car') DEFAULT 'Bike' AFTER loan_status");
+      console.log('✓ bikes table schema synchronized');
     } catch (err) {
-      // Ignore if already exists
+       console.log('Bike check error:', err.message);
     }
 
     await db.query(`
