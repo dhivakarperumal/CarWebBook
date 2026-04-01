@@ -307,7 +307,7 @@ const AllOrders = () => {
 
       {/* ================= TABLE VIEW ================= */}
       {view === "table" && (
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
+        <div className="bg-white  rounded-2xl ">
   <div className="overflow-x-auto">
     <table className="min-w-[800px] text-sm whitespace-nowrap">
             <thead className="bg-gradient-to-r  from-black to-cyan-400 shadow text-white text-left">

@@ -65,6 +65,7 @@ const AddBike = ({ defaultType = "Bike" }) => {
     area: "",
     pincode: "",
     expected_price: "",
+    advance_amount_paid: "",
     negotiable: false,
     insurance_valid: "",
     road_tax_paid: false,
@@ -137,7 +138,7 @@ const AddBike = ({ defaultType = "Bike" }) => {
         await api.post("/bikes", payload);
         toast.success(`${form.type} listed successfully`);
       }
-      navigate(form.type === "Car" ? "/admin/cars" : "/admin/bikes");
+      navigate(form.type === "Car" ? "/admin/inventory-list" : "/admin/bikes");
     } catch (error) {
       toast.error(`Failed to save ${form.type.toLowerCase()}`);
     } finally {
@@ -377,6 +378,17 @@ const AddBike = ({ defaultType = "Bike" }) => {
                   value={form.expected_price}
                   onChange={handleChange}
                   placeholder="e.g. 145000"
+                  className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest">Advance Amount Paid</label>
+                <input 
+                  type="number" 
+                  name="advance_amount_paid"
+                  value={form.advance_amount_paid}
+                  onChange={handleChange}
+                  placeholder="e.g. 5000"
                   className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold"
                 />
               </div>

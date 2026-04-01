@@ -63,6 +63,7 @@ async function initializeDatabase() {
         area VARCHAR(255),
         pincode VARCHAR(10),
         expected_price DECIMAL(15,2),
+        advance_amount_paid DECIMAL(15,2) DEFAULT 0,
         negotiable BOOLEAN DEFAULT FALSE,
         insurance_valid DATE,
         road_tax_paid BOOLEAN DEFAULT FALSE,
@@ -108,6 +109,7 @@ async function initializeDatabase() {
     try {
       await db.query("ALTER TABLE bikes MODIFY COLUMN fuel_type ENUM('Petrol', 'Diesel', 'Electric', 'Hybrid', 'CNG') DEFAULT 'Petrol'");
       await db.query("ALTER TABLE bikes ADD COLUMN IF NOT EXISTS type ENUM('Bike', 'Car') DEFAULT 'Bike' AFTER loan_status");
+      await db.query("ALTER TABLE bikes ADD COLUMN IF NOT EXISTS advance_amount_paid DECIMAL(15,2) DEFAULT 0 AFTER expected_price");
       console.log('✓ bikes table schema synchronized');
     } catch (err) {
        console.log('Bike check error:', err.message);
@@ -159,6 +161,29 @@ async function initializeDatabase() {
       )
     `);
     console.log('✓ product_order_items table checked/created');
+
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS vehicle_bookings (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        bookingId VARCHAR(100) UNIQUE,
+        uid VARCHAR(255),
+        customerName VARCHAR(255),
+        customerPhone VARCHAR(20),
+        customerEmail VARCHAR(255),
+        vehicleId INT,
+        vehicleName VARCHAR(255),
+        vehicleType VARCHAR(50),
+        paymentMethod VARCHAR(50),
+        paymentStatus VARCHAR(50) DEFAULT 'Pending',
+        paymentId VARCHAR(100),
+        status VARCHAR(50) DEFAULT 'Booked',
+        advanceAmount DECIMAL(10,2) DEFAULT 0,
+        pickupAddress TEXT,
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('✓ vehicle_bookings table checked/created');
   } catch (error) {
     console.error('✗ Error initializing database:', error.message);
   }
@@ -209,6 +234,9 @@ app.use('/api/addresses', addressRouter);
 
 const serviceAreaRouter = require('./src/routers/serviceAreaRouter');
 app.use('/api/service-areas', serviceAreaRouter);
+
+const vehicleBookingRouter = require('./src/routers/vehicleBookingRouter');
+app.use('/api/vehicle-bookings', vehicleBookingRouter);
 
 // Basic Route
 app.get('/', (req, res) => {

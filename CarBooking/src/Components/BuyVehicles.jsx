@@ -4,6 +4,7 @@ import PageContainer from "./PageContainer";
 import { useNavigate } from "react-router-dom";
 import api from "../api";
 import toast from "react-hot-toast";
+import { useAuth } from "../PrivateRouter/AuthContext";
 import {
   FaCheckCircle,
   FaMapMarkerAlt,
@@ -29,6 +30,7 @@ const BuyVehicles = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
   const [bookingInProgress, setBookingInProgress] = useState(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchVehicles();
@@ -65,12 +67,93 @@ const BuyVehicles = () => {
     document.body.style.overflow = "hidden";
   };
 
+  const loadRazorpay = () =>
+    new Promise((resolve) => {
+      if (window.Razorpay) return resolve(true);
+      const s = document.createElement("script");
+      s.src = "https://checkout.razorpay.com/v1/checkout.js";
+      s.onload = () => resolve(true);
+      s.onerror = () => resolve(false);
+      document.body.appendChild(s);
+    });
+
   const handleBookNow = async (vehicle) => {
+    if (!user) {
+      toast.error("Please login to book a vehicle");
+      navigate("/login");
+      return;
+    }
+
     setBookingInProgress(vehicle.id);
-    setTimeout(() => {
-      closeModal();
-      navigate("/bookservice");
-    }, 300);
+    try {
+      const advanceAmount = Number(vehicle.advance_amount_paid) || 5000;
+      const amountPaise = Math.round(advanceAmount * 100);
+
+      const loaded = await loadRazorpay();
+      if (!loaded) throw new Error("Razorpay failed to load script");
+
+      const options = {
+        key: "rzp_test_SGj8n5SyKSE10b",
+        amount: amountPaise,
+        currency: "INR",
+        name: "Car Store",
+        description: `Advance Payment for ${vehicle.brand} ${vehicle.model}`,
+        handler: async (response) => {
+          try {
+            // Store the booking in the vehicle_bookings table
+            const bookingData = {
+              uid: user.id || user.uid,
+              customerName: user.username || "Guest",
+              customerPhone: user.mobile || "",
+              customerEmail: user.email || "",
+              vehicleId: vehicle.id,
+              vehicleName: `${vehicle.brand} ${vehicle.model}`,
+              vehicleType: vehicle.type || "Vehicle",
+              paymentMethod: "ONLINE_RAZORPAY",
+              paymentStatus: `Paid`,
+              paymentId: response.razorpay_payment_id,
+              status: "Booked",
+              advanceAmount: advanceAmount,
+              pickupAddress: `Vehicle Pickup at ${vehicle.city}, ${vehicle.pincode}`
+            };
+
+            const res = await api.post("/vehicle-bookings", bookingData);
+            const newBookingId = res.data.bookingId;
+
+            toast.success(`Vehicle Booking successful! Booking ID: ${newBookingId}`);
+            closeModal();
+            // Navigate to /account on the vehicle-bookings tab
+            navigate("/account", { 
+              state: { 
+                tab: "vehicle-bookings",
+                highlightBookingId: newBookingId
+              } 
+            });
+          } catch (err) {
+            console.error("Booking save error:", err);
+            toast.error("Payment succeeded but booking tracking failed. Please contact support.");
+          } finally {
+            setBookingInProgress(null);
+          }
+        },
+        prefill: {
+          name: user.username || "",
+          email: user.email || "",
+          contact: user.mobile || "",
+        },
+        theme: { color: "#38bdf8" },
+      };
+      
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", function (response) {
+        toast.error("Payment cancelled or failed.");
+        setBookingInProgress(null);
+      });
+      rzp.open();
+    } catch (err) {
+      toast.error(err.message || "Failed to initiate payment");
+      setBookingInProgress(null);
+    }
   };
 
   const closeModal = () => {
@@ -386,12 +469,12 @@ const BuyVehicles = () => {
                         </p>
                       )}
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex flex-col items-end">
                       <p className="text-gray-300 text-xs mb-2 uppercase tracking-wider">
-                        Availability
+                        Advance Booking Amount
                       </p>
-                      <span className="inline-block px-6 py-3 rounded-full bg-emerald-500/20 text-emerald-300 text-sm font-bold border border-emerald-400/40">
-                        <FaCheckCircle className="inline mr-2" /> Available
+                      <span className="inline-block px-4 py-2 rounded-lg bg-sky-500/20 text-sky-300 text-xl font-bold border border-sky-400/40">
+                        ₹{Number(selectedVehicle.advance_amount_paid || 5000).toLocaleString("en-IN")}
                       </span>
                     </div>
                   </div>

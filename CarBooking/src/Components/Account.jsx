@@ -5,6 +5,7 @@ import MyOrders from "./MyOrders";
 import ManageAddress from "./ManageAddress";
 import ServiceStatus from "./ServiceStatus";
 import History from "./History";
+import VehicleBookings from "./VehicleBookings";
 import PageContainer from "./PageContainer";
 import { useLocation } from "react-router-dom";
 
@@ -24,6 +25,7 @@ const Account = () => {
   const titleMap = {
     personal: "Personal Information",
     orders: "My Orders",
+    "vehicle-bookings": "Vehicle Bookings",
     address: "Manage Address",
     servicestatus: "Service Status",
     history: "Service History",
@@ -37,6 +39,8 @@ const Account = () => {
         return <PersonalInfo />;
       case "orders":
         return <MyOrders />;
+      case "vehicle-bookings":
+        return <VehicleBookings />;
       case "address":
         return <ManageAddress />;
       case "history":
@@ -58,6 +62,7 @@ const Account = () => {
               ["servicestatus", "Service"],
               ["personal", "Profile"],
               ["orders", "Orders"],
+              ["vehicle-bookings", "Vehicles"],
               ["history", "History"],
               ["address", "Address"],
             ].map(([key, label]) => (
@@ -103,6 +108,11 @@ const Account = () => {
                   active={activeTab === "orders"}
                   onClick={() => setActiveTab("orders")}
                   label="My Orders"
+                />
+                <SidebarButton
+                  active={activeTab === "vehicle-bookings"}
+                  onClick={() => setActiveTab("vehicle-bookings")}
+                  label="Vehicle Bookings"
                 />
                 {/* <SidebarButton
                   active={activeTab === "address"}
