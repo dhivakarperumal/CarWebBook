@@ -260,7 +260,7 @@ const EmpAssingCars = () => {
       ) : (
 
         <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden overflow-x-auto">
-          <table className="w-full text-left">
+          <table className="w-full text-left whitespace-nowrap">
             <thead>
               <tr>
                 <th className="px-6 py-5">Job ID</th>
