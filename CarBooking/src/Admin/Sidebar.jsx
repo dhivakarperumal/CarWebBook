@@ -356,10 +356,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           onClick={onToggleCollapse}
           className="hidden lg:flex absolute -right-3.5 top-1/2 -translate-y-1/2
           w-7 h-7 rounded-full
-          bg-white border border-slate-200
+          bg-gradient-to-br from-black to-sky-500
           shadow-md shadow-slate-200/50
           items-center justify-center
-          text-slate-400 hover:text-emerald-600 hover:border-emerald-200 transition-all"
+          text-white transition-all"
         >
           <ChevronLeft
             className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""
