@@ -15,6 +15,8 @@ import {
   FaPhone,
   FaEnvelope,
   FaUser,
+  FaTimes,
+  FaFileAlt,
 } from "react-icons/fa";
 
 const BuyVehicles = () => {
@@ -22,8 +24,11 @@ const BuyVehicles = () => {
   const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [fullscreenImage, setFullscreenImage] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
+  const [bookingInProgress, setBookingInProgress] = useState(null);
 
   useEffect(() => {
     fetchVehicles();
@@ -55,11 +60,24 @@ const BuyVehicles = () => {
 
   const handleViewDetails = (vehicle) => {
     setSelectedVehicle(vehicle);
+    setSelectedImage(null);
+    setFullscreenImage(null);
+    document.body.style.overflow = "hidden";
   };
 
-  const handleContactSeller = (vehicle) => {
-    // You can implement contact functionality here
-    toast.success("Seller will contact you soon!");
+  const handleBookNow = async (vehicle) => {
+    setBookingInProgress(vehicle.id);
+    setTimeout(() => {
+      closeModal();
+      navigate("/bookservice");
+    }, 300);
+  };
+
+  const closeModal = () => {
+    setSelectedVehicle(null);
+    setSelectedImage(null);
+    setFullscreenImage(null);
+    document.body.style.overflow = "auto";
   };
 
   if (loading) {
@@ -166,8 +184,8 @@ const BuyVehicles = () => {
 
                       {/* Badge */}
                       <div className="absolute top-3 right-3">
-                        <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-400/30">
-                          ✓ Available
+                        <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-400/30 flex items-center gap-1">
+                          <FaCheckCircle size={10} /> Available
                         </span>
                       </div>
                     </div>
@@ -196,7 +214,7 @@ const BuyVehicles = () => {
                         </p>
                         {vehicle.negotiable && (
                           <p className="text-xs text-yellow-400 mt-1">
-                            💬 Negotiable
+                            Negotiable Price
                           </p>
                         )}
                       </div>
@@ -239,10 +257,11 @@ const BuyVehicles = () => {
                           View Details
                         </button>
                         <button
-                          onClick={() => handleContactSeller(vehicle)}
-                          className="flex-1 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-cyan-500 text-white hover:scale-105 transition text-sm font-semibold"
+                          onClick={() => handleBookNow(vehicle)}
+                          disabled={bookingInProgress === vehicle.id}
+                          className="flex-1 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-cyan-500 text-white hover:scale-105 transition text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Contact
+                          {bookingInProgress === vehicle.id ? "Loading..." : "Book Now"}
                         </button>
                       </div>
                     </div>
@@ -269,277 +288,403 @@ const BuyVehicles = () => {
         </PageContainer>
       </section>
 
-      {/* Vehicle Details Modal */}
+      {/* Premium Vehicle Details Modal */}
       {selectedVehicle && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-slate-900 rounded-2xl border border-sky-400/30 max-w-2xl w-full my-10">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl border border-sky-400/40 w-full max-w-5xl shadow-2xl shadow-sky-500/30 my-8">
             {/* Header */}
-            <div className="sticky top-0 flex items-center justify-between p-6 border-b border-sky-400/20 bg-slate-900/95 z-10">
-              <h2 className="text-2xl font-bold text-white">Vehicle Details</h2>
+            <div className="sticky top-0 bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-xl flex items-center justify-between p-8 border-b border-sky-400/20 z-10 rounded-t-3xl">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-1">
+                  {selectedVehicle.brand} {selectedVehicle.model}
+                </h2>
+                <p className="text-sky-300 text-sm">{selectedVehicle.title}</p>
+              </div>
               <button
-                onClick={() => setSelectedVehicle(null)}
-                className="text-gray-400 hover:text-white transition"
+                onClick={closeModal}
+                className="text-gray-400 hover:text-white hover:bg-white/10 p-3 rounded-full transition"
               >
-                ✕
+                <FaTimes size={24} />
               </button>
             </div>
 
             {/* Content */}
-            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-              {/* Image Gallery */}
-              {(() => {
-                const images = selectedVehicle.images
-                  ? typeof selectedVehicle.images === "string"
-                    ? JSON.parse(selectedVehicle.images)
-                    : selectedVehicle.images
-                  : {};
-                const imageList = Object.values(images).filter(Boolean);
+            <div className="overflow-y-auto max-h-[calc(90vh-180px)] custom-scrollbar">
+              <div className="p-8 space-y-8">
+                {/* Image Gallery Section - Premium */}
+                {(() => {
+                  const images = selectedVehicle.images
+                    ? typeof selectedVehicle.images === "string"
+                      ? JSON.parse(selectedVehicle.images)
+                      : selectedVehicle.images
+                    : {};
+                  const imageList = Object.values(images).filter(Boolean);
 
-                return imageList.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    {imageList.slice(0, 4).map((img, idx) => (
-                      <img
+                  return imageList.length > 0 ? (
+                    <div className="space-y-4">
+                      {/* Main Image with Zoom Overlay */}
+                      <div
+                        className="relative rounded-2xl overflow-hidden bg-slate-700 cursor-pointer group"
+                        onClick={() => setFullscreenImage(selectedImage || imageList[0])}
+                      >
+                        <img
+                          src={selectedImage || imageList[0]}
+                          alt="Main Vehicle"
+                          className="w-full h-96 object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                          <div className="text-white text-center">
+                            <h4 className="text-lg font-semibold mb-2">Click to zoom</h4>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Thumbnail Gallery */}
+                      {imageList.length > 1 && (
+                        <div>
+                          <p className="text-sm text-gray-400 mb-3">
+                            Click thumbnail to view ({imageList.length} images)
+                          </p>
+                          <div className="grid grid-cols-5 md:grid-cols-6 gap-3">
+                            {imageList.map((img, idx) => (
+                              <div
+                                key={idx}
+                                onClick={() => setSelectedImage(img)}
+                                className={`relative rounded-lg overflow-hidden cursor-pointer border-2 transition transform hover:scale-105 ${
+                                  selectedImage === img
+                                    ? "border-sky-400 shadow-lg shadow-sky-400/50"
+                                    : "border-slate-600 hover:border-sky-400"
+                                }`}
+                              >
+                                <img
+                                  src={img}
+                                  alt={`Thumbnail ${idx + 1}`}
+                                  className="w-full h-20 object-cover"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : null;
+                })()}
+
+                {/* Price Section - Premium Gradient */}
+                <div className="bg-gradient-to-r from-sky-500/15 via-cyan-500/10 to-sky-500/15 border border-sky-400/40 rounded-2xl p-8">
+                  <div className="flex items-end justify-between gap-6">
+                    <div className="flex-1">
+                      <p className="text-gray-300 text-sm mb-3 uppercase tracking-wider">
+                        Expected Price
+                      </p>
+                      <p className="text-5xl font-bold text-sky-300">
+                        ₹{Number(selectedVehicle.expected_price).toLocaleString("en-IN")}
+                      </p>
+                      {selectedVehicle.negotiable && (
+                        <p className="text-amber-400 text-sm mt-3 font-semibold">
+                          Negotiable Price Available
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-gray-300 text-xs mb-2 uppercase tracking-wider">
+                        Availability
+                      </p>
+                      <span className="inline-block px-6 py-3 rounded-full bg-emerald-500/20 text-emerald-300 text-sm font-bold border border-emerald-400/40">
+                        <FaCheckCircle className="inline mr-2" /> Available
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Basic Information */}
+                <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+                  <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <FaCheckCircle className="text-sky-400" /> Basic Information
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                    <div>
+                      <p className="text-gray-400 text-sm mb-2">Title</p>
+                      <p className="text-white font-semibold text-lg">
+                        {selectedVehicle.title}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-2">Brand & Model</p>
+                      <p className="text-white font-semibold text-lg">
+                        {selectedVehicle.brand} {selectedVehicle.model}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-2">Variant</p>
+                      <p className="text-white font-semibold text-lg">
+                        {selectedVehicle.variant || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-2">Type</p>
+                      <p className="text-white font-semibold text-lg">
+                        {selectedVehicle.type}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-2">Color</p>
+                      <p className="text-white font-semibold text-lg">
+                        {selectedVehicle.color || "N/A"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-400 text-sm mb-2">Year</p>
+                      <p className="text-white font-semibold text-lg">
+                        {selectedVehicle.yom || "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Technical Specifications */}
+                <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+                  <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <FaCog className="text-sky-400" /> Technical Specifications
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div className="bg-slate-700/50 rounded-lg p-4">
+                      <p className="text-gray-400 text-xs uppercase mb-2">Engine CC</p>
+                      <p className="text-white font-semibold text-xl">
+                        {selectedVehicle.engine_cc || "N/A"}
+                      </p>
+                    </div>
+                    <div className="bg-slate-700/50 rounded-lg p-4 flex items-center gap-3">
+                      <FaGasPump className="text-orange-400 text-2xl" />
+                      <div>
+                        <p className="text-gray-400 text-xs uppercase">Fuel Type</p>
+                        <p className="text-white font-semibold">
+                          {selectedVehicle.fuel_type}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-slate-700/50 rounded-lg p-4 flex items-center gap-3">
+                      <FaCog className="text-cyan-400 text-2xl" />
+                      <div>
+                        <p className="text-gray-400 text-xs uppercase">Transmission</p>
+                        <p className="text-white font-semibold">
+                          {selectedVehicle.transmission}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-slate-700/50 rounded-lg p-4">
+                      <p className="text-gray-400 text-xs uppercase mb-2">Mileage</p>
+                      <p className="text-white font-semibold text-lg">
+                        {selectedVehicle.mileage || "N/A"} kmpl
+                      </p>
+                    </div>
+                    <div className="bg-slate-700/50 rounded-lg p-4 flex items-center gap-3">
+                      <FaTachometerAlt className="text-green-400 text-2xl" />
+                      <div>
+                        <p className="text-gray-400 text-xs uppercase">KM Driven</p>
+                        <p className="text-white font-semibold">
+                          {selectedVehicle.km_driven || 0} km
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-slate-700/50 rounded-lg p-4 flex items-center gap-3">
+                      <FaUsers className="text-purple-400 text-2xl" />
+                      <div>
+                        <p className="text-gray-400 text-xs uppercase">Owners</p>
+                        <p className="text-white font-semibold">
+                          {selectedVehicle.owners || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="bg-slate-700/50 rounded-lg p-4">
+                      <p className="text-gray-400 text-xs uppercase mb-2">Registration</p>
+                      <p className="text-white font-semibold">
+                        {selectedVehicle.reg_year || "N/A"}
+                      </p>
+                    </div>
+                    <div className="bg-slate-700/50 rounded-lg p-4">
+                      <p className="text-gray-400 text-xs uppercase mb-2">Loan Status</p>
+                      <span
+                        className={`inline-block px-2 py-1 rounded text-xs font-bold ${
+                          selectedVehicle.loan_status === "Clear"
+                            ? "bg-green-500/20 text-green-300"
+                            : "bg-red-500/20 text-red-300"
+                        }`}
+                      >
+                        {selectedVehicle.loan_status}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Vehicle Condition */}
+                <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+                  <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <FaCheckCircle className="text-emerald-400" /> Vehicle Condition
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {[
+                      { label: "RC Available", value: selectedVehicle.rc_available },
+                      {
+                        label: "Insurance",
+                        value: selectedVehicle.insurance_available,
+                      },
+                      { label: "PUC Available", value: selectedVehicle.puc_available },
+                      { label: "Road Tax Paid", value: selectedVehicle.road_tax_paid },
+                    ].map((item, idx) => (
+                      <div
                         key={idx}
-                        src={img}
-                        alt={`Vehicle ${idx + 1}`}
-                        className="w-full h-32 object-cover rounded-lg"
-                      />
+                        className={`p-4 rounded-lg border font-semibold text-center ${
+                          item.value
+                            ? "bg-emerald-500/10 border-emerald-400/30 text-emerald-300"
+                            : "bg-red-500/10 border-red-400/30 text-red-300"
+                        }`}
+                      >
+                        {item.value ? "✓ Yes" : "✗ No"}
+                        <p className="text-xs text-gray-400 mt-2">{item.label}</p>
+                      </div>
                     ))}
                   </div>
-                ) : null;
-              })()}
-
-              {/* Basic Info */}
-              <div className="bg-slate-800/50 rounded-lg p-4">
-                <h3 className="text-lg font-bold text-sky-300 mb-4">
-                  📋 Basic Information
-                </h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-400">Title</p>
-                    <p className="text-white font-semibold">
-                      {selectedVehicle.title}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">Brand & Model</p>
-                    <p className="text-white font-semibold">
-                      {selectedVehicle.brand} {selectedVehicle.model}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">Variant</p>
-                    <p className="text-white font-semibold">
-                      {selectedVehicle.variant || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">Type</p>
-                    <p className="text-white font-semibold">{selectedVehicle.type}</p>
-                  </div>
                 </div>
-              </div>
 
-              {/* Technical Details */}
-              <div className="bg-slate-800/50 rounded-lg p-4">
-                <h3 className="text-lg font-bold text-sky-300 mb-4">
-                  ⚙️ Technical Details
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-400">Engine CC</p>
-                    <p className="text-white font-semibold">
-                      {selectedVehicle.engine_cc || "N/A"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">Fuel Type</p>
-                    <p className="text-white font-semibold">
-                      {selectedVehicle.fuel_type}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">Transmission</p>
-                    <p className="text-white font-semibold">
-                      {selectedVehicle.transmission}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">Mileage</p>
-                    <p className="text-white font-semibold">
-                      {selectedVehicle.mileage || "N/A"} kmpl
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">KM Driven</p>
-                    <p className="text-white font-semibold">
-                      {selectedVehicle.km_driven || 0} km
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">Owners</p>
-                    <p className="text-white font-semibold">
-                      {selectedVehicle.owners || "N/A"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Vehicle Condition */}
-              <div className="bg-slate-800/50 rounded-lg p-4">
-                <h3 className="text-lg font-bold text-sky-300 mb-4">
-                  ✓ Vehicle Condition
-                </h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">RC Available</span>
-                    <span className="text-white font-semibold">
-                      {selectedVehicle.rc_available ? "✓ Yes" : "✗ No"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Insurance Available</span>
-                    <span className="text-white font-semibold">
-                      {selectedVehicle.insurance_available ? "✓ Yes" : "✗ No"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">PUC Available</span>
-                    <span className="text-white font-semibold">
-                      {selectedVehicle.puc_available ? "✓ Yes" : "✗ No"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Road Tax Paid</span>
-                    <span className="text-white font-semibold">
-                      {selectedVehicle.road_tax_paid ? "✓ Yes" : "✗ No"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-400">Loan Status</span>
-                    <span className="text-white font-semibold">
-                      {selectedVehicle.loan_status}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Price & Location */}
-              <div className="bg-slate-800/50 rounded-lg p-4">
-                <h3 className="text-lg font-bold text-sky-300 mb-4">
-                  💰 Price & Location
-                </h3>
-                <div className="space-y-3 text-sm">
-                  <div>
-                    <p className="text-gray-400">Expected Price</p>
-                    <p className="text-2xl text-sky-300 font-bold">
-                      ₹{Number(selectedVehicle.expected_price).toLocaleString(
-                        "en-IN"
-                      )}
-                    </p>
-                    {selectedVehicle.negotiable && (
-                      <p className="text-yellow-400 text-xs mt-1">💬 Negotiable</p>
-                    )}
-                  </div>
+                {/* Location Information */}
+                <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+                  <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <FaMapMarkerAlt className="text-orange-400" /> Location
+                  </h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <p className="text-gray-400">City</p>
-                      <p className="text-white font-semibold">
+                      <p className="text-gray-400 text-sm mb-2">City</p>
+                      <p className="text-white font-semibold text-lg">
                         {selectedVehicle.city}
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Area</p>
-                      <p className="text-white font-semibold">
+                      <p className="text-gray-400 text-sm mb-2">Area</p>
+                      <p className="text-white font-semibold text-lg">
                         {selectedVehicle.area || "N/A"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Pincode</p>
-                      <p className="text-white font-semibold">
+                      <p className="text-gray-400 text-sm mb-2">Pincode</p>
+                      <p className="text-white font-semibold text-lg">
                         {selectedVehicle.pincode || "N/A"}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-gray-400">Color</p>
-                      <p className="text-white font-semibold">
-                        {selectedVehicle.color || "N/A"}
-                      </p>
-                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Seller Info */}
-              <div className="bg-slate-800/50 rounded-lg p-4">
-                <h3 className="text-lg font-bold text-sky-300 mb-4">
-                  👤 Seller Information
-                </h3>
-                <div className="space-y-3 text-sm">
-                  <div className="flex items-center gap-2">
-                    <FaUser className="text-sky-400" />
-                    <div>
-                      <p className="text-gray-400">Name</p>
-                      <p className="text-white font-semibold">
-                        {selectedVehicle.seller_name || "N/A"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <FaPhone className="text-sky-400" />
-                    <div>
-                      <p className="text-gray-400">Phone</p>
-                      <p className="text-white font-semibold">
-                        {selectedVehicle.seller_phone || "N/A"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <FaEnvelope className="text-sky-400" />
-                    <div>
-                      <p className="text-gray-400">Email</p>
-                      <p className="text-white font-semibold">
-                        {selectedVehicle.seller_email || "N/A"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Description */}
-              {selectedVehicle.description && (
-                <div className="bg-slate-800/50 rounded-lg p-4">
-                  <h3 className="text-lg font-bold text-sky-300 mb-3">
-                    📝 Description
+                {/* Seller Information - Premium Cards */}
+                <div className="bg-gradient-to-r from-slate-800/50 to-slate-700/50 rounded-2xl p-6 border border-slate-700/50">
+                  <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <FaUser className="text-cyan-400" /> Seller Information
                   </h3>
-                  <p className="text-gray-300 text-sm leading-relaxed">
-                    {selectedVehicle.description}
-                  </p>
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50 hover:border-sky-400/30 transition">
+                      <FaUser className="text-sky-400 text-2xl flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-gray-400 text-xs uppercase tracking-wider">Name</p>
+                        <p className="text-white font-semibold text-lg">
+                          {selectedVehicle.seller_name || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50 hover:border-green-400/30 transition">
+                      <FaPhone className="text-green-400 text-2xl flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-gray-400 text-xs uppercase tracking-wider">Phone</p>
+                        <p className="text-white font-semibold text-lg">
+                          {selectedVehicle.seller_phone || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-lg border border-slate-700/50 hover:border-purple-400/30 transition">
+                      <FaEnvelope className="text-purple-400 text-2xl flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-gray-400 text-xs uppercase tracking-wider">Email</p>
+                        <p className="text-white font-semibold text-lg break-all">
+                          {selectedVehicle.seller_email || "N/A"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
+
+                {/* Description */}
+                {selectedVehicle.description && (
+                  <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
+                    <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                      <FaFileAlt className="text-yellow-400" /> Description
+                    </h3>
+                    <p className="text-gray-300 leading-relaxed text-base">
+                      {selectedVehicle.description}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Footer */}
-            <div className="sticky bottom-0 p-6 border-t border-sky-400/20 bg-slate-900/95 flex gap-3">
+            {/* Premium Footer */}
+            <div className="sticky bottom-0 p-6 border-t border-sky-400/20 bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-xl flex gap-3 rounded-b-3xl">
               <button
-                onClick={() => setSelectedVehicle(null)}
-                className="flex-1 py-3 rounded-lg border border-gray-600 text-white hover:bg-white/10 transition font-semibold"
+                onClick={closeModal}
+                className="flex-1 py-3 rounded-lg border border-gray-600 text-white hover:bg-white/10 transition font-semibold text-lg"
               >
                 Close
               </button>
               <button
-                onClick={() => {
-                  handleContactSeller(selectedVehicle);
-                  setSelectedVehicle(null);
-                }}
-                className="flex-1 py-3 rounded-lg bg-gradient-to-r from-sky-500 to-cyan-500 text-white hover:scale-105 transition font-semibold"
+                onClick={() => handleBookNow(selectedVehicle)}
+                disabled={bookingInProgress === selectedVehicle.id}
+                className="flex-1 py-3 rounded-lg bg-gradient-to-r from-sky-500 to-cyan-500 text-white hover:scale-105 transition font-semibold text-lg shadow-lg shadow-sky-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Contact Seller
+                {bookingInProgress === selectedVehicle.id ? "Processing..." : "Book Now"}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Fullscreen Image Viewer Modal */}
+      {fullscreenImage && (
+        <div
+          className="fixed inset-0 bg-black/95 backdrop-blur-md flex items-center justify-center z-[60] p-4"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setFullscreenImage(null);
+            }}
+            className="absolute top-6 right-6 text-gray-300 hover:text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition text-3xl z-[61]"
+          >
+            <FaTimes />
+          </button>
+          <img
+            src={fullscreenImage}
+            alt="Full view"
+            className="max-w-4xl max-h-[85vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: rgba(15, 23, 42, 0.8);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(56, 189, 248, 0.5);
+          border-radius: 10px;
+          transition: background 0.3s;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(56, 189, 248, 0.8);
+        }
+      `}</style>
     </>
   );
 };
