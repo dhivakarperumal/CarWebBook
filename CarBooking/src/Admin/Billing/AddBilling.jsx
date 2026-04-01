@@ -124,36 +124,51 @@ const AddBillings = () => {
     <div className="p-6 max-w-6xl bg-white shadow rounded-lg mx-auto space-y-6">
       <h2 className="text-xl font-semibold">Generate Billing Invoice</h2>
 
-      {/* 🔍 SEARCH SERVICE */}
-      <input
-        placeholder="Search Booking ID / Name / Phone"
-        className="w-full border border-gray-200 px-4 py-3 rounded-lg"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-
-      {search && (
-        <div className="border rounded max-h-56 overflow-auto">
-          {services
-            .filter((s) =>
-              `${s.bookingId} ${s.name} ${s.phone}`
-                .toLowerCase()
-                .includes(search.toLowerCase())
-            )
-            .map((s) => (
-              <div
-                key={s.id}
-                onClick={() => {
-                  selectService(s);
-                  setSearch("");
-                }}
-                className="p-3 hover:bg-gray-100 cursor-pointer border-b"
-              >
-                <b>{s.bookingId}</b> — {s.name} ({s.brand} {s.model})
-              </div>
-            ))}
+      <div className="space-y-4">
+        {/* 1. SEARCH SERVICE */}
+        <div>
+          <label className="block text-sm text-gray-600 mb-1 font-medium">Search Booking</label>
+          <input
+            placeholder="Search Booking ID / Name / Phone"
+            className="w-full border border-gray-200 px-4 py-3 rounded-lg outline-none focus:ring-2 focus:ring-black transition"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
         </div>
-      )}
+
+        {/* 2. SELECT SERVICE */}
+        <div>
+          <label className="block text-sm text-gray-600 mb-1 font-medium">Select Booking</label>
+          <select
+            className="w-full border border-gray-200 bg-white px-4 py-3 rounded-lg cursor-pointer shadow-sm focus:ring-2 focus:ring-black outline-none transition"
+            value={selectedService?.id || ""}
+            onChange={(e) => {
+              const s = services.find(
+                (srv) => String(srv.id) === String(e.target.value)
+              );
+              if (s) {
+                selectService(s);
+              } else {
+                setSelectedService(null);
+                setParts([]);
+              }
+            }}
+          >
+            <option value="">-- Choose a Booking Default or From Search --</option>
+            {services
+              .filter((s) =>
+                `${s.bookingId} ${s.name} ${s.phone} ${s.brand} ${s.model}`
+                  .toLowerCase()
+                  .includes(search.toLowerCase())
+              )
+              .map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.bookingId} — {s.name} ({s.brand} {s.model}) - {s.phone}
+                </option>
+              ))}
+          </select>
+        </div>
+      </div>
 
       {/* SERVICE DETAILS */}
       {selectedService && (
