@@ -212,7 +212,7 @@ const Navbar = () => {
   className="
     relative cursor-pointer
     flex items-center justify-center
-    w-10 h-10
+    w-9 h-9 md:w-10 md:h-10
     rounded-full
     border border-sky-400 
     text-sky-400
