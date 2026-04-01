@@ -261,7 +261,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         </div>
 
         {/* ========== NAVIGATION ========== */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto hide-scrollbar">
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto no-scrollbar">
           {filteredNavItems.map((item) => {
             const Icon = item.icon;
 
