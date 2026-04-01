@@ -21,7 +21,7 @@ import api from "../../api";
 import toast from "react-hot-toast";
 import Pagination from "../../Components/Pagination";
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 5;
 
 const AllBikes = ({ defaultType = "all" }) => {
   const navigate = useNavigate();
