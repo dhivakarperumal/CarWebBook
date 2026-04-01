@@ -23,7 +23,7 @@ exports.createBooking = async (req, res) => {
     const { 
       bookingId, uid, name, email, phone, altPhone, 
       brand, model, issue, otherIssue, address, 
-      location, latitude, longitude, status, vehicleType, vehicleNumber 
+      location, latitude, longitude, status,vehicleType = 'car', vehicleNumber 
     } = req.body;
 
     const [result] = await db.query(
