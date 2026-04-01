@@ -269,7 +269,7 @@ const EmpAddBilling = () => {
                 <div className="overflow-hidden rounded-2xl border border-gray-50 bg-gray-50/50">
                   <table className="min-w-full text-left text-[11px] font-bold">
                     <thead>
-                      <tr className="text-gray-400 uppercase tracking-widest bg-white">
+                      <tr className="text-gray-400 uppercase tracking-widest ">
                         <th className="px-4 py-3">Description</th>
                         <th className="px-4 py-3 text-center">Qty</th>
                         <th className="px-4 py-3 text-right">Price</th>
