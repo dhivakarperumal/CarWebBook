@@ -59,9 +59,12 @@ export default function Services() {
 
   const [partsModalVisible, setPartsModalVisible] = useState(false);
   const [selectedParts, setSelectedParts] = useState([]);
-  
+
   const [editingIssueId, setEditingIssueId] = useState(null);
   const [issueText, setIssueText] = useState("");
+
+  const [issueModalVisible, setIssueModalVisible] = useState(false);
+  const [selectedIssueItem, setSelectedIssueItem] = useState(null);
 
   const loadData = async () => {
     try {
@@ -297,8 +300,8 @@ export default function Services() {
                 setCurrentPage(1);
               }}
               className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${mainTab === "booked"
-                  ? "bg-white text-blue-600 shadow"
-                  : "text-gray-500 hover:text-gray-700"
+                ? "bg-white text-blue-600 shadow"
+                : "text-gray-500 hover:text-gray-700"
                 }`}
             >
               Booked
@@ -309,8 +312,8 @@ export default function Services() {
                 setCurrentPage(1);
               }}
               className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${mainTab === "addVehicle"
-                  ? "bg-white text-blue-600 shadow"
-                  : "text-gray-500 hover:text-gray-700"
+                ? "bg-white text-blue-600 shadow"
+                : "text-gray-500 hover:text-gray-700"
                 }`}
             >
               Add Service Vehicle
@@ -321,8 +324,8 @@ export default function Services() {
             <button
               onClick={() => setViewMode("table")}
               className={`flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${viewMode === "table"
-                  ? "bg-white text-blue-600 shadow"
-                  : "text-gray-500 hover:text-gray-700"
+                ? "bg-white text-blue-600 shadow"
+                : "text-gray-500 hover:text-gray-700"
                 }`}
             >
               <FaList />
@@ -331,8 +334,8 @@ export default function Services() {
             <button
               onClick={() => setViewMode("card")}
               className={`flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${viewMode === "card"
-                  ? "bg-white text-blue-600 shadow"
-                  : "text-gray-500 hover:text-gray-700"
+                ? "bg-white text-blue-600 shadow"
+                : "text-gray-500 hover:text-gray-700"
                 }`}
             >
               <FaThLarge />
@@ -371,8 +374,8 @@ export default function Services() {
                 setCurrentPage(1);
               }}
               className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${subTab === "assigned"
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                ? "bg-blue-600 text-white shadow-md"
+                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                 }`}
             >
               Assigned ({assignedCount})
@@ -383,8 +386,8 @@ export default function Services() {
                 setCurrentPage(1);
               }}
               className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${subTab === "unassigned"
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                ? "bg-blue-600 text-white shadow-md"
+                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                 }`}
             >
               Unassigned ({unassignedCount})
@@ -449,44 +452,25 @@ export default function Services() {
                         <p className="text-xs font-black uppercase tracking-wider text-blue-700 mb-2">
                           Service Issue
                         </p>
-                        {editingIssueId === item.id ? (
-                          <div className="space-y-2">
-                            <textarea
-                              value={issueText}
-                              onChange={(e) => setIssueText(e.target.value)}
-                              placeholder="Enter the issue details..."
-                              className="w-full rounded-lg border border-blue-300 bg-white p-2 text-sm text-gray-800 outline-none focus:ring-1 focus:ring-blue-600 resize-none h-20"
-                            />
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => handleIssueSave(item.id)}
-                                className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 transition-all"
-                              >
-                                Save
-                              </button>
-                              <button
-                                onClick={handleIssueCancel}
-                                className="flex-1 rounded-lg bg-gray-400 hover:bg-gray-500 text-white text-xs font-bold py-2 transition-all"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div>
-                            <p className="text-sm text-gray-700 mb-2">
-                              {item.issue ? item.issue : <span className="text-gray-400 italic">No issue entered yet</span>}
-                            </p>
-                            {isMechanic && item.assignedEmployeeName && (
-                              <button
-                                onClick={() => handleIssueEdit(item)}
-                                className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
-                              >
-                                Edit Issue
-                              </button>
-                            )}
-                          </div>
-                        )}
+                        <div>
+                          <p className="text-xs text-gray-700 mb-1">
+                            {item.issue ? item.issue.substring(0, 50) + (item.issue.length > 50 ? "..." : "") :
+                              <span className="text-gray-400 italic">No issue</span>}
+                          </p>
+
+                          {isMechanic && item.assignedEmployeeName && (
+                            <button
+                              onClick={() => {
+                                setSelectedIssueItem(item);
+                                setIssueText(item.issue || "");
+                                setIssueModalVisible(true);
+                              }}
+                              className="text-xs font-bold text-blue-600 hover:underline"
+                            >
+                              Edit
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {/* 🔹 ASSIGNED MECHANIC */}
@@ -532,8 +516,8 @@ export default function Services() {
                             <div key={step} className="flex flex-1 items-center">
                               <div
                                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-black z-10 ${active
-                                    ? "border-blue-600 bg-blue-600 text-white"
-                                    : "border-gray-200 bg-gray-100 text-gray-400"
+                                  ? "border-blue-600 bg-blue-600 text-white"
+                                  : "border-gray-200 bg-gray-100 text-gray-400"
                                   }`}
                                 title={step}
                               >
@@ -542,8 +526,8 @@ export default function Services() {
                               {!isLast && (
                                 <div
                                   className={`h-1 flex-1 mx-1 rounded-full ${index < currentStepIndex
-                                      ? "bg-blue-600"
-                                      : "bg-gray-100"
+                                    ? "bg-blue-600"
+                                    : "bg-gray-100"
                                     }`}
                                 />
                               )}
@@ -713,7 +697,11 @@ export default function Services() {
                           </p>
                           {isMechanic && item.assignedEmployeeName && (
                             <button
-                              onClick={() => handleIssueEdit(item)}
+                              onClick={() => {
+                                setSelectedIssueItem(item);
+                                setIssueText(item.issue || "");
+                                setIssueModalVisible(true);
+                              }}
                               className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
                             >
                               Edit
@@ -726,30 +714,30 @@ export default function Services() {
                       {getServiceParts(item.id).length === 0 ? (
                         <p className="text-xs text-gray-500">No parts added</p>
                       ) : (
-                       <div className="space-y-1">
+                        <div className="space-y-1">
 
-  {/* ✅ show only 2 */}
-  {getServiceParts(item.id).slice(0, 2).map((part, pindex) => (
-    <p key={`${item.id}-part-${pindex}`} className="text-xs text-gray-700">
-      {part.partName} • ₹{Number(part.total).toFixed(2)} • 
-      <span className="font-bold">{formatPartStatus(part.status)}</span>
-    </p>
-  ))}
+                          {/* ✅ show only 2 */}
+                          {getServiceParts(item.id).slice(0, 2).map((part, pindex) => (
+                            <p key={`${item.id}-part-${pindex}`} className="text-xs text-gray-700">
+                              {part.partName} • ₹{Number(part.total).toFixed(2)} •
+                              <span className="font-bold">{formatPartStatus(part.status)}</span>
+                            </p>
+                          ))}
 
-  {/* ✅ show popup button */}
-  {getServiceParts(item.id).length > 2 && (
-    <button
-      onClick={() => {
-        setSelectedParts(getServiceParts(item.id));
-        setPartsModalVisible(true);
-      }}
-      className="text-blue-600 font-bold text-xs hover:underline"
-    >
-      View All ({getServiceParts(item.id).length})
-    </button>
-  )}
+                          {/* ✅ show popup button */}
+                          {getServiceParts(item.id).length > 2 && (
+                            <button
+                              onClick={() => {
+                                setSelectedParts(getServiceParts(item.id));
+                                setPartsModalVisible(true);
+                              }}
+                              className="text-blue-600 font-bold text-xs hover:underline"
+                            >
+                              View All ({getServiceParts(item.id).length})
+                            </button>
+                          )}
 
-</div>
+                        </div>
                       )}
                     </td>
                     <td className="px-6 py-4 font-semibold text-gray-800">
@@ -879,44 +867,95 @@ export default function Services() {
       )}
 
       {partsModalVisible && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-    
-    <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
 
-      <h2 className="text-xl font-bold mb-4">
-        Spare Parts List
-      </h2>
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
 
-      <div className="max-h-80 overflow-y-auto space-y-3">
-        {selectedParts.map((part, index) => (
-          <div key={index} className="flex justify-between border p-3 rounded-lg">
-            
-            <div>
-              <p className="font-semibold">{part.partName}</p>
-              <p className="text-xs text-gray-500">Qty: {part.qty}</p>
+            <h2 className="text-xl font-bold mb-4">
+              Spare Parts List
+            </h2>
+
+            <div className="max-h-80 overflow-y-auto space-y-3">
+              {selectedParts.map((part, index) => (
+                <div key={index} className="flex justify-between border p-3 rounded-lg">
+
+                  <div>
+                    <p className="font-semibold">{part.partName}</p>
+                    <p className="text-xs text-gray-500">Qty: {part.qty}</p>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="font-bold">₹{Number(part.total).toFixed(2)}</p>
+                    <span className={`text-xs px-2 py-1 rounded ${partStatusClass(part.status)}`}>
+                      {formatPartStatus(part.status)}
+                    </span>
+                  </div>
+
+                </div>
+              ))}
             </div>
 
-            <div className="text-right">
-              <p className="font-bold">₹{Number(part.total).toFixed(2)}</p>
-              <span className={`text-xs px-2 py-1 rounded ${partStatusClass(part.status)}`}>
-                {formatPartStatus(part.status)}
-              </span>
+            <button
+              onClick={() => setPartsModalVisible(false)}
+              className="mt-4 w-full bg-blue-600 text-white py-2 rounded-xl"
+            >
+              Close
+            </button>
+
+          </div>
+        </div>
+      )}
+
+      {issueModalVisible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+
+            <h2 className="text-xl font-bold mb-4">
+              Edit Service Issue
+            </h2>
+
+            <textarea
+              value={issueText}
+              onChange={(e) => setIssueText(e.target.value)}
+              placeholder="Enter issue..."
+              className="w-full border rounded-lg p-3 mb-4"
+              rows={4}
+            />
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIssueModalVisible(false)}
+                className="flex-1 bg-gray-400 text-white py-2 rounded-lg"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={async () => {
+                  try {
+                    await api.put(`/all-services/${selectedIssueItem.id}/issue`, {
+                      issue: issueText
+                    });
+
+                    toast.success("Issue updated");
+                    setIssueModalVisible(false);
+                    setSelectedIssueItem(null);
+                    setIssueText("");
+                    loadData(); // refresh table
+                  } catch {
+                    toast.error("Failed to update");
+                  }
+                }}
+                className="flex-1 bg-green-600 text-white py-2 rounded-lg"
+              >
+                Save
+              </button>
             </div>
 
           </div>
-        ))}
-      </div>
-
-      <button
-        onClick={() => setPartsModalVisible(false)}
-        className="mt-4 w-full bg-blue-600 text-white py-2 rounded-xl"
-      >
-        Close
-      </button>
-
-    </div>
-  </div>
-)}
+        </div>
+      )}
     </div>
   );
 }
