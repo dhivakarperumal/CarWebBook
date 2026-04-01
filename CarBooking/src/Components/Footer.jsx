@@ -1,8 +1,7 @@
 import { Facebook, Instagram, Linkedin, Mail } from "lucide-react";
 import PageContainer from "./PageContainer";
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, where, limit } from "firebase/firestore";
-import { db } from "../firebase";
+import api from "../api";
 import { useNavigate } from "react-router-dom";
 
 const links = [
@@ -18,26 +17,24 @@ export default function Footer() {
   const [services, setServices] = useState([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchServices = async () => {
-      const q = query(
-        collection(db, "services"),
-        where("status", "==", "active"), // optional (matches your DB)
-        limit(6),
-      );
+useEffect(() => {
+  const fetchServices = async () => {
+    try {
+      const res = await api.get("/services");
 
-      const snap = await getDocs(q);
+      // show only active services and limit to 6
+      const activeServices = (res.data || [])
+        .filter((service) => service.status === "active")
+        .slice(0, 6);
 
-      setServices(
-        snap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })),
-      );
-    };
+      setServices(activeServices);
+    } catch (error) {
+      console.error("Failed to load footer services", error);
+    }
+  };
 
-    fetchServices();
-  }, []);
+  fetchServices();
+}, []);
 
   return (
     <footer className="bg-[#050b14] text-white pt-20">
