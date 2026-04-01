@@ -31,24 +31,48 @@ const EmpDashboard = () => {
 
   useEffect(() => {
     fetchMyTasks();
-    checkAttendanceStatus();
-  }, []);
+  }, [userProfile?.id, userProfile?.uid]);
+
+  useEffect(() => {
+    if (userProfile?.email) {
+      checkAttendanceStatus();
+    }
+  }, [userProfile?.email]);
 
   const checkAttendanceStatus = async () => {
+    if (!userProfile?.email) {
+      console.log("No user email found for attendance check");
+      return;
+    }
+    
     try {
+      console.log("Checking attendance for:", userProfile.email);
       // 1. Get staff record to find staff_id
       const staffRes = await api.get("/staff");
       const me = (staffRes.data || []).find(s => s.email?.toLowerCase() === userProfile?.email?.toLowerCase());
       
+      console.log("Staff record found:", me);
+
       if (me) {
         setMyStaffRecord(me);
-        // 2. Check if already marked for today
-        const today = new Date().toISOString().split('T')[0];
+        // 2. Check if already marked for today (using local date string YYYY-MM-DD)
+        const today = new Date().toLocaleDateString('en-CA');
         const attendRes = await api.get(`/attendance/check?staff_id=${me.id}&date=${today}`);
         
-        if (!attendRes.data.isPresent && userProfile?.role === "mechanic") {
+        console.log("Attendance status for today:", attendRes.data);
+
+        // Show modal if NOT present today AND role is one that needs attendance
+        const role = userProfile?.role?.toLowerCase();
+        const needsAttendance = ["mechanic", "employee", "staff", "receptionist", "manager"].includes(role);
+        
+        console.log("Role:", role, "Needs attendance:", needsAttendance, "Is present:", attendRes.data.isPresent);
+
+        if (!attendRes.data.isPresent && needsAttendance) {
+          console.log("Showing attendance modal...");
           setShowAttendanceModal(true);
         }
+      } else {
+        console.warn("No matching staff record found for email:", userProfile.email);
       }
     } catch (err) {
       console.error("Attendance check failed", err);
@@ -61,12 +85,17 @@ const EmpDashboard = () => {
       return;
     }
 
+    if (!myStaffRecord) {
+      toast.error("Staff record not found. Please contact admin.");
+      return;
+    }
+
     setIsPunchingIn(true);
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
-          const today = new Date().toISOString().split('T')[0];
+          const today = new Date().toLocaleDateString('en-CA');
           
           await api.post("/attendance/punch-in", {
             staff_id: myStaffRecord.id,
@@ -87,7 +116,8 @@ const EmpDashboard = () => {
       (error) => {
         setIsPunchingIn(false);
         toast.error("Please allow location access to mark attendance");
-      }
+      },
+      { enableHighAccuracy: true, timeout: 5000 }
     );
   };
 
