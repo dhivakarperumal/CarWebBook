@@ -79,6 +79,24 @@ exports.deleteInvoice = async (req, res) => {
   }
 };
 
+/* ✏️ UPDATE INVOICE STATUS */
+exports.updateInvoiceStatus = async (req, res) => {
+  try {
+    const { paymentStatus } = req.body;
+    if (!paymentStatus) {
+      return res.status(400).json({ message: 'paymentStatus is required' });
+    }
+    
+    // Update the paymentStatus in the billings table
+    await db.query('UPDATE billings SET paymentStatus = ? WHERE id = ?', [paymentStatus, req.params.id]);
+    
+    // Check if billing document exists
+    res.json({ message: 'Status updated successfully' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 /* 🔍 GET ONE INVOICE IN DETAIL */
 exports.getInvoiceById = async (req, res) => {
   try {

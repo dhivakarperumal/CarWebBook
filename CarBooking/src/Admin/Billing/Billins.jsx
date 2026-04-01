@@ -116,7 +116,7 @@ const Billings = () => {
   }, [search, statusFilter, amountSort]);
 
   /* =========================
-     DELETE
+     DELETE & UPDATE
   ========================= */
   const deleteInvoice = async (id) => {
     if (!window.confirm("Delete this invoice?")) return;
@@ -126,6 +126,18 @@ const Billings = () => {
       toast.success("Invoice deleted");
     } catch {
       toast.error("Delete failed");
+    }
+  };
+
+  const updateStatus = async (id, newStatus) => {
+    try {
+      await api.patch(`/billings/${id}`, { paymentStatus: newStatus });
+      setBills((prev) =>
+        prev.map((b) => (b.id === id ? { ...b, paymentStatus: newStatus } : b))
+      );
+      toast.success("Status updated to " + newStatus);
+    } catch {
+      toast.error("Failed to update status");
     }
   };
 
@@ -337,7 +349,19 @@ const Billings = () => {
                   <td className="px-4 py-4">{b.bookingId}</td>
                   <td className="px-4 py-4">₹{b.grandTotal}</td>
                   <td className="px-4 py-4">
-                    <StatusBadge status={b.paymentStatus} />
+                    <select
+                      value={b.paymentStatus?.toLowerCase() || "pending"}
+                      onChange={(e) => updateStatus(b.id, e.target.value)}
+                      className={`px-3 py-1.5 rounded-full text-white text-xs font-semibold capitalize border-2 border-transparent hover:border-white/50 outline-none cursor-pointer shadow-sm transition-all focus:ring-2 focus:ring-offset-1 focus:ring-sky-500 appearance-none ${
+                        b.paymentStatus?.toLowerCase() === "paid" ? "bg-emerald-500" :
+                        b.paymentStatus?.toLowerCase() === "partial" ? "bg-orange-500" :
+                        "bg-amber-500"
+                      }`}
+                    >
+                      <option value="pending" className="bg-white text-black">Pending</option>
+                      <option value="partial" className="bg-white text-black">Partial</option>
+                      <option value="paid" className="bg-white text-black">Paid</option>
+                    </select>
                   </td>
                   <td className="px-4 py-4 flex gap-2">
                     <button onClick={() => fetchAndPrint(b.id)} className="bg-gray-700 text-white px-2 py-1 rounded">
