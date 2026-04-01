@@ -43,7 +43,7 @@ const AddBike = ({ defaultType = "Bike" }) => {
         images: typeof data.images === 'string' ? JSON.parse(data.images) : data.images
       });
     } catch (err) {
-      toast.error("Failed to load bike details");
+      toast.error(`Failed to load ${form.type.toLowerCase()} details`);
     }
   };
 
@@ -132,17 +132,22 @@ const AddBike = ({ defaultType = "Bike" }) => {
       
       if (id) {
         await api.put(`/bikes/${id}`, payload);
-        toast.success("Bike updated successfully");
+        toast.success(`${form.type} updated successfully`);
       } else {
         await api.post("/bikes", payload);
-        toast.success("Bike listed successfully");
+        toast.success(`${form.type} listed successfully`);
       }
-      navigate("/admin/bikes");
+      navigate(form.type === "Car" ? "/admin/cars" : "/admin/bikes");
     } catch (error) {
-      toast.error("Failed to save bike");
+      toast.error(`Failed to save ${form.type.toLowerCase()}`);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleStepChange = (newStep) => {
+    setCurrentStep(newStep);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const steps = [
@@ -158,7 +163,7 @@ const AddBike = ({ defaultType = "Bike" }) => {
       case 1:
         return (
           <div className="space-y-6 animate-fadeIn">
-            <h3 className="text-xl font-black text-gray-900 border-b pb-4">1. Basic {form.type} Details</h3>
+            <h3 className="text-xl font-black text-gray-900 border-b border-gray-200 pb-4">1. Basic {form.type} Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2 grid grid-cols-2 gap-4 mb-2">
                 <button
@@ -262,7 +267,7 @@ const AddBike = ({ defaultType = "Bike" }) => {
       case 2:
         return (
           <div className="space-y-6 animate-fadeIn">
-            <h3 className="text-xl font-black text-gray-900 border-b pb-4">2. {form.type} Specifications</h3>
+            <h3 className="text-xl font-black text-gray-900 border-b border-gray-200 pb-4">2. {form.type} Specifications</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest">Engine CC</label>
@@ -340,7 +345,7 @@ const AddBike = ({ defaultType = "Bike" }) => {
       case 3:
         return (
           <div className="space-y-6 animate-fadeIn">
-            <h3 className="text-xl font-black text-gray-900 border-b pb-4">3. Location & Pricing</h3>
+            <h3 className="text-xl font-black text-gray-900 border-b border-gray-200 pb-4">3. Location & Pricing</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest">City</label>
@@ -412,7 +417,7 @@ const AddBike = ({ defaultType = "Bike" }) => {
       case 4:
         return (
           <div className="space-y-6 animate-fadeIn">
-            <h3 className="text-xl font-black text-gray-900 border-b pb-4">4. Documents & Legal</h3>
+            <h3 className="text-xl font-black text-gray-900 border-b border-gray-200 pb-4">4. Documents & Legal</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
                 {[
@@ -463,7 +468,7 @@ const AddBike = ({ defaultType = "Bike" }) => {
       case 5:
         return (
           <div className="space-y-8 animate-fadeIn">
-            <h3 className="text-xl font-black text-gray-900 border-b pb-4">5. Images & Seller Info</h3>
+            <h3 className="text-xl font-black text-gray-900 border-b border-gray-200 pb-4">5. Images & Seller Info</h3>
             
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {['front', 'back', 'side', 'dashboard', 'rc'].map((type) => (
@@ -541,7 +546,7 @@ const AddBike = ({ defaultType = "Bike" }) => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
       {/* HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100">
         <div className="flex items-center gap-4">
@@ -557,7 +562,7 @@ const AddBike = ({ defaultType = "Bike" }) => {
         </div>
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => navigate("/admin/bikes")}
+            onClick={() => navigate(form.type === "Car" ? "/admin/cars" : "/admin/bikes")}
             className="px-6 py-3 rounded-2xl font-black text-gray-500 uppercase tracking-widest hover:bg-gray-50 transition-all"
           >
             Cancel
@@ -574,11 +579,11 @@ const AddBike = ({ defaultType = "Bike" }) => {
       </div>
 
       {/* STEPPER */}
-      <div className="flex items-center justify-between bg-white px-8 py-4 rounded-3xl shadow-sm border border-gray-100 overflow-x-auto gap-4 scrollbar-hide">
+      <div className="flex items-center justify-between bg-white px-8 py-4 rounded-3xl shadow-sm border border-gray-100 overflow-x-auto gap-4 no-scrollbar">
         {steps.map((step) => (
           <button
             key={step.id}
-            onClick={() => setCurrentStep(step.id)}
+            onClick={() => handleStepChange(step.id)}
             className={`flex items-center gap-3 whitespace-nowrap px-4 py-2 rounded-2xl transition-all ${
               currentStep === step.id 
               ? "bg-blue-600 text-white shadow-lg shadow-blue-100" 
@@ -602,7 +607,7 @@ const AddBike = ({ defaultType = "Bike" }) => {
         <div className="flex items-center justify-between mt-12 pt-8 border-t border-gray-100">
           <button
             disabled={currentStep === 1}
-            onClick={() => setCurrentStep(prev => prev - 1)}
+            onClick={() => handleStepChange(currentStep - 1)}
             className={`flex items-center gap-2 px-8 py-4 rounded-2xl font-black uppercase tracking-widest transition-all ${
               currentStep === 1 ? "opacity-30 cursor-not-allowed" : "text-gray-600 hover:bg-gray-50"
             }`}
@@ -612,7 +617,7 @@ const AddBike = ({ defaultType = "Bike" }) => {
 
           {currentStep < steps.length ? (
             <button
-              onClick={() => setCurrentStep(prev => prev + 1)}
+              onClick={() => handleStepChange(currentStep + 1)}
               className="group flex items-center gap-2 px-10 py-4 bg-gray-900 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-black transition-all"
             >
               Continue <ChevronRight size={20} className="group-hover:translate-x-1 transition-transform" />

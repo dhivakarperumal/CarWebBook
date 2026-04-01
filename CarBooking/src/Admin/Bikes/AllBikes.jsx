@@ -21,7 +21,7 @@ import api from "../../api";
 import toast from "react-hot-toast";
 import Pagination from "../../Components/Pagination";
 
-const ITEMS_PER_PAGE = 8;
+const ITEMS_PER_PAGE = 5;
 
 const AllBikes = ({ defaultType = "all" }) => {
   const navigate = useNavigate();
@@ -122,7 +122,7 @@ const AllBikes = ({ defaultType = "all" }) => {
 
         <div className="flex flex-wrap items-center gap-4">
            <div className="flex items-center gap-3 bg-blue-50 px-6 py-4 rounded-2xl border border-blue-100">
-              <span className="text-3xl font-black text-blue-600">{bikes.length}</span>
+              <span className="text-3xl font-black text-blue-600">{filteredBikes.length}</span>
               <div className="flex flex-col leading-none">
                  <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Total</span>
                  <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Units</span>
@@ -130,7 +130,7 @@ const AllBikes = ({ defaultType = "all" }) => {
            </div>
            
            <button 
-             onClick={() => navigate(defaultType === 'Car' ? "/admin/addcar" : "/admin/addbike")}
+             onClick={() => navigate("/admin/add-vehicle")}
              className="flex items-center gap-2 bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-gray-200 group"
            >
               <Plus className="group-hover:rotate-90 transition-transform" />
@@ -173,7 +173,7 @@ const AllBikes = ({ defaultType = "all" }) => {
         <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
             <tr>
-              <th className="px-6 py-5 first:pl-10">Vehicle Detail</th>
+              <th className="px-6 py-5 first:pl-10">{defaultType === 'all' ? 'Vehicle Details' : `${defaultType} Details`}</th>
               <th className="px-6 py-5">Specs</th>
               <th className="px-6 py-5">Location</th>
               <th className="px-6 py-5">Price</th>
@@ -258,7 +258,7 @@ const AllBikes = ({ defaultType = "all" }) => {
                            <Eye size={16} />
                         </button>
                        <button 
-                         onClick={() => navigate(`/admin/addbike/${bike.id}`)}
+                         onClick={() => navigate(`/admin/add-vehicle/${bike.id}`)}
                          className="p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:bg-black hover:text-white transition-all shadow-sm"
                        >
                           <Edit size={16} />
@@ -380,12 +380,12 @@ const AllBikes = ({ defaultType = "all" }) => {
 
             {/* Modal Footer */}
             <div className="p-6 border-t bg-gray-50 flex gap-4">
-               <button 
-                 onClick={() => { setSelectedBike(null); navigate(`/admin/addbike/${selectedBike.id}`); }}
-                 className="flex-1 bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl"
-               >
+                <button 
+                  onClick={() => { setSelectedBike(null); navigate(`/admin/add-vehicle/${selectedBike.id}`); }}
+                  className="flex-1 bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl"
+                >
                   Edit Listing
-               </button>
+                </button>
                <button 
                  onClick={() => setSelectedBike(null)}
                  className="px-8 py-4 bg-white text-gray-500 rounded-2xl font-black uppercase tracking-widest border hover:bg-gray-100 transition-all"
