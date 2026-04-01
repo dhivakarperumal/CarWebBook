@@ -40,7 +40,35 @@ exports.getServiceById = async (req, res) => {
   }
 };
 
-/* 🔄 UPDATE STATUS */
+/* � GET PARTS BY BOOKING ID */
+exports.getPartsByBookingId = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    console.log(`\n📦 [getPartsByBookingId] Fetching parts for booking ID: ${bookingId}`);
+    
+    // First, find the all_services record with this bookingDocId
+    const [services] = await db.query('SELECT id FROM all_services WHERE bookingDocId = ?', [bookingId]);
+    
+    if (!services.length) {
+      console.log(`⚠️ [getPartsByBookingId] No service record found for booking ${bookingId}`);
+      return res.json({ parts: [] });
+    }
+    
+    const serviceId = services[0].id;
+    console.log(`✅ [getPartsByBookingId] Found service ID: ${serviceId}`);
+    
+    // Now get parts for this service
+    const [parts] = await db.query('SELECT * FROM service_parts WHERE all_service_id = ?', [serviceId]);
+    console.log(`✅ [getPartsByBookingId] Found ${parts.length} parts for service ${serviceId}`);
+    
+    res.json({ parts });
+  } catch (err) {
+    console.error(`❌ [getPartsByBookingId] Error:`, err);
+    res.status(500).json({ message: 'Error fetching parts', error: err.message });
+  }
+};
+
+/* �🔄 UPDATE STATUS */
 exports.updateServiceStatus = async (req, res) => {
   const { id } = req.params;
   const { serviceStatus } = req.body;

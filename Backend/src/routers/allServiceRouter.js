@@ -3,6 +3,7 @@ const router = express.Router();
 const asc = require('../controllers/allServiceController');
 
 router.get('/', asc.getAllServices);
+router.get('/booking/:bookingId/parts', asc.getPartsByBookingId);
 router.get('/:id', asc.getServiceById);
 router.put('/:id/status', asc.updateServiceStatus);
 router.put('/:id/assign', asc.assignMechanic);

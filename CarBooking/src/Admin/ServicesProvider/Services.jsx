@@ -45,6 +45,7 @@ export default function Services() {
 
   const [services, setServices] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [serviceParts, setServiceParts] = useState({});
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
@@ -62,8 +63,24 @@ export default function Services() {
         api.get("/all-services"),
         api.get("/staff"),
       ]);
+
       setServices(servRes.data);
       setEmployees(empRes.data);
+
+      const partsMap = {};
+      await Promise.all(
+        (servRes.data || []).map(async (service) => {
+          try {
+            const detailRes = await api.get(`/all-services/${service.id}`);
+            partsMap[service.id] = detailRes.data?.parts || [];
+          } catch (err) {
+            console.error(`Failed to load parts for service ${service.id}`, err);
+            partsMap[service.id] = [];
+          }
+        })
+      );
+
+      setServiceParts(partsMap);
     } catch (error) {
       console.error(error);
       toast.error("Failed to fetch data");
@@ -145,6 +162,24 @@ export default function Services() {
       default:
         return "bg-gray-100 text-gray-700";
     }
+  };
+
+  const getServiceParts = (id) => {
+    return serviceParts[id] || [];
+  };
+
+  const formatPartStatus = (status) => {
+    const normalized = (status || "pending").toLowerCase();
+    if (normalized === "approved") return "Approved";
+    if (normalized === "rejected") return "Rejected";
+    return "Pending";
+  };
+
+  const partStatusClass = (status) => {
+    const normalized = (status || "pending").toLowerCase();
+    if (normalized === "approved") return "bg-green-100 text-green-700";
+    if (normalized === "rejected") return "bg-red-100 text-red-700";
+    return "bg-yellow-100 text-yellow-700";
   };
 
   const handleStatusChange = async (service, newStatus) => {
@@ -400,6 +435,30 @@ export default function Services() {
                           Mechanic: <span className="text-gray-700">{item.assignedEmployeeName}</span>
                         </p>
                       )}
+
+                      {/* 🔧 SPARE PARTS SUMMARY */}
+                      <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                        <p className="text-xs font-black uppercase tracking-wider text-gray-500 mb-2">
+                          Spare Parts
+                        </p>
+                        {getServiceParts(item.id).length === 0 ? (
+                          <p className="text-sm text-gray-500">No spare parts added (pending).</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {getServiceParts(item.id).map((part, pindex) => (
+                              <div key={part.id || `${part.partName}-${pindex}`} className="flex justify-between items-center bg-white p-2 rounded-lg border border-gray-100">
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-800">{part.partName}</p>
+                                  <p className="text-xs text-gray-500">Qty: {part.qty} | ₹{Number(part.total).toFixed(2)}</p>
+                                </div>
+                                <span className={`text-xs font-bold px-2 py-1 rounded-full ${partStatusClass(part.status)}`}>
+                                  {formatPartStatus(part.status)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* 🔹 TIMELINE */}
@@ -526,6 +585,7 @@ export default function Services() {
                     <th className="px-6 py-4 font-bold">Customer</th>
                     <th className="px-6 py-4 font-bold">Vehicle</th>
                     <th className="px-6 py-4 font-bold">Status</th>
+                    <th className="px-6 py-4 font-bold">Spare Parts</th>
                     <th className="px-6 py-4 font-bold">Mechanic</th>
                     <th className="px-6 py-4 font-bold text-right">Action</th>
                   </tr>
@@ -561,6 +621,20 @@ export default function Services() {
                           >
                             {item.serviceStatus || "Booked"}
                           </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        {getServiceParts(item.id).length === 0 ? (
+                          <p className="text-xs text-gray-500">No parts added</p>
+                        ) : (
+                          <div className="space-y-1">
+                            {getServiceParts(item.id).map((part, pindex) => (
+                              <p key={`${item.id}-part-${pindex}`} className="text-xs text-gray-700">
+                                {part.partName} • ₹{Number(part.total).toFixed(2)} • <span className="font-bold">{formatPartStatus(part.status)}</span>
+                              </p>
+                            ))}
+                            
+                          </div>
                         )}
                       </td>
                       <td className="px-6 py-4 font-semibold text-gray-800">
@@ -617,7 +691,7 @@ export default function Services() {
                   ))}
                   {paginatedData.length === 0 && (
                     <tr>
-                      <td colSpan="6" className="py-12 text-center text-gray-500 text-base">
+                      <td colSpan="7" className="py-12 text-center text-gray-500 text-base">
                         No services found in this category.
                       </td>
                     </tr>
