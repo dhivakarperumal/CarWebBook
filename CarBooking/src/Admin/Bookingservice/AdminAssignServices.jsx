@@ -25,6 +25,24 @@ export default function AdminAssignServices() {
   const [searchText, setSearchText] = useState("");
   const [viewMode, setViewMode] = useState("table"); // card | table
   const [currentPage, setCurrentPage] = useState(1);
+  
+  const formatBookingDate = (b) => {
+    if (b.createdDate) return b.createdDate;
+    if (!b.created_at) return "N/A";
+    const date = new Date(b.created_at);
+    return date.toLocaleDateString("en-GB");
+  };
+
+  const formatBookingTime = (b) => {
+    if (b.createdTime) return b.createdTime;
+    if (!b.created_at) return "N/A";
+    const date = new Date(b.created_at);
+    return date.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
 
   const fetchData = async () => {
     try {
@@ -364,7 +382,10 @@ export default function AdminAssignServices() {
 
                 <div className="space-y-4 flex-1 relative z-10">
                   <div>
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex items-center gap-2 flex-wrap mb-2">
+                       <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                          {item.vehicleType || 'Car'}
+                       </span>
                        <h3 className="text-xl font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
                         {item.brand} {item.model}
                       </h3>
@@ -373,30 +394,33 @@ export default function AdminAssignServices() {
                       )}
                     </div>
                     {item.vehicleNumber && (
-                      <p className="text-blue-600 text-xs font-black mt-2 bg-blue-50 w-fit px-3 py-1 rounded-xl border border-blue-100 uppercase tracking-widest">
+                      <p className="text-blue-600 text-xs font-black bg-blue-50 w-fit px-3 py-1 rounded-xl border border-blue-100 uppercase tracking-widest">
                         {item.vehicleNumber}
                       </p>
                     )}
                     
                     <div className="flex flex-wrap gap-4 mt-4 py-3 border-y border-gray-50">
-                       {item.createdDate && (
-                        <div className="flex items-center gap-2">
-                           <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
-                              <Calendar className="w-4 h-4 text-gray-400" />
-                           </div>
-                           <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">{item.createdDate}</span>
-                        </div>
-                      )}
-                      {item.createdTime && (
-                         <div className="flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
-                               <Clock className="w-4 h-4 text-gray-400" />
-                            </div>
-                            <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">{item.createdTime}</span>
-                         </div>
-                      )}
+                       <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
+                             <Calendar className="w-4 h-4 text-gray-400" />
+                          </div>
+                          <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">{formatBookingDate(item)}</span>
+                       </div>
+                       <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
+                             <Clock className="w-4 h-4 text-gray-400" />
+                          </div>
+                          <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">{formatBookingTime(item)}</span>
+                       </div>
                     </div>
                   </div>
+
+                  {item.issue && (
+                    <div className="bg-amber-50/30 p-4 rounded-2xl border border-amber-100/50">
+                       <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Reported Issue</p>
+                       <p className="text-sm font-bold text-gray-700 leading-snug">{item.issue}</p>
+                    </div>
+                  )}
 
                   <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 space-y-3">
                     <div className="flex items-center gap-3">
@@ -428,12 +452,6 @@ export default function AdminAssignServices() {
                     )}
                   </div>
 
-                  {item.issue && (
-                    <div className="bg-amber-50/30 p-4 rounded-2xl border border-amber-100/50">
-                       <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Reported Issue</p>
-                       <p className="text-sm font-bold text-gray-700 leading-snug">{item.issue}</p>
-                    </div>
-                  )}
 
                   {item.assignedEmployeeName && (
                     <div className="flex items-center gap-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 group/staff">
@@ -464,9 +482,11 @@ export default function AdminAssignServices() {
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
                 <tr className="bg-gradient-to-r from-black to-cyan-400 text-white">
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Job Details</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date & Time</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Booking ID</th>
                   <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Vehicle</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Service Detail</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer</th>
                   <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Technician</th>
                   <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
                   <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Action</th>
@@ -476,20 +496,31 @@ export default function AdminAssignServices() {
                 {paginatedBookings.map((item) => (
                   <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
                     <td className="px-8 py-6">
-                       <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none">#{item.id}</span>
-                       <span className="text-xs font-black text-blue-900 block mt-1">{item.bookingId || "BKG-NEW"}</span>
-                       <span className="text-[10px] font-bold text-gray-400 mt-1 block">{item.createdDate}</span>
+                       <span className="text-xs font-black text-blue-900 block">{formatBookingDate(item)}</span>
+                       <span className="text-[10px] font-bold text-gray-400 mt-1 block">{formatBookingTime(item)}</span>
                     </td>
                     <td className="px-8 py-6">
-                      <p className="text-sm font-black text-gray-800">{item.name}</p>
-                      <p className="text-xs font-bold text-gray-400 mt-0.5">{item.phone}</p>
+                       <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none">#{item.id}</span>
+                       <span className="text-xs font-black text-blue-900 block mt-1">{item.bookingId || "BKG-NEW"}</span>
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                          {item.vehicleType || 'Car'}
+                        </span>
                         <p className="text-sm font-black text-gray-900 font-inter">{item.brand} {item.model}</p>
                         {item.uid === 'admin-created' && <span className="bg-cyan-100 text-cyan-600 text-[9px] px-2 py-0.5 rounded font-black uppercase">Walk-in</span>}
                       </div>
                       <p className="text-[10px] font-black text-blue-500 mt-1 uppercase tracking-widest">{item.vehicleNumber || "N/A"}</p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="text-xs font-bold text-gray-600 max-w-[200px] truncate" title={item.issue}>
+                        {item.issue}
+                      </p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-black text-gray-800">{item.name}</p>
+                      <p className="text-xs font-bold text-gray-400 mt-0.5">{item.phone}</p>
                     </td>
                     <td className="px-8 py-6">
                       {item.assignedEmployeeName ? (
