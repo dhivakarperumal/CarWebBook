@@ -229,17 +229,17 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       >
         {/* ========== LOGO ========== */}
         <div className="flex items-center gap-3 px-4 py-6 border-b border-slate-100">
-          <div
-            className="w-10 h-10 rounded-xl 
-            bg-gray-600
+           <div
+            className="w-11 h-11 rounded-2xl 
+            bg-gradient-to-br from-black to-gray-800
             flex items-center justify-center
-            shadow-lg shadow-emerald-600/20
-            shrink-0"
+            shadow-lg shadow-blue-500/30
+            shrink-0 border border-white/10"
           >
             <img
               src="/logo_no_bg.png"
               alt="Logo"
-              className="w-7 h-7 object-contain"
+              className="w-8 h-8 object-contain drop-shadow-[0_0_6px_rgba(59,130,246,0.6)]"
             />
           </div>
 
