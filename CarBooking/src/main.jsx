@@ -58,6 +58,7 @@ import Contact from "./Components/ContactUs.jsx";
 import BookService from "./Components/BookService.jsx";
 import Account from "./Components/Account.jsx";
 import Cart from "./Components/Cart.jsx";
+import BuyVehicles from "./Components/BuyVehicles.jsx";
 import AllOrders from "./Admin/Orders/All Orders.jsx";
 import OrderDetails from "./Admin/Orders/OrderDetails.jsx";
 import AdminAssignServices from "./Admin/Bookingservice/AdminAssignServices.jsx";
@@ -92,6 +93,7 @@ const router = createBrowserRouter([
       { path: "/services/:id", element: <ServiceDetails /> },
       { path: "/about", element: <About /> },
       { path: "/contact", element: <ContactUs /> },
+      { path: "/buy-vehicles", element: <BuyVehicles /> },
       { path: "/cart", element: <Cart /> },
       { path: "/bookservice", element: <BookService /> },
       { path: "/account", element: <Account /> },
