@@ -75,23 +75,35 @@ export default function Services() {
         api.get("/staff"),
       ]);
 
-      setServices(servRes.data);
-      setEmployees(empRes.data);
-
       const partsMap = {};
+      const servicesWithDetails = [];
+
       await Promise.all(
         (servRes.data || []).map(async (service) => {
           try {
             const detailRes = await api.get(`/all-services/${service.id}`);
-            partsMap[service.id] = detailRes.data?.parts || [];
+            const details = detailRes.data || {};
+            partsMap[service.id] = details.parts || [];
+            servicesWithDetails.push({
+              ...service,
+              parts: details.parts || [],
+              issues: details.issues || [],
+            });
           } catch (err) {
-            console.error(`Failed to load parts for service ${service.id}`, err);
+            console.error(`Failed to load service details for ${service.id}`, err);
             partsMap[service.id] = [];
+            servicesWithDetails.push({
+              ...service,
+              parts: [],
+              issues: [],
+            });
           }
         })
       );
 
       setServiceParts(partsMap);
+      setServices(servicesWithDetails);
+      setEmployees(empRes.data);
     } catch (error) {
       console.error(error);
       toast.error("Failed to fetch data");

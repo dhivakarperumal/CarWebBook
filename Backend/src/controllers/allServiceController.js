@@ -382,6 +382,9 @@ exports.addServiceIssueEntry = async (req, res) => {
 
     const newIssueId = result.insertId;
 
+    // Sync all_services row to keep issue view in query director updated
+    await db.query('UPDATE all_services SET issue = ?, issueAmount = ?, issueStatus = ? WHERE id = ?', [issue.trim(), normalizedAmount, 'pending', id]);
+
     // Sync to bookings main issue fields for backward compatibility
     const bookingDocId = service[0].bookingDocId;
     if (bookingDocId) {
@@ -397,7 +400,7 @@ exports.addServiceIssueEntry = async (req, res) => {
         console.log('✅ [addServiceIssueEntry] added missing column bookings.issueStatus');
       }
 
-      await db.query('UPDATE bookings SET issue = ?, issueAmount = ?, issueStatus = ? WHERE id = ?', [issue.trim(), parseFloat(issueAmount) || 0, 'pending', bookingDocId]);
+      await db.query('UPDATE bookings SET issue = ?, issueAmount = ?, issueStatus = ? WHERE id = ?', [issue.trim(), normalizedAmount, 'pending', bookingDocId]);
     }
 
     const [insertedIssue] = await db.query('SELECT * FROM service_issues WHERE id = ?', [newIssueId]);
@@ -441,6 +444,9 @@ exports.updateServiceIssueEntry = async (req, res) => {
       return res.status(404).json({ message: 'Issue entry not found' });
     }
 
+    // sync to all_services row for downstream clients
+    await db.query('UPDATE all_services SET issue = ?, issueAmount = ?, issueStatus = ? WHERE id = ?', [issue.trim(), normalizedAmount, 'pending', serviceId]);
+
     const [updated] = await db.query('SELECT * FROM service_issues WHERE id = ?', [issueId]);
     res.json({ message: 'Issue entry updated', issue: updated[0] });
   } catch (err) {
@@ -472,6 +478,8 @@ exports.updateServiceIssueEntryStatus = async (req, res) => {
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: 'Issue entry not found' });
     }
+
+    await db.query('UPDATE all_services SET issueStatus = ? WHERE id = ?', [normalized, serviceId]);
 
     const [service] = await db.query('SELECT bookingDocId FROM all_services WHERE id = ?', [serviceId]);
     if (service.length && service[0].bookingDocId) {
