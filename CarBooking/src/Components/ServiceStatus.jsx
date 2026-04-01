@@ -188,9 +188,18 @@ useEffect(() => {
         });
       } else if (type === 'issue') {
         setApprovingPartId(itemId);
-        await api.put(`/all-services/${serviceId}/issue-status`, {
-          issueStatus: status,
-        });
+        if (itemId) {
+          await api.put(
+            `/all-services/${serviceId}/issues/${itemId}/status`,
+            {
+              issueStatus: status,
+            }
+          );
+        } else {
+          await api.put(`/all-services/${serviceId}/issue-status`, {
+            issueStatus: status,
+          });
+        }
       }
 
       toast.success(`${type === 'issue' ? 'Issue' : 'Spare part'} ${status} successfully`);
@@ -222,20 +231,46 @@ useEffect(() => {
       setSpareParts(allSpareParts);
 
       if (type === 'issue') {
-        // update local booking issue status for immediate reflect
-        const linkedService = services.find((s) => s.id === serviceId);
-        if (linkedService && linkedService.bookingDocId) {
+        // update local booking issue status for immediate reflection
+        const linkedService =
+          filteredServices.find((s) => s.id === serviceId) ||
+          services.find((s) => s.id === serviceId);
+
+        const bookingDocId = linkedService?.bookingDocId;
+
+        if (bookingDocId) {
           setBookings((prev) =>
-            prev.map((b) =>
-              b.id === linkedService.bookingDocId
-                ? { ...b, issueStatus: status }
-                : b
-            )
+            prev.map((b) => {
+              if (b.id !== bookingDocId) return b;
+              return {
+                ...b,
+                issueStatus: status,
+                issues: b.issues
+                  ? b.issues.map((issue) =>
+                      issue.id === itemId
+                        ? { ...issue, issueStatus: status }
+                        : issue
+                    )
+                  : b.issues,
+              };
+            })
           );
-          // Also update selectedBooking if it's the same
-          if (selectedBooking && selectedBooking.id === linkedService.bookingDocId) {
-            setSelectedBooking(prev => ({ ...prev, issueStatus: status }));
-          }
+
+          // Also update selectedBooking if it is currently open
+          setSelectedBooking((prev) => {
+            if (!prev || prev.id !== bookingDocId) return prev;
+            return {
+              ...prev,
+              issueStatus: status,
+              issues: prev.issues
+                ? prev.issues.map((issue) =>
+                    issue.id === itemId
+                      ? { ...issue, issueStatus: status }
+                      : issue
+                  )
+                : prev.issues,
+            };
+          });
         }
       }
 
