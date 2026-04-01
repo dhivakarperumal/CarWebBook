@@ -143,6 +143,8 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
     "/admin/additemsinventory": "/admin/inventory",
     "/admin/addcarservies": "/admin/carservies",
     "/admin/addservices": "/admin/serviceslist",
+    "/admin/addbike": "/admin/bikes",
+    "/admin/addcar": "/admin/cars",
   };
 
   const isRouteActive = (path, exact) => {

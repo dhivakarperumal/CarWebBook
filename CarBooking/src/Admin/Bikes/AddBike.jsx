@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { 
   Bike, 
+  Car,
   MapPin, 
   IndianRupee, 
   FileText, 
@@ -18,7 +19,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import api from "../../api";
 import imageCompression from "browser-image-compression";
 
-const AddBike = () => {
+const AddBike = ({ defaultType = "Bike" }) => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [loading, setLoading] = useState(false);
@@ -27,8 +28,10 @@ const AddBike = () => {
   useEffect(() => {
     if (id) {
        fetchBike();
+    } else {
+       setForm(prev => ({ ...prev, type: defaultType }));
     }
-  }, [id]);
+  }, [id, defaultType]);
 
   const fetchBike = async () => {
     try {
@@ -36,6 +39,7 @@ const AddBike = () => {
       const data = res.data;
       setForm({
         ...data,
+        type: data.type || "Bike",
         images: typeof data.images === 'string' ? JSON.parse(data.images) : data.images
       });
     } catch (err) {
@@ -79,7 +83,8 @@ const AddBike = () => {
     seller_name: "",
     seller_phone: "",
     seller_email: "",
-    status: "draft"
+    status: "draft",
+    type: defaultType
   });
 
   const handleChange = (e) => {
@@ -153,16 +158,42 @@ const AddBike = () => {
       case 1:
         return (
           <div className="space-y-6 animate-fadeIn">
-            <h3 className="text-xl font-black text-gray-900 border-b pb-4">1. Basic Bike Details</h3>
+            <h3 className="text-xl font-black text-gray-900 border-b pb-4">1. Basic {form.type} Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2 grid grid-cols-2 gap-4 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setForm(prev => ({ ...prev, type: "Car" }))}
+                  className={`flex items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all font-black uppercase tracking-widest ${
+                    form.type === "Car" 
+                      ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 scale-105" 
+                      : "bg-white border-gray-100 text-gray-400 hover:border-blue-200"
+                  }`}
+                >
+                  <Plus className={form.type === "Car" ? "text-white" : "text-gray-300"} size={20} />
+                  Car
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm(prev => ({ ...prev, type: "Bike" }))}
+                  className={`flex items-center justify-center gap-3 p-4 rounded-2xl border-2 transition-all font-black uppercase tracking-widest ${
+                    form.type === "Bike" 
+                      ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 scale-105" 
+                      : "bg-white border-gray-100 text-gray-400 hover:border-blue-200"
+                  }`}
+                >
+                  <Bike className={form.type === "Bike" ? "text-white" : "text-gray-300"} size={20} />
+                  Bike
+                </button>
+              </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest">Bike Title</label>
+                <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest">{form.type} Title</label>
                 <input 
                   type="text" 
                   name="title"
                   value={form.title}
                   onChange={handleChange}
-                  placeholder='e.g. Yamaha R15 V4 2022'
+                  placeholder={`e.g. ${form.type === 'Bike' ? 'Yamaha R15 V4 2022' : 'Toyota Camry SE 2021'}`}
                   className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold"
                 />
               </div>
@@ -183,6 +214,13 @@ const AddBike = () => {
                   <option value="Suzuki">Suzuki</option>
                   <option value="KTM">KTM</option>
                   <option value="Kawasaki">Kawasaki</option>
+                  <option value="Toyota">Toyota</option>
+                  <option value="Hyundai">Hyundai</option>
+                  <option value="Tata">Tata</option>
+                  <option value="Mahindra">Mahindra</option>
+                  <option value="Maruti Suzuki">Maruti Suzuki</option>
+                  <option value="Kia">Kia</option>
+                  <option value="MG">MG</option>
                 </select>
               </div>
               <div>
@@ -224,7 +262,7 @@ const AddBike = () => {
       case 2:
         return (
           <div className="space-y-6 animate-fadeIn">
-            <h3 className="text-xl font-black text-gray-900 border-b pb-4">2. Bike Specifications</h3>
+            <h3 className="text-xl font-black text-gray-900 border-b pb-4">2. {form.type} Specifications</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div>
                 <label className="block text-sm font-black text-gray-700 mb-2 uppercase tracking-widest">Engine CC</label>
@@ -257,8 +295,10 @@ const AddBike = () => {
                   className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-bold"
                 >
                   <option value="Petrol">Petrol</option>
+                  <option value="Diesel">Diesel</option>
                   <option value="Electric">Electric</option>
                   <option value="Hybrid">Hybrid</option>
+                  <option value="CNG">CNG</option>
                 </select>
               </div>
               <div>
@@ -506,13 +546,13 @@ const AddBike = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-3xl bg-blue-600 flex items-center justify-center shadow-xl shadow-blue-200">
-            <Bike className="text-white w-8 h-8" />
+            {form.type === "Car" ? <Car className="text-white w-8 h-8" /> : <Bike className="text-white w-8 h-8" />}
           </div>
           <div>
             <h1 className="text-3xl font-black text-gray-900 leading-tight">
-              {id ? "Edit Bike Details" : "List Your Bike"}
+              {id ? `Edit ${form.type} Details` : `List Your ${form.type}`}
             </h1>
-            <p className="text-gray-500 font-medium">Sell your bike faster with detailed specifications</p>
+            <p className="text-gray-500 font-medium">Sell your vehicle faster with detailed specifications</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -528,7 +568,7 @@ const AddBike = () => {
             className="px-8 py-4 bg-black text-white rounded-[1.5rem] font-black uppercase tracking-widest shadow-xl shadow-gray-200 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
           >
             <Save size={18} />
-            {loading ? (id ? "Updating..." : "Listing...") : (id ? "Update Bike" : "Save Bike")}
+            {loading ? (id ? "Updating..." : "Listing...") : (id ? `Update ${form.type}` : `Save ${form.type}`)}
           </button>
         </div>
       </div>

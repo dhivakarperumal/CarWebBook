@@ -138,9 +138,13 @@ const router = createBrowserRouter([
       { path: "orders", element: <AllOrders /> },
       { path: "orders/:id", element: <OrderDetails /> },
 
-      { path: "bikes", element: <AllBikes /> },
-      { path: "addbike", element: <AddBike /> },
-      { path: "addbike/:id", element: <AddBike /> },
+      { path: "bikes", element: <AllBikes defaultType="Bike" /> },
+      { path: "addbike", element: <AddBike defaultType="Bike" /> },
+      { path: "addbike/:id", element: <AddBike defaultType="Bike" /> },
+      
+      { path: "cars", element: <AllBikes defaultType="Car" /> },
+      { path: "addcar", element: <AddBike defaultType="Car" /> },
+      { path: "addcar/:id", element: <AddBike defaultType="Car" /> },
 
 
 

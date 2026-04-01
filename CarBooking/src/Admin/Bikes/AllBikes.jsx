@@ -23,7 +23,7 @@ import Pagination from "../../Components/Pagination";
 
 const ITEMS_PER_PAGE = 8;
 
-const AllBikes = () => {
+const AllBikes = ({ defaultType = "all" }) => {
   const navigate = useNavigate();
   const [bikes, setBikes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -76,9 +76,10 @@ const AllBikes = () => {
         bike.brand.toLowerCase().includes(search.toLowerCase()) ||
         bike.model.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = filterStatus === "all" || bike.status === filterStatus;
-      return matchesSearch && matchesStatus;
+      const matchesType = defaultType === "all" || bike.type === defaultType;
+      return matchesSearch && matchesStatus && matchesType;
     });
-  }, [bikes, search, filterStatus]);
+  }, [bikes, search, filterStatus, defaultType]);
 
   const totalPages = Math.ceil(filteredBikes.length / ITEMS_PER_PAGE);
   const paginatedBikes = filteredBikes.slice(
@@ -111,10 +112,10 @@ const AllBikes = () => {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100">
         <div className="flex items-center gap-5">
           <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-black to-blue-800 flex items-center justify-center shadow-xl shadow-blue-200 rotate-3">
-             <Bike className="text-white w-8 h-8 -rotate-3" />
+             {defaultType === 'Car' ? <Car className="text-white w-8 h-8 -rotate-3" /> : <Bike className="text-white w-8 h-8 -rotate-3" />}
           </div>
           <div>
-             <h1 className="text-3xl font-black text-gray-900">Bike Inventory</h1>
+             <h1 className="text-3xl font-black text-gray-900">{defaultType === 'all' ? 'Vehicle Inventory' : `${defaultType} Inventory`}</h1>
              <p className="text-sm font-bold text-gray-400 mt-1 uppercase tracking-widest">Manage your marketplace listings</p>
           </div>
         </div>
@@ -129,11 +130,11 @@ const AllBikes = () => {
            </div>
            
            <button 
-             onClick={() => navigate("/admin/addbike")}
+             onClick={() => navigate(defaultType === 'Car' ? "/admin/addcar" : "/admin/addbike")}
              className="flex items-center gap-2 bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-gray-200 group"
            >
               <Plus className="group-hover:rotate-90 transition-transform" />
-              Add New Bike
+              Add New {defaultType === 'all' ? 'Vehicle' : defaultType}
            </button>
         </div>
       </div>
@@ -172,7 +173,7 @@ const AllBikes = () => {
         <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
             <tr>
-              <th className="px-6 py-5 first:pl-10">Bike Detail</th>
+              <th className="px-6 py-5 first:pl-10">Vehicle Detail</th>
               <th className="px-6 py-5">Specs</th>
               <th className="px-6 py-5">Location</th>
               <th className="px-6 py-5">Price</th>
@@ -189,15 +190,20 @@ const AllBikes = () => {
                         {bike.images ? (
                            <img src={JSON.parse(bike.images).front} className="w-full h-full object-cover" alt="" />
                         ) : (
-                           <Bike className="w-full h-full p-4 text-gray-300" />
+                           bike.type === 'Car' ? <Car className="w-full h-full p-4 text-gray-300" /> : <Bike className="w-full h-full p-4 text-gray-300" />
                         )}
-                     </div>
-                     <div>
-                        <p className="font-black text-gray-900 leading-tight">{bike.title}</p>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                           <p className="font-black text-gray-900 leading-tight">{bike.title}</p>
+                           <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-md border ${bike.type === 'Car' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>
+                              {bike.type || 'Bike'}
+                           </span>
+                        </div>
                         <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mt-1">
                            {bike.brand} • {bike.yom} Model
                         </p>
-                     </div>
+                      </div>
                   </div>
                 </td>
                 <td className="px-6 py-6">
@@ -273,11 +279,11 @@ const AllBikes = () => {
         {paginatedBikes.length === 0 && (
           <div className="py-32 text-center">
              <div className="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner border border-gray-100">
-                <Bike className="w-12 h-12 text-gray-200" />
+                <Plus className="w-12 h-12 text-gray-200" />
              </div>
-             <h3 className="text-xl font-black text-gray-800">No Bike Listings Found</h3>
+             <h3 className="text-xl font-black text-gray-800">No Vehicle Listings Found</h3>
              <p className="text-gray-400 mt-2 font-medium max-w-sm mx-auto">
-                Start by adding your first bike to the inventory manually.
+                Start by adding your first vehicle to the inventory manually.
              </p>
           </div>
         )}
@@ -299,7 +305,7 @@ const AllBikes = () => {
             <div className="p-6 border-b flex items-center justify-between bg-gray-50">
                <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-black flex items-center justify-center">
-                     <Bike className="text-white w-6 h-6" />
+                     {selectedBike.type === 'Car' ? <Car className="text-white w-6 h-6" /> : <Bike className="text-white w-6 h-6" />}
                   </div>
                   <div>
                      <h3 className="font-black text-gray-900 text-lg">{selectedBike.title}</h3>
