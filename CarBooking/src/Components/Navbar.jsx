@@ -19,6 +19,18 @@ const Navbar = () => {
   const [showLogin, setShowLogin] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [showPages, setShowPages] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest(".pages-dropdown")) {
+        setShowPages(false);
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -82,8 +94,7 @@ const Navbar = () => {
     { label: "SERVICES", path: "/services" },
     { label: "PRICING", path: "/pricing" },
     { label: "PRODUCTS", path: "/products" },
-    { label: "ABOUT", path: "/about" },
-    { label: "CONTACT US", path: "/contact" },
+    { label: "PAGES", dropdown: true },
   ];
 
   return (
@@ -110,29 +121,83 @@ const Navbar = () => {
               className="hidden md:flex items-center gap-6
              absolute left-1/2 -translate-x-1/2"
             >
-              {links.map((item) => (
-                <button
-                  key={item.label}
-                  onClick={() => navigate(item.path)}
-                  className={`relative cursor-pointer text-[14px] font-bold
-        transition-all duration-300
+              {links.map((item) =>
+                item.dropdown ? (
+                  <div key="pages" className="relative pages-dropdown">
+                    {/* BUTTON */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowPages((prev) => !prev);
+                      }}
+                      className="flex items-center gap-1 text-gray-300 font-bold text-[14px] hover:text-sky-400 transition"
+                    >
+                      PAGES
+                      <span className={`text-xs transition ${showPages ? "rotate-180" : ""}`}>
+                        ▼
+                      </span>
+                    </button>
+
+                    {/* DROPDOWN */}
+                    {showPages && (
+                      <div
+                        className="
+            absolute top-7 left-0 mt-0.5 w-48
+            bg-black
+            border border-sky-400/30
+            rounded-xl
+            overflow-hidden z-[999]
+            animate-fadeIn
+          "
+                      >
+                        <button
+                          onClick={() => {
+                            navigate("/about");
+                            setShowPages(false);
+                          }
+                          }
+                          className={`w-full text-left px-4 py-3 text-sm transition
+    ${location.pathname === "/about"
+                              ? "text-sky-400 bg-sky-400/10"
+                              : "text-gray-300 hover:bg-sky-400/10 cursor-pointer hover:text-sky-400"
+                            }
+  `}
+                        >
+                          About Us
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            navigate("/contact");
+                            setShowPages(false);
+                          }
+                          }
+                          className={`w-full text-left px-4 py-3 text-sm transition
+    ${location.pathname === "/contact"
+                              ? "text-sky-400 bg-sky-400/10"
+                              : "text-gray-300 hover:bg-sky-400/10 cursor-pointer hover:text-sky-400"
+                            }
+  `}
+                        >
+                          Contact Us
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    key={item.label}
+                    onClick={() => navigate(item.path)}
+                    className={`relative cursor-pointer text-[14px] font-bold
         ${location.pathname === item.path
-                      ? "text-sky-400 drop-shadow-[0_0_10px_rgba(56,189,248,0.8)]"
-                      : "text-gray-300 hover:text-sky-400 hover:drop-shadow-[0_0_8px_rgba(56,189,248,0.6)]"
-                    }
-        after:absolute after:left-1/2 after:-bottom-2
-        after:h-[2px] after:-translate-x-1/2
-        after:bg-gradient-to-r after:from-sky-400 after:to-cyan-300
-        after:transition-all after:duration-300
-        ${location.pathname === item.path
-                      ? "after:w-full"
-                      : "after:w-0 hover:after:w-full"
-                    }
-      `}
-                >
-                  {item.label}
-                </button>
-              ))}
+                        ? "text-sky-400"
+                        : "text-gray-300 hover:text-sky-400"
+                      }`}
+                  >
+                    {item.label}
+                  </button>
+                )
+              )}
             </nav>
 
             {/* CTA + USER */}
@@ -142,23 +207,49 @@ const Navbar = () => {
 
 
                 {/* CART ICON */}
-                <button
-                  onClick={() => navigate("/cart")}
-                  className="relative cursor-pointer text-sky-400 hover:text-white transition
-  md:order-none order-first"
-                >
-                  <FiShoppingCart size={22} />
+              <button
+  onClick={() => navigate("/cart")}
+  className="
+    relative cursor-pointer
+    flex items-center justify-center
+    w-10 h-10
+    rounded-full
+    border border-sky-400 
+    text-sky-400
+    bg-black/40
 
-                  {cartCount > 0 && (
-                    <span
-                      className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px]
-      w-4 h-4 flex items-center justify-center rounded-full
-      shadow-[0_0_10px_rgba(239,68,68,0.8)]"
-                    >
-                      {cartCount}
-                    </span>
-                  )}
-                </button>
+    hover:bg-sky-400/10
+    hover:text-white
+    hover:shadow-[0_0_15px_rgba(56,189,248,0.6)]
+
+    transition-all duration-300
+    active:scale-95
+    md:order-none order-first
+  "
+>
+  <FiShoppingCart size={20} />
+
+  {cartCount > 0 && (
+    <span
+      className="
+        absolute -top-1.5 -right-1.5
+        min-w-[18px] h-[18px]
+        px-[4px]
+        flex items-center justify-center
+
+        bg-red-500 text-white text-[10px] font-bold
+        rounded-full
+
+        border-2 border-black
+        shadow-[0_0_8px_rgba(239,68,68,0.9)]
+
+        animate-pulse
+      "
+    >
+      {cartCount}
+    </span>
+  )}
+</button>
 
                 {/* USER AVATAR (SINGLE INSTANCE) */}
                 {!loadingUser &&
@@ -303,7 +394,7 @@ const Navbar = () => {
         </PageContainer>
       </div>
 
-      <div className="h-[0.5px] bg-gradient-to-r from-transparent via-sky-400 to-transparent animate-pulse" />
+      <div className="h-[0.5px] bg-gradient-to-r from-transparent via-sky-400 to-transparent animate-pulse relative z-0" />
 
       {/* MOBILE MENU */}
       <div
