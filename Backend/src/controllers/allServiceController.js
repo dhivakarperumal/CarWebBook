@@ -246,15 +246,6 @@ exports.approveServicePart = async (req, res) => {
 
     console.log(`✅ [approveServicePart] Pending parts count: ${pendingParts[0].count}`);
 
-    // If all parts are approved/rejected, update service status to "Service Going on" only when no pending left
-    if (pendingParts[0].count === 0) {
-      await db.query(
-        'UPDATE all_services SET serviceStatus = "Service Going on" WHERE id = ?',
-        [serviceId]
-      );
-      console.log(`✅ [approveServicePart] All parts cleared, service status updated to "Service Going on"`);
-    }
-
     res.json({ message: `Part ${status} successfully` });
   } catch (err) {
     console.error("❌ [approveServicePart] Error:", err);
