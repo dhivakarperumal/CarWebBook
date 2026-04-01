@@ -710,20 +710,55 @@ export default function Services() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="space-y-2">
-                        {((item.issues && item.issues.length > 0) ? item.issues : (item.issue ? [{
-                          id: null,
-                          issue: item.issue,
-                          issueAmount: item.issueAmount,
-                          issueStatus: item.issueStatus || 'pending',
-                        }] : [])).map((issueEntry, idx) => (
-                          <div key={issueEntry.id || `issue-${idx}`} className="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                            <p className="text-xs text-gray-700 font-semibold">{issueEntry.issue || 'No issue text'}</p>
-                            {issueEntry.issueAmount != null && Number(issueEntry.issueAmount) > 0 && (
-                              <p className="text-xs text-gray-500">Amount: ₹{Number(issueEntry.issueAmount).toFixed(2)}</p>
-                            )}
-                            <p className="text-xs text-gray-500">Status: <span className="capitalize">{(issueEntry.issueStatus || 'pending')}</span></p>
-                          </div>
-                        ))}
+                        {(() => {
+                          const issuesList =
+                            (item.issues && item.issues.length > 0)
+                              ? item.issues
+                              : (item.issue
+                                ? [{
+                                  id: null,
+                                  issue: item.issue,
+                                  issueAmount: item.issueAmount,
+                                  issueStatus: item.issueStatus || 'pending',
+                                }]
+                                : []);
+
+                          return (
+                            <>
+                              {/* ✅ SHOW ONLY 1 */}
+                              {issuesList.slice(0, 1).map((issueEntry, idx) => (
+                                <div key={issueEntry.id || `issue-${idx}`} className="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                                  <p className="text-xs text-gray-700 font-semibold">
+                                    {issueEntry.issue || 'No issue text'}
+                                  </p>
+
+                                  {issueEntry.issueAmount != null && Number(issueEntry.issueAmount) > 0 && (
+                                    <p className="text-xs text-gray-500">
+                                      Amount: ₹{Number(issueEntry.issueAmount).toFixed(2)}
+                                    </p>
+                                  )}
+
+                                  <p className="text-xs text-gray-500">
+                                    Status: <span className="capitalize">{issueEntry.issueStatus || 'pending'}</span>
+                                  </p>
+                                </div>
+                              ))}
+
+                              {/* ✅ VIEW ALL BUTTON */}
+                              {issuesList.length > 1 && (
+                                <button
+                                  onClick={() => {
+                                    setIssueEntries(issuesList);
+                                    setIssueModalVisible(true);
+                                  }}
+                                  className="text-blue-600 font-bold text-xs hover:underline"
+                                >
+                                  View All ({issuesList.length})
+                                </button>
+                              )}
+                            </>
+                          );
+                        })()}
 
                         {!item.issues?.length && !item.issue && (
                           <p className="text-xs text-gray-400 italic">No issue entries yet.</p>
@@ -949,8 +984,10 @@ export default function Services() {
 
       {issueModalVisible && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl">
-            <h2 className="text-xl font-bold mb-4">Manage Issue Entries</h2>
+          <div className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl bg-white shadow-2xl">
+            <div className="p-4 border-b">
+              <h2 className="text-xl font-bold">All Issue Entries</h2>
+            </div>
 
             {issueEntries.length === 0 && (
               <div className="rounded-lg border border-dashed border-blue-300 bg-blue-50 text-blue-700 p-3 mb-4 text-sm">
@@ -958,7 +995,7 @@ export default function Services() {
               </div>
             )}
 
-            <div className="space-y-3 mb-4">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {issueEntries.map((entry, idx) => (
                 <div key={entry.id ?? `new-${idx}`} className="p-3 border border-gray-200 rounded-lg bg-gray-50">
                   <div className="flex items-center justify-between mb-2">
@@ -1031,7 +1068,7 @@ export default function Services() {
               + Add Issue Entry
             </button>
 
-            <div className="flex gap-3">
+            <div className="p-4 border-t flex gap-3">
               <button
                 onClick={() => {
                   setIssueModalVisible(false);
