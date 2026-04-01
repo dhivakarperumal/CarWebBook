@@ -59,6 +59,9 @@ export default function Services() {
 
   const [partsModalVisible, setPartsModalVisible] = useState(false);
   const [selectedParts, setSelectedParts] = useState([]);
+  
+  const [editingIssueId, setEditingIssueId] = useState(null);
+  const [issueText, setIssueText] = useState("");
 
   const loadData = async () => {
     try {
@@ -211,6 +214,30 @@ export default function Services() {
     } catch {
       toast.error("Failed to delete service");
     }
+  };
+
+  const handleIssueEdit = (item) => {
+    setEditingIssueId(item.id);
+    setIssueText(item.issue || "");
+  };
+
+  const handleIssueSave = async (id) => {
+    try {
+      await api.put(`/all-services/${id}/issue`, {
+        issue: issueText
+      });
+      toast.success("Issue updated successfully");
+      setEditingIssueId(null);
+      setIssueText("");
+      loadData();
+    } catch (error) {
+      toast.error("Failed to update issue");
+    }
+  };
+
+  const handleIssueCancel = () => {
+    setEditingIssueId(null);
+    setIssueText("");
   };
 
   const assignEmployee = async () => {
@@ -417,14 +444,50 @@ export default function Services() {
                         </p>
                       </div>
 
-                      {item.issue && (
-                        <div className="rounded-lg bg-gray-50 border border-gray-100 p-3">
-                          <p className="text-sm font-semibold text-gray-700">
-                            Issue:{" "}
-                            <span className="text-gray-500 font-normal">{item.issue}</span>
-                          </p>
-                        </div>
-                      )}
+                      {/* 🔹 ISSUE SECTION */}
+                      <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
+                        <p className="text-xs font-black uppercase tracking-wider text-blue-700 mb-2">
+                          Service Issue
+                        </p>
+                        {editingIssueId === item.id ? (
+                          <div className="space-y-2">
+                            <textarea
+                              value={issueText}
+                              onChange={(e) => setIssueText(e.target.value)}
+                              placeholder="Enter the issue details..."
+                              className="w-full rounded-lg border border-blue-300 bg-white p-2 text-sm text-gray-800 outline-none focus:ring-1 focus:ring-blue-600 resize-none h-20"
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleIssueSave(item.id)}
+                                className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-2 transition-all"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={handleIssueCancel}
+                                className="flex-1 rounded-lg bg-gray-400 hover:bg-gray-500 text-white text-xs font-bold py-2 transition-all"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="text-sm text-gray-700 mb-2">
+                              {item.issue ? item.issue : <span className="text-gray-400 italic">No issue entered yet</span>}
+                            </p>
+                            {isMechanic && item.assignedEmployeeName && (
+                              <button
+                                onClick={() => handleIssueEdit(item)}
+                                className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                              >
+                                Edit Issue
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
 
                       {/* 🔹 ASSIGNED MECHANIC */}
                       {item.assignedEmployeeName && (
@@ -580,6 +643,7 @@ export default function Services() {
                   <th className="px-6 py-4 font-bold">Customer</th>
                   <th className="px-6 py-4 font-bold">Vehicle</th>
                   <th className="px-6 py-4 font-bold">Status</th>
+                  <th className="px-6 py-4 font-bold">Issue</th>
                   <th className="px-6 py-4 font-bold">Spare Parts</th>
                   <th className="px-6 py-4 font-bold">Mechanic</th>
                   <th className="px-6 py-4 font-bold text-right">Action</th>
@@ -616,6 +680,46 @@ export default function Services() {
                         >
                           {item.serviceStatus || "Booked"}
                         </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {editingIssueId === item.id ? (
+                        <div className="space-y-2">
+                          <textarea
+                            value={issueText}
+                            onChange={(e) => setIssueText(e.target.value)}
+                            placeholder="Enter the issue details..."
+                            className="w-full rounded-lg border border-blue-300 bg-white p-2 text-xs text-gray-800 outline-none focus:ring-1 focus:ring-blue-600 resize-none h-16"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleIssueSave(item.id)}
+                              className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1 transition-all"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={handleIssueCancel}
+                              className="flex-1 rounded-lg bg-gray-400 hover:bg-gray-500 text-white text-xs font-bold py-1 transition-all"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <p className="text-xs text-gray-700 mb-1">
+                            {item.issue ? item.issue.substring(0, 50) + (item.issue.length > 50 ? "..." : "") : <span className="text-gray-400 italic">No issue</span>}
+                          </p>
+                          {isMechanic && item.assignedEmployeeName && (
+                            <button
+                              onClick={() => handleIssueEdit(item)}
+                              className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                            >
+                              Edit
+                            </button>
+                          )}
+                        </div>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -702,7 +806,7 @@ export default function Services() {
                 ))}
                 {paginatedData.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="py-12 text-center text-gray-500 text-base">
+                    <td colSpan="8" className="py-12 text-center text-gray-500 text-base">
                       No services found in this category.
                     </td>
                   </tr>

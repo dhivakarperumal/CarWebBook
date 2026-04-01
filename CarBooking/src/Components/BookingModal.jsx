@@ -142,7 +142,26 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
             </div>
           </div>
         )}
-
+        {/* SERVICE ISSUE SECTION */}
+        <div className="mt-6">
+          <h4 className="text-sky-400 font-bold mb-3">
+            ⚙️ Service Issue
+          </h4>
+          <div className="bg-slate-800 rounded-lg p-4 border border-slate-700">
+            {booking.issue ? (
+              <div>
+                <p className="text-gray-300 text-sm leading-relaxed">
+                  {booking.issue}
+                </p>
+                <p className="text-xs text-gray-500 mt-2">
+                  Issue Date: {booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() : "N/A"}
+                </p>
+              </div>
+            ) : (
+              <p className="text-gray-500 italic text-sm">No service issue details entered yet.</p>
+            )}
+          </div>
+        </div>
         {/* STATUS TRACKER */}
         <div className="mt-6">
           {booking.status !== "CANCELLED" ? (

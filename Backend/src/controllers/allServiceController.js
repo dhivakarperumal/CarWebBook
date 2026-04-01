@@ -253,6 +253,33 @@ exports.approveServicePart = async (req, res) => {
   }
 };
 
+/* 📝 UPDATE SERVICE ISSUE */
+exports.updateServiceIssue = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { issue } = req.body;
+
+    console.log(`\n📝 [updateServiceIssue] Updating issue for service ID: ${id}`);
+    console.log(`Issue text: ${issue ? issue.substring(0, 50) + '...' : 'empty'}`);
+
+    const [result] = await db.query(
+      'UPDATE all_services SET issue = ? WHERE id = ?',
+      [issue || null, id]
+    );
+
+    if (result.affectedRows === 0) {
+      console.warn(`⚠️ [updateServiceIssue] Service ${id} not found`);
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    console.log(`✅ [updateServiceIssue] Issue updated successfully`);
+    res.json({ message: 'Issue updated successfully' });
+  } catch (err) {
+    console.error(`❌ [updateServiceIssue] Error:`, err);
+    res.status(500).json({ message: 'Error updating issue', error: err.message });
+  }
+};
+
 /* ❌ DELETE SERVICE */
 exports.deleteService = async (req, res) => {
   try {
