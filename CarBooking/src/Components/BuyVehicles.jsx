@@ -251,8 +251,23 @@ const BuyVehicles = () => {
                 return (
                   <div
                     key={vehicle.id}
-                    className="group rounded-2xl border border-sky-500/30 bg-slate-900/50 overflow-hidden hover:border-sky-400 transition-all duration-300 hover:shadow-2xl hover:shadow-sky-500/20"
+                    className={`relative group rounded-2xl border border-sky-500/30 bg-slate-900/50 overflow-hidden transition-all duration-300 ${
+                      vehicle.status === "booked" 
+                        ? "grayscale-[20%] opacity-75 cursor-not-allowed" 
+                        : "hover:border-sky-400 hover:shadow-2xl hover:shadow-sky-500/20"
+                    }`}
                   >
+                    {/* Full Card Sold Out Overlay */}
+                    {vehicle.status === "booked" && (
+                      <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] z-20 flex items-center justify-center p-4">
+                        <div className="px-8 py-4 border-4 border-red-500 rounded-2xl transform -rotate-12 bg-black/60 shadow-2xl text-center">
+                          <span className="text-4xl font-black text-red-500 uppercase tracking-tighter">
+                            Sold Out
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Image */}
                     <div className="relative h-48 bg-slate-800 overflow-hidden">
                       {mainImage ? (
@@ -271,7 +286,7 @@ const BuyVehicles = () => {
                       <div className="absolute top-3 right-3">
                         {vehicle.status === "booked" ? (
                           <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-300 text-xs font-bold border border-red-400/30 flex items-center gap-1">
-                            <FaTimes size={10} /> Booked
+                            <FaTimes size={10} /> Sold Out
                           </span>
                         ) : (
                           <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-400/30 flex items-center gap-1">
@@ -303,11 +318,19 @@ const BuyVehicles = () => {
                         <p className="text-3xl font-bold text-sky-400">
                           ₹{Number(vehicle.expected_price).toLocaleString("en-IN")}
                         </p>
-                        {vehicle.negotiable && (
-                          <p className="text-xs text-yellow-400 mt-1">
-                            Negotiable Price
-                          </p>
-                        )}
+                        <div className="flex items-center justify-between mt-2">
+                          {vehicle.negotiable && (
+                            <p className="text-xs text-yellow-400">
+                              Negotiable Price
+                            </p>
+                          )}
+                          <div className="text-right">
+                             <p className="text-[10px] text-gray-400 uppercase tracking-wider">Advance</p>
+                             <p className="text-sm font-bold text-sky-300">
+                               ₹{Number(vehicle.advance_amount_paid || 5000).toLocaleString("en-IN")}
+                             </p>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Quick Info Grid */}
@@ -341,19 +364,30 @@ const BuyVehicles = () => {
 
                       {/* Action Buttons */}
                       <div className="flex gap-2">
-                        <button
-                          onClick={() => handleViewDetails(vehicle)}
-                          className="flex-1 py-2 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-400/30 hover:bg-sky-500/30 transition text-sm font-semibold"
-                        >
-                          View Details
-                        </button>
-                        <button
-                          onClick={() => handleBookNow(vehicle)}
-                          disabled={bookingInProgress === vehicle.id || vehicle.status === "booked"}
-                          className="flex-1 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-cyan-500 text-white hover:scale-105 transition text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {bookingInProgress === vehicle.id ? "Loading..." : vehicle.status === "booked" ? "Booked" : "Book Now"}
-                        </button>
+                        {vehicle.status === "booked" ? (
+                          <button
+                            disabled
+                            className="w-full py-2 rounded-lg bg-red-500/20 text-red-400 border border-red-500/50 font-bold text-center uppercase tracking-widest cursor-not-allowed"
+                          >
+                             Sold Out
+                          </button>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => handleViewDetails(vehicle)}
+                              className="flex-1 py-2 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-400/30 hover:bg-sky-500/30 transition text-sm font-semibold"
+                            >
+                              View Details
+                            </button>
+                            <button
+                              onClick={() => handleBookNow(vehicle)}
+                              disabled={bookingInProgress === vehicle.id}
+                              className="flex-1 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-cyan-500 text-white hover:scale-105 transition text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              {bookingInProgress === vehicle.id ? "Loading..." : "Book Now"}
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -717,19 +751,30 @@ const BuyVehicles = () => {
 
             {/* Premium Footer */}
             <div className="sticky bottom-0 p-6 border-t border-sky-400/20 bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-xl flex gap-3 rounded-b-3xl">
-              <button
-                onClick={closeModal}
-                className="flex-1 py-3 rounded-lg border border-gray-600 text-white hover:bg-white/10 transition font-semibold text-lg"
-              >
-                Close
-              </button>
-              <button
-                onClick={() => handleBookNow(selectedVehicle)}
-                disabled={bookingInProgress === selectedVehicle.id || selectedVehicle.status === "booked"}
-                className="flex-1 py-3 rounded-lg bg-gradient-to-r from-sky-500 to-cyan-500 text-white hover:scale-105 transition font-semibold text-lg shadow-lg shadow-sky-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {bookingInProgress === selectedVehicle.id ? "Processing..." : selectedVehicle.status === "booked" ? "Booked" : "Book Now"}
-              </button>
+              {selectedVehicle.status === "booked" ? (
+                <button
+                  disabled
+                  className="w-full py-3 rounded-lg bg-red-500/20 text-red-400 border border-red-500/50 font-bold text-center uppercase tracking-widest cursor-not-allowed text-lg"
+                >
+                  Sold Out
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={closeModal}
+                    className="flex-1 py-3 rounded-lg border border-gray-600 text-white hover:bg-white/10 transition font-semibold text-lg"
+                  >
+                    Close
+                  </button>
+                  <button
+                    onClick={() => handleBookNow(selectedVehicle)}
+                    disabled={bookingInProgress === selectedVehicle.id}
+                    className="flex-1 py-3 rounded-lg bg-gradient-to-r from-sky-500 to-cyan-500 text-white hover:scale-105 transition font-semibold text-lg shadow-lg shadow-sky-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {bookingInProgress === selectedVehicle.id ? "Processing..." : "Book Now"}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>

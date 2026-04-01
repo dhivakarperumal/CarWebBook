@@ -65,7 +65,7 @@ const VehicleBookings = () => {
                   </div>
                   <div className="flex flex-col items-start md:items-end gap-2">
                     <span className="text-xs px-3 py-1 rounded-full font-semibold bg-emerald-900 text-emerald-400">
-                      {booking.status || "Booked"}
+                      {booking.status || "Sold"}
                     </span>
                     <p className="text-sky-400 font-bold">Advance Paid: ₹{booking.advanceAmount}</p>
                   </div>
