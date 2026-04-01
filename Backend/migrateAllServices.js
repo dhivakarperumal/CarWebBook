@@ -15,6 +15,8 @@ const migrate = async () => {
         brand VARCHAR(100),
         model VARCHAR(100),
         issue VARCHAR(255),
+        issueAmount DECIMAL(10,2) DEFAULT 0,
+        issueStatus VARCHAR(50) DEFAULT 'pending',
         otherIssue TEXT,
         location VARCHAR(255),
         address TEXT,
@@ -35,6 +37,8 @@ const migrate = async () => {
       await db.query(`ALTER TABLE all_services ADD COLUMN IF NOT EXISTS addVehicle TINYINT(1) DEFAULT 0`);
       await db.query(`ALTER TABLE all_services ADD COLUMN IF NOT EXISTS assignedEmployeeId INT`);
       await db.query(`ALTER TABLE all_services ADD COLUMN IF NOT EXISTS assignedEmployeeName VARCHAR(255)`);
+      await db.query(`ALTER TABLE all_services ADD COLUMN IF NOT EXISTS issueAmount DECIMAL(10,2) DEFAULT 0`);
+      await db.query(`ALTER TABLE all_services ADD COLUMN IF NOT EXISTS issueStatus VARCHAR(50) DEFAULT 'pending'`);
       console.log("Added missing columns to all_services table.");
     } catch (alterError) {
       console.log("Columns may already exist or ALTER failed:", alterError.message);
@@ -58,6 +62,21 @@ const migrate = async () => {
       )
     `);
     console.log('✅ service_parts table created');
+
+    // 3. Create service_issues table for multi-issue entries
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS service_issues (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        all_service_id INT NOT NULL,
+        issue TEXT NOT NULL,
+        issueAmount DECIMAL(10,2) DEFAULT 0,
+        issueStatus VARCHAR(50) DEFAULT 'pending',
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (all_service_id) REFERENCES all_services(id) ON DELETE CASCADE
+      )
+    `);
+    console.log('✅ service_issues table created');
 
     process.exit(0);
   } catch (err) {
