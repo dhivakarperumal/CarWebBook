@@ -63,6 +63,21 @@ const migrate = async () => {
     `);
     console.log('✅ service_parts table created');
 
+    // 3. Create service_issues table for multi-issue entries
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS service_issues (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        all_service_id INT NOT NULL,
+        issue TEXT NOT NULL,
+        issueAmount DECIMAL(10,2) DEFAULT 0,
+        issueStatus VARCHAR(50) DEFAULT 'pending',
+        createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (all_service_id) REFERENCES all_services(id) ON DELETE CASCADE
+      )
+    `);
+    console.log('✅ service_issues table created');
+
     process.exit(0);
   } catch (err) {
     console.error('❌ Error:', err.message);

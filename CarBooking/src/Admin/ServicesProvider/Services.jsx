@@ -45,6 +45,7 @@ export default function Services() {
 
   const [services, setServices] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [issueEntries, setIssueEntries] = useState([]);
   const [serviceParts, setServiceParts] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -454,27 +455,23 @@ export default function Services() {
 
                       {/* 🔹 ISSUE SECTION */}
                       <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
-                        <p className="text-xs font-black uppercase tracking-wider text-blue-700 mb-2">
-                          Service Issue
-                        </p>
-                        <div>
-                          <p className="text-xs text-gray-700 mb-1">
-                            {item.issue ? item.issue.substring(0, 50) + (item.issue.length > 50 ? "..." : "") :
-                              <span className="text-gray-400 italic">No issue</span>}
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-black uppercase tracking-wider text-blue-700">
+                            Service Issues
                           </p>
-                          {item.issueAmount != null && Number(item.issueAmount) > 0 && (
-                            <p className="text-xs font-bold text-gray-800">Amount: ₹{Number(item.issueAmount).toFixed(2)}</p>
-                          )}
-                          <p className="text-xs font-semibold text-gray-600 mt-1">
-                            Status: <span className="capitalize">{item.issueStatus || 'pending'}</span>
-                          </p>
-
                           {isMechanic && item.assignedEmployeeName && (
                             <button
                               onClick={() => {
-                                setSelectedIssueItem(item);
-                                setIssueText(item.issue || "");
-                                setIssueAmount(item.issueAmount != null ? String(item.issueAmount) : "");
+                                setEditingIssueId(item.id);
+                                const initialIssues = (item.issues || []).map((issue) => ({ ...issue }));
+                                if (!initialIssues.length && item.issue) {
+                                  initialIssues.push({
+                                    issue: item.issue,
+                                    issueAmount: item.issueAmount != null ? Number(item.issueAmount) : 0,
+                                    issueStatus: item.issueStatus || 'pending',
+                                  });
+                                }
+                                setIssueEntries(initialIssues);
                                 setIssueModalVisible(true);
                               }}
                               className="text-xs font-bold text-blue-600 hover:underline"
@@ -483,6 +480,27 @@ export default function Services() {
                             </button>
                           )}
                         </div>
+
+                        {(item.issues && item.issues.length > 0) || item.issue ? (
+                          <div className="space-y-2">
+                            {((item.issues && item.issues.length > 0) ? item.issues : [{
+                              id: null,
+                              issue: item.issue,
+                              issueAmount: item.issueAmount,
+                              issueStatus: item.issueStatus || 'pending',
+                            }]).map((issueEntry, index) => (
+                              <div key={issueEntry.id || `issue-${index}`} className="bg-white rounded-lg p-2 border border-gray-200">
+                                <p className="text-xs text-gray-700 font-semibold">{issueEntry.issue || 'No issue text'}</p>
+                                {issueEntry.issueAmount != null && Number(issueEntry.issueAmount) > 0 && (
+                                  <p className="text-xs text-gray-500">Amount: ₹{Number(issueEntry.issueAmount).toFixed(2)}</p>
+                                )}
+                                <p className="text-xs text-gray-500">Status: <span className="capitalize">{(issueEntry.issueStatus || 'pending')}</span></p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-400 italic">No issues added yet.</p>
+                        )}
                       </div>
 
                       {/* 🔹 ASSIGNED MECHANIC */}
@@ -679,64 +697,47 @@ export default function Services() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      {editingIssueId === item.id ? (
-                        <div className="space-y-2">
-                          <textarea
-                            value={issueText}
-                            onChange={(e) => setIssueText(e.target.value)}
-                            placeholder="Enter the issue details..."
-                            className="w-full rounded-lg border border-blue-300 bg-white p-2 text-xs text-gray-800 outline-none focus:ring-1 focus:ring-blue-600 resize-none h-16"
-                          />
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={issueAmount}
-                            onChange={(e) => setIssueAmount(e.target.value)}
-                            placeholder="Amount"
-                            className="w-full rounded-lg border border-blue-300 bg-white p-2 text-xs text-gray-800 outline-none focus:ring-1 focus:ring-blue-600"
-                          />
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleIssueSave(item.id)}
-                              className="flex-1 rounded-lg bg-green-600 hover:bg-green-700 text-white text-xs font-bold py-1 transition-all"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={handleIssueCancel}
-                              className="flex-1 rounded-lg bg-gray-400 hover:bg-gray-500 text-white text-xs font-bold py-1 transition-all"
-                            >
-                              Cancel
-                            </button>
+                      <div className="space-y-2">
+                        {((item.issues && item.issues.length > 0) ? item.issues : (item.issue ? [{
+                          id: null,
+                          issue: item.issue,
+                          issueAmount: item.issueAmount,
+                          issueStatus: item.issueStatus || 'pending',
+                        }] : [])).map((issueEntry, idx) => (
+                          <div key={issueEntry.id || `issue-${idx}`} className="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                            <p className="text-xs text-gray-700 font-semibold">{issueEntry.issue || 'No issue text'}</p>
+                            {issueEntry.issueAmount != null && Number(issueEntry.issueAmount) > 0 && (
+                              <p className="text-xs text-gray-500">Amount: ₹{Number(issueEntry.issueAmount).toFixed(2)}</p>
+                            )}
+                            <p className="text-xs text-gray-500">Status: <span className="capitalize">{(issueEntry.issueStatus || 'pending')}</span></p>
                           </div>
-                        </div>
-                      ) : (
-                        <div>
-                          <p className="text-xs text-gray-700 mb-1">
-                            {item.issue ? item.issue.substring(0, 50) + (item.issue.length > 50 ? "..." : "") : <span className="text-gray-400 italic">No issue</span>}
-                          </p>
-                          {item.issueAmount != null && Number(item.issueAmount) > 0 && (
-                            <p className="text-xs text-gray-500">Amount: ₹{Number(item.issueAmount).toFixed(2)}</p>
-                          )}
-                          <p className="text-xs font-semibold text-gray-600 mt-1">
-                            Status: <span className="capitalize">{item.issueStatus || 'pending'}</span>
-                          </p>
-                          {isMechanic && item.assignedEmployeeName && (
-                            <button
-                              onClick={() => {
-                                setSelectedIssueItem(item);
-                                setIssueText(item.issue || "");
-                                setIssueAmount(item.issueAmount != null ? String(item.issueAmount) : "");
-                                setIssueModalVisible(true);
-                              }}
-                              className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
-                            >
-                              Edit
-                            </button>
-                          )}
-                        </div>
-                      )}
+                        ))}
+
+                        {!item.issues?.length && !item.issue && (
+                          <p className="text-xs text-gray-400 italic">No issue entries yet.</p>
+                        )}
+
+                        {isMechanic && item.assignedEmployeeName && (
+                          <button
+                            onClick={() => {
+                              setEditingIssueId(item.id);
+                              const initialIssues = (item.issues || []).map((issue) => ({ ...issue }));
+                              if (!initialIssues.length && item.issue) {
+                                initialIssues.push({
+                                  issue: item.issue,
+                                  issueAmount: item.issueAmount != null ? Number(item.issueAmount) : 0,
+                                  issueStatus: item.issueStatus || 'pending',
+                                });
+                              }
+                              setIssueEntries(initialIssues);
+                              setIssueModalVisible(true);
+                            }}
+                            className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4">
                       {getServiceParts(item.id).length === 0 ? (
@@ -936,24 +937,95 @@ export default function Services() {
 
       {issueModalVisible && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl">
+            <h2 className="text-xl font-bold mb-4">Manage Issue Entries</h2>
 
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            {issueEntries.length === 0 && (
+              <div className="rounded-lg border border-dashed border-blue-300 bg-blue-50 text-blue-700 p-3 mb-4 text-sm">
+                No issue entries yet. Use + add button to create one.
+              </div>
+            )}
 
-            <h2 className="text-xl font-bold mb-4">
-              Edit Service Issue
-            </h2>
+            <div className="space-y-3 mb-4">
+              {issueEntries.map((entry, idx) => (
+                <div key={entry.id ?? `new-${idx}`} className="p-3 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-bold text-gray-700">Issue #{idx + 1}</p>
+                    <button
+                      onClick={() => {
+                        const copy = [...issueEntries];
+                        copy.splice(idx, 1);
+                        setIssueEntries(copy);
+                      }}
+                      className="text-red-600 text-xs hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
 
-            <textarea
-              value={issueText}
-              onChange={(e) => setIssueText(e.target.value)}
-              placeholder="Enter issue..."
-              className="w-full border rounded-lg p-3 mb-4"
-              rows={4}
-            />
+                  <textarea
+                    value={entry.issue || ""}
+                    onChange={(e) => {
+                      const copy = [...issueEntries];
+                      copy[idx] = { ...copy[idx], issue: e.target.value };
+                      setIssueEntries(copy);
+                    }}
+                    className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                    rows={3}
+                    placeholder="Describe the issue"
+                  />
+
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={entry.issueAmount != null ? entry.issueAmount : ""}
+                      onChange={(e) => {
+                        const copy = [...issueEntries];
+                        copy[idx] = { ...copy[idx], issueAmount: e.target.value };
+                        setIssueEntries(copy);
+                      }}
+                      placeholder="Amount"
+                      className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                    />
+                    <select
+                      value={entry.issueStatus || 'pending'}
+                      onChange={(e) => {
+                        const copy = [...issueEntries];
+                        copy[idx] = { ...copy[idx], issueStatus: e.target.value };
+                        setIssueEntries(copy);
+                      }}
+                      className="w-40 border border-gray-300 rounded-lg p-2 text-sm"
+                    >
+                      <option value="pending">pending</option>
+                      <option value="approved">approved</option>
+                      <option value="rejected">rejected</option>
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => {
+                setIssueEntries((prev) => [
+                  ...prev,
+                  { issue: '', issueAmount: '', issueStatus: 'pending' },
+                ]);
+              }}
+              className="mb-4 inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-300 text-blue-600 font-bold hover:bg-blue-50"
+            >
+              + Add Issue Entry
+            </button>
 
             <div className="flex gap-3">
               <button
-                onClick={() => setIssueModalVisible(false)}
+                onClick={() => {
+                  setIssueModalVisible(false);
+                  setEditingIssueId(null);
+                  setIssueEntries([]);
+                }}
                 className="flex-1 bg-gray-400 text-white py-2 rounded-lg"
               >
                 Cancel
@@ -961,26 +1033,53 @@ export default function Services() {
 
               <button
                 onClick={async () => {
-                  try {
-                    await api.put(`/all-services/${selectedIssueItem.id}/issue`, {
-                      issue: issueText
-                    });
+                  if (!editingIssueId) {
+                    toast.error('No service selected');
+                    return;
+                  }
 
-                    toast.success("Issue updated");
+                  try {
+                    const toSave = issueEntries.filter((entry) => entry.issue && entry.issue.trim());
+                    for (const entry of toSave) {
+                      if (entry.id) {
+                        await api.put(`/all-services/${editingIssueId}/issues/${entry.id}`, {
+                          issue: entry.issue.trim(),
+                          issueAmount: Number(entry.issueAmount || 0),
+                        });
+                        if (entry.issueStatus && entry.issueStatus !== 'pending') {
+                          await api.put(`/all-services/${editingIssueId}/issues/${entry.id}/status`, {
+                            issueStatus: entry.issueStatus,
+                          });
+                        }
+                      } else {
+                        const newIssue = await api.post(`/all-services/${editingIssueId}/issues`, {
+                          issue: entry.issue.trim(),
+                          issueAmount: Number(entry.issueAmount || 0),
+                        });
+                        if (entry.issueStatus && entry.issueStatus !== 'pending') {
+                          const issueId = newIssue.data.issue.id;
+                          await api.put(`/all-services/${editingIssueId}/issues/${issueId}/status`, {
+                            issueStatus: entry.issueStatus,
+                          });
+                        }
+                      }
+                    }
+
+                    toast.success('Issue entries saved');
                     setIssueModalVisible(false);
-                    setSelectedIssueItem(null);
-                    setIssueText("");
-                    loadData(); // refresh table
-                  } catch {
-                    toast.error("Failed to update");
+                    setEditingIssueId(null);
+                    setIssueEntries([]);
+                    loadData();
+                  } catch (error) {
+                    console.error(error);
+                    toast.error('Failed to save issue entries');
                   }
                 }}
                 className="flex-1 bg-green-600 text-white py-2 rounded-lg"
               >
-                Save
+                Save Issues
               </button>
             </div>
-
           </div>
         </div>
       )}

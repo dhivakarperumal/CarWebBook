@@ -91,7 +91,7 @@ useEffect(() => {
 
       setBookings(bookingsWithServiceIssue);
 
-      // Fetch all services to get spare parts
+      // Fetch all services to get spare parts and issue entries
       console.log("🔍 [ServiceStatus] Fetching all services from /all-services...");
       const servicesRes = await api.get("/all-services");
       console.log("📊 [ServiceStatus] All services:", servicesRes.data);
@@ -102,15 +102,35 @@ useEffect(() => {
         return match;
       });
       console.log(`✅ [ServiceStatus] Filtered ${filteredServices.length} services`);
-      setServices(filteredServices);
+
+      // Enrich services with parts and issue entries from detail endpoint
+      const enrichedServices = [];
+      for (let service of filteredServices) {
+        try {
+          const detailRes = await api.get(`/all-services/${service.id}`);
+          const details = detailRes.data;
+          enrichedServices.push({
+            ...service,
+            parts: details.parts || [],
+            issues: details.issues || [],
+          });
+        } catch (err) {
+          console.error(`❌ [ServiceStatus] Failed to fetch service details for ${service.id}:`, err);
+          enrichedServices.push({ ...service, parts: [], issues: [] });
+        }
+      }
+
+      console.log(`✅ [ServiceStatus] Enriched services with parts and issues`);
+      setServices(enrichedServices);
 
       // Update bookings issue from linked all_services so user sees latest issue text
       const mergedBookings = bookingData.map((b) => {
-        const matchedService = filteredServices.find(
+        const matchedService = enrichedServices.find(
           (s) => s.bookingId === b.bookingId || s.bookingDocId === b.id
         );
         return {
           ...b,
+          issues: matchedService?.issues || [],
           issue: matchedService?.issue || b.issue,
           issueAmount: matchedService?.issueAmount != null ? matchedService.issueAmount : b.issueAmount,
           issueStatus: matchedService?.issueStatus || b.issueStatus || 'pending',
@@ -157,18 +177,18 @@ useEffect(() => {
   fetchData();
 }, [user]); // 👈 IMPORTANT
 
-  const handleApproveSpare = async (serviceId, partId, status, type = 'part') => {
+  const handleApproveSpare = async (serviceId, itemId, status, type = 'part') => {
     try {
       if (type === 'part') {
-        setApprovingPartId(partId);
-        await api.put(`/all-services/${serviceId}/parts/${partId}/approve`, {
+        setApprovingPartId(itemId);
+        await api.put(`/all-services/${serviceId}/parts/${itemId}/approve`, {
           status: status,
           approvedBy: user.email,
           approvalNotes: `${status} by customer`,
         });
       } else if (type === 'issue') {
-        setApprovingPartId(null);
-        await api.put(`/all-services/${serviceId}/issue-status`, {
+        setApprovingPartId(itemId);
+        await api.put(`/all-services/${serviceId}/issues/${itemId}/status`, {
           issueStatus: status,
         });
       }

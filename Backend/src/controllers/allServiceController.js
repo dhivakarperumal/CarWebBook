@@ -28,11 +28,20 @@ exports.getServiceById = async (req, res) => {
     console.log(`🔍 [getServiceById] Querying service_parts for all_service_id=${id}...`);
     const [parts] = await db.query('SELECT * FROM service_parts WHERE all_service_id = ?', [id]);
     console.log(`✅ [getServiceById] Found ${parts.length} parts for service ${id}`);
+
+    // Get issues
+    console.log(`🔍 [getServiceById] Querying service_issues for all_service_id=${id}...`);
+    const [issues] = await db.query('SELECT * FROM service_issues WHERE all_service_id = ? ORDER BY createdAt DESC', [id]);
+    console.log(`✅ [getServiceById] Found ${issues.length} issues for service ${id}`);
+
     if (parts.length > 0) {
       parts.forEach((p, i) => console.log(`     Part ${i+1}: ${p.partName} x${p.qty} = ₹${p.total} (status: ${p.status})`));
     }
-    
-    const response = { ...rows[0], parts };
+    if (issues.length > 0) {
+      issues.forEach((issue, i) => console.log(`     Issue ${i+1}: ${issue.issue} (₹${issue.issueAmount}) status=${issue.issueStatus}`));
+    }
+
+    const response = { ...rows[0], parts, issues };
     res.json(response);
   } catch (err) {
     console.error(`❌ [getServiceById] Error:`, err);
@@ -317,6 +326,112 @@ exports.updateIssueStatus = async (req, res) => {
     res.json({ message: 'Issue status updated' });
   } catch (err) {
     console.error(`❌ [updateIssueStatus] Error:`, err);
+    res.status(500).json({ message: 'Error updating issue status', error: err.message });
+  }
+};
+
+/* 📋 GET SERVICE ISSUES */
+exports.getServiceIssues = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [service] = await db.query('SELECT id FROM all_services WHERE id = ?', [id]);
+    if (!service.length) return res.status(404).json({ message: 'Service not found' });
+
+    const [issues] = await db.query('SELECT * FROM service_issues WHERE all_service_id = ? ORDER BY createdAt DESC', [id]);
+    res.json({ issues });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching issues', error: err.message });
+  }
+};
+
+/* ➕ ADD SERVICE ISSUE */
+exports.addServiceIssueEntry = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { issue, issueAmount } = req.body;
+
+    if (!issue || issue.trim() === '') {
+      return res.status(400).json({ message: 'Issue text is required' });
+    }
+
+    const [service] = await db.query('SELECT bookingDocId FROM all_services WHERE id = ?', [id]);
+    if (!service.length) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    const [result] = await db.query(
+      'INSERT INTO service_issues (all_service_id, issue, issueAmount, issueStatus) VALUES (?, ?, ?, ?)',
+      [id, issue.trim(), issueAmount != null ? issueAmount : 0, 'pending']
+    );
+
+    const newIssueId = result.insertId;
+
+    // Sync to bookings main issue fields for backward compatibility
+    const bookingDocId = service[0].bookingDocId;
+    if (bookingDocId) {
+      await db.query('UPDATE bookings SET issue = ?, issueAmount = ?, issueStatus = ? WHERE id = ?', [issue.trim(), issueAmount != null ? issueAmount : 0, 'pending', bookingDocId]);
+    }
+
+    const [insertedIssue] = await db.query('SELECT * FROM service_issues WHERE id = ?', [newIssueId]);
+    res.json({ message: 'Issue entry added', issue: insertedIssue[0] });
+  } catch (err) {
+    res.status(500).json({ message: 'Error adding issue entry', error: err.message });
+  }
+};
+
+/* ✏️ UPDATE SERVICE ISSUE ENTRY */
+exports.updateServiceIssueEntry = async (req, res) => {
+  try {
+    const { serviceId, issueId } = req.params;
+    const { issue, issueAmount } = req.body;
+
+    if (!issue || issue.trim() === '') {
+      return res.status(400).json({ message: 'Issue text is required' });
+    }
+
+    const [result] = await db.query(
+      'UPDATE service_issues SET issue = ?, issueAmount = ? WHERE id = ? AND all_service_id = ?',
+      [issue.trim(), issueAmount != null ? issueAmount : 0, issueId, serviceId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Issue entry not found' });
+    }
+
+    const [updated] = await db.query('SELECT * FROM service_issues WHERE id = ?', [issueId]);
+    res.json({ message: 'Issue entry updated', issue: updated[0] });
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating issue entry', error: err.message });
+  }
+};
+
+/* ✅ APPROVE/REJECT SERVICE ISSUE ENTRY */
+exports.updateServiceIssueEntryStatus = async (req, res) => {
+  try {
+    const { serviceId, issueId } = req.params;
+    const { issueStatus } = req.body;
+    const normalized = (issueStatus || '').toLowerCase();
+    if (!['pending', 'approved', 'rejected'].includes(normalized)) {
+      return res.status(400).json({ message: 'Invalid issue status' });
+    }
+
+    const [result] = await db.query(
+      'UPDATE service_issues SET issueStatus = ? WHERE id = ? AND all_service_id = ?',
+      [normalized, issueId, serviceId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Issue entry not found' });
+    }
+
+    const [service] = await db.query('SELECT bookingDocId FROM all_services WHERE id = ?', [serviceId]);
+    if (service.length && service[0].bookingDocId) {
+      await db.query('UPDATE bookings SET issueStatus = ? WHERE id = ?', [normalized, service[0].bookingDocId]);
+    }
+
+    const [updated] = await db.query('SELECT * FROM service_issues WHERE id = ?', [issueId]);
+    res.json({ message: 'Issue status updated', issue: updated[0] });
+  } catch (err) {
     res.status(500).json({ message: 'Error updating issue status', error: err.message });
   }
 };
