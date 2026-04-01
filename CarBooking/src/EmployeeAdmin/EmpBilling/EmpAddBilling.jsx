@@ -41,9 +41,12 @@ const EmpAddBilling = () => {
         
         const mechanicName = userProfile?.displayName || "";
         // Filter: Only services assigned to me
-        const myServices = res.data.filter(s => 
-          (s.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase()
-        );
+        const myServices = res.data.filter(s => {
+          const assignedMatch = (s.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase();
+          const status = (s.serviceStatus || s.status || "").toString().trim();
+          const isBillPending = status.toLowerCase() === "bill pending";
+          return assignedMatch && isBillPending;
+        });
         
         setServices(myServices);
       } catch (err) {
@@ -66,12 +69,14 @@ const EmpAddBilling = () => {
       const res = await api.get(`/all-services/${s.id}`);
       const data = res.data;
 
-      const partsData = (data.parts || []).map((p) => ({
-        partName: p.partName,
-        qty: Number(p.qty || 0),
-        price: Number(p.price || 0),
-        total: Number(p.qty || 0) * Number(p.price || 0),
-      }));
+      const partsData = (data.parts || [])
+        .filter((p) => (p.status || "").toLowerCase() === "approved")
+        .map((p) => ({
+          partName: p.partName,
+          qty: Number(p.qty || 0),
+          price: Number(p.price || 0),
+          total: Number(p.qty || 0) * Number(p.price || 0),
+        }));
 
       setParts(partsData);
     } catch (err) {
