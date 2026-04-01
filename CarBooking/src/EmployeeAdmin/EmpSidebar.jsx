@@ -257,7 +257,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           bg-gradient-to-br from-black to-sky-500
           shadow-xl shadow-orange-500/40
           items-center justify-center
-          text-black hover:scale-110 transition-all"
+          text-white hover:scale-110 transition-all"
         >
           <ChevronLeft
             className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""
