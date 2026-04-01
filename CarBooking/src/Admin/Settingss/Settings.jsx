@@ -75,7 +75,7 @@ const Settings = () => {
         path="/admin/serviceslist"
       />
 
-      
+
       <SettingCard
         icon={<FaStar />}
         title="Customer Reviews & Ratings"

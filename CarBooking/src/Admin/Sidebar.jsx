@@ -2,24 +2,37 @@ import { useState, useEffect, useMemo } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
-  Car,
-  ClipboardList,
+  CalendarCheck,
+  UserCheck,
   Wrench,
   Users,
-  UserCog,
   Receipt,
-  PackageSearch,
-  CalendarCheck,
-  BarChart3,
-  Home,
-  Settings,
-  FileText,
+  Car,
   CarFront,
-  ShieldCheck,
-  Fuel,
-  X, ChevronDown, ChevronLeft,
   Boxes,
-  UserCheck,
+  ClipboardList,
+  PackageSearch,
+  Bike,
+  PlusCircle,
+  UserCog,
+  FileText,
+  Home,
+  Package,
+  CalendarDays,
+  Store,
+  Briefcase,
+  ShoppingCart,
+  HandCoins,
+  Settings,
+  ChevronDown,
+  ChevronLeft,
+  X,
+  UserRound,
+  FileBarChart,
+  Hammer,
+  ShieldCheck,
+  BarChart3,
+  Fuel
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -88,24 +101,24 @@ const navItems = [
   },
 
 
-    {
+  {
     label: "Employees",
-    icon: CarFront, 
+    icon: CarFront,
     children: [
       { path: "/admin/employees", label: "Technicians", icon: UserCog },
-       {
-    path: "/admin/overall-attendance",
-    label: "Staff Attendance",
-    icon: ClipboardList,
-  },
+      {
+        path: "/admin/overall-attendance",
+        label: "Staff Attendance",
+        icon: ClipboardList,
+      },
     ],
   },
-  
-  
 
-  
 
- 
+
+
+
+
 
   { path: "/admin/reports", label: "Service Reports", icon: FileText },
 
@@ -134,16 +147,16 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
   const isRouteActive = (path, exact) => {
     const currentPath = location.pathname;
-    
+
     // Direct match
     if (currentPath === path) return true;
-    
+
     // Mapping match (usually for Add/Edit forms)
     if (routeMappings[currentPath] === path) return true;
 
     // For non-exact routes (like categories or lists with sub-pages)
     if (!exact && currentPath.startsWith(path + "/")) return true;
-    
+
     return false;
   };
 
@@ -173,11 +186,26 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const filteredNavItems = useMemo(() => {
     const role = (userProfile?.role || "").toLowerCase();
     if (role === "admin" || role === "manager") return navItems;
-    
-    const allowed = ROLE_PERMISSIONS[role];
-    if (!allowed) return [navItems[0], navItems[navItems.length - 1]]; // Default to dashboard and home
-    
-    return navItems.filter((item) => allowed.includes(item.label));
+
+    const allowed = ROLE_PERMISSIONS[role] || [];
+
+    return navItems
+      .filter((item) => {
+        if (item.children) {
+          // If any child is allowed, show the parent
+          return item.children.some((child) => allowed.includes(child.label));
+        }
+        return allowed.includes(item.label);
+      })
+      .map((item) => {
+        if (item.children) {
+          return {
+            ...item,
+            children: item.children.filter((child) => allowed.includes(child.label)),
+          };
+        }
+        return item;
+      });
   }, [userProfile?.role]);
 
   return (
@@ -192,41 +220,41 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       {/* ========== SIDEBAR ========== */}
       <aside
         className={`fixed top-0 left-0 z-50 h-full
-        bg-white text-blue-900 border-r border-white/10
-        shadow-[0_25px_30px_rgba(0,0,0,0.18)]
-        flex flex-col transition-all duration-300 backdrop-blur-xl
+        bg-white text-slate-900 border-r border-slate-200
+        shadow-[0_0_40px_rgba(0,0,0,0.08)]
+        flex flex-col transition-all duration-300
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0
         ${collapsed ? "w-20" : "w-64"}`}
       >
         {/* ========== LOGO ========== */}
-        <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-200">
+        <div className="flex items-center gap-3 px-4 py-6 border-b border-slate-100">
           <div
-            className="w-11 h-11 rounded-2xl 
-            bg-gradient-to-br from-black to-gray-800
+            className="w-10 h-10 rounded-xl 
+            bg-gray-600
             flex items-center justify-center
-            shadow-lg shadow-blue-500/30
-            shrink-0 border border-white/10"
+            shadow-lg shadow-emerald-600/20
+            shrink-0"
           >
             <img
               src="/logo_no_bg.png"
               alt="Logo"
-              className="w-8 h-8 object-contain drop-shadow-[0_0_6px_rgba(59,130,246,0.6)]"
+              className="w-7 h-7 object-contain"
             />
           </div>
 
           {!collapsed && (
             <div className="overflow-hidden">
-              <h1 className="text-lg font-semibold text-black">
-                Services Booking
+              <h1 className="text-base font-bold text-slate-800 whitespace-nowrap">
+                Service Booking
               </h1>
-              
+              <p className="text-[10px] text-emerald-600 font-medium tracking-wider uppercase">Admin Panel</p>
             </div>
           )}
 
           <button
             onClick={onClose}
-            className="ml-auto p-2 rounded-xl text-gray-500 hover:bg-white/20 lg:hidden"
+            className="ml-auto p-2 rounded-lg text-slate-400 hover:bg-slate-100 lg:hidden"
           >
             <X className="w-5 h-5" />
           </button>
@@ -246,21 +274,21 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 <div key={item.label}>
                   <button
                     onClick={() => toggleMenu(item.label)}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
                     ${hasActiveChild
-                        ? "bg-sky-50 text-sky-700 font-semibold"
-                        : "text-black/80 hover:bg-gray-100"
+                        ? "bg-emerald-50 text-emerald-700 font-semibold shadow-sm"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                       }`}
                   >
-                    <Icon className={`w-5 h-5 shrink-0 ${hasActiveChild ? "text-sky-600" : ""}`} />
+                    <Icon className={`w-5 h-5 shrink-0 ${hasActiveChild ? "text-emerald-600" : ""}`} />
 
                     {!collapsed && (
                       <>
-                        <span className="flex-1 text-left">
+                        <span className="flex-1 text-left text-sm">
                           {item.label}
                         </span>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform ${isMenuOpen ? "rotate-180" : ""} ${hasActiveChild ? "text-sky-600" : ""}`}
+                          className={`w-4 h-4 transition-transform ${isMenuOpen ? "rotate-180" : ""} ${hasActiveChild ? "text-emerald-600" : ""}`}
                         />
                       </>
                     )}
@@ -326,12 +354,12 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         {/* ========== COLLAPSE BUTTON ========== */}
         <button
           onClick={onToggleCollapse}
-          className="hidden lg:flex absolute -right-4 top-1/2 -translate-y-1/2
-          w-9 h-9 rounded-full
-          bg-gradient-to-br from-black to-sky-500
-          shadow-xl shadow-orange-500/40
+          className="hidden lg:flex absolute -right-3.5 top-1/2 -translate-y-1/2
+          w-7 h-7 rounded-full
+          bg-white border border-slate-200
+          shadow-md shadow-slate-200/50
           items-center justify-center
-          text-black hover:scale-110 transition-all"
+          text-slate-400 hover:text-emerald-600 hover:border-emerald-200 transition-all"
         >
           <ChevronLeft
             className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""
