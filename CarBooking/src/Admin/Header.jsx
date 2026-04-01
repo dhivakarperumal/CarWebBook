@@ -25,6 +25,14 @@ const pageTitles = {
   "/admin/addstaff": "Add Employees",
   "/admin/customers": "Customers",
   "/admin/billing": "Billing",
+  "/admin/serviceslist": "Services Bookings",
+  "/admin/priceslist": "Service Pricing",
+  "/admin/allProducts": "All Products",
+  "/admin/productbilling": "Product Billing",
+  "/admin/stockdetails": "Stock Details",
+  "/admin/bikes": "Vehicles",
+  "/admin/addbike": "Add Vehicle",
+  "/admin/orders": "Orders",
   "/admin/addbillings": "Add Billing",
   "/admin/inventory": "Inventory",
   "/admin/additemsinventory": "Add Inventory",
@@ -194,7 +202,7 @@ const Header = ({ onMenuClick }) => {
     try {
       await logout(); // ✅ from AuthContext
       toast.success("Logged out successfully");
-      navigate("/login");
+      navigate("/");
     } catch (err) {
       toast.error("Logout failed");
       console.error(err);
@@ -243,10 +251,14 @@ const Header = ({ onMenuClick }) => {
                 />
 
                 <div
-                  className="absolute right-0 top-[-5px] mt-0 
-                  w-[90vw] max-w-[360px] sm:w-80 
-                  bg-white border border-slate-200 rounded-md shadow-xl 
-                  flex flex-col z-50 animate-fadeIn overflow-hidden"
+                  className="fixed top-16 left-1/2 -translate-x-1/2
+    w-[94vw] max-w-md
+
+    sm:absolute sm:top-full sm:mt-2
+    sm:right-0 sm:left-auto sm:translate-x-0 sm:w-80
+
+    bg-white border border-slate-200 rounded-lg shadow-xl
+    flex flex-col z-50 animate-fadeIn overflow-hidden "
                 >
 
                   {/* Input Row */}
@@ -347,11 +359,10 @@ const Header = ({ onMenuClick }) => {
                 setShowNotifications((p) => !p);
                 setNotificationsSeen(true);
               }}
-              className={`relative p-2 rounded-xl transition-all duration-200 ${
-                showNotifications 
-                  ? "bg-sky-100 text-sky-600 shadow-inner" 
+              className={`relative p-2 rounded-xl transition-all duration-200 ${showNotifications
+                  ? "bg-sky-100 text-sky-600 shadow-inner"
                   : "hover:bg-slate-100 text-slate-600"
-              }`}
+                }`}
             >
               <Bell className={`w-5 h-5 ${showNotifications ? "fill-sky-600" : ""}`} />
 
@@ -372,7 +383,13 @@ const Header = ({ onMenuClick }) => {
                 />
 
                 {/* Dropdown Box */}
-                <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-fadeIn">
+                <div className="fixed top-16 left-1/2 -translate-x-1/2
+    w-[94vw] max-w-sm
+
+    sm:left-auto sm:right-40 sm:translate-x-0 sm:w-80
+
+    bg-white border border-slate-200 rounded-2xl shadow-xl
+    z-50 overflow-hidden animate-fadeIn">
 
                   <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
                     <div className="flex items-center gap-2">
@@ -381,7 +398,7 @@ const Header = ({ onMenuClick }) => {
                         Notifications
                       </h3>
                     </div>
-                    <button 
+                    <button
                       onClick={() => setNotificationsSeen(true)}
                       className="text-[10px] font-bold uppercase tracking-wider text-sky-600 hover:text-sky-700 transition-colors"
                     >
@@ -559,218 +576,3 @@ const Header = ({ onMenuClick }) => {
 };
 
 export default Header;
-
-
-// import { useState, useEffect } from "react";
-// import { useNavigate, Link, useLocation } from "react-router-dom";
-// import {
-//   Menu,
-//   Bell,
-//   Settings,
-//   User,
-//   LogOut,
-//   ChevronDown,
-// } from "lucide-react";
-// import { useAuth } from "../PrivateRouter/AuthContext";
-// import { collection, onSnapshot } from "firebase/firestore";
-// import { db } from "../firebase";
-// import toast from "react-hot-toast";
-
-// const pageTitles = {
-//   "/admin": "Dashboard",
-//   "/admin/services": "Services",
-//   "/admin/bookings": "Bookings Service",
-//   "/admin/orders": "Orders",
-// };
-
-// const Header = ({ onMenuClick }) => {
-//   const [showDropdown, setShowDropdown] = useState(false);
-//   const [showNotifications, setShowNotifications] = useState(false);
-
-//   const [todayBookings, setTodayBookings] = useState([]);
-//   const [todayOrders, setTodayOrders] = useState([]);
-
-//   const { profileName, logout } = useAuth();
-//   const navigate = useNavigate();
-//   const location = useLocation();
-
-//   // 📅 check today
-//   const isToday = (timestamp) => {
-//     if (!timestamp) return false;
-//     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-//     const today = new Date();
-//     return (
-//       date.getDate() === today.getDate() &&
-//       date.getMonth() === today.getMonth() &&
-//       date.getFullYear() === today.getFullYear()
-//     );
-//   };
-
-//   // 🔔 Firestore listeners
-//   useEffect(() => {
-//     const unsubBookings = onSnapshot(collection(db, "bookings"), (snap) => {
-//       const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-//       setTodayBookings(data.filter((b) => isToday(b.createdAt)));
-//     });
-
-//     const unsubOrders = onSnapshot(collection(db, "orders"), (snap) => {
-//       const data = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-//       setTodayOrders(data.filter((o) => isToday(o.createdAt)));
-//     });
-
-//     return () => {
-//       unsubBookings();
-//       unsubOrders();
-//     };
-//   }, []);
-
-//   const totalTodayNotifications =
-//     todayBookings.length + todayOrders.length;
-
-//   const getPageTitle = () => {
-//     if (pageTitles[location.pathname]) return pageTitles[location.pathname];
-//     return "Dashboard";
-//   };
-
-//   const handleLogout = async () => {
-//     try {
-//       await logout();
-//       toast.success("Logged out successfully");
-//       navigate("/login");
-//     } catch {
-//       toast.error("Logout failed");
-//     }
-//   };
-
-//   return (
-//     <header className="sticky top-0 z-30 shadow bg-white">
-//       <div className="flex items-center justify-between px-4 py-3 sm:px-6">
-
-//         {/* LEFT */}
-//         <div className="flex items-center gap-3 min-w-0">
-//           <button
-//             onClick={onMenuClick}
-//             className="lg:hidden p-2 rounded-lg text-slate-500 hover:bg-slate-100"
-//           >
-//             <Menu className="w-6 h-6" />
-//           </button>
-
-//           <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-800 truncate">
-//             {getPageTitle()}
-//           </h1>
-//         </div>
-
-//         {/* RIGHT */}
-//         <div className="flex items-center gap-2">
-
-//           {/* 🔔 NOTIFICATIONS */}
-//           <div className="relative">
-//             <button
-//               onClick={() => setShowNotifications((p) => !p)}
-//               className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100"
-//             >
-//               <Bell className="w-5 h-5" />
-
-//               {totalTodayNotifications > 0 && (
-//                 <span className="absolute -top-1 -right-1 text-[10px] bg-red-500 text-white px-1 rounded-full">
-//                   {totalTodayNotifications}
-//                 </span>
-//               )}
-//             </button>
-
-//             {showNotifications && (
-//               <div className="absolute right-0 mt-2 w-80 bg-white border rounded-xl shadow z-50 max-h-96 overflow-y-auto">
-
-//                 <div className="px-4 py-3 border-b font-semibold text-sm">
-//                   Today Notifications ({totalTodayNotifications})
-//                 </div>
-
-//                 {/* BOOKINGS */}
-//                 {todayBookings.map((b) => (
-//                   <div
-//                     key={b.id}
-//                     onClick={() => {
-//                       navigate(`/admin/bookings/${b.id}`);
-//                       setShowNotifications(false);
-//                     }}
-//                     className="px-4 py-3 border-b hover:bg-slate-50 cursor-pointer"
-//                   >
-//                     <p className="text-sm font-semibold">{b.name}</p>
-//                     <p className="text-xs text-slate-500">
-//                       Booking ID: {b.bookingId}
-//                     </p>
-//                     <p className="text-xs text-slate-400 truncate">
-//                       {b.address || b.location}
-//                     </p>
-//                   </div>
-//                 ))}
-
-//                 {/* ORDERS */}
-//                 {todayOrders.map((o) => (
-//                   <div
-//                     key={o.id}
-//                     onClick={() => {
-//                       navigate(`/admin/orders/${o.id}`);
-//                       setShowNotifications(false);
-//                     }}
-//                     className="px-4 py-3 border-b hover:bg-slate-50 cursor-pointer"
-//                   >
-//                     <p className="text-sm font-semibold">
-//                       {o.customerName}
-//                     </p>
-//                     <p className="text-xs text-slate-500">
-//                       Order ID: {o.orderId}
-//                     </p>
-//                     <p className="text-xs text-slate-400 truncate">
-//                       {o.address}
-//                     </p>
-//                   </div>
-//                 ))}
-
-//                 {totalTodayNotifications === 0 && (
-//                   <p className="text-center text-sm py-6 text-slate-400">
-//                     No new notifications today
-//                   </p>
-//                 )}
-//               </div>
-//             )}
-//           </div>
-
-//           {/* 👤 USER */}
-//           <div className="relative">
-//             <button
-//               onClick={() => setShowDropdown((p) => !p)}
-//               className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100"
-//             >
-//               <div className="w-9 h-9 rounded-full bg-sky-600 text-white flex items-center justify-center font-semibold">
-//                 {profileName?.displayName?.[0]?.toUpperCase() || "A"}
-//               </div>
-//               <ChevronDown className="w-4 h-4 text-slate-400" />
-//             </button>
-
-//             {showDropdown && (
-//               <div className="absolute right-0 mt-2 w-48 bg-white border rounded-xl shadow z-50">
-//                 <Link
-//                   to="/admin/settings"
-//                   className="block px-4 py-2 hover:bg-slate-50 text-sm"
-//                 >
-//                   Settings
-//                 </Link>
-
-//                 <button
-//                   onClick={handleLogout}
-//                   className="w-full text-left px-4 py-2 hover:bg-red-50 text-red-600 text-sm"
-//                 >
-//                   Logout
-//                 </button>
-//               </div>
-//             )}
-//           </div>
-
-//         </div>
-//       </div>
-//     </header>
-//   );
-// };
-
-// export default Header;

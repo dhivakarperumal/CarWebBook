@@ -313,53 +313,55 @@ const Billings = () => {
 
 
       {/* TABLE */}
-      <div className="bg-white rounded-2xl shadow overflow-hidden">
-        <table className="min-w-full text-sm">
-          <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
-            <tr>
-              <th className="px-4 py-4 text-left">S No</th>
-              <th className="px-4 py-4 text-left">Invoice</th>
-              <th className="px-4 py-4 text-left">Customer</th>
-              <th className="px-4 py-4 text-left">Car No</th>
-              <th className="px-4 py-4 text-left">Total</th>
-              <th className="px-4 py-4 text-left">Status</th>
-              <th className="px-4 py-4 text-left">Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {paginatedBills.map((b, i) => (
-              <tr key={b.id} className="border-b border-gray-300">
-                <td className="px-4 py-4">{i + 1}</td>
-                <td className="px-4 py-4">{b.invoiceNo}</td>
-                <td className="px-4 py-4">{b.customerName}</td>
-                <td className="px-4 py-4">{b.bookingId}</td>
-                <td className="px-4 py-4">₹{b.grandTotal}</td>
-                <td className="px-4 py-4">
-                  <StatusBadge status={b.paymentStatus} />
-                </td>
-                <td className="px-4 py-4 flex gap-2">
-                  <button onClick={() => fetchAndPrint(b.id)} className="bg-gray-700 text-white px-2 py-1 rounded">
-                    <Printer size={14} />
-                  </button>
-                  <button onClick={() => deleteInvoice(b.id)} className="bg-red-500 text-white px-2 py-1 rounded">
-                    <Trash2 size={14} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-
-            {filtered.length === 0 && (
+      <div className="bg-white rounded-2xl shadow">
+        <div className="overflow-x-auto no-scrollbar">
+          <table className="min-w-[700px] text-sm whitespace-nowrap">
+            <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
               <tr>
-                <td colSpan="7" className="text-center p-6">
-                  No invoices found
-                </td>
+                <th className="px-4 py-4 text-left">S No</th>
+                <th className="px-4 py-4 text-left">Invoice</th>
+                <th className="px-4 py-4 text-left">Customer</th>
+                <th className="px-4 py-4 text-left">Car No</th>
+                <th className="px-4 py-4 text-left">Total</th>
+                <th className="px-4 py-4 text-left">Status</th>
+                <th className="px-4 py-4 text-left">Actions</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {paginatedBills.map((b, i) => (
+                <tr key={b.id} className="border-b border-gray-300">
+                  <td className="px-4 py-4">{i + 1}</td>
+                  <td className="px-4 py-4">{b.invoiceNo}</td>
+                  <td className="px-4 py-4">{b.customerName}</td>
+                  <td className="px-4 py-4">{b.bookingId}</td>
+                  <td className="px-4 py-4">₹{b.grandTotal}</td>
+                  <td className="px-4 py-4">
+                    <StatusBadge status={b.paymentStatus} />
+                  </td>
+                  <td className="px-4 py-4 flex gap-2">
+                    <button onClick={() => fetchAndPrint(b.id)} className="bg-gray-700 text-white px-2 py-1 rounded">
+                      <Printer size={14} />
+                    </button>
+                    <button onClick={() => deleteInvoice(b.id)} className="bg-red-500 text-white px-2 py-1 rounded">
+                      <Trash2 size={14} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan="7" className="text-center p-6">
+                    No invoices found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-      <Pagination 
+      <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}

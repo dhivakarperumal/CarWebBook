@@ -108,7 +108,7 @@ const StockDetails = () => {
       {/* TABLE VIEW */}
       {view === "table" && (
         <div className="overflow-x-auto bg-white rounded-xl mt-15 shadow">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm whitespace-nowrap">
             <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
               <tr>
                 <th className="px-4 py-4 text-left">S No</th>

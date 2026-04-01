@@ -183,7 +183,7 @@ const Header = ({ onMenuClick }) => {
     try {
       await logout(); // ✅ from AuthContext
       toast.success("Logged out successfully");
-      navigate("/login");
+      navigate("/");
     } catch (err) {
       toast.error("Logout failed");
       console.error(err);
@@ -232,10 +232,15 @@ const Header = ({ onMenuClick }) => {
                 />
 
                 <div
-                  className="absolute right-0 top-[-5px] mt-0 
-                  w-[90vw] max-w-[360px] sm:w-80 
-                  bg-white border border-slate-200 rounded-md shadow-xl 
-                  flex flex-col z-50 animate-fadeIn overflow-hidden"
+                  className="fixed top-16 left-1/2 -translate-x-1/2
+    w-[94vw] max-w-md
+
+    sm:absolute sm:top-full sm:mt-2
+    sm:right-0 sm:left-auto sm:translate-x-0 sm:w-80
+
+    bg-white border border-slate-200 rounded-lg shadow-xl
+    flex flex-col z-50 animate-fadeIn overflow-hidden 
+                  "
                 >
 
                   {/* Input Row */}
@@ -264,7 +269,7 @@ const Header = ({ onMenuClick }) => {
 
                   {/* RESULTS */}
                   {searchTerm && (
-                    <div className="max-h-72 overflow-y-auto">
+                    <div className="max-h-[65vh] overflow-y-auto">
                       {searchResults.length > 0 ? (
                         searchResults.map((item, i) => (
                           <div
@@ -335,11 +340,10 @@ const Header = ({ onMenuClick }) => {
                 setShowNotifications((p) => !p);
                 setNotificationsSeen(true);
               }}
-              className={`relative p-2 rounded-xl transition-all duration-200 ${
-                showNotifications 
-                  ? "bg-sky-100 text-sky-600 shadow-inner" 
-                  : "hover:bg-slate-100 text-slate-600"
-              }`}
+              className={`relative p-2 rounded-xl transition-all duration-200 ${showNotifications
+                ? "bg-sky-100 text-sky-600 shadow-inner"
+                : "hover:bg-slate-100 text-slate-600"
+                }`}
             >
               <Bell className={`w-5 h-5 ${showNotifications ? "fill-sky-600" : ""}`} />
 
@@ -360,8 +364,17 @@ const Header = ({ onMenuClick }) => {
                 />
 
                 {/* Dropdown Box */}
-                <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-fadeIn">
+                <div
+                  className="
+    fixed top-16 left-1/2 -translate-x-1/2
+    w-[94vw] max-w-sm
 
+    sm:left-auto sm:right-40 sm:translate-x-0 sm:w-80
+
+    bg-white border border-slate-200 rounded-2xl shadow-xl
+    z-50 overflow-hidden animate-fadeIn
+  "
+                >
                   <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />

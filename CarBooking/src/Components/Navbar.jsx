@@ -228,6 +228,20 @@ const Navbar = () => {
                             </button>
                           )}
 
+                          {userData?.role === "mechanic" && (
+                            <button
+                              onClick={() => {
+                                navigate("/employee");
+                                setShowMenu(false);
+                              }}
+                              className="w-full cursor-pointer px-4 py-3 text-left
+               text-white hover:text-yellow-300
+               hover:bg-yellow-400/10 transition font-semibold"
+                            >
+                              Employee Panel
+                            </button>
+                          )}
+
                           {/* LOGOUT */}
                           <button
                             onClick={handleLogout}
