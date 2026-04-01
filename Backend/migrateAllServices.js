@@ -19,6 +19,8 @@ const migrate = async () => {
         location VARCHAR(255),
         address TEXT,
         trackNumber VARCHAR(100),
+        vehicleNumber VARCHAR(50),
+        addVehicle TINYINT(1) DEFAULT 0,
         serviceStatus VARCHAR(100) DEFAULT 'Booked',
         estimatedCost DECIMAL(10,2) DEFAULT 0,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -26,6 +28,17 @@ const migrate = async () => {
       )
     `);
     console.log('✅ all_services table created');
+
+    // Add missing columns if they don't exist
+    try {
+      await db.query(`ALTER TABLE all_services ADD COLUMN IF NOT EXISTS vehicleNumber VARCHAR(50)`);
+      await db.query(`ALTER TABLE all_services ADD COLUMN IF NOT EXISTS addVehicle TINYINT(1) DEFAULT 0`);
+      await db.query(`ALTER TABLE all_services ADD COLUMN IF NOT EXISTS assignedEmployeeId INT`);
+      await db.query(`ALTER TABLE all_services ADD COLUMN IF NOT EXISTS assignedEmployeeName VARCHAR(255)`);
+      console.log("Added missing columns to all_services table.");
+    } catch (alterError) {
+      console.log("Columns may already exist or ALTER failed:", alterError.message);
+    }
 
     // 2. Create service_parts table
     await db.query(`
