@@ -2,12 +2,28 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const files = fs.readdirSync(__dirname).filter(f => f.startsWith('migrate') && f.endsWith('.js') && f !== 'runMigrations.js');
+// Define migration order based on dependencies
+const migrationOrder = [
+  'migrateUsers.js',
+  'migrateStaff.js',
+  'migrateProducts.js',
+  'migrateServiceTypes.js',
+  'migrateServices.js',
+  'migrateBookings.js',
+  'migrateAllServices.js',
+  'migrateCarServices.js',
+  'migrateCart.js',
+  'migrateInventory.js',
+  'migrateOrders.js',
+  'migrateProductBills.js',
+  'migrateBilling.js',
+  'migrateAttendance.js'
+];
 
 console.log('Starting migrations...');
-console.log('Files to migrate:', files);
+console.log('Files to migrate:', migrationOrder);
 
-files.forEach(file => {
+migrationOrder.forEach(file => {
     process.stdout.write(`Running ${file}... `);
     try {
         const output = execSync(`node ${file}`, { cwd: __dirname }).toString();

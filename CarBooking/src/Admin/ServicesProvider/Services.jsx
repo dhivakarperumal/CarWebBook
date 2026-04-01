@@ -45,6 +45,7 @@ export default function Services() {
 
   const [services, setServices] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [serviceParts, setServiceParts] = useState({});
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
@@ -56,14 +57,33 @@ export default function Services() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
   const [assigning, setAssigning] = useState(false);
 
+  const [partsModalVisible, setPartsModalVisible] = useState(false);
+  const [selectedParts, setSelectedParts] = useState([]);
+
   const loadData = async () => {
     try {
       const [servRes, empRes] = await Promise.all([
         api.get("/all-services"),
         api.get("/staff"),
       ]);
+
       setServices(servRes.data);
       setEmployees(empRes.data);
+
+      const partsMap = {};
+      await Promise.all(
+        (servRes.data || []).map(async (service) => {
+          try {
+            const detailRes = await api.get(`/all-services/${service.id}`);
+            partsMap[service.id] = detailRes.data?.parts || [];
+          } catch (err) {
+            console.error(`Failed to load parts for service ${service.id}`, err);
+            partsMap[service.id] = [];
+          }
+        })
+      );
+
+      setServiceParts(partsMap);
     } catch (error) {
       console.error(error);
       toast.error("Failed to fetch data");
@@ -99,7 +119,7 @@ export default function Services() {
   const assignedServices = currentMainList.filter((s) => {
     const isAssigned = !!s.assignedEmployeeId;
     if (!isAssigned) return false;
-    
+
     // If mechanic, only see their own assigned tasks
     if (isMechanic) {
       return (s.assignedEmployeeName || "").toLowerCase() === (userProfile?.displayName || "").toLowerCase();
@@ -107,7 +127,7 @@ export default function Services() {
     return true;
   });
 
-  const unassignedServices = isMechanic 
+  const unassignedServices = isMechanic
     ? [] // Mechanics don't see unassigned tasks (usually)
     : currentMainList.filter((s) => !s.assignedEmployeeId);
 
@@ -145,6 +165,24 @@ export default function Services() {
       default:
         return "bg-gray-100 text-gray-700";
     }
+  };
+
+  const getServiceParts = (id) => {
+    return serviceParts[id] || [];
+  };
+
+  const formatPartStatus = (status) => {
+    const normalized = (status || "pending").toLowerCase();
+    if (normalized === "approved") return "Approved";
+    if (normalized === "rejected") return "Rejected";
+    return "Pending";
+  };
+
+  const partStatusClass = (status) => {
+    const normalized = (status || "pending").toLowerCase();
+    if (normalized === "approved") return "bg-green-100 text-green-700";
+    if (normalized === "rejected") return "bg-red-100 text-red-700";
+    return "bg-yellow-100 text-yellow-700";
   };
 
   const handleStatusChange = async (service, newStatus) => {
@@ -231,11 +269,10 @@ export default function Services() {
                 setMainTab("booked");
                 setCurrentPage(1);
               }}
-              className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${
-                mainTab === "booked"
+              className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${mainTab === "booked"
                   ? "bg-white text-blue-600 shadow"
                   : "text-gray-500 hover:text-gray-700"
-              }`}
+                }`}
             >
               Booked
             </button>
@@ -244,11 +281,10 @@ export default function Services() {
                 setMainTab("addVehicle");
                 setCurrentPage(1);
               }}
-              className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${
-                mainTab === "addVehicle"
+              className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${mainTab === "addVehicle"
                   ? "bg-white text-blue-600 shadow"
                   : "text-gray-500 hover:text-gray-700"
-              }`}
+                }`}
             >
               Add Service Vehicle
             </button>
@@ -257,22 +293,20 @@ export default function Services() {
           <div className="flex items-center space-x-1 bg-gray-100 p-1 rounded-lg">
             <button
               onClick={() => setViewMode("table")}
-              className={`flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${
-                viewMode === "table"
+              className={`flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${viewMode === "table"
                   ? "bg-white text-blue-600 shadow"
                   : "text-gray-500 hover:text-gray-700"
-              }`}
+                }`}
             >
               <FaList />
               <span className="hidden sm:inline">Table</span>
             </button>
             <button
               onClick={() => setViewMode("card")}
-              className={`flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${
-                viewMode === "card"
+              className={`flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${viewMode === "card"
                   ? "bg-white text-blue-600 shadow"
                   : "text-gray-500 hover:text-gray-700"
-              }`}
+                }`}
             >
               <FaThLarge />
               <span className="hidden sm:inline">Card</span>
@@ -300,7 +334,7 @@ export default function Services() {
           </button>
         </div>
 
-        
+
         {/* 🔹 SUB TABS */}
         {!isMechanic ? (
           <div className="mb-8 flex space-x-2">
@@ -309,11 +343,10 @@ export default function Services() {
                 setSubTab("assigned");
                 setCurrentPage(1);
               }}
-              className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${
-                subTab === "assigned"
+              className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${subTab === "assigned"
                   ? "bg-blue-600 text-white shadow-md"
                   : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-              }`}
+                }`}
             >
               Assigned ({assignedCount})
             </button>
@@ -322,11 +355,10 @@ export default function Services() {
                 setSubTab("unassigned");
                 setCurrentPage(1);
               }}
-              className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${
-                subTab === "unassigned"
+              className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${subTab === "unassigned"
                   ? "bg-blue-600 text-white shadow-md"
                   : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-              }`}
+                }`}
             >
               Unassigned ({unassignedCount})
             </button>
@@ -400,6 +432,30 @@ export default function Services() {
                           Mechanic: <span className="text-gray-700">{item.assignedEmployeeName}</span>
                         </p>
                       )}
+
+                      {/* 🔧 SPARE PARTS SUMMARY */}
+                      <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3">
+                        <p className="text-xs font-black uppercase tracking-wider text-gray-500 mb-2">
+                          Spare Parts
+                        </p>
+                        {getServiceParts(item.id).length === 0 ? (
+                          <p className="text-sm text-gray-500">No spare parts added (pending).</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {getServiceParts(item.id).map((part, pindex) => (
+                              <div key={part.id || `${part.partName}-${pindex}`} className="flex justify-between items-center bg-white p-2 rounded-lg border border-gray-100">
+                                <div>
+                                  <p className="text-sm font-semibold text-gray-800">{part.partName}</p>
+                                  <p className="text-xs text-gray-500">Qty: {part.qty} | ₹{Number(part.total).toFixed(2)}</p>
+                                </div>
+                                <span className={`text-xs font-bold px-2 py-1 rounded-full ${partStatusClass(part.status)}`}>
+                                  {formatPartStatus(part.status)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* 🔹 TIMELINE */}
@@ -412,22 +468,20 @@ export default function Services() {
                           return (
                             <div key={step} className="flex flex-1 items-center">
                               <div
-                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-black z-10 ${
-                                  active
+                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-black z-10 ${active
                                     ? "border-blue-600 bg-blue-600 text-white"
                                     : "border-gray-200 bg-gray-100 text-gray-400"
-                                }`}
+                                  }`}
                                 title={step}
                               >
                                 {index + 1}
                               </div>
                               {!isLast && (
                                 <div
-                                  className={`h-1 flex-1 mx-1 rounded-full ${
-                                    index < currentStepIndex
+                                  className={`h-1 flex-1 mx-1 rounded-full ${index < currentStepIndex
                                       ? "bg-blue-600"
                                       : "bg-gray-100"
-                                  }`}
+                                    }`}
                                 />
                               )}
                             </div>
@@ -509,7 +563,7 @@ export default function Services() {
               );
             })}
             {paginatedData.length === 0 && (
-               <div className="col-span-full py-20 text-center text-gray-500">
+              <div className="col-span-full py-20 text-center text-gray-500">
                 <FaThLarge className="mx-auto text-4xl mb-4 text-gray-300" />
                 <p className="text-lg">No services found.</p>
               </div>
@@ -518,118 +572,149 @@ export default function Services() {
         ) : (
           /* TABLE VIEW */
           // <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm text-gray-600 whitespace-nowrap">
-                <thead className="border-b border-gray-200 bg-gray-50 text-gray-900">
-                  <tr>
-                    <th className="px-6 py-4 font-bold">ID</th>
-                    <th className="px-6 py-4 font-bold">Customer</th>
-                    <th className="px-6 py-4 font-bold">Vehicle</th>
-                    <th className="px-6 py-4 font-bold">Status</th>
-                    <th className="px-6 py-4 font-bold">Mechanic</th>
-                    <th className="px-6 py-4 font-bold text-right">Action</th>
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm text-gray-600 whitespace-nowrap">
+              <thead className="border-b border-gray-200 bg-gray-50 text-gray-900">
+                <tr>
+                  <th className="px-6 py-4 font-bold">ID</th>
+                  <th className="px-6 py-4 font-bold">Customer</th>
+                  <th className="px-6 py-4 font-bold">Vehicle</th>
+                  <th className="px-6 py-4 font-bold">Status</th>
+                  <th className="px-6 py-4 font-bold">Spare Parts</th>
+                  <th className="px-6 py-4 font-bold">Mechanic</th>
+                  <th className="px-6 py-4 font-bold text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {paginatedData.map((item) => (
+                  <tr key={item.id} className="transition-all hover:bg-gray-50">
+                    <td className="px-6 py-4 font-semibold text-gray-900 whitespace-nowrap">
+                      {item.bookingId || `SER-${item.id}`}
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-bold text-gray-800">{item.name}</p>
+                      <p className="text-xs text-gray-500">{item.phone}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="font-bold text-blue-600">{item.vehicleNumber || 'N/A'}</p>
+                      <p className="text-xs text-gray-500">{item.brand} {item.model}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      {item.assignedEmployeeId ? (
+                        <select
+                          value={item.serviceStatus || "Booked"}
+                          onChange={(e) => handleStatusChange(item, e.target.value)}
+                          className="rounded-lg border border-gray-200 bg-white p-1.5 text-xs text-gray-800 shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        >
+                          {BOOKING_STATUS.slice(BOOKING_STATUS.indexOf(item.serviceStatus || "Booked") === -1 ? 0 : BOOKING_STATUS.indexOf(item.serviceStatus || "Booked")).map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span
+                          className={`inline-flex rounded-full px-2 py-1 text-xs font-bold ${getStatusColor(item.serviceStatus)}`}
+                        >
+                          {item.serviceStatus || "Booked"}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {getServiceParts(item.id).length === 0 ? (
+                        <p className="text-xs text-gray-500">No parts added</p>
+                      ) : (
+                       <div className="space-y-1">
+
+  {/* ✅ show only 2 */}
+  {getServiceParts(item.id).slice(0, 2).map((part, pindex) => (
+    <p key={`${item.id}-part-${pindex}`} className="text-xs text-gray-700">
+      {part.partName} • ₹{Number(part.total).toFixed(2)} • 
+      <span className="font-bold">{formatPartStatus(part.status)}</span>
+    </p>
+  ))}
+
+  {/* ✅ show popup button */}
+  {getServiceParts(item.id).length > 2 && (
+    <button
+      onClick={() => {
+        setSelectedParts(getServiceParts(item.id));
+        setPartsModalVisible(true);
+      }}
+      className="text-blue-600 font-bold text-xs hover:underline"
+    >
+      View All ({getServiceParts(item.id).length})
+    </button>
+  )}
+
+</div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-gray-800">
+                      {item.assignedEmployeeName ? (
+                        item.assignedEmployeeName
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setSelectedBooking(item);
+                            setModalVisible(true);
+                          }}
+                          className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-600 hover:text-white transition-all border border-blue-100"
+                        >
+                          Assign Mode
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex justify-end space-x-2">
+                        {/* Add Spare Button - Show only when Processing */}
+                        {item.serviceStatus === "Processing" && (
+                          <button
+                            onClick={() => navigate("/employee/addserviceparts", { state: { service: item } })}
+                            className="rounded-lg p-2 text-orange-400 hover:bg-orange-50 hover:text-orange-600 transition-all border border-transparent hover:border-orange-100"
+                            title="Add Spare Parts"
+                          >
+                            <FaPlus />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => navigate(`${pathPrefix}/services/${item.id}`)}
+                          className="rounded-lg p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100"
+                          title="View"
+                        >
+                          <FaEye />
+                        </button>
+                        <button
+                          onClick={() => navigate(`${pathPrefix}/addservices/${item.id}`)}
+                          className="rounded-lg p-2 text-gray-400 hover:bg-green-50 hover:text-green-600 transition-all border border-transparent hover:border-green-100"
+                          title="Edit"
+                        >
+                          <FaEdit />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-all border border-transparent hover:border-red-100"
+                          title="Delete"
+                        >
+                          <FaTrash />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {paginatedData.map((item) => (
-                    <tr key={item.id} className="transition-all hover:bg-gray-50">
-                      <td className="px-6 py-4 font-semibold text-gray-900 whitespace-nowrap">
-                        {item.bookingId || `SER-${item.id}`}
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="font-bold text-gray-800">{item.name}</p>
-                        <p className="text-xs text-gray-500">{item.phone}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="font-bold text-blue-600">{item.vehicleNumber || 'N/A'}</p>
-                        <p className="text-xs text-gray-500">{item.brand} {item.model}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        {item.assignedEmployeeId ? (
-                          <select
-                            value={item.serviceStatus || "Booked"}
-                            onChange={(e) => handleStatusChange(item, e.target.value)}
-                            className="rounded-lg border border-gray-200 bg-white p-1.5 text-xs text-gray-800 shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                          >
-                            {BOOKING_STATUS.slice(BOOKING_STATUS.indexOf(item.serviceStatus || "Booked") === -1 ? 0 : BOOKING_STATUS.indexOf(item.serviceStatus || "Booked")).map((s) => (
-                              <option key={s} value={s}>{s}</option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span
-                            className={`inline-flex rounded-full px-2 py-1 text-xs font-bold ${getStatusColor(item.serviceStatus)}`}
-                          >
-                            {item.serviceStatus || "Booked"}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 font-semibold text-gray-800">
-                        {item.assignedEmployeeName ? (
-                          item.assignedEmployeeName
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setSelectedBooking(item);
-                              setModalVisible(true);
-                            }}
-                            className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-600 hover:text-white transition-all border border-blue-100"
-                          >
-                            Assign Mode
-                          </button>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end space-x-2">
-                          {/* Add Spare Button - Show only when Processing */}
-                          {item.serviceStatus === "Processing" && (
-                            <button
-                              onClick={() => navigate("/employee/addserviceparts", { state: { service: item } })}
-                              className="rounded-lg p-2 text-orange-400 hover:bg-orange-50 hover:text-orange-600 transition-all border border-transparent hover:border-orange-100"
-                              title="Add Spare Parts"
-                            >
-                              <FaPlus />
-                            </button>
-                          )}
-                          <button
-                            onClick={() => navigate(`${pathPrefix}/services/${item.id}`)}
-                            className="rounded-lg p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100"
-                            title="View"
-                          >
-                            <FaEye />
-                          </button>
-                          <button
-                            onClick={() => navigate(`${pathPrefix}/addservices/${item.id}`)}
-                            className="rounded-lg p-2 text-gray-400 hover:bg-green-50 hover:text-green-600 transition-all border border-transparent hover:border-green-100"
-                            title="Edit"
-                          >
-                            <FaEdit />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-all border border-transparent hover:border-red-100"
-                            title="Delete"
-                          >
-                            <FaTrash />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {paginatedData.length === 0 && (
-                    <tr>
-                      <td colSpan="6" className="py-12 text-center text-gray-500 text-base">
-                        No services found in this category.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
+                ))}
+                {paginatedData.length === 0 && (
+                  <tr>
+                    <td colSpan="7" className="py-12 text-center text-gray-500 text-base">
+                      No services found in this category.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
           // </div>
         )}
 
         {/* 📚 PAGINATION */}
-        <Pagination 
+        <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
@@ -688,6 +773,46 @@ export default function Services() {
           </div>
         </div>
       )}
+
+      {partsModalVisible && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+    
+    <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+
+      <h2 className="text-xl font-bold mb-4">
+        Spare Parts List
+      </h2>
+
+      <div className="max-h-80 overflow-y-auto space-y-3">
+        {selectedParts.map((part, index) => (
+          <div key={index} className="flex justify-between border p-3 rounded-lg">
+            
+            <div>
+              <p className="font-semibold">{part.partName}</p>
+              <p className="text-xs text-gray-500">Qty: {part.qty}</p>
+            </div>
+
+            <div className="text-right">
+              <p className="font-bold">₹{Number(part.total).toFixed(2)}</p>
+              <span className={`text-xs px-2 py-1 rounded ${partStatusClass(part.status)}`}>
+                {formatPartStatus(part.status)}
+              </span>
+            </div>
+
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={() => setPartsModalVisible(false)}
+        className="mt-4 w-full bg-blue-600 text-white py-2 rounded-xl"
+      >
+        Close
+      </button>
+
+    </div>
+  </div>
+)}
     </div>
   );
 }
