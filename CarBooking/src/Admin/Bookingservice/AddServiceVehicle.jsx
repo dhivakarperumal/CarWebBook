@@ -19,15 +19,18 @@ const ISSUE_OPTIONS = [
 ];
 
 const baseInput =
-  "w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 shadow-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100 placeholder:text-gray-400";
+  "w-full bg-white rounded-lg border px-5 py-3 text-gray-900 shadow-sm outline-none transition focus:ring-2 focus:ring-black";
+
+const errorClass = "border-red-400";
+const normalClass = "border-gray-300";
 
 const Field = ({ label, required, error, children }) => (
   <div>
-    <label className="block mb-1.5 text-sm font-medium text-gray-600">
+    <label className="block mb-2 text-sm text-gray-600">
       {label} {required && <span className="text-red-500">*</span>}
     </label>
     {children}
-    {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+    <p className="mt-1 h-4 text-xs text-red-500">{error || ""}</p>
   </div>
 );
 
@@ -135,7 +138,9 @@ const AddServiceVehicle = () => {
   /* ===== SUCCESS STATE ===== */
   if (success) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 p-8">
+      <section className="relative py-24 bg-black text-white overflow-hidden">
+        <div className="relative max-w-6xl mx-auto">
+          <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 p-8">
         <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center">
           <CheckCircle className="w-10 h-10 text-emerald-500" />
         </div>
@@ -159,40 +164,38 @@ const AddServiceVehicle = () => {
           </button>
         </div>
       </div>
+    </div>
+  </section>
     );
   }
 
   /* ===== FORM ===== */
   return (
-    <div className="max-w-6xl bg-white rounded-xl shadow-lg mx-auto p-9 pb-16">
+    <section className="relative py-4 text-white overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 transition"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-        <div className="flex items-center gap-2">
-         
+      <div className="relative max-w-6xl mx-auto mb-6">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 rounded-xl hover:bg-white/10 text-white transition"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           <div>
-            <h1 className="text-lg font-bold text-gray-800 leading-none">Add Service Vehicle</h1>
-            <p className="text-xs text-gray-400 mt-0.5 whitespace-pre-line">Register a new vehicle for service (Auto-creates login using Email & Phone)</p>
+            <h1 className="text-lg font-bold text-white leading-none">Add Service Vehicle</h1>
+            <p className="text-xs text-gray-900 mt-0.5 whitespace-pre-line">Register a new vehicle for service (Auto-creates login using Email & Phone)</p>
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="relative max-w-6xl mx-auto">
+        {/* Form Card */}
+        <form onSubmit={handleSubmit} className="rounded-3xl border border-gray-300 bg-white/5 backdrop-blur-xl p-10 space-y-2">
         {/* CUSTOMER DETAILS */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-sky-100 text-sky-600 flex items-center justify-center text-xs font-bold">1</span>
-            Customer Details
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Field label="Customer Name" required error={errors.name}>
               <input
-                className={baseInput}
+                className={`${baseInput} ${errors.name ? errorClass : normalClass}`}
                 placeholder="e.g. Rajan Kumar"
                 value={form.name}
                 onChange={(e) => handleChange("name", e.target.value)}
@@ -201,7 +204,7 @@ const AddServiceVehicle = () => {
 
             <Field label="Phone Number" required error={errors.phone}>
               <input
-                className={baseInput}
+                className={`${baseInput} ${errors.phone ? errorClass : normalClass}`}
                 placeholder="e.g. 9876543210"
                 inputMode="numeric"
                 value={form.phone}
@@ -211,7 +214,7 @@ const AddServiceVehicle = () => {
 
             <Field label="Customer Email (User Login)" required error={errors.email}>
               <input
-                className={baseInput}
+                className={`${baseInput} ${errors.email ? errorClass : normalClass}`}
                 placeholder="customer@email.com"
                 type="email"
                 value={form.email}
@@ -221,25 +224,19 @@ const AddServiceVehicle = () => {
 
             <Field label="Service Address">
               <input
-                className={baseInput}
+                className={`${baseInput} ${errors.address ? errorClass : normalClass}`}
                 placeholder="House / Street / Area"
                 value={form.address}
                 onChange={(e) => handleChange("address", e.target.value)}
               />
             </Field>
           </div>
-        </div>
 
-        {/* VEHICLE DETAILS */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-cyan-100 text-cyan-600 flex items-center justify-center text-xs font-bold">2</span>
-            Vehicle Details
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* VEHICLE DETAILS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Field label="Vehicle Type" required error={errors.vehicleType}>
               <select
-                className={baseInput}
+                className={`${baseInput} ${errors.vehicleType ? errorClass : normalClass}`}
                 value={form.vehicleType}
                 onChange={(e) => handleChange("vehicleType", e.target.value)}
               >
@@ -252,7 +249,7 @@ const AddServiceVehicle = () => {
 
             <Field label="Vehicle Number" required error={errors.vehicleNumber}>
               <input
-                className={`${baseInput} uppercase`}
+                className={`${baseInput} uppercase ${errors.vehicleNumber ? errorClass : normalClass}`}
                 placeholder="e.g. TN01AB1234"
                 value={form.vehicleNumber}
                 onChange={(e) => handleChange("vehicleNumber", e.target.value.toUpperCase())}
@@ -261,7 +258,7 @@ const AddServiceVehicle = () => {
 
             <Field label="Brand">
               <input
-                className={baseInput}
+                className={`${baseInput} ${errors.brand ? errorClass : normalClass}`}
                 placeholder="e.g. Honda, Hyundai, BMW"
                 value={form.brand}
                 onChange={(e) => handleChange("brand", e.target.value)}
@@ -270,25 +267,19 @@ const AddServiceVehicle = () => {
 
             <Field label="Model">
               <input
-                className={baseInput}
+                className={`${baseInput} ${errors.model ? errorClass : normalClass}`}
                 placeholder="e.g. City, Creta, 3 Series"
                 value={form.model}
                 onChange={(e) => handleChange("model", e.target.value)}
               />
             </Field>
           </div>
-        </div>
 
-        {/* ISSUE */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <span className="w-5 h-5 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xs font-bold">3</span>
-            Issue / Complaint
-          </h3>
+          {/* ISSUE */}
           <div className="space-y-4">
             <Field label="Select Issue">
               <select
-                className={baseInput}
+                className={`${baseInput} ${errors.issue ? errorClass : normalClass}`}
                 value={form.issue}
                 onChange={(e) => handleChange("issue", e.target.value)}
               >
@@ -302,7 +293,7 @@ const AddServiceVehicle = () => {
             {form.issue === "Others" && (
               <Field label="Describe the Issue">
                 <textarea
-                  className={`${baseInput} resize-none`}
+                  className={`${baseInput} resize-none ${errors.otherIssue ? errorClass : normalClass}`}
                   rows={3}
                   placeholder="Describe the problem in detail..."
                   value={form.otherIssue}
@@ -311,27 +302,22 @@ const AddServiceVehicle = () => {
               </Field>
             )}
           </div>
-        </div>
-
         {/* SUBMIT */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-2">
+        <div className="flex justify-end">
           <button
             type="submit"
             disabled={submitting}
-            className="flex-1 py-3.5 rounded-xl bg-gradient-to-r from-black to-cyan-400 text-white font-semibold text-sm shadow-md hover:opacity-90 hover:scale-[1.01] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full md:w-auto px-10 py-4 rounded-full font-semibold text-white
+bg-gradient-to-r from-black to-cyan-400
+hover:scale-105 transition-all duration-300
+shadow-lg shadow-sky-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {submitting ? "Adding Service..." : "🚗 Add Service Vehicle"}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="sm:w-36 py-3.5 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50 transition"
-          >
-            Cancel
+            {submitting ? "Adding Service..." : " Add Service Vehicle →"}
           </button>
         </div>
       </form>
     </div>
+  </section>
   );
 };
 
