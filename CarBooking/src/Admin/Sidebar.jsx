@@ -228,7 +228,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
       >
         {/* ========== LOGO ========== */}
         <div className="flex items-center gap-3 px-4 py-6 border-b border-slate-100">
-           <div
+          <div
             className="w-11 h-11 rounded-2xl 
             bg-gradient-to-br from-black to-gray-800
             flex items-center justify-center
