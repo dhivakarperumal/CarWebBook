@@ -57,7 +57,7 @@ const Account = () => {
       <div className="min-h-screen bg-black text-white py-10">
         <PageContainer className="overflow-visible">
           {/* ===== MOBILE TABS ===== */}
-          <div className="md:hidden flex gap-2 overflow-x-auto pb-3 mb-4 hide-scrollbar">
+          <div className="md:hidden flex gap-2 overflow-x-auto pb-3 mb-4 hide-scrollbar bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-4 py-3 rounded-2xl border border-sky-400/30">
             {[
               ["servicestatus", "Service"],
               ["personal", "Profile"],
@@ -69,11 +69,11 @@ const Account = () => {
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
-                className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-semibold
+                className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-semibold transition-all
                   ${
                     activeTab === key
-                      ? "bg-sky-500 text-black"
-                      : "bg-slate-800 text-white"
+                      ? "bg-gradient-to-r from-sky-500 to-cyan-400 text-black shadow-lg shadow-sky-500/50"
+                      : "bg-slate-700/50 text-white hover:bg-slate-600/50"
                   }`}
               >
                 {label}
