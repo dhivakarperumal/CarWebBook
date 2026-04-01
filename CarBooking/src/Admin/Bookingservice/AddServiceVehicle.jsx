@@ -171,19 +171,19 @@ const AddServiceVehicle = () => {
 
   /* ===== FORM ===== */
   return (
-    <section className="relative py-4 text-white overflow-hidden">
+    <section className="relative py-4 text-gray-800 overflow-hidden">
       {/* Header */}
       <div className="relative max-w-6xl mx-auto mb-6">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 rounded-xl hover:bg-white/10 text-white transition"
+            className="p-2 rounded-xl hover:bg-gray-200 text-gray-600 transition"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-lg font-bold text-white leading-none">Add Service Vehicle</h1>
-            <p className="text-xs text-gray-900 mt-0.5 whitespace-pre-line">Register a new vehicle for service (Auto-creates login using Email & Phone)</p>
+            <h1 className="text-xl font-bold text-gray-900 leading-none">Add Service Vehicle</h1>
+            <p className="text-xs text-gray-500 mt-1 whitespace-pre-line">Register a new vehicle for service (Auto-creates login using Email & Phone)</p>
           </div>
         </div>
       </div>
