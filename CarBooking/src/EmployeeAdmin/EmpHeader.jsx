@@ -36,8 +36,7 @@ const Header = ({ onMenuClick }) => {
 
   const searchInputRef = useRef(null);
 
-  const [todayBookings, setTodayBookings] = useState([]);
-  const [todayOrders, setTodayOrders] = useState([]);
+  const [assignedNotifications, setAssignedNotifications] = useState([]);
 
   const { profileName, logout } = useAuth();
 
@@ -153,22 +152,27 @@ const Header = ({ onMenuClick }) => {
   };
 
   useEffect(() => {
-    const fetchTodayData = async () => {
+    const fetchAssignedNotifications = async () => {
       try {
-        const [bookingsRes, ordersRes] = await Promise.all([
-          api.get("/bookings"),
-          api.get("/orders")
-        ]);
-        const bData = bookingsRes.data || [];
-        const oData = ordersRes.data || [];
-        setTodayBookings(bData.filter((b) => isToday(b.created_at || b.createdAt)));
-        setTodayOrders(oData.filter((o) => isToday(o.created_at || o.createdAt)));
+        const res = await api.get("/bookings");
+        const allBookings = res.data || [];
+        const myName = (profileName?.displayName || "").toLowerCase();
+        // Show bookings assigned to this employee with new/pending status
+        const myNew = allBookings.filter((b) => {
+          const assignedTo = (b.assignedEmployeeName || "").toLowerCase();
+          const isAssignedToMe = assignedTo === myName;
+          const isNewStatus = ["assigned", "booked", "pending"].includes(
+            (b.status || "").toLowerCase()
+          );
+          return isAssignedToMe && isNewStatus && b.status !== "Cancelled";
+        });
+        setAssignedNotifications(myNew);
       } catch (err) {
         console.error(err);
       }
     };
-    fetchTodayData();
-  }, [location.pathname]); // Refetch on navigation to update counts
+    fetchAssignedNotifications();
+  }, [location.pathname, profileName?.displayName]);
 
   const getPageTitle = () => {
     if (pageTitles[location.pathname]) return pageTitles[location.pathname];
@@ -349,9 +353,9 @@ const Header = ({ onMenuClick }) => {
               <Bell className={`w-5 h-5 ${showNotifications ? "fill-sky-600" : ""}`} />
 
               {/* Count Badge */}
-              {!notificationsSeen && todayBookings.length + todayOrders.length > 0 && (
+              {!notificationsSeen && assignedNotifications.length > 0 && (
                 <span className="absolute top-1 right-1 min-w-[17px] h-[17px] text-[10px] font-bold flex items-center justify-center bg-red-500 text-white rounded-full border-2 border-white shadow-sm px-0.5 animate-pulse">
-                  {todayBookings.length + todayOrders.length}
+                  {assignedNotifications.length}
                 </span>
               )}
             </button>
@@ -378,83 +382,62 @@ const Header = ({ onMenuClick }) => {
                 >
                   <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/50">
                     <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
+                      <div className={`w-2 h-2 rounded-full ${assignedNotifications.length > 0 ? 'bg-red-500 animate-pulse' : 'bg-slate-300'}`} />
                       <h3 className="text-sm font-bold text-slate-800">
-                        Notifications
+                        My Assignments
                       </h3>
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-sky-600">
-                      {todayBookings.length + todayOrders.length} New
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                      assignedNotifications.length > 0
+                        ? 'bg-red-100 text-red-600'
+                        : 'bg-slate-100 text-slate-400'
+                    }`}>
+                      {assignedNotifications.length} New
                     </span>
                   </div>
 
                   {/* LIST */}
                   <div className="max-h-80 overflow-y-auto custom-scrollbar">
 
-                    {/* BOOKINGS */}
-                    {todayBookings.map((b) => (
+                    {/* ASSIGNED TASKS */}
+                    {assignedNotifications.map((b) => (
                       <div
                         key={b.id}
                         onClick={() => {
-                          navigate("/employee/bookings");
+                          navigate("/employee/assignservices");
                           setShowNotifications(false);
                         }}
                         className="px-4 py-4 border-b border-slate-50 hover:bg-sky-50/50 cursor-pointer transition-colors relative group"
                       >
                         <div className="flex justify-between items-start mb-1">
                           <p className="text-sm font-bold text-slate-800 group-hover:text-sky-700 transition-colors">
-                            {b.name}
+                            {b.brand} {b.model}
                           </p>
-                          {!notificationsSeen && <div className="w-2 h-2 rounded-full bg-sky-500 shadow-sm" />}
+                          {!notificationsSeen && <div className="w-2 h-2 rounded-full bg-red-500 shadow-sm" />}
                         </div>
                         <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5 mb-1.5">
                           <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">ID: {b.bookingId}</span>
                           <span className="text-slate-300">•</span>
-                          <span className="text-slate-400">Booking</span>
+                          <span className="bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-bold">{b.status}</span>
                         </p>
-                        <p className="text-[11px] text-slate-400 truncate opacity-80 italic">
-                          {b.address || b.location || "No address provided"}
+                        <p className="text-[11px] text-slate-500 truncate">
+                          Customer: <span className="font-semibold text-slate-700">{b.name}</span>
                         </p>
-                      </div>
-                    ))}
-
-                    {/* ORDERS */}
-                    {todayOrders.map((o) => (
-                      <div
-                        key={o.id}
-                        onClick={() => {
-                          navigate(`/employee/billing`);
-                          setShowNotifications(false);
-                        }}
-                        className="px-4 py-4 border-b border-slate-50 hover:bg-sky-50/50 cursor-pointer transition-colors relative group"
-                      >
-                        <div className="flex justify-between items-start mb-1">
-                          <p className="text-sm font-bold text-slate-800 group-hover:text-sky-700 transition-colors">
-                            {o.shipping?.name || "Unknown Customer"}
-                          </p>
-                          {!notificationsSeen && <div className="w-2 h-2 rounded-full bg-sky-500 shadow-sm" />}
-                        </div>
-                        <p className="text-[11px] font-semibold text-slate-500 flex items-center gap-1.5 mb-1.5">
-                          <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-600">ID: {o.orderId || o.id}</span>
-                          <span className="text-slate-300">•</span>
-                          <span className="text-slate-400 uppercase">Order</span>
-                        </p>
-                        <p className="text-[11px] text-sky-600 font-bold">
-                          Amount: {o.total}
+                        <p className="text-[11px] text-slate-400 mt-0.5">
+                          {b.vehicleNumber || "No Plate"} • {b.serviceType || b.issue || ""}
                         </p>
                       </div>
                     ))}
-
 
                     {/* EMPTY STATE */}
-                    {todayBookings.length + todayOrders.length === 0 && (
+                    {assignedNotifications.length === 0 && (
                       <div className="flex flex-col items-center justify-center gap-2 px-6 py-10 text-center">
                         <Bell className="w-10 h-10 text-slate-300" />
                         <p className="text-sm text-slate-500 font-medium">
                           You're all caught up
                         </p>
                         <p className="text-xs text-slate-400">
-                          No new notifications right now
+                          No new assignments right now
                         </p>
                       </div>
                     )}
