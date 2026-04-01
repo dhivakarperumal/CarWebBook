@@ -248,11 +248,11 @@ const EmpDashboard = () => {
               <table className="min-w-full text-sm">
                 <thead>
                   <tr>
-                    <th className="px-6 py-5 text-left font-bold">Vehicle No</th>
+                    <th className="px-6 py-5 text-left font-bold">S No</th>
                     <th className="px-6 py-5 text-left font-bold">Vehicle Info</th>
                     <th className="px-6 py-5 text-left font-bold">Status</th>
                     <th className="px-6 py-5 text-left font-bold">Customer</th>
-                    <th className="px-6 py-5 text-right font-bold">Actions</th>
+                    <th className="px-6 py-5 text-left font-bold">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -268,7 +268,7 @@ const EmpDashboard = () => {
                   ) : (
                     myTasks.map((task,ind) => (
                       <tr key={task.id} className="hover:bg-gray-50 transition">
-                          <td className="px-6 py-5">
+                          <td className="px-6 text-center py-5">
                           {ind+1}
                         </td>
                         <td className="px-6 py-5">
@@ -300,7 +300,7 @@ const EmpDashboard = () => {
                            )}
                            <button 
                             onClick={() => navigate("/employee/assignservices")}
-                            className="p-2 text-gray-400 hover:text-blue-600 transition"
+                            className="p-2 text-gray-400 text-center hover:text-blue-600 transition"
                             title="View Details"
                           >
                             <AlertCircle size={20} />
