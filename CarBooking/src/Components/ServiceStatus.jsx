@@ -188,7 +188,7 @@ useEffect(() => {
         });
       } else if (type === 'issue') {
         setApprovingPartId(itemId);
-        await api.put(`/all-services/${serviceId}/issues/${itemId}/status`, {
+        await api.put(`/all-services/${serviceId}/issue-status`, {
           issueStatus: status,
         });
       }
@@ -232,6 +232,10 @@ useEffect(() => {
                 : b
             )
           );
+          // Also update selectedBooking if it's the same
+          if (selectedBooking && selectedBooking.id === linkedService.bookingDocId) {
+            setSelectedBooking(prev => ({ ...prev, issueStatus: status }));
+          }
         }
       }
 

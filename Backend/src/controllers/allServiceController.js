@@ -361,7 +361,7 @@ exports.addServiceIssueEntry = async (req, res) => {
 
     const [result] = await db.query(
       'INSERT INTO service_issues (all_service_id, issue, issueAmount, issueStatus) VALUES (?, ?, ?, ?)',
-      [id, issue.trim(), issueAmount != null ? issueAmount : 0, 'pending']
+      [id, issue.trim(), parseFloat(issueAmount) || 0, 'pending']
     );
 
     const newIssueId = result.insertId;
@@ -369,7 +369,7 @@ exports.addServiceIssueEntry = async (req, res) => {
     // Sync to bookings main issue fields for backward compatibility
     const bookingDocId = service[0].bookingDocId;
     if (bookingDocId) {
-      await db.query('UPDATE bookings SET issue = ?, issueAmount = ?, issueStatus = ? WHERE id = ?', [issue.trim(), issueAmount != null ? issueAmount : 0, 'pending', bookingDocId]);
+      await db.query('UPDATE bookings SET issue = ?, issueAmount = ?, issueStatus = ? WHERE id = ?', [issue.trim(), parseFloat(issueAmount) || 0, 'pending', bookingDocId]);
     }
 
     const [insertedIssue] = await db.query('SELECT * FROM service_issues WHERE id = ?', [newIssueId]);
@@ -389,9 +389,15 @@ exports.updateServiceIssueEntry = async (req, res) => {
       return res.status(400).json({ message: 'Issue text is required' });
     }
 
+    // Check if service exists
+    const [serviceCheck] = await db.query('SELECT id FROM all_services WHERE id = ?', [serviceId]);
+    if (!serviceCheck.length) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
     const [result] = await db.query(
       'UPDATE service_issues SET issue = ?, issueAmount = ? WHERE id = ? AND all_service_id = ?',
-      [issue.trim(), issueAmount != null ? issueAmount : 0, issueId, serviceId]
+      [issue.trim(), parseFloat(issueAmount) || 0, issueId, serviceId]
     );
 
     if (result.affectedRows === 0) {
@@ -413,6 +419,12 @@ exports.updateServiceIssueEntryStatus = async (req, res) => {
     const normalized = (issueStatus || '').toLowerCase();
     if (!['pending', 'approved', 'rejected'].includes(normalized)) {
       return res.status(400).json({ message: 'Invalid issue status' });
+    }
+
+    // Check if service exists
+    const [serviceCheck] = await db.query('SELECT id FROM all_services WHERE id = ?', [serviceId]);
+    if (!serviceCheck.length) {
+      return res.status(404).json({ message: 'Service not found' });
     }
 
     const [result] = await db.query(
