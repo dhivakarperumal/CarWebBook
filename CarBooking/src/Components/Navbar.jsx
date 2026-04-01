@@ -66,6 +66,9 @@ const Navbar = () => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setShowMenu(false);
       }
+      if (pagesDropdownRef.current && !pagesDropdownRef.current.contains(e.target)) {
+        setShowPagesDropdown(false);
+      }
     };
 
     document.addEventListener("click", handleClickOutside);
@@ -82,9 +85,16 @@ const Navbar = () => {
     { label: "SERVICES", path: "/services" },
     { label: "PRICING", path: "/pricing" },
     { label: "PRODUCTS", path: "/products" },
+    { label: "BUY VEHICLES", path: "/buy-vehicles" },
+  ];
+
+  const pageLinks = [
     { label: "ABOUT", path: "/about" },
     { label: "CONTACT US", path: "/contact" },
   ];
+
+  const [showPagesDropdown, setShowPagesDropdown] = useState(false);
+  const pagesDropdownRef = useRef(null);
 
   return (
     <header className="sticky top-0 z-50">
@@ -133,6 +143,53 @@ const Navbar = () => {
                   {item.label}
                 </button>
               ))}
+              
+              {/* PAGES DROPDOWN */}
+              <div className="relative" ref={pagesDropdownRef}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowPagesDropdown((prev) => !prev);
+                  }}
+                  className={`relative cursor-pointer text-[14px] font-bold
+        transition-all duration-300
+        ${showPagesDropdown
+                      ? "text-sky-400 drop-shadow-[0_0_10px_rgba(56,189,248,0.8)]"
+                      : "text-gray-300 hover:text-sky-400 hover:drop-shadow-[0_0_8px_rgba(56,189,248,0.6)]"
+                    }
+        after:absolute after:left-1/2 after:-bottom-2
+        after:h-[2px] after:-translate-x-1/2
+        after:bg-gradient-to-r after:from-sky-400 after:to-cyan-300
+        after:transition-all after:duration-300
+        ${showPagesDropdown ? "after:w-full" : "after:w-0"}`}
+                >
+                  PAGES ▼
+                </button>
+                
+                {/* PAGES DROPDOWN MENU */}
+                {showPagesDropdown && (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute top-12 left-0 w-48 rounded-lg
+                  bg-black border border-sky-400/30
+                  shadow-[0_0_30px_rgba(56,189,248,0.25)] overflow-hidden z-50"
+                  >
+                    {pageLinks.map((item) => (
+                      <button
+                        key={item.label}
+                        onClick={() => {
+                          navigate(item.path);
+                          setShowPagesDropdown(false);
+                        }}
+                        className="w-full px-4 py-3 text-left text-gray-300
+                      hover:bg-sky-400/10 hover:text-sky-400 transition text-sm font-semibold"
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </nav>
 
             {/* CTA + USER */}
@@ -308,7 +365,7 @@ const Navbar = () => {
       {/* MOBILE MENU */}
       <div
         className={`md:hidden bg-black/95 backdrop-blur transition-all duration-300 overflow-hidden
-        ${isOpen ? "max-h-[420px] border-t border-sky-400/20" : "max-h-0"}`}
+        ${isOpen ? "max-h-[520px] border-t border-sky-400/20" : "max-h-0"}`}
       >
         <nav className="flex flex-col px-6 py-6 gap-6">
           {links.map((item) => (
@@ -328,6 +385,33 @@ const Navbar = () => {
               {item.label}
             </button>
           ))}
+
+          {/* MOBILE PAGES DROPDOWN */}
+          <div>
+            <button
+              onClick={() => setShowPagesDropdown(!showPagesDropdown)}
+              className="text-xs font-bold tracking-[0.2em] text-left transition text-gray-300 hover:text-sky-400 w-full"
+            >
+              PAGES {showPagesDropdown ? "▼" : "▶"}
+            </button>
+            {showPagesDropdown && (
+              <div className="mt-2 flex flex-col gap-2 pl-4 border-l-2 border-sky-400/30">
+                {pageLinks.map((item) => (
+                  <button
+                    key={item.label}
+                    onClick={() => {
+                      navigate(item.path);
+                      setIsOpen(false);
+                      setShowPagesDropdown(false);
+                    }}
+                    className="text-xs font-bold tracking-[0.2em] text-left text-gray-300 hover:text-sky-400 transition"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           <button
             onClick={() => {
