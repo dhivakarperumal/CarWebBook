@@ -92,19 +92,11 @@ const navItems = [
 
 
   {
-    label: "Bike Marketplace",
-    icon: Bike, 
-    children: [
-      { path: "/admin/bikes", label: "Bike Inventory", icon: ClipboardList },
-      { path: "/admin/addbike", label: "Add Bike Details", icon: PlusCircle },
-    ],
-  },
-  {
-    label: "Car Marketplace",
+    label: "Vehicle Marketplace",
     icon: Car, 
     children: [
-      { path: "/admin/cars", label: "Car Inventory", icon: ClipboardList },
-      { path: "/admin/addcar", label: "Add Car Details", icon: PlusCircle },
+      { path: "/admin/inventory-list", label: "Vehicle Inventory", icon: ClipboardList },
+      { path: "/admin/add-vehicle", label: "Add New Vehicle", icon: PlusCircle },
     ],
   },
 

@@ -122,7 +122,7 @@ const AllBikes = ({ defaultType = "all" }) => {
 
         <div className="flex flex-wrap items-center gap-4">
            <div className="flex items-center gap-3 bg-blue-50 px-6 py-4 rounded-2xl border border-blue-100">
-              <span className="text-3xl font-black text-blue-600">{bikes.length}</span>
+              <span className="text-3xl font-black text-blue-600">{filteredBikes.length}</span>
               <div className="flex flex-col leading-none">
                  <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Total</span>
                  <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Units</span>
@@ -130,7 +130,7 @@ const AllBikes = ({ defaultType = "all" }) => {
            </div>
            
            <button 
-             onClick={() => navigate(defaultType === 'Car' ? "/admin/addcar" : "/admin/addbike")}
+             onClick={() => navigate("/admin/add-vehicle")}
              className="flex items-center gap-2 bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-gray-200 group"
            >
               <Plus className="group-hover:rotate-90 transition-transform" />
@@ -258,7 +258,7 @@ const AllBikes = ({ defaultType = "all" }) => {
                            <Eye size={16} />
                         </button>
                        <button 
-                         onClick={() => navigate(bike.type === "Car" ? `/admin/addcar/${bike.id}` : `/admin/addbike/${bike.id}`)}
+                         onClick={() => navigate(`/admin/add-vehicle/${bike.id}`)}
                          className="p-2.5 rounded-xl bg-gray-50 text-gray-400 hover:bg-black hover:text-white transition-all shadow-sm"
                        >
                           <Edit size={16} />
@@ -381,7 +381,7 @@ const AllBikes = ({ defaultType = "all" }) => {
             {/* Modal Footer */}
             <div className="p-6 border-t bg-gray-50 flex gap-4">
                 <button 
-                  onClick={() => { setSelectedBike(null); navigate(selectedBike.type === "Car" ? `/admin/addcar/${selectedBike.id}` : `/admin/addbike/${selectedBike.id}`); }}
+                  onClick={() => { setSelectedBike(null); navigate(`/admin/add-vehicle/${selectedBike.id}`); }}
                   className="flex-1 bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl"
                 >
                   Edit Listing
