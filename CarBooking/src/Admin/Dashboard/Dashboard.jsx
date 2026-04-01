@@ -131,6 +131,7 @@ const Dashboard = () => {
         billingsData,
         productsData,
         inventoryData,
+        bikesData,
       ] = await Promise.all([
         fetchSafe("/bookings"),
         fetchSafe("/all-services"),

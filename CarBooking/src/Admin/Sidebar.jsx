@@ -32,8 +32,10 @@ import {
   Hammer,
   ShieldCheck,
   BarChart3,
-  Fuel
+  Fuel,
+  MapPin
 } from "lucide-react";
+
 
 import { useAuth } from "../PrivateRouter/AuthContext";
 
@@ -74,6 +76,8 @@ const navItems = [
   { path: "/admin/services", label: "Active Services", icon: Wrench },
   { path: "/admin/customers", label: "Customers", icon: Users },
   { path: "/admin/billing", label: "Billing", icon: Receipt },
+  { path: "/admin/service-areas", label: "Service Areas", icon: MapPin },
+
 
   // { path: "/admin/serviceslist", label: "Service Packages", icon: ShieldCheck },
   // { path: "/admin/priceslist", label: "Service Pricing", icon: BarChart3 },

@@ -103,8 +103,8 @@ const Header = ({ onMenuClick }) => {
       ...customers
         .filter(
           (c) =>
-            c.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.phone?.includes(searchTerm)
+            (c.username || c.name)?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (c.mobile || c.phone)?.includes(searchTerm)
         )
         .map((c) => ({ type: "customer", ...c })),
 
@@ -127,7 +127,7 @@ const Header = ({ onMenuClick }) => {
         const [bookingsRes, ordersRes, customersRes] = await Promise.all([
           api.get("/bookings"),
           api.get("/orders"),
-          api.get("/customers")
+          api.get("/auth/users")
         ]);
         setBookings(bookingsRes.data || []);
         setOrders(ordersRes.data || []);
@@ -310,6 +310,7 @@ const Header = ({ onMenuClick }) => {
                           >
                             <p className="text-sm font-semibold text-slate-800">
                               {item.title ||
+                                item.username ||
                                 item.name ||
                                 item.customerName ||
                                 item.shippingName ||
@@ -321,7 +322,7 @@ const Header = ({ onMenuClick }) => {
                               {item.type === "booking" &&
                                 `Booking ID: ${item.bookingId}`}
                               {item.type === "customer" &&
-                                `Phone: ${item.phone}`}
+                                `Phone: ${item.mobile || item.phone}`}
                               {item.type === "order" &&
                                 `Order ID: ${item.orderId}`}
                             </p>

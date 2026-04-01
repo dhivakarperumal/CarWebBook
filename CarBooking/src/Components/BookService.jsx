@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import PageContainer from "./PageContainer";
 import { useRef } from "react";
 import { useAuth } from "../PrivateRouter/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 import { forwardRef } from "react";
 import PageHeader from "./PageHeader";
@@ -162,55 +163,6 @@ const BookService = () => {
 
   const [errors, setErrors] = useState({});
 
-  // const handleUseCurrentLocation = async () => {
-  //     setLocationLoading(true);
-  //     setSubmitError("");
-
-  //     if (!navigator.geolocation) {
-  //         setLocationLoading(false);
-  //         return;
-  //     }
-
-  //     navigator.geolocation.getCurrentPosition(
-  //         async (position) => {
-  //             const { latitude, longitude } = position.coords;
-
-  //             try {
-  //                 const res = await fetch(
-  //                     `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
-  //                 );
-  //                 const data = await res.json();
-
-  //                 const city =
-  //                     data.address.city ||
-  //                     data.address.town ||
-  //                     data.address.village ||
-  //                     "";
-
-  //                 setFormData((prev) => ({
-  //                     ...prev,
-  //                     location: data.display_name,
-  //                 }));
-
-  //                 setCoords({
-  //                     lat: latitude,
-  //                     lng: longitude,
-  //                 });
-
-  //                 setIsChennai(
-  //                     ["chennai", "tirupattur"].includes(city.toLowerCase())
-  //                 );
-  //             } catch (err) {
-  //                 console.error("Location fetch failed");
-  //             } finally {
-  //                 setLocationLoading(false);
-  //             }
-  //         },
-  //         () => {
-  //             setLocationLoading(false);
-  //         }
-  //     );
-  // };
 
   const handleUseCurrentLocation = async () => {
     setLocationLoading(true);
