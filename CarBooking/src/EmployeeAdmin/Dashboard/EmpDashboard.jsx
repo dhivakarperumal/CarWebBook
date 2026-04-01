@@ -248,6 +248,7 @@ const EmpDashboard = () => {
               <table className="min-w-full text-sm">
                 <thead>
                   <tr>
+                    <th className="px-6 py-5 text-left font-bold">Vehicle No</th>
                     <th className="px-6 py-5 text-left font-bold">Vehicle Info</th>
                     <th className="px-6 py-5 text-left font-bold">Status</th>
                     <th className="px-6 py-5 text-left font-bold">Customer</th>
@@ -265,8 +266,11 @@ const EmpDashboard = () => {
                       </td>
                     </tr>
                   ) : (
-                    myTasks.map((task) => (
+                    myTasks.map((task,ind) => (
                       <tr key={task.id} className="hover:bg-gray-50 transition">
+                          <td className="px-6 py-5">
+                          {ind+1}
+                        </td>
                         <td className="px-6 py-5">
                           <p className="font-bold text-gray-800">{task.brand} {task.model}</p>
                           <p className="text-xs text-gray-500">{task.vehicleNumber || "No Plate"}</p>

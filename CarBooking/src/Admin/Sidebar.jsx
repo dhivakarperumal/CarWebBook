@@ -3,37 +3,32 @@ import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   CalendarCheck,
-  UserCheck,
+  ClipboardCheck,
   Wrench,
   Users,
   Receipt,
   Car,
   CarFront,
   Boxes,
-  ClipboardList,
+  ShoppingCart,
   PackageSearch,
-  Bike,
   PlusCircle,
   UserCog,
-  FileText,
+  FileBarChart2,
   Home,
-  Package,
   CalendarDays,
-  Store,
-  Briefcase,
-  ShoppingCart,
-  HandCoins,
-  Settings,
   ChevronDown,
   ChevronLeft,
   X,
-  UserRound,
-  FileBarChart,
-  Hammer,
-  ShieldCheck,
-  BarChart3,
-  Fuel,
-  MapPin
+  MapPin,
+  ShoppingBag,
+  UsersRound,
+  Gauge,
+  Package,
+  CreditCard,
+  ListChecks,
+  Truck,
+  HardHat,
 } from "lucide-react";
 
 
@@ -69,10 +64,10 @@ const ROLE_PERMISSIONS = {
 
 /* ================= NAV ITEMS ================= */
 const navItems = [
-  { path: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { path: "/admin", label: "Dashboard", icon: Gauge, exact: true },
 
   { path: "/admin/bookings", label: "Service Bookings", icon: CalendarCheck },
-  { path: "/admin/assignservices", label: "Assign Services", icon: UserCheck },
+  { path: "/admin/assignservices", label: "Assign Services", icon: ClipboardCheck },
   { path: "/admin/services", label: "Active Services", icon: Wrench },
   { path: "/admin/customers", label: "Customers", icon: Users },
   { path: "/admin/billing", label: "Billing", icon: Receipt },
@@ -84,12 +79,12 @@ const navItems = [
 
   {
     label: "Products",
-    icon: Car,
+    icon: ShoppingBag,
     children: [
-      { path: "/admin/allProducts", label: "Products", icon: CarFront },
-      { path: "/admin/productbilling", label: "Product Billing", icon: Receipt },
+      { path: "/admin/allProducts", label: "Products", icon: Package },
+      { path: "/admin/productbilling", label: "Product Billing", icon: CreditCard },
       { path: "/admin/stockdetails", label: "Spare Parts Stock", icon: Boxes },
-      { path: "/admin/orders", label: "Orders", icon: ClipboardList },
+      { path: "/admin/orders", label: "Orders", icon: ShoppingCart },
       { path: "/admin/inventory", label: "Parts Inventory", icon: PackageSearch },
     ],
   },
@@ -97,9 +92,9 @@ const navItems = [
 
   {
     label: "Vehicle Marketplace",
-    icon: Car, 
+    icon: Car,
     children: [
-      { path: "/admin/inventory-list", label: "Vehicle Inventory", icon: ClipboardList },
+      { path: "/admin/inventory-list", label: "Vehicle Inventory", icon: Truck },
       { path: "/admin/add-vehicle", label: "Add New Vehicle", icon: PlusCircle },
     ],
   },
@@ -107,13 +102,13 @@ const navItems = [
 
   {
     label: "Employees",
-    icon: CarFront,
+    icon: UsersRound,
     children: [
-      { path: "/admin/employees", label: "Technicians", icon: UserCog },
+      { path: "/admin/employees", label: "Technicians", icon: HardHat },
       {
         path: "/admin/overall-attendance",
         label: "Staff Attendance",
-        icon: ClipboardList,
+        icon: CalendarDays,
       },
     ],
   },
@@ -124,7 +119,7 @@ const navItems = [
 
 
 
-  { path: "/admin/reports", label: "Service Reports", icon: FileText },
+  { path: "/admin/reports", label: "Service Reports", icon: FileBarChart2 },
 
   { path: "/", label: "Back Home", icon: Home },
 ];
@@ -278,17 +273,17 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 <div key={item.label}>
                   <button
                     onClick={() => toggleMenu(item.label)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200
                     ${hasActiveChild
-                        ? "bg-emerald-50 text-emerald-700 font-semibold shadow-sm"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        ? "bg-emerald-50 text-emerald-700 shadow-sm"
+                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                       }`}
                   >
-                    <Icon className={`w-5 h-5 shrink-0 ${hasActiveChild ? "text-emerald-600" : ""}`} />
+                    <Icon className={`w-5 h-5 shrink-0 ${hasActiveChild ? "text-emerald-600" : "text-slate-600"}`} />
 
                     {!collapsed && (
                       <>
-                        <span className="flex-1 text-left text-sm">
+                        <span className="flex-1 text-left text-sm font-bold">
                           {item.label}
                         </span>
                         <ChevronDown
@@ -315,15 +310,15 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                           key={sub.path}
                           to={sub.path}
                           onClick={() => isOpen && onClose()}
-                          className={`flex items-center gap-3 px-4 py-2.5 rounded transition-all duration-300
+                          className={`flex items-center gap-3 px-4 py-2.5 rounded font-semibold transition-all duration-300
   ${isActive
                               ? "bg-gradient-to-r from-black to-cyan-400 text-white shadow-md shadow-cyan-100"
                               : "text-black/80 hover:bg-gradient-to-r hover:from-cyan-400 hover:to-black/30 hover:text-white"
                             }`}
                         >
 
-                          <SubIcon className="w-4 h-4 shrink-0" />
-                          <span>{sub.label}</span>
+                          <SubIcon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-slate-500"}`} />
+                          <span className="font-semibold">{sub.label}</span>
                         </NavLink>
                       );
                     })}
@@ -342,14 +337,14 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 to={itemPath}
                 end={item.exact}
                 onClick={() => isOpen && onClose()}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded transition-all duration-300
+                className={`flex items-center gap-3 px-4 py-2.5 rounded font-bold transition-all duration-300
   ${isActive
                     ? "bg-gradient-to-r from-black to-cyan-400 text-white shadow-md shadow-cyan-100"
                     : "text-black/80 hover:bg-gradient-to-r hover:from-cyan-400 hover:to-black/30 hover:text-white"
                   }`}
               >
-                <Icon className={`w-5 h-5 shrink-0 ${isActive ? "text-white" : ""}`} />
-                {!collapsed && <span>{item.label}</span>}
+                <Icon className={`w-5 h-5 shrink-0 ${isActive ? "text-white" : "text-slate-600"}`} />
+                {!collapsed && <span className="font-bold">{item.label}</span>}
               </NavLink>
             );
           })}

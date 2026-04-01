@@ -1,25 +1,21 @@
 import { useState, useEffect, useMemo } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard,
+  Gauge,
   Car,
-  ClipboardList,
+  ClipboardCheck,
   Wrench,
   Users,
   UserCog,
   Receipt,
   PackageSearch,
   CalendarCheck,
-  BarChart3,
   Home,
-  Settings,
-  FileText,
+  FileBarChart2,
   CarFront,
-  ShieldCheck,
-  Fuel,
   X, ChevronDown, ChevronLeft,
   Boxes,
-  UserCheck,
+  HardHat,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -27,15 +23,10 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 /* ================= ROLE PERMISSIONS ================= */
 
 const navItems = [
-  { path: "/employee", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { path: "/employee/assignservices", label: "Assigned History", icon: UserCheck },
+  { path: "/employee", label: "Dashboard", icon: Gauge, exact: true },
+  { path: "/employee/assignservices", label: "Assigned History", icon: ClipboardCheck },
   { path: "/employee/services", label: "Service Center", icon: Wrench },
-
   { path: "/employee/billing", label: "Job Billing", icon: Receipt },
-  // { path: "/employee/addserviceparts", label: "Add Service Parts", icon: Boxes },
-  
-  
-
   { path: "/", label: "Back Home", icon: Home },
 ];
 
@@ -169,13 +160,13 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 <div key={item.label}>
                   <button
                     onClick={() => toggleMenu(item.label)}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-300
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-bold transition-all duration-300
                     ${hasActiveChild
-                        ? "bg-sky-50 text-sky-700 font-semibold"
+                        ? "bg-sky-50 text-sky-700"
                         : "text-black/80 hover:bg-gray-100"
                       }`}
                   >
-                    <Icon className={`w-5 h-5 shrink-0 ${hasActiveChild ? "text-sky-600" : ""}`} />
+                    <Icon className={`w-5 h-5 shrink-0 ${hasActiveChild ? "text-sky-600" : "text-slate-600"}`} />
 
                     {!collapsed && (
                       <>
@@ -206,14 +197,14 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                           key={sub.path}
                           to={sub.path}
                           onClick={() => isOpen && onClose()}
-                          className={`flex items-center gap-3 px-4 py-2.5 rounded transition-all duration-300
+                          className={`flex items-center gap-3 px-4 py-2.5 rounded font-semibold transition-all duration-300
   ${isActive
                               ? "bg-gradient-to-r from-black to-cyan-400 text-white shadow-md shadow-cyan-100"
                               : "text-black/80 hover:bg-gradient-to-r hover:from-cyan-400 hover:to-black/30 hover:text-white"
                             }`}
                         >
 
-                          <SubIcon className="w-4 h-4 shrink-0" />
+                          <SubIcon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-slate-500"}`} />
                           <span>{sub.label}</span>
                         </NavLink>
                       );
@@ -236,13 +227,13 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 to={itemPath}
                 end={item.exact}
                 onClick={() => isOpen && onClose()}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded transition-all duration-300
+                className={`flex items-center gap-3 px-4 py-2.5 rounded font-bold transition-all duration-300
   ${isActive
                     ? "bg-gradient-to-r from-black to-cyan-400 text-white shadow-md shadow-cyan-100"
                     : "text-black/80 hover:bg-gradient-to-r hover:from-cyan-400 hover:to-black/30 hover:text-white"
                   }`}
               >
-                <Icon className={`w-5 h-5 shrink-0 ${isActive ? "text-white" : ""}`} />
+                <Icon className={`w-5 h-5 shrink-0 ${isActive ? "text-white" : "text-slate-600"}`} />
                 {!collapsed && <span>{item.label}</span>}
               </NavLink>
             );

@@ -6,12 +6,12 @@ import {
   FaEye,
   FaTimes,
 } from "react-icons/fa";
-import { collection, onSnapshot } from "firebase/firestore";
-import { db } from "../../firebase";
+import api from "../../api";
 import dayjs from "dayjs";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
+import toast from "react-hot-toast";
 
 /* ========================
    HELPERS
@@ -20,8 +20,9 @@ import * as XLSX from "xlsx";
 const groupByMonth = (data, dateKey = "createdAt") => {
   const map = {};
   data.forEach(item => {
-    if (!item[dateKey]) return;
-    const month = dayjs(item[dateKey].toDate()).format("YYYY-MM");
+    const rawDate = item[dateKey] || item.created_at || item.updatedAt;
+    if (!rawDate) return;
+    const month = dayjs(rawDate).format("YYYY-MM");
     if (!map[month]) map[month] = [];
     map[month].push(item);
   });
@@ -31,15 +32,15 @@ const groupByMonth = (data, dateKey = "createdAt") => {
 const getDownloadRows = (report) => {
   switch (report.type) {
 
-    /* ===== APPOINTMENTS ===== */
-    case "Appointments":
+    /* ===== BOOKINGS ===== */
+    case "Bookings":
       return report.items.map(a => ({
         Customer: a.name,
         Phone: a.phone,
-        Vehicle: a.vehicle,
+        Vehicle: `${a.brand || ''} ${a.model || ''} (${a.vehicleNumber || 'N/A'})`,
         ServiceType: a.serviceType,
         Location: a.location,
-        Date: a.date,
+        Date: a.date ? dayjs(a.date).format("DD MMM YYYY") : "N/A",
         Time: a.time,
         Status: a.status,
       }));
@@ -52,7 +53,7 @@ const getDownloadRows = (report) => {
         StockQty: i.stockQty,
         MinStock: i.minStock,
         Vendor: i.vendor,
-        UpdatedAt: dayjs(i.updatedAt?.toDate()).format("DD MMM YYYY"),
+        UpdatedAt: dayjs(i.updatedAt).format("DD MMM YYYY"),
       }));
 
     /* ===== BILLING ===== */
@@ -70,7 +71,7 @@ const getDownloadRows = (report) => {
         GrandTotal: b.grandTotal,
         PaymentStatus: b.paymentStatus,
         Status: b.status,
-        Date: dayjs(b.createdAt?.toDate()).format("DD MMM YYYY"),
+        Date: dayjs(b.createdAt || b.created_at).format("DD MMM YYYY"),
       }));
 
     default:
@@ -86,28 +87,37 @@ const Reports = () => {
   const [appointments, setAppointments] = useState([]);
   const [inventory, setInventory] = useState([]);
   const [billings, setBillings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [typeFilter, setTypeFilter] = useState("All");
   const [monthFilter, setMonthFilter] = useState("All");
   const [selectedReport, setSelectedReport] = useState(null);
 
   /* ========================
-     FIRESTORE REALTIME
+     MYSQL DATA FETCHING
   ======================== */
   useEffect(() => {
-    const u1 = onSnapshot(collection(db, "appointments"), s =>
-      setAppointments(s.docs.map(d => ({ id: d.id, ...d.data() })))
-    );
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [bookingsRes, inventoryRes, billingsRes] = await Promise.all([
+          api.get("/bookings"),
+          api.get("/inventory"),
+          api.get("/billings")
+        ]);
+        
+        setAppointments(bookingsRes.data || []);
+        setInventory(inventoryRes.data || []);
+        setBillings(billingsRes.data || []);
+      } catch (err) {
+        console.error("Failed to load reports data", err);
+        toast.error("Failed to load reports data");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    const u2 = onSnapshot(collection(db, "carInventory"), s =>
-      setInventory(s.docs.map(d => ({ id: d.id, ...d.data() })))
-    );
-
-    const u3 = onSnapshot(collection(db, "billings"), s =>
-      setBillings(s.docs.map(d => ({ id: d.id, ...d.data() })))
-    );
-
-    return () => { u1(); u2(); u3(); };
+    fetchData();
   }, []);
 
   /* ========================
@@ -127,7 +137,7 @@ const Reports = () => {
       });
     };
 
-    push(groupByMonth(appointments), "Appointments", "Appointments Report");
+    push(groupByMonth(appointments), "Bookings", "Bookings Report");
     push(groupByMonth(inventory, "updatedAt"), "Inventory", "Inventory Report");
     push(groupByMonth(billings), "Billing", "Billing Report");
 
@@ -189,7 +199,7 @@ const Reports = () => {
 
       {/* STATS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <Stat title="Appointments" value={appointments.length} icon={<FaCalendarAlt />} />
+        <Stat title="Bookings" value={appointments.length} icon={<FaCalendarAlt />} />
         <Stat title="Billing Records" value={billings.length} icon={<FaFileAlt />} />
         <Stat title="Inventory Items" value={inventory.length} icon={<FaBox />} />
       </div>
@@ -205,7 +215,7 @@ const Reports = () => {
             className="border border-gray-300 px-4 py-3 rounded-md shadow-sm w-full sm:w-40"
           >
             <option value="All">All Types</option>
-            <option value="Appointments">Appointments</option>
+            <option value="Bookings">Bookings</option>
             <option value="Inventory">Inventory</option>
             <option value="Billing">Billing</option>
           </select>
@@ -227,96 +237,103 @@ const Reports = () => {
         </div>
       </div>
 
+      {/* LOADING SPINNER */}
+      {loading && (
+        <div className="flex items-center justify-center h-64">
+           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      )}
 
       {/* TABLE */}
-    <div className="bg-white rounded-2xl mt-15 shadow">
-  <div className="overflow-x-auto touch-pan-x">
-    <table className="min-w-[700px] text-sm whitespace-nowrap">
-          <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
-            <tr>
-              <th className="p-4">S No</th>
-              <th className="p-4">Report Name</th>
-              <th className="p-4">Type</th>
-              <th className="p-4">Month</th>
-              <th className="p-4">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredReports.map((r, i) => (
-              <tr key={i} className="border-t border-gray-300 hover:bg-gray-50">
-                <td className="p-4">{i + 1}</td>
-                <td className="p-4">{r.name}</td>
-                <td className="p-4 text-center">{r.type}</td>
-                <td className="p-4 text-center">
-                  {dayjs(r.month).format("MMM YYYY")}
-                </td>
-                <td className="p-4 flex gap-2 justify-center">
-                  <button
-                    onClick={() => setSelectedReport(r)}
-                    className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs flex gap-2 items-center"
-                  >
-                    <FaEye /> View
-                  </button>
-                  <button
-                    onClick={() => downloadPDF(r)}
-                    className="bg-blue-100 text-blue-700 px-3 py-1.5 rounded text-xs"
-                  >
-                    PDF
-                  </button>
-                  <button
-                    onClick={() => downloadExcel(r)}
-                    className="bg-green-100 text-green-700 px-3 py-1.5 rounded text-xs"
-                  >
-                    Excel
-                  </button>
-                </td>
+    {!loading && (
+      <div className="bg-white rounded-2xl mt-15 shadow">
+        <div className="overflow-x-auto touch-pan-x">
+          <table className="min-w-[700px] text-sm whitespace-nowrap">
+            <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
+              <tr>
+                <th className="p-4">S No</th>
+                <th className="p-4">Report Name</th>
+                <th className="p-4">Type</th>
+                <th className="p-4">Month</th>
+                <th className="p-4">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredReports.map((r, i) => (
+                <tr key={i} className="border-t border-gray-300 hover:bg-gray-50">
+                  <td className="p-4">{i + 1}</td>
+                  <td className="p-4">{r.name}</td>
+                  <td className="p-4 text-center">{r.type}</td>
+                  <td className="p-4 text-center">
+                    {dayjs(r.month).format("MMM YYYY")}
+                  </td>
+                  <td className="p-4 flex gap-2 justify-center">
+                    <button
+                      onClick={() => setSelectedReport(r)}
+                      className="bg-blue-600 text-white px-3 py-1.5 rounded text-xs flex gap-2 items-center"
+                    >
+                      <FaEye /> View
+                    </button>
+                    <button
+                      onClick={() => downloadPDF(r)}
+                      className="bg-blue-100 text-blue-700 px-3 py-1.5 rounded text-xs"
+                    >
+                      PDF
+                    </button>
+                    <button
+                      onClick={() => downloadExcel(r)}
+                      className="bg-green-100 text-green-700 px-3 py-1.5 rounded text-xs"
+                    >
+                      Excel
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-        {filteredReports.length === 0 && (
-          <p className="text-center py-6 text-gray-500">No reports found</p>
-        )}
+          {filteredReports.length === 0 && (
+            <p className="text-center py-6 text-gray-500">No reports found</p>
+          )}
+        </div>
       </div>
-      </div>
+    )}
 
       {/* MODAL */}
       {selectedReport && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl w-[90%] max-w-4xl p-6">
-            <div className="flex justify-between mb-4">
+          <div className="bg-white rounded-xl w-[90%] max-w-4xl p-6 max-h-[80vh] flex flex-col">
+            <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">{selectedReport.name}</h2>
-              <button onClick={() => setSelectedReport(null)}>
+              <button onClick={() => setSelectedReport(null)} className="p-2 hover:bg-gray-100 rounded-lg transition">
                 <FaTimes />
               </button>
             </div>
 
-            <table className="min-w-full text-sm">
-              <thead className="bg-blue-600 text-white">
-                <tr>
-                  <th className="p-3">S No</th>
-                  <th className="p-3">Date</th>
-                  <th className="p-3">Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {selectedReport.items.map((i, idx) => (
-                  <tr key={idx} className="border-t">
-                    <td className="p-3">{idx + 1}</td>
-                    <td className="p-3">
-                      {dayjs(
-                        i.createdAt?.toDate() || i.updatedAt?.toDate()
-                      ).format("DD MMM YYYY")}
-                    </td>
-                    <td className="p-3">
-                      {i.customerName || i.partName || i.name}
-                    </td>
+            <div className="overflow-y-auto">
+              <table className="min-w-full text-sm">
+                <thead className="bg-blue-600 text-white sticky top-0">
+                  <tr>
+                    <th className="p-3 text-left">S No</th>
+                    <th className="p-3 text-left">Date</th>
+                    <th className="p-3 text-left">Details</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-
+                </thead>
+                <tbody>
+                  {selectedReport.items.map((i, idx) => (
+                    <tr key={idx} className="border-t hover:bg-gray-50">
+                      <td className="p-3">{idx + 1}</td>
+                      <td className="p-3">
+                        {dayjs(i.createdAt || i.created_at || i.updatedAt || i.date).format("DD MMM YYYY")}
+                      </td>
+                      <td className="p-3">
+                        {i.customerName || i.partName || i.name || "N/A"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}
