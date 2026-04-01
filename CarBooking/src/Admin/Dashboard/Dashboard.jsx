@@ -591,7 +591,7 @@ const Dashboard = () => {
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl shadow border border-gray-200 overflow-hidden">
+          <div className="bg-white overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm text-gray-700 border-collapse">
                 <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
@@ -673,7 +673,7 @@ const Dashboard = () => {
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl shadow border border-gray-200 overflow-hidden">
+          <div className="bg-white overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm text-gray-700">
                 <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">

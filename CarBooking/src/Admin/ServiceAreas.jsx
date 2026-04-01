@@ -129,7 +129,7 @@ const ServiceAreas = () => {
       </div>
 
       {/* TABLE SECTION */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden min-h-[400px]">
+      <div className="bg-white overflow-hidden min-h-[400px]">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-[400px] text-slate-400 gap-3">
             <Loader2 className="w-10 h-10 animate-spin text-blue-500" />
@@ -147,12 +147,12 @@ const ServiceAreas = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-slate-50/50 border-b border-slate-100 text-slate-500 text-[11px] font-bold uppercase tracking-widest">
+                <tr className="bg-gradient-to-r from-black to-cyan-400 text-white text-[11px] font-bold uppercase tracking-widest">
                   <th className="px-6 py-5">S.No</th>
                   <th className="px-6 py-5">Pincode</th>
                   <th className="px-6 py-5">Area Name</th>
                   <th className="px-6 py-5">Status</th>
-                  <th className="px-6 py-5 text-right">Actions</th>
+                  <th className="px-6 py-5">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -181,7 +181,7 @@ const ServiceAreas = () => {
                         )}
                       </button>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 flex  justify-start">
                       <div className="flex items-center justify-end gap-2 opacity-10 sm:opacity-100 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => {
@@ -189,7 +189,7 @@ const ServiceAreas = () => {
                             setFormData({ pincode: area.pincode, area_name: area.area_name });
                             setIsModalOpen(true);
                           }}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
+                          className="p-2 border border-gray-200 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
                           title="Edit"
                         >
                           <Edit2 className="w-4 h-4" />
