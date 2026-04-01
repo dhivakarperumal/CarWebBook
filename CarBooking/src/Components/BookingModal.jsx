@@ -142,7 +142,74 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
             </div>
           </div>
         )}
+        {/* SERVICE ISSUE SECTION */}
+        <div className="mt-6">
+          <h4 className="text-sky-400 font-bold mb-3">
+            ⚙️ Service Issues
+          </h4>
+          <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 space-y-3">
+            {(booking.issues && booking.issues.length > 0) ? (
+              booking.issues.map((issueEntry) => {
+                const status = (issueEntry.issueStatus || 'pending').toLowerCase();
+                return (
+                  <div key={issueEntry.id} className="bg-slate-900 rounded-lg p-3 border border-slate-700">
+                    <p className="text-gray-300 text-sm leading-relaxed">{issueEntry.issue}</p>
+                    {issueEntry.issueAmount != null && Number(issueEntry.issueAmount) > 0 && (
+                      <p className="text-sm text-orange-300 font-semibold mt-1">Amount: ₹{Number(issueEntry.issueAmount).toFixed(2)}</p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-2">Issue Date: {issueEntry.createdAt ? new Date(issueEntry.createdAt).toLocaleDateString() : 'N/A'}</p>
+                    <p className="text-xs text-gray-400 mt-1">Status: <span className={`font-bold ${status === 'approved' ? 'text-green-300' : status === 'rejected' ? 'text-red-300' : 'text-yellow-300'}`}>{status.toUpperCase()}</span></p>
 
+                    {status === 'pending' && booking.serviceId && (
+                      <div className="flex gap-2 mt-3">
+                        <button
+                          onClick={() => onApprove(booking.serviceId, issueEntry.id, 'approved', 'issue')}
+                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => onApprove(booking.serviceId, issueEntry.id, 'rejected', 'issue')}
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            ) : booking.issue ? (
+              <div>
+                <p className="text-gray-300 text-sm leading-relaxed">{booking.issue}</p>
+                {booking.issueAmount != null && Number(booking.issueAmount) > 0 && (
+                  <p className="text-sm text-orange-300 font-semibold mt-1">Amount: ₹{Number(booking.issueAmount).toFixed(2)}</p>
+                )}
+                <p className="text-xs text-gray-500 mt-2">Issue Date: {booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() : 'N/A'}</p>
+                <p className="text-xs text-gray-400 mt-1">Status: <span className={`font-bold ${booking.issueStatus === 'approved' ? 'text-green-300' : booking.issueStatus === 'rejected' ? 'text-red-300' : 'text-yellow-300'}`}>{(booking.issueStatus || 'pending').toUpperCase()}</span></p>
+
+                {(booking.issueStatus || 'pending') === 'pending' && booking.serviceId && (
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => onApprove(booking.serviceId, null, 'approved', 'issue')}
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => onApprove(booking.serviceId, null, 'rejected', 'issue')}
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-gray-500 italic text-sm">No service issue details entered yet.</p>
+            )}
+          </div>
+        </div>
         {/* STATUS TRACKER */}
         <div className="mt-6">
           {booking.status !== "CANCELLED" ? (

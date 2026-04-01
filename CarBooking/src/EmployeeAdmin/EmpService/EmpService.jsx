@@ -62,7 +62,8 @@ const EmpService = () => {
             });
             return {
               ...service,
-              parts: parts
+              parts: parts,
+              issues: partsRes.data?.issues || []
             };
           } catch (err) {
             console.error(`❌ Failed to fetch parts for service ${service.id}:`, err.message);
@@ -258,6 +259,36 @@ const EmpService = () => {
                   </div>
                 )}
 
+                {service.issues && service.issues.filter(i => (i.issueStatus || '').toLowerCase() === 'approved').length > 0 && (
+                  <div className="mb-8">
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+                      ✅ Approved Issue for Billing
+                    </p>
+                    <div className="overflow-hidden rounded-2xl border border-gray-50 bg-gray-50/50">
+                      <table className="min-w-full text-left text-[11px] font-bold">
+                        <thead>
+                          <tr className="text-gray-400 uppercase tracking-widest ">
+                            <th className="px-4 py-3">Issue</th>
+                            <th className="px-4 py-3 text-right">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {service.issues.filter(i => (i.issueStatus || '').toLowerCase() === 'approved').map((issue) => (
+                            <tr key={issue.id} className="text-gray-700">
+                              <td className="px-4 py-4">{issue.issue}</td>
+                              <td className="px-4 py-4 text-right text-blue-600 font-black">₹{Number(issue.issueAmount || 0).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="mt-2 flex justify-between text-sm font-black">
+                      <span className="text-gray-500">Issue total</span>
+                      <span className="text-blue-600">₹{service.issues.filter(i => (i.issueStatus || '').toLowerCase() === 'approved').reduce((sum, i) => sum + Number(i.issueAmount || 0), 0).toFixed(2)}</span>
+                    </div>
+                  </div>
+                )}
+
                 <div className="mb-8">
                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
                       <AlertCircle size={12} /> Reported Issue
@@ -337,10 +368,15 @@ const EmpService = () => {
                       </span>
                       {service.parts && service.parts.length > 0 && (
                         <div className="text-xs mt-2">
-                          <p className="text-gray-600 font-bold">₹{service.parts.reduce((sum, p) => sum + Number(p.total), 0).toFixed(2)}</p>
+                          <p className="text-gray-600 font-bold">Spare: ₹{service.parts.reduce((sum, p) => sum + Number(p.total), 0).toFixed(2)}</p>
                           <p className="text-gray-500 text-[10px]">
                             {service.parts.filter(p => p.status === 'pending').length} pending | {service.parts.filter(p => p.status === 'approved').length} approved
                           </p>
+                        </div>
+                      )}
+                      {service.issues && service.issues.filter(i => (i.issueStatus || '').toLowerCase() === 'approved').length > 0 && (
+                        <div className="text-xs mt-2">
+                          <p className="text-gray-600 font-bold">Issue: ₹{service.issues.filter(i => (i.issueStatus || '').toLowerCase() === 'approved').reduce((sum, i) => sum + Number(i.issueAmount || 0), 0).toFixed(2)}</p>
                         </div>
                       )}
                     </div>

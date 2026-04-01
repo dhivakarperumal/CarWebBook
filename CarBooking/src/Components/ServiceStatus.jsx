@@ -74,9 +74,24 @@ useEffect(() => {
         }));
 
       console.log(`✅ [ServiceStatus] Filtered ${bookingData.length} bookings`);
-      setBookings(bookingData);
 
-      // Fetch all services to get spare parts
+      // Merge issue from all_services into bookings for user view
+      const bookingsWithServiceIssue = bookingData.map((b) => {
+        const matchedService = (res.data || []).find(
+          (s) => s.bookingId === b.bookingId || s.bookingDocId === b.id
+        );
+        return {
+          ...b,
+          issue: matchedService?.issue || b.issue,
+          issueAmount: matchedService?.issueAmount != null ? matchedService.issueAmount : b.issueAmount,
+          issueStatus: matchedService?.issueStatus || b.issueStatus || 'pending',
+          issueUpdatedAt: matchedService?.updatedAt || b.updatedAt,
+        };
+      });
+
+      setBookings(bookingsWithServiceIssue);
+
+      // Fetch all services to get spare parts and issue entries
       console.log("🔍 [ServiceStatus] Fetching all services from /all-services...");
       const servicesRes = await api.get("/all-services");
       console.log("📊 [ServiceStatus] All services:", servicesRes.data);
@@ -87,7 +102,42 @@ useEffect(() => {
         return match;
       });
       console.log(`✅ [ServiceStatus] Filtered ${filteredServices.length} services`);
-      setServices(filteredServices);
+
+      // Enrich services with parts and issue entries from detail endpoint
+      const enrichedServices = [];
+      for (let service of filteredServices) {
+        try {
+          const detailRes = await api.get(`/all-services/${service.id}`);
+          const details = detailRes.data;
+          enrichedServices.push({
+            ...service,
+            parts: details.parts || [],
+            issues: details.issues || [],
+          });
+        } catch (err) {
+          console.error(`❌ [ServiceStatus] Failed to fetch service details for ${service.id}:`, err);
+          enrichedServices.push({ ...service, parts: [], issues: [] });
+        }
+      }
+
+      console.log(`✅ [ServiceStatus] Enriched services with parts and issues`);
+      setServices(enrichedServices);
+
+      // Update bookings issue from linked all_services so user sees latest issue text
+      const mergedBookings = bookingData.map((b) => {
+        const matchedService = enrichedServices.find(
+          (s) => s.bookingId === b.bookingId || s.bookingDocId === b.id
+        );
+        return {
+          ...b,
+          issues: matchedService?.issues || [],
+          issue: matchedService?.issue || b.issue,
+          issueAmount: matchedService?.issueAmount != null ? matchedService.issueAmount : b.issueAmount,
+          issueStatus: matchedService?.issueStatus || b.issueStatus || 'pending',
+          issueUpdatedAt: matchedService?.updatedAt || b.updatedAt,
+        };
+      });
+      setBookings(mergedBookings);
 
       // Fetch spare parts for these services
       console.log("🔍 [ServiceStatus] Fetching spare parts for each service...");
@@ -127,16 +177,32 @@ useEffect(() => {
   fetchData();
 }, [user]); // 👈 IMPORTANT
 
-  const handleApproveSpare = async (serviceId, partId, status) => {
+  const handleApproveSpare = async (serviceId, itemId, status, type = 'part') => {
     try {
-      setApprovingPartId(partId);
-      await api.put(`/all-services/${serviceId}/parts/${partId}/approve`, {
-        status: status,
-        approvedBy: user.email,
-        approvalNotes: `${status} by customer`,
-      });
+      if (type === 'part') {
+        setApprovingPartId(itemId);
+        await api.put(`/all-services/${serviceId}/parts/${itemId}/approve`, {
+          status: status,
+          approvedBy: user.email,
+          approvalNotes: `${status} by customer`,
+        });
+      } else if (type === 'issue') {
+        setApprovingPartId(itemId);
+        if (itemId) {
+          await api.put(
+            `/all-services/${serviceId}/issues/${itemId}/status`,
+            {
+              issueStatus: status,
+            }
+          );
+        } else {
+          await api.put(`/all-services/${serviceId}/issue-status`, {
+            issueStatus: status,
+          });
+        }
+      }
 
-      toast.success(`Spare part ${status} successfully`);
+      toast.success(`${type === 'issue' ? 'Issue' : 'Spare part'} ${status} successfully`);
       // Refresh data
       setLoading(true);
       const servicesRes = await api.get("/all-services");
@@ -163,6 +229,51 @@ useEffect(() => {
         }
       }
       setSpareParts(allSpareParts);
+
+      if (type === 'issue') {
+        // update local booking issue status for immediate reflection
+        const linkedService =
+          filteredServices.find((s) => s.id === serviceId) ||
+          services.find((s) => s.id === serviceId);
+
+        const bookingDocId = linkedService?.bookingDocId;
+
+        if (bookingDocId) {
+          setBookings((prev) =>
+            prev.map((b) => {
+              if (b.id !== bookingDocId) return b;
+              return {
+                ...b,
+                issueStatus: status,
+                issues: b.issues
+                  ? b.issues.map((issue) =>
+                      issue.id === itemId
+                        ? { ...issue, issueStatus: status }
+                        : issue
+                    )
+                  : b.issues,
+              };
+            })
+          );
+
+          // Also update selectedBooking if it is currently open
+          setSelectedBooking((prev) => {
+            if (!prev || prev.id !== bookingDocId) return prev;
+            return {
+              ...prev,
+              issueStatus: status,
+              issues: prev.issues
+                ? prev.issues.map((issue) =>
+                    issue.id === itemId
+                      ? { ...issue, issueStatus: status }
+                      : issue
+                  )
+                : prev.issues,
+            };
+          });
+        }
+      }
+
       setLoading(false);
     } catch (err) {
       toast.error("Failed to update spare part status");
@@ -212,7 +323,7 @@ useEffect(() => {
             return (
               <div
                 key={booking.id}
-                onClick={() => setSelectedBooking(booking)}
+                onClick={() => setSelectedBooking({ ...booking, serviceId: bookingSpares?.serviceId })}
                 className={`cursor-pointer bg-[#020617] border rounded-xl px-2 md:px-6 py-4 flex justify-between items-center hover:shadow-lg transition ${
                   hasPendingSpares 
                     ? 'border-orange-500/40 hover:shadow-orange-500/30' 

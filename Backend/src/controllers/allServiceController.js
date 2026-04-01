@@ -28,11 +28,20 @@ exports.getServiceById = async (req, res) => {
     console.log(`🔍 [getServiceById] Querying service_parts for all_service_id=${id}...`);
     const [parts] = await db.query('SELECT * FROM service_parts WHERE all_service_id = ?', [id]);
     console.log(`✅ [getServiceById] Found ${parts.length} parts for service ${id}`);
+
+    // Get issues
+    console.log(`🔍 [getServiceById] Querying service_issues for all_service_id=${id}...`);
+    const [issues] = await db.query('SELECT * FROM service_issues WHERE all_service_id = ? ORDER BY createdAt DESC', [id]);
+    console.log(`✅ [getServiceById] Found ${issues.length} issues for service ${id}`);
+
     if (parts.length > 0) {
       parts.forEach((p, i) => console.log(`     Part ${i+1}: ${p.partName} x${p.qty} = ₹${p.total} (status: ${p.status})`));
     }
-    
-    const response = { ...rows[0], parts };
+    if (issues.length > 0) {
+      issues.forEach((issue, i) => console.log(`     Issue ${i+1}: ${issue.issue} (₹${issue.issueAmount}) status=${issue.issueStatus}`));
+    }
+
+    const response = { ...rows[0], parts, issues };
     res.json(response);
   } catch (err) {
     console.error(`❌ [getServiceById] Error:`, err);
@@ -246,19 +255,247 @@ exports.approveServicePart = async (req, res) => {
 
     console.log(`✅ [approveServicePart] Pending parts count: ${pendingParts[0].count}`);
 
-    // If all parts are approved/rejected, update service status to "Service Going on" only when no pending left
-    if (pendingParts[0].count === 0) {
-      await db.query(
-        'UPDATE all_services SET serviceStatus = "Service Going on" WHERE id = ?',
-        [serviceId]
-      );
-      console.log(`✅ [approveServicePart] All parts cleared, service status updated to "Service Going on"`);
-    }
-
     res.json({ message: `Part ${status} successfully` });
   } catch (err) {
     console.error("❌ [approveServicePart] Error:", err);
     res.status(500).json({ message: 'Error updating part status', error: err.message });
+  }
+};
+
+/* 📝 UPDATE SERVICE ISSUE */
+exports.updateServiceIssue = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { issue, issueAmount } = req.body;
+
+    console.log(`\n📝 [updateServiceIssue] Updating issue for service ID: ${id}`);
+    console.log(`Issue text: ${issue ? issue.substring(0, 50) + '...' : 'empty'}`);
+    console.log(`Issue amount: ${issueAmount != null ? issueAmount : 'not provided'}`);
+
+    const [result] = await db.query(
+      'UPDATE all_services SET issue = ?, issueAmount = ?, issueStatus = ? WHERE id = ?',
+      [issue || null, issueAmount != null ? issueAmount : 0, 'pending', id]
+    );
+
+    if (result.affectedRows === 0) {
+      console.warn(`⚠️ [updateServiceIssue] Service ${id} not found`);
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    // Sync issue to bookings table when linked by bookingDocId
+    const [serviceRows] = await db.query('SELECT bookingDocId FROM all_services WHERE id = ?', [id]);
+    if (serviceRows.length && serviceRows[0].bookingDocId) {
+      await db.query('UPDATE bookings SET issue = ? WHERE id = ?', [issue || null, serviceRows[0].bookingDocId]);
+      console.log(`✅ [updateServiceIssue] Synced issue to bookings table for bookingDocId=${serviceRows[0].bookingDocId}`);
+    }
+
+    console.log(`✅ [updateServiceIssue] Issue updated successfully`);
+    res.json({ message: 'Issue updated successfully' });
+  } catch (err) {
+    console.error(`❌ [updateServiceIssue] Error:`, err);
+    res.status(500).json({ message: 'Error updating issue', error: err.message });
+  }
+};
+
+/* 🧾 UPDATE ISSUE STATUS (USER APPROVE/REJECT) */
+exports.updateIssueStatus = async (req, res) => {
+  const { id } = req.params;
+  const { issueStatus } = req.body;
+  const validStatuses = ['pending', 'approved', 'rejected'];
+
+  if (!validStatuses.includes((issueStatus || '').toLowerCase())) {
+    return res.status(400).json({ message: 'Invalid issue status provided' });
+  }
+
+  try {
+    const [result] = await db.query(
+      'UPDATE all_services SET issueStatus = ? WHERE id = ?',
+      [issueStatus.toLowerCase(), id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    // Sync to bookings table if linked
+    const [serviceRows] = await db.query('SELECT bookingDocId FROM all_services WHERE id = ?', [id]);
+    if (serviceRows.length && serviceRows[0].bookingDocId) {
+      await db.query('UPDATE bookings SET issueStatus = ? WHERE id = ?', [issueStatus.toLowerCase(), serviceRows[0].bookingDocId]);
+    }
+
+    res.json({ message: 'Issue status updated' });
+  } catch (err) {
+    console.error(`❌ [updateIssueStatus] Error:`, err);
+    res.status(500).json({ message: 'Error updating issue status', error: err.message });
+  }
+};
+
+/* 📋 GET SERVICE ISSUES */
+exports.getServiceIssues = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [service] = await db.query('SELECT id FROM all_services WHERE id = ?', [id]);
+    if (!service.length) return res.status(404).json({ message: 'Service not found' });
+
+    const [issues] = await db.query('SELECT * FROM service_issues WHERE all_service_id = ? ORDER BY createdAt DESC', [id]);
+    res.json({ issues });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching issues', error: err.message });
+  }
+};
+
+/* ➕ ADD SERVICE ISSUE */
+exports.addServiceIssueEntry = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { issue, issueAmount } = req.body;
+    console.log(`🚀 [addServiceIssueEntry] called for service ${id} issue=${issue} issueAmount=${issueAmount}`);
+
+    if (!issue || issue.trim() === '') {
+      return res.status(400).json({ message: 'Issue text is required' });
+    }
+
+    const [service] = await db.query('SELECT bookingDocId FROM all_services WHERE id = ?', [id]);
+    if (!service.length) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    // Ensure optional issue metadata columns exist for backwards compatibility.
+    const [serviceIssueColumns] = await db.query('SHOW COLUMNS FROM service_issues');
+    const serviceIssueFieldNames = serviceIssueColumns.map((c) => c.Field);
+
+    if (!serviceIssueFieldNames.includes('issueAmount')) {
+      await db.query('ALTER TABLE service_issues ADD COLUMN issueAmount DECIMAL(10,2) DEFAULT 0');
+      console.log('✅ [addServiceIssueEntry] added missing column service_issues.issueAmount');
+    }
+
+    if (!serviceIssueFieldNames.includes('issueStatus')) {
+      await db.query("ALTER TABLE service_issues ADD COLUMN issueStatus VARCHAR(50) DEFAULT 'pending'");
+      console.log('✅ [addServiceIssueEntry] added missing column service_issues.issueStatus');
+    }
+
+    const normalizedAmount = Number(issueAmount) || 0;
+    const [result] = await db.query(
+      'INSERT INTO service_issues (all_service_id, issue, issueAmount, issueStatus) VALUES (?, ?, ?, ?)',
+      [id, issue.trim(), normalizedAmount, 'pending']
+    );
+
+    const newIssueId = result.insertId;
+
+    // Sync all_services row to keep issue view in query director updated
+    await db.query('UPDATE all_services SET issue = ?, issueAmount = ?, issueStatus = ? WHERE id = ?', [issue.trim(), normalizedAmount, 'pending', id]);
+
+    // Sync to bookings main issue fields for backward compatibility
+    const bookingDocId = service[0].bookingDocId;
+    if (bookingDocId) {
+      // Ensure bookings columns exist before update
+      const [bookingColumns] = await db.query('SHOW COLUMNS FROM bookings');
+      const bookingFields = bookingColumns.map((c) => c.Field);
+      if (!bookingFields.includes('issueAmount')) {
+        await db.query('ALTER TABLE bookings ADD COLUMN issueAmount DECIMAL(10,2) DEFAULT 0');
+        console.log('✅ [addServiceIssueEntry] added missing column bookings.issueAmount');
+      }
+      if (!bookingFields.includes('issueStatus')) {
+        await db.query("ALTER TABLE bookings ADD COLUMN issueStatus VARCHAR(50) DEFAULT 'pending'");
+        console.log('✅ [addServiceIssueEntry] added missing column bookings.issueStatus');
+      }
+
+      await db.query('UPDATE bookings SET issue = ?, issueAmount = ?, issueStatus = ? WHERE id = ?', [issue.trim(), normalizedAmount, 'pending', bookingDocId]);
+    }
+
+    const [insertedIssue] = await db.query('SELECT * FROM service_issues WHERE id = ?', [newIssueId]);
+    res.json({ message: 'Issue entry added', issue: insertedIssue[0] });
+  } catch (err) {
+    res.status(500).json({ message: 'Error adding issue entry', error: err.message });
+  }
+};
+
+/* ✏️ UPDATE SERVICE ISSUE ENTRY */
+exports.updateServiceIssueEntry = async (req, res) => {
+  try {
+    const { serviceId, issueId } = req.params;
+    const { issue, issueAmount } = req.body;
+
+    if (!issue || issue.trim() === '') {
+      return res.status(400).json({ message: 'Issue text is required' });
+    }
+
+    // Check if service exists
+    const [serviceCheck] = await db.query('SELECT id FROM all_services WHERE id = ?', [serviceId]);
+    if (!serviceCheck.length) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    // Ensure issueAmount column exists before update (backwards compatibility)
+    const [serviceIssueColumns] = await db.query('SHOW COLUMNS FROM service_issues');
+    const serviceIssueFieldNames = serviceIssueColumns.map((c) => c.Field);
+    if (!serviceIssueFieldNames.includes('issueAmount')) {
+      await db.query('ALTER TABLE service_issues ADD COLUMN issueAmount DECIMAL(10,2) DEFAULT 0');
+      console.log('✅ [updateServiceIssueEntry] added missing column service_issues.issueAmount');
+    }
+
+    const normalizedAmount = Number(issueAmount) || 0;
+    const [result] = await db.query(
+      'UPDATE service_issues SET issue = ?, issueAmount = ? WHERE id = ? AND all_service_id = ?',
+      [issue.trim(), normalizedAmount, issueId, serviceId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Issue entry not found' });
+    }
+
+    // sync to all_services row for downstream clients
+    await db.query('UPDATE all_services SET issue = ?, issueAmount = ?, issueStatus = ? WHERE id = ?', [issue.trim(), normalizedAmount, 'pending', serviceId]);
+
+    const [updated] = await db.query('SELECT * FROM service_issues WHERE id = ?', [issueId]);
+    res.json({ message: 'Issue entry updated', issue: updated[0] });
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating issue entry', error: err.message });
+  }
+};
+
+/* ✅ APPROVE/REJECT SERVICE ISSUE ENTRY */
+exports.updateServiceIssueEntryStatus = async (req, res) => {
+  try {
+    const { serviceId, issueId } = req.params;
+    const { issueStatus } = req.body;
+    const normalized = (issueStatus || '').toLowerCase();
+    if (!['pending', 'approved', 'rejected'].includes(normalized)) {
+      return res.status(400).json({ message: 'Invalid issue status' });
+    }
+
+    // Check if service exists
+    const [serviceCheck] = await db.query('SELECT id FROM all_services WHERE id = ?', [serviceId]);
+    if (!serviceCheck.length) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    const [result] = await db.query(
+      'UPDATE service_issues SET issueStatus = ? WHERE id = ? AND all_service_id = ?',
+      [normalized, issueId, serviceId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Issue entry not found' });
+    }
+
+    await db.query('UPDATE all_services SET issueStatus = ? WHERE id = ?', [normalized, serviceId]);
+
+    const [service] = await db.query('SELECT bookingDocId FROM all_services WHERE id = ?', [serviceId]);
+    if (service.length && service[0].bookingDocId) {
+      const [bookingColumns] = await db.query('SHOW COLUMNS FROM bookings');
+      const bookingFields = bookingColumns.map((c) => c.Field);
+      if (!bookingFields.includes('issueStatus')) {
+        await db.query("ALTER TABLE bookings ADD COLUMN issueStatus VARCHAR(50) DEFAULT 'pending'");
+        console.log('✅ [updateServiceIssueEntryStatus] added missing column bookings.issueStatus');
+      }
+      await db.query('UPDATE bookings SET issueStatus = ? WHERE id = ?', [normalized, service[0].bookingDocId]);
+    }
+
+    const [updated] = await db.query('SELECT * FROM service_issues WHERE id = ?', [issueId]);
+    res.json({ message: 'Issue status updated', issue: updated[0] });
+  } catch (err) {
+    res.status(500).json({ message: 'Error updating issue status', error: err.message });
   }
 };
 

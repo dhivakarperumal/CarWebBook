@@ -45,6 +45,7 @@ export default function Services() {
 
   const [services, setServices] = useState([]);
   const [employees, setEmployees] = useState([]);
+  const [issueEntries, setIssueEntries] = useState([]);
   const [serviceParts, setServiceParts] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -60,6 +61,13 @@ export default function Services() {
   const [partsModalVisible, setPartsModalVisible] = useState(false);
   const [selectedParts, setSelectedParts] = useState([]);
 
+  const [editingIssueId, setEditingIssueId] = useState(null);
+  const [issueText, setIssueText] = useState("");
+  const [issueAmount, setIssueAmount] = useState("");
+
+  const [issueModalVisible, setIssueModalVisible] = useState(false);
+  const [selectedIssueItem, setSelectedIssueItem] = useState(null);
+
   const loadData = async () => {
     try {
       const [servRes, empRes] = await Promise.all([
@@ -67,23 +75,35 @@ export default function Services() {
         api.get("/staff"),
       ]);
 
-      setServices(servRes.data);
-      setEmployees(empRes.data);
-
       const partsMap = {};
+      const servicesWithDetails = [];
+
       await Promise.all(
         (servRes.data || []).map(async (service) => {
           try {
             const detailRes = await api.get(`/all-services/${service.id}`);
-            partsMap[service.id] = detailRes.data?.parts || [];
+            const details = detailRes.data || {};
+            partsMap[service.id] = details.parts || [];
+            servicesWithDetails.push({
+              ...service,
+              parts: details.parts || [],
+              issues: details.issues || [],
+            });
           } catch (err) {
-            console.error(`Failed to load parts for service ${service.id}`, err);
+            console.error(`Failed to load service details for ${service.id}`, err);
             partsMap[service.id] = [];
+            servicesWithDetails.push({
+              ...service,
+              parts: [],
+              issues: [],
+            });
           }
         })
       );
 
       setServiceParts(partsMap);
+      setServices(servicesWithDetails);
+      setEmployees(empRes.data);
     } catch (error) {
       console.error(error);
       toast.error("Failed to fetch data");
@@ -213,6 +233,34 @@ export default function Services() {
     }
   };
 
+  const handleIssueEdit = (item) => {
+    setEditingIssueId(item.id);
+    setIssueText(item.issue || "");
+    setIssueAmount(item.issueAmount != null ? String(item.issueAmount) : "");
+  };
+
+  const handleIssueSave = async (id) => {
+    try {
+      await api.put(`/all-services/${id}/issue`, {
+        issue: issueText,
+        issueAmount: Number(issueAmount || 0),
+      });
+      toast.success("Issue updated successfully");
+      setEditingIssueId(null);
+      setIssueText("");
+      setIssueAmount("");
+      loadData();
+    } catch (error) {
+      toast.error("Failed to update issue");
+    }
+  };
+
+  const handleIssueCancel = () => {
+    setEditingIssueId(null);
+    setIssueText("");
+    setIssueAmount("");
+  };
+
   const assignEmployee = async () => {
     if (!selectedBooking || !selectedEmployeeId || assigning) return;
 
@@ -270,8 +318,8 @@ export default function Services() {
                 setCurrentPage(1);
               }}
               className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${mainTab === "booked"
-                  ? "bg-white text-blue-600 shadow"
-                  : "text-gray-500 hover:text-gray-700"
+                ? "bg-white text-blue-600 shadow"
+                : "text-gray-500 hover:text-gray-700"
                 }`}
             >
               Booked
@@ -282,8 +330,8 @@ export default function Services() {
                 setCurrentPage(1);
               }}
               className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${mainTab === "addVehicle"
-                  ? "bg-white text-blue-600 shadow"
-                  : "text-gray-500 hover:text-gray-700"
+                ? "bg-white text-blue-600 shadow"
+                : "text-gray-500 hover:text-gray-700"
                 }`}
             >
               Add Service Vehicle
@@ -294,8 +342,8 @@ export default function Services() {
             <button
               onClick={() => setViewMode("table")}
               className={`flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${viewMode === "table"
-                  ? "bg-white text-blue-600 shadow"
-                  : "text-gray-500 hover:text-gray-700"
+                ? "bg-white text-blue-600 shadow"
+                : "text-gray-500 hover:text-gray-700"
                 }`}
             >
               <FaList />
@@ -304,8 +352,8 @@ export default function Services() {
             <button
               onClick={() => setViewMode("card")}
               className={`flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${viewMode === "card"
-                  ? "bg-white text-blue-600 shadow"
-                  : "text-gray-500 hover:text-gray-700"
+                ? "bg-white text-blue-600 shadow"
+                : "text-gray-500 hover:text-gray-700"
                 }`}
             >
               <FaThLarge />
@@ -344,8 +392,8 @@ export default function Services() {
                 setCurrentPage(1);
               }}
               className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${subTab === "assigned"
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                ? "bg-blue-600 text-white shadow-md"
+                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                 }`}
             >
               Assigned ({assignedCount})
@@ -356,8 +404,8 @@ export default function Services() {
                 setCurrentPage(1);
               }}
               className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${subTab === "unassigned"
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                ? "bg-blue-600 text-white shadow-md"
+                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                 }`}
             >
               Unassigned ({unassignedCount})
@@ -417,14 +465,55 @@ export default function Services() {
                         </p>
                       </div>
 
-                      {item.issue && (
-                        <div className="rounded-lg bg-gray-50 border border-gray-100 p-3">
-                          <p className="text-sm font-semibold text-gray-700">
-                            Issue:{" "}
-                            <span className="text-gray-500 font-normal">{item.issue}</span>
+                      {/* 🔹 ISSUE SECTION */}
+                      <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-xs font-black uppercase tracking-wider text-blue-700">
+                            Service Issues
                           </p>
+                          {isMechanic && item.assignedEmployeeName && (
+                            <button
+                              onClick={() => {
+                                setEditingIssueId(item.id);
+                                const initialIssues = (item.issues || []).map((issue) => ({ ...issue }));
+                                if (!initialIssues.length && item.issue) {
+                                  initialIssues.push({
+                                    issue: item.issue,
+                                    issueAmount: item.issueAmount != null ? Number(item.issueAmount) : 0,
+                                    issueStatus: item.issueStatus || 'pending',
+                                  });
+                                }
+                                setIssueEntries(initialIssues);
+                                setIssueModalVisible(true);
+                              }}
+                              className="text-xs font-bold text-blue-600 hover:underline"
+                            >
+                              Edit
+                            </button>
+                          )}
                         </div>
-                      )}
+
+                        {(item.issues && item.issues.length > 0) || item.issue ? (
+                          <div className="space-y-2">
+                            {((item.issues && item.issues.length > 0) ? item.issues : [{
+                              id: null,
+                              issue: item.issue,
+                              issueAmount: item.issueAmount,
+                              issueStatus: item.issueStatus || 'pending',
+                            }]).map((issueEntry, index) => (
+                              <div key={issueEntry.id || `issue-${index}`} className="bg-white rounded-lg p-2 border border-gray-200">
+                                <p className="text-xs text-gray-700 font-semibold">{issueEntry.issue || 'No issue text'}</p>
+                                {issueEntry.issueAmount != null && Number(issueEntry.issueAmount) > 0 && (
+                                  <p className="text-xs text-gray-500">Amount: ₹{Number(issueEntry.issueAmount).toFixed(2)}</p>
+                                )}
+                                <p className="text-xs text-gray-500">Status: <span className="capitalize">{(issueEntry.issueStatus || 'pending')}</span></p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-gray-400 italic">No issues added yet.</p>
+                        )}
+                      </div>
 
                       {/* 🔹 ASSIGNED MECHANIC */}
                       {item.assignedEmployeeName && (
@@ -469,8 +558,8 @@ export default function Services() {
                             <div key={step} className="flex flex-1 items-center">
                               <div
                                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-black z-10 ${active
-                                    ? "border-blue-600 bg-blue-600 text-white"
-                                    : "border-gray-200 bg-gray-100 text-gray-400"
+                                  ? "border-blue-600 bg-blue-600 text-white"
+                                  : "border-gray-200 bg-gray-100 text-gray-400"
                                   }`}
                                 title={step}
                               >
@@ -479,8 +568,8 @@ export default function Services() {
                               {!isLast && (
                                 <div
                                   className={`h-1 flex-1 mx-1 rounded-full ${index < currentStepIndex
-                                      ? "bg-blue-600"
-                                      : "bg-gray-100"
+                                    ? "bg-blue-600"
+                                    : "bg-gray-100"
                                     }`}
                                 />
                               )}
@@ -580,6 +669,7 @@ export default function Services() {
                   <th className="px-6 py-4 font-bold">Customer</th>
                   <th className="px-6 py-4 font-bold">Vehicle</th>
                   <th className="px-6 py-4 font-bold">Status</th>
+                  <th className="px-6 py-4 font-bold">Issue</th>
                   <th className="px-6 py-4 font-bold">Spare Parts</th>
                   <th className="px-6 py-4 font-bold">Mechanic</th>
                   <th className="px-6 py-4 font-bold text-right">Action</th>
@@ -619,33 +709,111 @@ export default function Services() {
                       )}
                     </td>
                     <td className="px-6 py-4">
+                      <div className="space-y-2">
+                        {(() => {
+                          const issuesList =
+                            (item.issues && item.issues.length > 0)
+                              ? item.issues
+                              : (item.issue
+                                ? [{
+                                  id: null,
+                                  issue: item.issue,
+                                  issueAmount: item.issueAmount,
+                                  issueStatus: item.issueStatus || 'pending',
+                                }]
+                                : []);
+
+                          return (
+                            <>
+                              {/* ✅ SHOW ONLY 1 */}
+                              {issuesList.slice(0, 1).map((issueEntry, idx) => (
+                                <div key={issueEntry.id || `issue-${idx}`} className="bg-gray-50 p-2 rounded-lg border border-gray-200">
+                                  <p className="text-xs text-gray-700 font-semibold">
+                                    {issueEntry.issue || 'No issue text'}
+                                  </p>
+
+                                  {issueEntry.issueAmount != null && Number(issueEntry.issueAmount) > 0 && (
+                                    <p className="text-xs text-gray-500">
+                                      Amount: ₹{Number(issueEntry.issueAmount).toFixed(2)}
+                                    </p>
+                                  )}
+
+                                  <p className="text-xs text-gray-500">
+                                    Status: <span className="capitalize">{issueEntry.issueStatus || 'pending'}</span>
+                                  </p>
+                                </div>
+                              ))}
+
+                              {/* ✅ VIEW ALL BUTTON */}
+                              {issuesList.length > 1 && (
+                                <button
+                                  onClick={() => {
+                                    setIssueEntries(issuesList);
+                                    setIssueModalVisible(true);
+                                  }}
+                                  className="text-blue-600 font-bold text-xs hover:underline"
+                                >
+                                  View All ({issuesList.length})
+                                </button>
+                              )}
+                            </>
+                          );
+                        })()}
+
+                        {!item.issues?.length && !item.issue && (
+                          <p className="text-xs text-gray-400 italic">No issue entries yet.</p>
+                        )}
+
+                        {isMechanic && item.assignedEmployeeName && (
+                          <button
+                            onClick={() => {
+                              setEditingIssueId(item.id);
+                              const initialIssues = (item.issues || []).map((issue) => ({ ...issue }));
+                              if (!initialIssues.length && item.issue) {
+                                initialIssues.push({
+                                  issue: item.issue,
+                                  issueAmount: item.issueAmount != null ? Number(item.issueAmount) : 0,
+                                  issueStatus: item.issueStatus || 'pending',
+                                });
+                              }
+                              setIssueEntries(initialIssues);
+                              setIssueModalVisible(true);
+                            }}
+                            className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                          >
+                            Edit
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
                       {getServiceParts(item.id).length === 0 ? (
                         <p className="text-xs text-gray-500">No parts added</p>
                       ) : (
-                       <div className="space-y-1">
+                        <div className="space-y-1">
 
-  {/* ✅ show only 2 */}
-  {getServiceParts(item.id).slice(0, 2).map((part, pindex) => (
-    <p key={`${item.id}-part-${pindex}`} className="text-xs text-gray-700">
-      {part.partName} • ₹{Number(part.total).toFixed(2)} • 
-      <span className="font-bold">{formatPartStatus(part.status)}</span>
-    </p>
-  ))}
+                          {/* ✅ show only 2 */}
+                          {getServiceParts(item.id).slice(0, 2).map((part, pindex) => (
+                            <p key={`${item.id}-part-${pindex}`} className="text-xs text-gray-700">
+                              {part.partName} • ₹{Number(part.total).toFixed(2)} •
+                              <span className="font-bold">{formatPartStatus(part.status)}</span>
+                            </p>
+                          ))}
 
-  {/* ✅ show popup button */}
-  {getServiceParts(item.id).length > 2 && (
-    <button
-      onClick={() => {
-        setSelectedParts(getServiceParts(item.id));
-        setPartsModalVisible(true);
-      }}
-      className="text-blue-600 font-bold text-xs hover:underline"
-    >
-      View All ({getServiceParts(item.id).length})
-    </button>
-  )}
+                          {/* ✅ show popup button */}
+                          {getServiceParts(item.id).length > 2 && (
+                            <button
+                              onClick={() => {
+                                setSelectedParts(getServiceParts(item.id));
+                                setPartsModalVisible(true);
+                              }}
+                              className="text-blue-600 font-bold text-xs hover:underline"
+                            >
+                              View All ({getServiceParts(item.id).length})
+                            </button>
+                          )}
 
-</div>
+                        </div>
                       )}
                     </td>
                     <td className="px-6 py-4 font-semibold text-gray-800">
@@ -702,7 +870,7 @@ export default function Services() {
                 ))}
                 {paginatedData.length === 0 && (
                   <tr>
-                    <td colSpan="7" className="py-12 text-center text-gray-500 text-base">
+                    <td colSpan="8" className="py-12 text-center text-gray-500 text-base">
                       No services found in this category.
                     </td>
                   </tr>
@@ -775,44 +943,191 @@ export default function Services() {
       )}
 
       {partsModalVisible && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-    
-    <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
 
-      <h2 className="text-xl font-bold mb-4">
-        Spare Parts List
-      </h2>
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
 
-      <div className="max-h-80 overflow-y-auto space-y-3">
-        {selectedParts.map((part, index) => (
-          <div key={index} className="flex justify-between border p-3 rounded-lg">
-            
-            <div>
-              <p className="font-semibold">{part.partName}</p>
-              <p className="text-xs text-gray-500">Qty: {part.qty}</p>
+            <h2 className="text-xl font-bold mb-4">
+              Spare Parts List
+            </h2>
+
+            <div className="max-h-80 overflow-y-auto space-y-3">
+              {selectedParts.map((part, index) => (
+                <div key={index} className="flex justify-between border p-3 rounded-lg">
+
+                  <div>
+                    <p className="font-semibold">{part.partName}</p>
+                    <p className="text-xs text-gray-500">Qty: {part.qty}</p>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="font-bold">₹{Number(part.total).toFixed(2)}</p>
+                    <span className={`text-xs px-2 py-1 rounded ${partStatusClass(part.status)}`}>
+                      {formatPartStatus(part.status)}
+                    </span>
+                  </div>
+
+                </div>
+              ))}
             </div>
 
-            <div className="text-right">
-              <p className="font-bold">₹{Number(part.total).toFixed(2)}</p>
-              <span className={`text-xs px-2 py-1 rounded ${partStatusClass(part.status)}`}>
-                {formatPartStatus(part.status)}
-              </span>
-            </div>
+            <button
+              onClick={() => setPartsModalVisible(false)}
+              className="mt-4 w-full bg-blue-600 text-white py-2 rounded-xl"
+            >
+              Close
+            </button>
 
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
-      <button
-        onClick={() => setPartsModalVisible(false)}
-        className="mt-4 w-full bg-blue-600 text-white py-2 rounded-xl"
-      >
-        Close
-      </button>
+      {issueModalVisible && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl bg-white shadow-2xl">
+            <div className="p-4 border-b">
+              <h2 className="text-xl font-bold">All Issue Entries</h2>
+            </div>
 
-    </div>
-  </div>
-)}
+            {issueEntries.length === 0 && (
+              <div className="rounded-lg border border-dashed border-blue-300 bg-blue-50 text-blue-700 p-3 mb-4 text-sm">
+                No issue entries yet. Use + add button to create one.
+              </div>
+            )}
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {issueEntries.map((entry, idx) => (
+                <div key={entry.id ?? `new-${idx}`} className="p-3 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-bold text-gray-700">Issue #{idx + 1}</p>
+                    <button
+                      onClick={() => {
+                        const copy = [...issueEntries];
+                        copy.splice(idx, 1);
+                        setIssueEntries(copy);
+                      }}
+                      className="text-red-600 text-xs hover:underline"
+                    >
+                      Remove
+                    </button>
+                  </div>
+
+                  <textarea
+                    value={entry.issue || ""}
+                    onChange={(e) => {
+                      const copy = [...issueEntries];
+                      copy[idx] = { ...copy[idx], issue: e.target.value };
+                      setIssueEntries(copy);
+                    }}
+                    className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                    rows={3}
+                    placeholder="Describe the issue"
+                  />
+
+                  <div className="mt-2 flex gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={entry.issueAmount != null ? entry.issueAmount : ""}
+                      onChange={(e) => {
+                        const copy = [...issueEntries];
+                        copy[idx] = { ...copy[idx], issueAmount: e.target.value };
+                        setIssueEntries(copy);
+                      }}
+                      placeholder="Amount"
+                      className="w-full border border-gray-300 rounded-lg p-2 text-sm"
+                    />
+                    <p className="text-xs mt-1">
+                      Status:
+                      <span className={`ml-1 font-bold capitalize
+        ${entry.issueStatus === "approved" ? "text-green-600" :
+                          entry.issueStatus === "rejected" ? "text-red-600" :
+                            "text-yellow-600"}`}>
+                        {entry.issueStatus || "pending"}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => {
+                setIssueEntries((prev) => [
+                  ...prev,
+                  { issue: '', issueAmount: '', issueStatus: 'pending' },
+                ]);
+              }}
+              className="mb-4 inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-300 text-blue-600 font-bold hover:bg-blue-50"
+            >
+              + Add Issue Entry
+            </button>
+
+            <div className="p-4 border-t flex gap-3">
+              <button
+                onClick={() => {
+                  setIssueModalVisible(false);
+                  setEditingIssueId(null);
+                  setIssueEntries([]);
+                }}
+                className="flex-1 bg-gray-400 text-white py-2 rounded-lg"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={async () => {
+                  if (!editingIssueId) {
+                    toast.error('No service selected');
+                    return;
+                  }
+
+                  try {
+                    const toSave = issueEntries.filter((entry) => entry.issue && entry.issue.trim());
+                    for (const entry of toSave) {
+                      if (entry.id) {
+                        await api.put(`/all-services/${editingIssueId}/issues/${entry.id}`, {
+                          issue: entry.issue.trim(),
+                          issueAmount: Number(entry.issueAmount || 0),
+                        });
+                        if (entry.issueStatus && entry.issueStatus !== 'pending') {
+                          await api.put(`/all-services/${editingIssueId}/issues/${entry.id}/status`, {
+                            issueStatus: entry.issueStatus,
+                          });
+                        }
+                      } else {
+                        const newIssue = await api.post(`/all-services/${editingIssueId}/issues`, {
+                          issue: entry.issue.trim(),
+                          issueAmount: Number(entry.issueAmount || 0),
+                        });
+                        if (entry.issueStatus && entry.issueStatus !== 'pending') {
+                          const issueId = newIssue.data.issue.id;
+                          await api.put(`/all-services/${editingIssueId}/issues/${issueId}/status`, {
+                            issueStatus: entry.issueStatus,
+                          });
+                        }
+                      }
+                    }
+
+                    toast.success('Issue entries saved');
+                    setIssueModalVisible(false);
+                    setEditingIssueId(null);
+                    setIssueEntries([]);
+                    loadData();
+                  } catch (error) {
+                    console.error(error);
+                    toast.error('Failed to save issue entries');
+                  }
+                }}
+                className="flex-1 bg-green-600 text-white py-2 rounded-lg"
+              >
+                Save Issues
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

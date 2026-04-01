@@ -3,13 +3,13 @@ import api from "../../api";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
-import { 
-  ChevronLeft, 
-  Search, 
-  FileText, 
-  Calculator, 
-  Car, 
-  User, 
+import {
+  ChevronLeft,
+  Search,
+  FileText,
+  Calculator,
+  Car,
+  User,
   ShieldCheck,
   Package,
   ArrowRight,
@@ -24,11 +24,12 @@ const EmpAddBilling = () => {
   const [search, setSearch] = useState("");
   const [selectedService, setSelectedService] = useState(null);
   const [parts, setParts] = useState([]);
+  const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectionMode, setSelectionMode] = useState("search"); // 'search' or 'select'
 
   const [labour, setLabour] = useState("");
-  const [gstPercent, setGstPercent] = useState(18);
+  const [gstPercent, setGstPercent] = useState(0); // GST forced to 0 per request
 
   /* =======================
      FETCH ASSIGNED SERVICES ONLY
@@ -38,13 +39,16 @@ const EmpAddBilling = () => {
       try {
         setLoading(true);
         const res = await api.get('/all-services');
-        
+
         const mechanicName = userProfile?.displayName || "";
         // Filter: Only services assigned to me
-        const myServices = res.data.filter(s => 
-          (s.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase()
-        );
-        
+        const myServices = res.data.filter(s => {
+          const assignedMatch = (s.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase();
+          const status = (s.serviceStatus || s.status || "").toString().trim();
+          const isBillPending = status.toLowerCase() === "bill pending";
+          return assignedMatch && isBillPending;
+        });
+
         setServices(myServices);
       } catch (err) {
         toast.error("Failed to load your assigned services");
@@ -61,19 +65,29 @@ const EmpAddBilling = () => {
   const selectService = async (s) => {
     try {
       setSelectedService(s);
-      
+
       // Fetch parts from backend for this service
       const res = await api.get(`/all-services/${s.id}`);
       const data = res.data;
 
-      const partsData = (data.parts || []).map((p) => ({
-        partName: p.partName,
-        qty: Number(p.qty || 0),
-        price: Number(p.price || 0),
-        total: Number(p.qty || 0) * Number(p.price || 0),
-      }));
+      const partsData = (data.parts || [])
+        .filter((p) => (p.status || "").toLowerCase() === "approved")
+        .map((p) => ({
+          partName: p.partName,
+          qty: Number(p.qty || 0),
+          price: Number(p.price || 0),
+          total: Number(p.qty || 0) * Number(p.price || 0),
+        }));
+
+      const issuesData = (data.issues || [])
+        .filter((i) => (i.issueStatus || "").toLowerCase() === "approved")
+        .map((i) => ({
+          issueName: i.issue,
+          amount: Number(i.issueAmount || 0),
+        }));
 
       setParts(partsData);
+      setIssues(issuesData);
     } catch (err) {
       toast.error("Failed to load spare parts for this vehicle");
     }
@@ -83,10 +97,11 @@ const EmpAddBilling = () => {
      CALCULATIONS
   ======================= */
   const partsTotal = parts.reduce((sum, p) => sum + p.total, 0);
+  const issueTotal = issues.reduce((sum, i) => sum + i.amount, 0);
   const labourAmount = Number(labour || 0);
   const gst = Number(gstPercent || 0);
 
-  const subTotal = partsTotal + labourAmount;
+  const subTotal = partsTotal + issueTotal + labourAmount;
   const gstAmount = (subTotal * gst) / 100;
   const grandTotal = subTotal + gstAmount;
 
@@ -116,7 +131,9 @@ const EmpAddBilling = () => {
         mobileNumber: selectedService.phone,
         car: `${selectedService.brand || ""} ${selectedService.model || ""}`.trim(),
         parts,
+        issues,
         partsTotal,
+        issueTotal,
         labour: labourAmount,
         gstPercent: gst,
         gstAmount,
@@ -147,10 +164,10 @@ const EmpAddBilling = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
-      
+
       {/* HEADER */}
       <div className="flex items-center gap-4">
-        <button 
+        <button
           onClick={() => navigate(-1)}
           className="p-3 bg-white rounded-2xl border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
         >
@@ -163,21 +180,21 @@ const EmpAddBilling = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
+
         {/* LEFT TOOLBOX */}
         <div className="lg:col-span-2 space-y-6">
-          
+
           {/* SEARCH & SELECT */}
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
             <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Vehicle Selection</h2>
             <div className="flex gap-2 p-1 bg-gray-50 rounded-2xl w-fit">
-              <button 
+              <button
                 onClick={() => setSelectionMode('search')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${selectionMode === 'search' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
               >
                 <Search size={14} /> Search
               </button>
-              <button 
+              <button
                 onClick={() => setSelectionMode('select')}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${selectionMode === 'select' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
               >
@@ -214,7 +231,7 @@ const EmpAddBilling = () => {
                   ))}
                 </select>
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                   <ArrowRight className="w-4 h-4 text-gray-400 rotate-90" />
+                  <ArrowRight className="w-4 h-4 text-gray-400 rotate-90" />
                 </div>
               </div>
             )}
@@ -249,7 +266,7 @@ const EmpAddBilling = () => {
                     </div>
                   ))}
                 {services.filter(s => `${s.bookingId} ${s.name} ${s.phone}`.toLowerCase().includes(search.toLowerCase())).length === 0 && (
-                   <div className="p-8 text-center text-gray-400 text-sm font-medium">No assigned vehicles found matching your search</div>
+                  <div className="p-8 text-center text-gray-400 text-sm font-medium">No assigned vehicles found matching your search</div>
                 )}
               </div>
             )}
@@ -285,6 +302,14 @@ const EmpAddBilling = () => {
                           <td className="px-4 py-4 text-right pr-6 text-blue-600 font-black">₹{p.total}</td>
                         </tr>
                       ))}
+                      <tr className="bg-gray-100 font-black text-gray-900">
+                        <td className="px-4 py-3" colSpan="3">
+                          Total
+                        </td>
+                        <td className="px-4 py-3 text-right pr-6 text-blue-700">
+                          ₹{partsTotal.toLocaleString()}
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
@@ -293,6 +318,46 @@ const EmpAddBilling = () => {
                   <Package className="w-10 h-10 text-gray-300 mx-auto mb-2" />
                   <p className="text-sm font-bold text-gray-400">No spare parts recorded for this vehicle.</p>
                 </div>
+              )}
+
+              {issues.length > 0 ? (
+                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                  <div className="flex items-center justify-between mb-3">
+                    <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Approved Issues</h2>
+                    <span className="text-xs font-bold text-blue-600">{issues.length} items</span>
+                  </div>
+                  <div className="overflow-hidden rounded-2xl border border-gray-50 bg-gray-50/50">
+                    <table className="min-w-full text-left text-[11px] font-bold">
+                      <thead>
+                        <tr className="text-gray-400 uppercase tracking-widest ">
+                          <th className="px-4 py-3">Issue</th>
+                          <th className="px-4 py-3 text-right">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {issues.map((issue, i) => (
+                          <tr key={i} className="text-gray-700">
+                            <td className="px-4 py-4">{issue.issueName}</td>
+                            <td className="px-4 py-4 text-right text-blue-600 font-black">₹{issue.amount.toFixed(2)}</td>
+                          </tr>
+                        ))}
+                        <tr className="bg-gray-100 font-black text-gray-900">
+                          <td className="px-4 py-3">
+                            Total
+                          </td>
+                          <td className="px-4 py-3 text-right text-blue-700">
+                            ₹{issueTotal.toLocaleString("en-IN", {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 text-center text-gray-500 text-sm">No approved issue entries available.</div>
               )}
             </div>
           )}
@@ -327,34 +392,34 @@ const EmpAddBilling = () => {
 
         {/* RIGHT SIDEBAR - SUMMARY */}
         <div className="space-y-6">
-          
+
           {/* VEHICLE PREVIEW */}
           {selectedService ? (
             <div className="bg-gray-900 rounded-[2rem] p-6 text-white shadow-xl shadow-gray-200">
               <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Job Detail</h2>
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 bg-gray-800 rounded-2xl flex items-center justify-center border border-gray-700">
-                   <User className="w-6 h-6 text-blue-400" />
+                  <User className="w-6 h-6 text-blue-400" />
                 </div>
                 <div>
                   <p className="font-black text-lg leading-tight">{selectedService.name}</p>
                   <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">{selectedService.brand} {selectedService.model}</p>
                 </div>
               </div>
-              
+
               <div className="space-y-3 pt-6 border-t border-gray-800">
-                 <div className="flex justify-between items-center text-xs font-bold">
-                    <span className="text-gray-500">Plate No:</span>
-                    <span>{selectedService.vehicleNumber || 'N/A'}</span>
-                 </div>
-                 <div className="flex justify-between items-center text-xs font-bold">
-                    <span className="text-gray-500">Booking ID:</span>
-                    <span>{selectedService.bookingId}</span>
-                 </div>
-                 <div className="flex justify-between items-center text-xs font-bold">
-                    <span className="text-gray-500">Assignment:</span>
-                    <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-blue-400" /> {userProfile?.displayName}</span>
-                 </div>
+                <div className="flex justify-between items-center text-xs font-bold">
+                  <span className="text-gray-500">Plate No:</span>
+                  <span>{selectedService.vehicleNumber || 'N/A'}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-bold">
+                  <span className="text-gray-500">Booking ID:</span>
+                  <span>{selectedService.bookingId}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-bold">
+                  <span className="text-gray-500">Assignment:</span>
+                  <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-blue-400" /> {userProfile?.displayName}</span>
+                </div>
               </div>
             </div>
           ) : (
@@ -368,23 +433,27 @@ const EmpAddBilling = () => {
           {selectedService && (
             <div className="bg-white rounded-[2rem] border border-gray-100 p-8 space-y-6 shadow-sm">
               <div className="space-y-3">
-                 <div className="flex justify-between font-bold text-sm">
-                    <span className="text-gray-400">Parts Total</span>
-                    <span className="text-gray-900 font-black">₹{partsTotal.toLocaleString()}</span>
-                 </div>
-                 <div className="flex justify-between font-bold text-sm">
-                    <span className="text-gray-400">Labour</span>
-                    <span className="text-gray-900 font-black">₹{labourAmount.toLocaleString()}</span>
-                 </div>
-                 <div className="flex justify-between font-bold text-sm">
-                    <span className="text-gray-400">GST ({gst}%)</span>
-                    <span className="text-gray-900 font-black">₹{gstAmount.toFixed(2)}</span>
-                 </div>
+                <div className="flex justify-between font-bold text-sm">
+                  <span className="text-gray-400">Parts Total</span>
+                  <span className="text-gray-900 font-black">₹{partsTotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between font-bold text-sm">
+                  <span className="text-gray-400">Issues Total</span>
+                  <span className="text-gray-900 font-black">₹{issueTotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between font-bold text-sm">
+                  <span className="text-gray-400">Labour</span>
+                  <span className="text-gray-900 font-black">₹{labourAmount.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between font-bold text-sm">
+                  <span className="text-gray-400">GST ({gst}%)</span>
+                  <span className="text-gray-900 font-black">₹{gstAmount.toFixed(2)}</span>
+                </div>
               </div>
 
               <div className="pt-6 border-t border-gray-100">
-                 <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Grand Estimated Total</p>
-                 <p className="text-4xl font-black text-emerald-600">₹{grandTotal.toLocaleString()}</p>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Grand Estimated Total</p>
+                <p className="text-4xl font-black text-emerald-600">₹{grandTotal.toLocaleString()}</p>
               </div>
 
               <button
