@@ -4,6 +4,7 @@ import PageHeader from "./PageHeader";
 import MyOrders from "./MyOrders";
 import ManageAddress from "./ManageAddress";
 import ServiceStatus from "./ServiceStatus";
+import History from "./History";
 import PageContainer from "./PageContainer";
 import { useLocation } from "react-router-dom";
 
@@ -11,7 +12,7 @@ const Account = () => {
   const location = useLocation();
 
   const [activeTab, setActiveTab] = useState(
-    location.state?.tab || "servicestatus"
+    location.state?.tab || "servicestatus",
   );
 
   useEffect(() => {
@@ -25,6 +26,7 @@ const Account = () => {
     orders: "My Orders",
     address: "Manage Address",
     servicestatus: "Service Status",
+    history: "Service History",
   };
 
   const renderComponent = () => {
@@ -37,6 +39,8 @@ const Account = () => {
         return <MyOrders />;
       case "address":
         return <ManageAddress />;
+      case "history":
+        return <History />;
       default:
         return <ServiceStatus />;
     }
@@ -48,13 +52,13 @@ const Account = () => {
 
       <div className="min-h-screen bg-black text-white py-10">
         <PageContainer className="overflow-visible">
-
           {/* ===== MOBILE TABS ===== */}
           <div className="md:hidden flex gap-2 overflow-x-auto pb-3 mb-4 hide-scrollbar">
             {[
               ["servicestatus", "Service"],
               ["personal", "Profile"],
               ["orders", "Orders"],
+              ["history", "History"],
               ["address", "Address"],
             ].map(([key, label]) => (
               <button
@@ -73,7 +77,6 @@ const Account = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
-
             {/* ===== DESKTOP SIDEBAR (STICKY WORKING) ===== */}
             <div className="hidden md:block">
               <div
@@ -101,10 +104,16 @@ const Account = () => {
                   onClick={() => setActiveTab("orders")}
                   label="My Orders"
                 />
-                <SidebarButton
+                {/* <SidebarButton
                   active={activeTab === "address"}
                   onClick={() => setActiveTab("address")}
                   label="Manage Address"
+                /> */}
+
+                <SidebarButton
+                  active={activeTab === "history"}
+                  onClick={() => setActiveTab("history")}
+                  label="History"
                 />
               </div>
             </div>
@@ -113,7 +122,6 @@ const Account = () => {
             <div className="md:col-span-3 bg-slate-900 rounded-2xl p-4 sm:p-6 border border-sky-400">
               {renderComponent()}
             </div>
-
           </div>
         </PageContainer>
       </div>
@@ -128,11 +136,7 @@ const SidebarButton = ({ active, onClick, label }) => (
   <button
     onClick={onClick}
     className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition
-      ${
-        active
-          ? "bg-sky-500 text-black"
-          : "bg-slate-800 hover:bg-slate-700"
-      }`}
+      ${active ? "bg-sky-500 text-black" : "bg-slate-800 hover:bg-slate-700"}`}
   >
     {label}
   </button>
