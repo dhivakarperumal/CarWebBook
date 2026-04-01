@@ -58,12 +58,12 @@ const navItems = [
 
   { path: "/admin/bookings", label: "Service Bookings", icon: CalendarCheck },
   { path: "/admin/assignservices", label: "Assign Services", icon: UserCheck },
-  { path: "/admin/services", label: "Service", icon: Wrench },
+  { path: "/admin/services", label: "Active Services", icon: Wrench },
   { path: "/admin/customers", label: "Customers", icon: Users },
   { path: "/admin/billing", label: "Billing", icon: Receipt },
 
-  { path: "/admin/serviceslist", label: "Service Packages", icon: ShieldCheck },
-  { path: "/admin/priceslist", label: "Service Pricing", icon: BarChart3 },
+  // { path: "/admin/serviceslist", label: "Service Packages", icon: ShieldCheck },
+  // { path: "/admin/priceslist", label: "Service Pricing", icon: BarChart3 },
 
   {
     label: "Products",
@@ -72,6 +72,8 @@ const navItems = [
       { path: "/admin/allProducts", label: "Products", icon: CarFront },
       { path: "/admin/productbilling", label: "Product Billing", icon: Receipt },
       { path: "/admin/stockdetails", label: "Spare Parts Stock", icon: Boxes },
+      { path: "/admin/orders", label: "Orders", icon: ClipboardList },
+      { path: "/admin/inventory", label: "Parts Inventory", icon: PackageSearch },
     ],
   },
 
@@ -85,17 +87,25 @@ const navItems = [
     ],
   },
 
-  { path: "/admin/orders", label: "Orders", icon: ClipboardList },
 
-  { path: "/admin/employees", label: "Technicians", icon: UserCog },
-
-  { path: "/admin/inventory", label: "Parts Inventory", icon: PackageSearch },
-
-  {
+    {
+    label: "Employees",
+    icon: CarFront, 
+    children: [
+      { path: "/admin/employees", label: "Technicians", icon: UserCog },
+       {
     path: "/admin/overall-attendance",
     label: "Staff Attendance",
     icon: ClipboardList,
   },
+    ],
+  },
+  
+  
+
+  
+
+ 
 
   { path: "/admin/reports", label: "Service Reports", icon: FileText },
 

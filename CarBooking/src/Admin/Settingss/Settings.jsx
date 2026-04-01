@@ -61,21 +61,21 @@ const Settings = () => {
         path="/admin/settings/usermanagement"
       />
 
-      {/* <SettingCard
+      <SettingCard
         icon={<FaCogs />}
-        title="System Settings"
+        title="Prices List"
         desc="Configure general system preferences."
-        path="/admin/settings/system"
-      /> */}
+        path="/admin/priceslist"
+      />
 
-      {/* <SettingCard
+      <SettingCard
         icon={<FaFileInvoice />}
-        title="Billing & Payment"
-        desc="Set up and manage billing preferences and payment options."
-        path="/admin/settings/billing"
-      /> */}
+        title="Services"
+        desc="Set up and manage services."
+        path="/admin/serviceslist"
+      />
 
-      {/* 🏥 Hospital Reviews Section */}
+      
       <SettingCard
         icon={<FaStar />}
         title="Customer Reviews & Ratings"
