@@ -385,20 +385,14 @@ const Dashboard = () => {
 
   const { profileName: userProfile } = useAuth();
   
-  const quickActions = useMemo(() => {
-    const role = (userProfile?.role || "").toLowerCase();
-    const actions = [
-      { label: "Add Service Vehicle", icon: "🚗", path: "/admin/addservicevehicle", color: "from-sky-500 to-cyan-400", roles: ["admin", "manager", "receptionist", "mechanic"] },
-      { label: "Add Booking", icon: "📅", path: "/admin/addbooking", color: "from-blue-500 to-indigo-400", roles: ["admin", "manager", "receptionist"] },
-      { label: "Add Billing", icon: "🧾", path: "/admin/addbillings", color: "from-emerald-500 to-green-400", roles: ["admin", "manager", "receptionist"] },
-      { label: "Add Staff", icon: "👨‍🔧", path: "/admin/addstaff", color: "from-violet-500 to-purple-400", roles: ["admin", "manager"] },
-      { label: "Add Inventory", icon: "📦", path: "/admin/additemsinventory", color: "from-orange-500 to-amber-400", roles: ["admin", "manager", "mechanic"] },
-      { label: "Add Product", icon: "🛒", path: "/admin/addproducts", color: "from-rose-500 to-pink-400", roles: ["admin", "manager"] },
-    ];
-
-    if (role === "admin" || role === "manager") return actions;
-    return actions.filter(a => a.roles.includes(role));
-  }, [userProfile?.role]);
+  const quickActions = [
+    { label: "Add Service Vehicle", icon: "🚗", path: "/admin/addservicevehicle", color: "from-sky-500 to-cyan-400" },
+    { label: "Add Booking", icon: "📅", path: "/admin/addbooking", color: "from-blue-500 to-indigo-400" },
+    { label: "Add Billing", icon: "🧾", path: "/admin/addbillings", color: "from-emerald-500 to-green-400" },
+    { label: "Add Staff", icon: "👨‍🔧", path: "/admin/addstaff", color: "from-violet-500 to-purple-400" },
+    { label: "Add Inventory", icon: "📦", path: "/admin/additemsinventory", color: "from-orange-500 to-amber-400" },
+    { label: "Add Product", icon: "🛒", path: "/admin/addproducts", color: "from-rose-500 to-pink-400" },
+  ];
 
   return (
     <div className="min-h-screen p-2">
