@@ -1038,19 +1038,15 @@ export default function Services() {
                       placeholder="Amount"
                       className="w-full border border-gray-300 rounded-lg p-2 text-sm"
                     />
-                    <select
-                      value={entry.issueStatus || 'pending'}
-                      onChange={(e) => {
-                        const copy = [...issueEntries];
-                        copy[idx] = { ...copy[idx], issueStatus: e.target.value };
-                        setIssueEntries(copy);
-                      }}
-                      className="w-40 border border-gray-300 rounded-lg p-2 text-sm"
-                    >
-                      <option value="pending">pending</option>
-                      <option value="approved">approved</option>
-                      <option value="rejected">rejected</option>
-                    </select>
+                    <p className="text-xs mt-1">
+                      Status:
+                      <span className={`ml-1 font-bold capitalize
+        ${entry.issueStatus === "approved" ? "text-green-600" :
+                          entry.issueStatus === "rejected" ? "text-red-600" :
+                            "text-yellow-600"}`}>
+                        {entry.issueStatus || "pending"}
+                      </span>
+                    </p>
                   </div>
                 </div>
               ))}
