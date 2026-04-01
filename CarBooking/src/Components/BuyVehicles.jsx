@@ -40,8 +40,10 @@ const BuyVehicles = () => {
     try {
       setLoading(true);
       const res = await api.get("/bikes");
-      // Filter only published vehicles
-      const published = res.data.filter((vehicle) => vehicle.status === "published");
+      // Filter only published and booked vehicles
+      const published = res.data.filter(
+        (vehicle) => vehicle.status === "published" || vehicle.status === "booked"
+      );
       setVehicles(published);
     } catch (err) {
       console.error("Error fetching vehicles:", err);
@@ -267,9 +269,15 @@ const BuyVehicles = () => {
 
                       {/* Badge */}
                       <div className="absolute top-3 right-3">
-                        <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-400/30 flex items-center gap-1">
-                          <FaCheckCircle size={10} /> Available
-                        </span>
+                        {vehicle.status === "booked" ? (
+                          <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-300 text-xs font-bold border border-red-400/30 flex items-center gap-1">
+                            <FaTimes size={10} /> Booked
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-400/30 flex items-center gap-1">
+                            <FaCheckCircle size={10} /> Available
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -341,10 +349,10 @@ const BuyVehicles = () => {
                         </button>
                         <button
                           onClick={() => handleBookNow(vehicle)}
-                          disabled={bookingInProgress === vehicle.id}
+                          disabled={bookingInProgress === vehicle.id || vehicle.status === "booked"}
                           className="flex-1 py-2 rounded-lg bg-gradient-to-r from-sky-500 to-cyan-500 text-white hover:scale-105 transition text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {bookingInProgress === vehicle.id ? "Loading..." : "Book Now"}
+                          {bookingInProgress === vehicle.id ? "Loading..." : vehicle.status === "booked" ? "Booked" : "Book Now"}
                         </button>
                       </div>
                     </div>
@@ -717,10 +725,10 @@ const BuyVehicles = () => {
               </button>
               <button
                 onClick={() => handleBookNow(selectedVehicle)}
-                disabled={bookingInProgress === selectedVehicle.id}
+                disabled={bookingInProgress === selectedVehicle.id || selectedVehicle.status === "booked"}
                 className="flex-1 py-3 rounded-lg bg-gradient-to-r from-sky-500 to-cyan-500 text-white hover:scale-105 transition font-semibold text-lg shadow-lg shadow-sky-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {bookingInProgress === selectedVehicle.id ? "Processing..." : "Book Now"}
+                {bookingInProgress === selectedVehicle.id ? "Processing..." : selectedVehicle.status === "booked" ? "Booked" : "Book Now"}
               </button>
             </div>
           </div>

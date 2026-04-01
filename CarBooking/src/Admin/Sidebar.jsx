@@ -96,6 +96,7 @@ const navItems = [
     children: [
       { path: "/admin/inventory-list", label: "Vehicle Inventory", icon: Truck },
       { path: "/admin/add-vehicle", label: "Add New Vehicle", icon: PlusCircle },
+      { path: "/admin/booked-vehicles", label: "Booked Vehicles", icon: ListChecks },
     ],
   },
 

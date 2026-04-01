@@ -1,14 +1,29 @@
 const db = require('../config/db');
 
 const addBooking = async (req, res) => {
+  const connection = await db.getConnection();
   try {
+    await connection.beginTransaction();
+
     const data = req.body;
     data.bookingId = 'VB' + Date.now();
-    const [result] = await db.query('INSERT INTO vehicle_bookings SET ?', [data]);
+    
+    // Insert into vehicle_bookings
+    await connection.query('INSERT INTO vehicle_bookings SET ?', [data]);
+
+    // Update bikes table status to booked
+    if (data.vehicleId) {
+      await connection.query('UPDATE bikes SET status = "booked" WHERE id = ?', [data.vehicleId]);
+    }
+
+    await connection.commit();
     res.status(201).json({ message: "Vehicle booked successfully", bookingId: data.bookingId });
   } catch (err) {
+    if (connection) await connection.rollback();
     console.error("Error adding vehicle booking:", err);
     res.status(500).json({ message: "Error booking vehicle", error: err.message });
+  } finally {
+    if (connection) connection.release();
   }
 };
 
