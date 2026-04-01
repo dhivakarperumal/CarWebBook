@@ -11,6 +11,12 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
+console.log('🛠️ [db] config', {
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  database: process.env.DB_NAME || 'car_booking',
+});
+
 const promisePool = pool.promise();
 
 module.exports = promisePool;

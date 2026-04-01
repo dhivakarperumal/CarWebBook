@@ -349,6 +349,7 @@ exports.addServiceIssueEntry = async (req, res) => {
   try {
     const { id } = req.params;
     const { issue, issueAmount } = req.body;
+    console.log(`🚀 [addServiceIssueEntry] called for service ${id} issue=${issue} issueAmount=${issueAmount}`);
 
     if (!issue || issue.trim() === '') {
       return res.status(400).json({ message: 'Issue text is required' });
@@ -359,9 +360,24 @@ exports.addServiceIssueEntry = async (req, res) => {
       return res.status(404).json({ message: 'Service not found' });
     }
 
+    // Ensure optional issue metadata columns exist for backwards compatibility.
+    const [serviceIssueColumns] = await db.query('SHOW COLUMNS FROM service_issues');
+    const serviceIssueFieldNames = serviceIssueColumns.map((c) => c.Field);
+
+    if (!serviceIssueFieldNames.includes('issueAmount')) {
+      await db.query('ALTER TABLE service_issues ADD COLUMN issueAmount DECIMAL(10,2) DEFAULT 0');
+      console.log('✅ [addServiceIssueEntry] added missing column service_issues.issueAmount');
+    }
+
+    if (!serviceIssueFieldNames.includes('issueStatus')) {
+      await db.query("ALTER TABLE service_issues ADD COLUMN issueStatus VARCHAR(50) DEFAULT 'pending'");
+      console.log('✅ [addServiceIssueEntry] added missing column service_issues.issueStatus');
+    }
+
+    const normalizedAmount = Number(issueAmount) || 0;
     const [result] = await db.query(
       'INSERT INTO service_issues (all_service_id, issue, issueAmount, issueStatus) VALUES (?, ?, ?, ?)',
-      [id, issue.trim(), parseFloat(issueAmount) || 0, 'pending']
+      [id, issue.trim(), normalizedAmount, 'pending']
     );
 
     const newIssueId = result.insertId;
@@ -369,6 +385,18 @@ exports.addServiceIssueEntry = async (req, res) => {
     // Sync to bookings main issue fields for backward compatibility
     const bookingDocId = service[0].bookingDocId;
     if (bookingDocId) {
+      // Ensure bookings columns exist before update
+      const [bookingColumns] = await db.query('SHOW COLUMNS FROM bookings');
+      const bookingFields = bookingColumns.map((c) => c.Field);
+      if (!bookingFields.includes('issueAmount')) {
+        await db.query('ALTER TABLE bookings ADD COLUMN issueAmount DECIMAL(10,2) DEFAULT 0');
+        console.log('✅ [addServiceIssueEntry] added missing column bookings.issueAmount');
+      }
+      if (!bookingFields.includes('issueStatus')) {
+        await db.query("ALTER TABLE bookings ADD COLUMN issueStatus VARCHAR(50) DEFAULT 'pending'");
+        console.log('✅ [addServiceIssueEntry] added missing column bookings.issueStatus');
+      }
+
       await db.query('UPDATE bookings SET issue = ?, issueAmount = ?, issueStatus = ? WHERE id = ?', [issue.trim(), parseFloat(issueAmount) || 0, 'pending', bookingDocId]);
     }
 
@@ -395,9 +423,18 @@ exports.updateServiceIssueEntry = async (req, res) => {
       return res.status(404).json({ message: 'Service not found' });
     }
 
+    // Ensure issueAmount column exists before update (backwards compatibility)
+    const [serviceIssueColumns] = await db.query('SHOW COLUMNS FROM service_issues');
+    const serviceIssueFieldNames = serviceIssueColumns.map((c) => c.Field);
+    if (!serviceIssueFieldNames.includes('issueAmount')) {
+      await db.query('ALTER TABLE service_issues ADD COLUMN issueAmount DECIMAL(10,2) DEFAULT 0');
+      console.log('✅ [updateServiceIssueEntry] added missing column service_issues.issueAmount');
+    }
+
+    const normalizedAmount = Number(issueAmount) || 0;
     const [result] = await db.query(
       'UPDATE service_issues SET issue = ?, issueAmount = ? WHERE id = ? AND all_service_id = ?',
-      [issue.trim(), parseFloat(issueAmount) || 0, issueId, serviceId]
+      [issue.trim(), normalizedAmount, issueId, serviceId]
     );
 
     if (result.affectedRows === 0) {
@@ -438,6 +475,12 @@ exports.updateServiceIssueEntryStatus = async (req, res) => {
 
     const [service] = await db.query('SELECT bookingDocId FROM all_services WHERE id = ?', [serviceId]);
     if (service.length && service[0].bookingDocId) {
+      const [bookingColumns] = await db.query('SHOW COLUMNS FROM bookings');
+      const bookingFields = bookingColumns.map((c) => c.Field);
+      if (!bookingFields.includes('issueStatus')) {
+        await db.query("ALTER TABLE bookings ADD COLUMN issueStatus VARCHAR(50) DEFAULT 'pending'");
+        console.log('✅ [updateServiceIssueEntryStatus] added missing column bookings.issueStatus');
+      }
       await db.query('UPDATE bookings SET issueStatus = ? WHERE id = ?', [normalized, service[0].bookingDocId]);
     }
 
