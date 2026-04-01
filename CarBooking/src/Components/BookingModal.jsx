@@ -153,9 +153,34 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
                 <p className="text-gray-300 text-sm leading-relaxed">
                   {booking.issue}
                 </p>
+                {booking.issueAmount != null && Number(booking.issueAmount) > 0 && (
+                  <p className="text-sm text-orange-300 font-semibold mt-1">
+                    Amount: ₹{Number(booking.issueAmount).toFixed(2)}
+                  </p>
+                )}
                 <p className="text-xs text-gray-500 mt-2">
                   Issue Date: {booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() : "N/A"}
                 </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Status: <span className={`font-bold ${booking.issueStatus === 'approved' ? 'text-green-300' : booking.issueStatus === 'rejected' ? 'text-red-300' : 'text-yellow-300'}`}>{(booking.issueStatus || 'pending').toUpperCase()}</span>
+                </p>
+
+                {(booking.issueStatus || 'pending') === 'pending' && booking.serviceId && (
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => onApprove(booking.serviceId, null, 'approved', 'issue')}
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => onApprove(booking.serviceId, null, 'rejected', 'issue')}
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-gray-500 italic text-sm">No service issue details entered yet.</p>

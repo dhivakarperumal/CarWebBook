@@ -83,6 +83,8 @@ useEffect(() => {
         return {
           ...b,
           issue: matchedService?.issue || b.issue,
+          issueAmount: matchedService?.issueAmount != null ? matchedService.issueAmount : b.issueAmount,
+          issueStatus: matchedService?.issueStatus || b.issueStatus || 'pending',
           issueUpdatedAt: matchedService?.updatedAt || b.updatedAt,
         };
       });
@@ -110,6 +112,8 @@ useEffect(() => {
         return {
           ...b,
           issue: matchedService?.issue || b.issue,
+          issueAmount: matchedService?.issueAmount != null ? matchedService.issueAmount : b.issueAmount,
+          issueStatus: matchedService?.issueStatus || b.issueStatus || 'pending',
           issueUpdatedAt: matchedService?.updatedAt || b.updatedAt,
         };
       });
@@ -153,16 +157,23 @@ useEffect(() => {
   fetchData();
 }, [user]); // 👈 IMPORTANT
 
-  const handleApproveSpare = async (serviceId, partId, status) => {
+  const handleApproveSpare = async (serviceId, partId, status, type = 'part') => {
     try {
-      setApprovingPartId(partId);
-      await api.put(`/all-services/${serviceId}/parts/${partId}/approve`, {
-        status: status,
-        approvedBy: user.email,
-        approvalNotes: `${status} by customer`,
-      });
+      if (type === 'part') {
+        setApprovingPartId(partId);
+        await api.put(`/all-services/${serviceId}/parts/${partId}/approve`, {
+          status: status,
+          approvedBy: user.email,
+          approvalNotes: `${status} by customer`,
+        });
+      } else if (type === 'issue') {
+        setApprovingPartId(null);
+        await api.put(`/all-services/${serviceId}/issue-status`, {
+          issueStatus: status,
+        });
+      }
 
-      toast.success(`Spare part ${status} successfully`);
+      toast.success(`${type === 'issue' ? 'Issue' : 'Spare part'} ${status} successfully`);
       // Refresh data
       setLoading(true);
       const servicesRes = await api.get("/all-services");
@@ -189,6 +200,21 @@ useEffect(() => {
         }
       }
       setSpareParts(allSpareParts);
+
+      if (type === 'issue') {
+        // update local booking issue status for immediate reflect
+        const linkedService = services.find((s) => s.id === serviceId);
+        if (linkedService && linkedService.bookingDocId) {
+          setBookings((prev) =>
+            prev.map((b) =>
+              b.id === linkedService.bookingDocId
+                ? { ...b, issueStatus: status }
+                : b
+            )
+          );
+        }
+      }
+
       setLoading(false);
     } catch (err) {
       toast.error("Failed to update spare part status");
@@ -238,7 +264,7 @@ useEffect(() => {
             return (
               <div
                 key={booking.id}
-                onClick={() => setSelectedBooking(booking)}
+                onClick={() => setSelectedBooking({ ...booking, serviceId: bookingSpares?.serviceId })}
                 className={`cursor-pointer bg-[#020617] border rounded-xl px-2 md:px-6 py-4 flex justify-between items-center hover:shadow-lg transition ${
                   hasPendingSpares 
                     ? 'border-orange-500/40 hover:shadow-orange-500/30' 

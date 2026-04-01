@@ -14,6 +14,8 @@ async function migrate() {
         brand VARCHAR(100) NOT NULL,
         model VARCHAR(100) NOT NULL,
         issue VARCHAR(255) NOT NULL,
+        issueAmount DECIMAL(10,2) DEFAULT 0,
+        issueStatus VARCHAR(50) DEFAULT 'pending',
         otherIssue TEXT,
         address TEXT NOT NULL,
         location VARCHAR(255) NOT NULL,
@@ -35,6 +37,8 @@ async function migrate() {
       await db.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS vehicleNumber VARCHAR(50)`);
       await db.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS assignedEmployeeId INT`);
       await db.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS assignedEmployeeName VARCHAR(255)`);
+      await db.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS issueAmount DECIMAL(10,2) DEFAULT 0`);
+      await db.query(`ALTER TABLE bookings ADD COLUMN IF NOT EXISTS issueStatus VARCHAR(50) DEFAULT 'pending'`);
       console.log("Added missing columns to bookings table.");
     } catch (alterError) {
       console.log("Columns may already exist or ALTER failed:", alterError.message);

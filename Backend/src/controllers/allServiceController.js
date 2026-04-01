@@ -257,14 +257,15 @@ exports.approveServicePart = async (req, res) => {
 exports.updateServiceIssue = async (req, res) => {
   try {
     const { id } = req.params;
-    const { issue } = req.body;
+    const { issue, issueAmount } = req.body;
 
     console.log(`\n📝 [updateServiceIssue] Updating issue for service ID: ${id}`);
     console.log(`Issue text: ${issue ? issue.substring(0, 50) + '...' : 'empty'}`);
+    console.log(`Issue amount: ${issueAmount != null ? issueAmount : 'not provided'}`);
 
     const [result] = await db.query(
-      'UPDATE all_services SET issue = ? WHERE id = ?',
-      [issue || null, id]
+      'UPDATE all_services SET issue = ?, issueAmount = ?, issueStatus = ? WHERE id = ?',
+      [issue || null, issueAmount != null ? issueAmount : 0, 'pending', id]
     );
 
     if (result.affectedRows === 0) {
@@ -284,6 +285,39 @@ exports.updateServiceIssue = async (req, res) => {
   } catch (err) {
     console.error(`❌ [updateServiceIssue] Error:`, err);
     res.status(500).json({ message: 'Error updating issue', error: err.message });
+  }
+};
+
+/* 🧾 UPDATE ISSUE STATUS (USER APPROVE/REJECT) */
+exports.updateIssueStatus = async (req, res) => {
+  const { id } = req.params;
+  const { issueStatus } = req.body;
+  const validStatuses = ['pending', 'approved', 'rejected'];
+
+  if (!validStatuses.includes((issueStatus || '').toLowerCase())) {
+    return res.status(400).json({ message: 'Invalid issue status provided' });
+  }
+
+  try {
+    const [result] = await db.query(
+      'UPDATE all_services SET issueStatus = ? WHERE id = ?',
+      [issueStatus.toLowerCase(), id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    // Sync to bookings table if linked
+    const [serviceRows] = await db.query('SELECT bookingDocId FROM all_services WHERE id = ?', [id]);
+    if (serviceRows.length && serviceRows[0].bookingDocId) {
+      await db.query('UPDATE bookings SET issueStatus = ? WHERE id = ?', [issueStatus.toLowerCase(), serviceRows[0].bookingDocId]);
+    }
+
+    res.json({ message: 'Issue status updated' });
+  } catch (err) {
+    console.error(`❌ [updateIssueStatus] Error:`, err);
+    res.status(500).json({ message: 'Error updating issue status', error: err.message });
   }
 };
 

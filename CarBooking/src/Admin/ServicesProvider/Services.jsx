@@ -62,6 +62,7 @@ export default function Services() {
 
   const [editingIssueId, setEditingIssueId] = useState(null);
   const [issueText, setIssueText] = useState("");
+  const [issueAmount, setIssueAmount] = useState("");
 
   const [issueModalVisible, setIssueModalVisible] = useState(false);
   const [selectedIssueItem, setSelectedIssueItem] = useState(null);
@@ -222,16 +223,19 @@ export default function Services() {
   const handleIssueEdit = (item) => {
     setEditingIssueId(item.id);
     setIssueText(item.issue || "");
+    setIssueAmount(item.issueAmount != null ? String(item.issueAmount) : "");
   };
 
   const handleIssueSave = async (id) => {
     try {
       await api.put(`/all-services/${id}/issue`, {
-        issue: issueText
+        issue: issueText,
+        issueAmount: Number(issueAmount || 0),
       });
       toast.success("Issue updated successfully");
       setEditingIssueId(null);
       setIssueText("");
+      setIssueAmount("");
       loadData();
     } catch (error) {
       toast.error("Failed to update issue");
@@ -241,6 +245,7 @@ export default function Services() {
   const handleIssueCancel = () => {
     setEditingIssueId(null);
     setIssueText("");
+    setIssueAmount("");
   };
 
   const assignEmployee = async () => {
@@ -457,12 +462,19 @@ export default function Services() {
                             {item.issue ? item.issue.substring(0, 50) + (item.issue.length > 50 ? "..." : "") :
                               <span className="text-gray-400 italic">No issue</span>}
                           </p>
+                          {item.issueAmount != null && Number(item.issueAmount) > 0 && (
+                            <p className="text-xs font-bold text-gray-800">Amount: ₹{Number(item.issueAmount).toFixed(2)}</p>
+                          )}
+                          <p className="text-xs font-semibold text-gray-600 mt-1">
+                            Status: <span className="capitalize">{item.issueStatus || 'pending'}</span>
+                          </p>
 
                           {isMechanic && item.assignedEmployeeName && (
                             <button
                               onClick={() => {
                                 setSelectedIssueItem(item);
                                 setIssueText(item.issue || "");
+                                setIssueAmount(item.issueAmount != null ? String(item.issueAmount) : "");
                                 setIssueModalVisible(true);
                               }}
                               className="text-xs font-bold text-blue-600 hover:underline"
@@ -675,6 +687,15 @@ export default function Services() {
                             placeholder="Enter the issue details..."
                             className="w-full rounded-lg border border-blue-300 bg-white p-2 text-xs text-gray-800 outline-none focus:ring-1 focus:ring-blue-600 resize-none h-16"
                           />
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={issueAmount}
+                            onChange={(e) => setIssueAmount(e.target.value)}
+                            placeholder="Amount"
+                            className="w-full rounded-lg border border-blue-300 bg-white p-2 text-xs text-gray-800 outline-none focus:ring-1 focus:ring-blue-600"
+                          />
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleIssueSave(item.id)}
@@ -695,11 +716,18 @@ export default function Services() {
                           <p className="text-xs text-gray-700 mb-1">
                             {item.issue ? item.issue.substring(0, 50) + (item.issue.length > 50 ? "..." : "") : <span className="text-gray-400 italic">No issue</span>}
                           </p>
+                          {item.issueAmount != null && Number(item.issueAmount) > 0 && (
+                            <p className="text-xs text-gray-500">Amount: ₹{Number(item.issueAmount).toFixed(2)}</p>
+                          )}
+                          <p className="text-xs font-semibold text-gray-600 mt-1">
+                            Status: <span className="capitalize">{item.issueStatus || 'pending'}</span>
+                          </p>
                           {isMechanic && item.assignedEmployeeName && (
                             <button
                               onClick={() => {
                                 setSelectedIssueItem(item);
                                 setIssueText(item.issue || "");
+                                setIssueAmount(item.issueAmount != null ? String(item.issueAmount) : "");
                                 setIssueModalVisible(true);
                               }}
                               className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"

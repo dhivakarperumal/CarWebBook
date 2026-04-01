@@ -8,6 +8,7 @@ router.get('/:id', asc.getServiceById);
 router.put('/:id/status', asc.updateServiceStatus);
 router.put('/:id/assign', asc.assignMechanic);
 router.put('/:id/issue', asc.updateServiceIssue);
+router.put('/:id/issue-status', asc.updateIssueStatus);
 router.post('/:id/parts', asc.addServiceParts);
 router.put('/:serviceId/parts/:partId/approve', asc.approveServicePart);
 router.delete('/:id', asc.deleteService);
