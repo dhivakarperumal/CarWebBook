@@ -21,23 +21,21 @@ const baseClass =
 const errorClass = "border-red-400";
 const normalClass = "border-gray-300";
 
-export const Input = forwardRef(
-  ({ label, required, error, ...props }, ref) => (
-    <div>
-      <label className="block mb-2 text-sm text-gray-600">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
+export const Input = forwardRef(({ label, required, error, ...props }, ref) => (
+  <div>
+    <label className="block mb-2 text-sm text-gray-600">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
 
-      <input
-        ref={ref}
-        {...props}
-        className={`${baseClass} ${error ? errorClass : normalClass}`}
-      />
+    <input
+      ref={ref}
+      {...props}
+      className={`${baseClass} ${error ? errorClass : normalClass}`}
+    />
 
-      <p className="mt-1 h-4 text-xs text-red-500">{error || ""}</p>
-    </div>
-  )
-);
+    <p className="mt-1 h-4 text-xs text-red-500">{error || ""}</p>
+  </div>
+));
 
 export const Textarea = forwardRef(
   ({ label, required, error, ...props }, ref) => (
@@ -54,7 +52,7 @@ export const Textarea = forwardRef(
 
       <p className="mt-1 h-4 text-xs text-red-500">{error || ""}</p>
     </div>
-  )
+  ),
 );
 
 export const Select = forwardRef(
@@ -74,10 +72,11 @@ export const Select = forwardRef(
 
       <p className="mt-1 h-4 text-xs text-red-500">{error || ""}</p>
     </div>
-  )
+  ),
 );
 
 const BookService = () => {
+  const [vehicleType, setVehicleType] = useState("car");
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -87,6 +86,7 @@ const BookService = () => {
     model: "",
     issue: "",
     otherIssue: "",
+    vehicleNumber: "",
     address: "",
     location: "",
   });
@@ -118,7 +118,7 @@ const BookService = () => {
 
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${query}&addressdetails=1&limit=5`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${query}&addressdetails=1&limit=5`,
       );
       const data = await res.json();
       setLocationResults(data);
@@ -146,9 +146,7 @@ const BookService = () => {
       place.address?.village ||
       "";
 
-    setIsChennai(
-      ["chennai", "tirupattur"].includes(city.toLowerCase())
-    );
+    setIsChennai(["chennai", "tirupattur"].includes(city.toLowerCase()));
 
     setLocationResults([]);
   };
@@ -160,8 +158,6 @@ const BookService = () => {
   const [submitError, setSubmitError] = useState("");
 
   const [errors, setErrors] = useState({});
-
-
 
   const handleUseCurrentLocation = async () => {
     setLocationLoading(true);
@@ -179,7 +175,7 @@ const BookService = () => {
 
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
           );
           const data = await res.json();
 
@@ -201,9 +197,7 @@ const BookService = () => {
             lng: longitude,
           });
 
-          setIsChennai(
-            ["chennai", "tirupattur"].includes(city.toLowerCase())
-          );
+          setIsChennai(["chennai", "tirupattur"].includes(city.toLowerCase()));
         } catch (err) {
           console.error(err);
           setSubmitError("Unable to fetch address from location");
@@ -228,7 +222,7 @@ const BookService = () => {
         enableHighAccuracy: true,
         timeout: 15000,
         maximumAge: 0,
-      }
+      },
     );
   };
   const generateBookingId = async () => {
@@ -304,6 +298,7 @@ const BookService = () => {
       const bookingData = {
         bookingId,
         uid: currentUser.uid,
+        vehicleType: vehicleType,
 
         // User details
         name: formData.name,
@@ -316,6 +311,7 @@ const BookService = () => {
         model: formData.model,
         issue: formData.issue,
         otherIssue: formData.otherIssue || "",
+         vehicleNumber: formData.vehicleNumber,
         address: formData.address,
         location: formData.location,
         latitude: coords.lat,
@@ -350,13 +346,11 @@ const BookService = () => {
          5️⃣ REDIRECT TO SUCCESS PAGE
       -------------------------------------------------- */
       navigate(`/booking-success/${bookingId}`);
-
     } catch (error) {
       console.error("❌ Booking failed:", error);
       setSubmitError("Something went wrong. Please try again.");
-    }
-    finally {
-      setSubmitting(false);  // ✅ ADD HERE
+    } finally {
+      setSubmitting(false); // ✅ ADD HERE
     }
   };
 
@@ -365,7 +359,6 @@ const BookService = () => {
       <div className="relative max-w-6xl mx-auto">
         {/* Form Card */}
         <form className="rounded-3xl border border-gray-300 bg-white/5 backdrop-blur-xl p-10 space-y-2 ">
-
           <div className="grid md:grid-cols-2 gap-6">
             <Input
               ref={refs.name}
@@ -388,8 +381,6 @@ const BookService = () => {
             />
           </div>
 
-
-
           {/* Phone Numbers */}
           <div className="grid md:grid-cols-2 gap-6">
             <Input
@@ -407,26 +398,62 @@ const BookService = () => {
             />
           </div>
 
+          {/* Vehicle Type */}
+          <div className="flex gap-6 mb-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                value="car"
+                checked={vehicleType === "car"}
+                onChange={() => setVehicleType("car")}
+              />
+              <span className="text-gray-700 font-medium">Car</span>
+            </label>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                value="bike"
+                checked={vehicleType === "bike"}
+                onChange={() => setVehicleType("bike")}
+              />
+              <span className="text-gray-700 font-medium">Bike</span>
+            </label>
+          </div>
+
           {/* Brand & Model */}
           <div className="grid md:grid-cols-2 gap-6">
             <Select
               ref={refs.brand}
-              label="Car Brand"
+              label={vehicleType === "car" ? "Car Brand" : "Bike Brand"}
               name="brand"
               required
               error={errors.brand}
               onChange={handleChange}
             >
               <option value="">Select Brand</option>
-              <option>Honda</option>
-              <option>Hyundai</option>
-              <option>BMW</option>
-              <option>Audi</option>
+
+              {vehicleType === "car" ? (
+                <>
+                  <option>Honda</option>
+                  <option>Hyundai</option>
+                  <option>BMW</option>
+                  <option>Audi</option>
+                </>
+              ) : (
+                <>
+                  <option>Yamaha</option>
+                  <option>Royal Enfield</option>
+                  <option>Honda</option>
+                  <option>Bajaj</option>
+                  <option>TVS</option>
+                </>
+              )}
             </Select>
 
             <Input
               ref={refs.model}
-              label="Car Model"
+              label={vehicleType === "car" ? "Car Model" : "Bike Model"}
               name="model"
               required
               error={errors.model}
@@ -434,21 +461,30 @@ const BookService = () => {
             />
           </div>
 
-          {/* Issues */}
-          <Select
-            ref={refs.issue}
-            label="Issue"
-            name="issue"
-            required
-            error={errors.issue}
-            onChange={handleChange}
-          >
-            <option value="">Select Issue</option>
-            <option>Engine Problem</option>
-            <option>Brake Issue</option>
-            <option>Electrical</option>
-            <option>Others</option>
-          </Select>
+          {/* Issue + Vehicle Number */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <Select
+              ref={refs.issue}
+              label="Issue"
+              name="issue"
+              required
+              error={errors.issue}
+              onChange={handleChange}
+            >
+              <option value="">Select Issue</option>
+              <option>Engine Problem</option>
+              <option>Brake Issue</option>
+              <option>Electrical</option>
+              <option>Others</option>
+            </Select>
+
+            <Input
+              label="Vehicle Number"
+              name="vehicleNumber"
+              placeholder="TN 01 AB 1234"
+              onChange={handleChange}
+            />
+          </div>
 
           {formData.issue === "Others" && (
             <Input
@@ -508,7 +544,6 @@ const BookService = () => {
                 {errors.location || ""}
               </p>
             </div>
-
           </div>
 
           {/* Address */}
@@ -538,10 +573,8 @@ const BookService = () => {
               {submitting ? "Booking..." : "Book Service →"}
             </button>
           </div>
-
         </form>
       </div>
-
     </section>
   );
 };
