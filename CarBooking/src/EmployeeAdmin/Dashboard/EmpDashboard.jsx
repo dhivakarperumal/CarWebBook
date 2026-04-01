@@ -25,10 +25,71 @@ const EmpDashboard = () => {
   });
   const [myTasks, setMyTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAttendanceModal, setShowAttendanceModal] = useState(false);
+  const [isPunchingIn, setIsPunchingIn] = useState(false);
+  const [myStaffRecord, setMyStaffRecord] = useState(null);
 
   useEffect(() => {
     fetchMyTasks();
+    checkAttendanceStatus();
   }, []);
+
+  const checkAttendanceStatus = async () => {
+    try {
+      // 1. Get staff record to find staff_id
+      const staffRes = await api.get("/staff");
+      const me = (staffRes.data || []).find(s => s.email?.toLowerCase() === userProfile?.email?.toLowerCase());
+      
+      if (me) {
+        setMyStaffRecord(me);
+        // 2. Check if already marked for today
+        const today = new Date().toISOString().split('T')[0];
+        const attendRes = await api.get(`/attendance/check?staff_id=${me.id}&date=${today}`);
+        
+        if (!attendRes.data.isPresent && userProfile?.role === "mechanic") {
+          setShowAttendanceModal(true);
+        }
+      }
+    } catch (err) {
+      console.error("Attendance check failed", err);
+    }
+  };
+
+  const handlePunchIn = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocation is not supported by your browser");
+      return;
+    }
+
+    setIsPunchingIn(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const today = new Date().toISOString().split('T')[0];
+          
+          await api.post("/attendance/punch-in", {
+            staff_id: myStaffRecord.id,
+            date: today,
+            latitude,
+            longitude,
+            status: "Present"
+          });
+          
+          toast.success("Attendance marked successfully!");
+          setShowAttendanceModal(false);
+        } catch (err) {
+          toast.error(err.response?.data?.message || "Punch in failed");
+        } finally {
+          setIsPunchingIn(false);
+        }
+      },
+      (error) => {
+        setIsPunchingIn(false);
+        toast.error("Please allow location access to mark attendance");
+      }
+    );
+  };
 
   const fetchMyTasks = async () => {
     try {
@@ -294,6 +355,48 @@ const EmpDashboard = () => {
           </div>
         </div>
       </div>
+      {/* ===== ATTENDANCE MODAL ===== */}
+      {showAttendanceModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md" />
+          <div className="relative bg-white w-full max-w-sm rounded-[32px] shadow-2xl animate-in zoom-in-95 duration-300 overflow-hidden border border-slate-50">
+            <div className="p-8 text-center">
+              <div className="w-20 h-20 bg-blue-100/50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 ring-8 ring-blue-50/50">
+                <Clock size={36} className="animate-pulse" />
+              </div>
+              <h2 className="text-2xl font-black text-slate-900 mb-2">Mark Attendance</h2>
+              <p className="text-slate-500 text-sm font-medium mb-8 leading-relaxed">
+                Good morning! Please mark your attendance with GPS location to begin your workday.
+              </p>
+              
+              <button
+                onClick={handlePunchIn}
+                disabled={isPunchingIn}
+                className="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:opacity-70"
+              >
+                {isPunchingIn ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white" />
+                    Checking GPS...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={20} />
+                    Punch In Now
+                  </>
+                )}
+              </button>
+              
+              <button 
+                onClick={() => setShowAttendanceModal(false)}
+                className="mt-4 text-xs font-bold text-slate-400 hover:text-slate-600 tracking-wider uppercase"
+              >
+                Skip for now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

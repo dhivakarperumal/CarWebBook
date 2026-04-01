@@ -18,13 +18,33 @@ exports.getAttendanceByDate = async (req, res) => {
   }
 };
 
+/* 🕒 CHECK TODAY'S ATTENDANCE */
+exports.checkTodayAttendance = async (req, res) => {
+  const { staff_id, date } = req.query;
+  try {
+    const [rows] = await db.query(
+      'SELECT id, login_time, logout_time FROM attendance WHERE staff_id = ? AND date = ?',
+      [staff_id, date]
+    );
+    res.json({ isPresent: rows.length > 0, record: rows[0] || null });
+  } catch (err) {
+    res.status(500).json({ message: 'Error checking attendance', error: err.message });
+  }
+};
+
 /* 🕒 PUNCH IN */
 exports.punchIn = async (req, res) => {
-  const { staff_id, date, status } = req.body;
+  const { staff_id, date, status, latitude, longitude } = req.body;
   try {
     const login_time = new Date();
-    const sql = 'INSERT INTO attendance (staff_id, date, login_time, status) VALUES (?, ?, ?, ?)';
-    const [result] = await db.query(sql, [staff_id, date, login_time, status || 'Present']);
+    // Check if already punched in
+    const [existing] = await db.query('SELECT id FROM attendance WHERE staff_id = ? AND date = ?', [staff_id, date]);
+    if (existing.length > 0) {
+      return res.status(400).json({ message: 'Already punched in for today' });
+    }
+
+    const sql = 'INSERT INTO attendance (staff_id, date, login_time, status, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?)';
+    const [result] = await db.query(sql, [staff_id, date, login_time, status || 'Present', latitude, longitude]);
     res.status(201).json({ message: 'Punched in successfully', id: result.insertId });
   } catch (err) {
     res.status(500).json({ message: 'Error punching in', error: err.message });
