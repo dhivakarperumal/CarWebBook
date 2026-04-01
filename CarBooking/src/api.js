@@ -9,6 +9,6 @@ const api = axios.create({
 // Example API calls
 export const getBookings = (uid) => api.get("/bookings", { params: { uid } });
 export const createBooking = (bookingData) => api.post("/bookings/create", bookingData);
-
+export const getAllServices = (uid) => api.get("/all-services", { params: { uid } });
 
 export default api;
