@@ -319,11 +319,7 @@ const BuyVehicles = () => {
                           ₹{Number(vehicle.expected_price).toLocaleString("en-IN")}
                         </p>
                         <div className="flex items-center justify-between mt-2">
-                          {vehicle.negotiable && (
-                            <p className="text-xs text-yellow-400">
-                              Negotiable Price
-                            </p>
-                          )}
+                       
                           <div className="text-right">
                              <p className="text-[10px] text-gray-400 uppercase tracking-wider">Advance</p>
                              <p className="text-sm font-bold text-sky-300">
