@@ -1,19 +1,7 @@
 import React, { useState } from "react";
 import PageContainer from "./PageContainer";
 import { useRef } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth, db } from "../firebase";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import {
-  collection,
-  doc,
-  addDoc,
-  setDoc,
-  getDoc,
-  runTransaction,
-  serverTimestamp,
-} from "firebase/firestore";
+import { useAuth } from "../PrivateRouter/AuthContext";
 
 import { forwardRef } from "react";
 import PageHeader from "./PageHeader";
@@ -116,7 +104,7 @@ const BookService = () => {
     address: useRef(),
   };
 
-  const [currentUser, setCurrentUser] = useState(null);
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
 
@@ -164,13 +152,7 @@ const BookService = () => {
 
     setLocationResults([]);
   };
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-    });
 
-    return () => unsubscribe();
-  }, []);
 
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState("");
@@ -296,25 +278,7 @@ const BookService = () => {
       },
     );
   };
-  const generateBookingId = async () => {
-    const counterRef = doc(db, "counters", "bookingCounter");
 
-    const bookingId = await runTransaction(db, async (transaction) => {
-      const counterSnap = await transaction.get(counterRef);
-
-      let nextValue = 1;
-
-      if (counterSnap.exists()) {
-        nextValue = counterSnap.data().value + 1;
-      }
-
-      transaction.set(counterRef, { value: nextValue }, { merge: true });
-
-      return `BS${String(nextValue).padStart(3, "0")}`;
-    });
-
-    return bookingId;
-  };
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -326,7 +290,7 @@ const BookService = () => {
     /* -------------------------------------------------
            1️⃣ BLOCK IF USER NOT LOGGED IN
         -------------------------------------------------- */
-    if (!currentUser) {
+    if (!user) {
       setSubmitError("Please login to book a service");
 
       setTimeout(() => {
@@ -372,17 +336,13 @@ const BookService = () => {
     }
 
     /* -------------------------------------------------
-           4️⃣ FIRESTORE SAVE (OPTION 2 – BS_001)
+           4️⃣ SYNC WITH MYSQL BACKEND
         -------------------------------------------------- */
     try {
-      // 🔢 Generate sequential booking ID
       setSubmitting(true);
 
-      const bookingId = await generateBookingId();
-
       const bookingData = {
-        bookingId,
-        uid: currentUser.uid,
+        uid: user.uid,
         vehicleType: vehicleType,
 
         // User details
@@ -404,31 +364,10 @@ const BookService = () => {
 
         // Status tracking
         status: BOOKING_STATUS.BOOKED,
-
-        createdAt: serverTimestamp(),
       };
 
-      /* -------- 1️⃣ GLOBAL BOOKINGS COLLECTION -------- */
-      const bookingRef = await addDoc(collection(db, "bookings"), bookingData);
-
-      /* -------- 2️⃣ USER SUBCOLLECTION -------- */
-      await setDoc(
-        doc(db, "users", currentUser.uid, "bookings", bookingRef.id),
-        {
-          ...bookingData,
-          docId: bookingRef.id,
-        },
-      );
-
-      console.log("✅ Booking Successful:", bookingId);
-
-      // Sync with MySQL Backend
-      try {
-        await createBooking(bookingData);
-        console.log("✅ MySQL Sync Successful");
-      } catch (mysqlError) {
-        console.error("❌ MySQL Sync Failed:", mysqlError);
-      }
+      const response = await createBooking(bookingData);
+      console.log("✅ Booking Successful:", response.data.bookingId);
 
       setFormData({
         name: "",
@@ -454,7 +393,7 @@ const BookService = () => {
       console.error("❌ Booking failed:", error);
       setSubmitError("Something went wrong. Please try again.");
     } finally {
-      setSubmitting(false); // ✅ ADD HERE
+      setSubmitting(false);
     }
   };
 
@@ -698,7 +637,7 @@ const BookService = () => {
               <button
                 type="submit"
                 onClick={handleSubmit}
-                disabled={!currentUser || submitting}
+                disabled={!user || submitting}
                 className="w-full py-4 cursor-pointer rounded-full font-semibold text-black
   bg-gradient-to-r from-sky-500 to-cyan-400
   hover:scale-105 transition-all duration-300

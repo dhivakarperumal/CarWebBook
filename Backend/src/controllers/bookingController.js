@@ -21,17 +21,24 @@ exports.getAllBookings = async (req, res) => {
 exports.createBooking = async (req, res) => {
   try {
     const { 
-      bookingId, uid, name, email, phone, altPhone, 
+      uid, name, email, phone, altPhone, 
       brand, model, issue, otherIssue, address, 
-      location, latitude, longitude, status,vehicleType = 'car', vehicleNumber 
+      location, latitude, longitude, status, vehicleType = 'car', vehicleNumber 
     } = req.body;
 
+    // 1. Insert the record first (without bookingId or with a temp one if needed, but we'll update it)
     const [result] = await db.query(
       `INSERT INTO bookings 
       (bookingId, uid, name, email, phone, altPhone, brand, model, issue, otherIssue, address, location, latitude, longitude, status, vehicleType, vehicleNumber) 
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [bookingId, uid, name, email, phone, altPhone, brand, model, issue, otherIssue, address, location, latitude, longitude, status, vehicleType, vehicleNumber]
+      ['TEMP', uid, name, email, phone, altPhone, brand, model, issue, otherIssue, address, location, latitude, longitude, status || 'Booked', vehicleType, vehicleNumber]
     );
+
+    const insertId = result.insertId;
+    const generatedBookingId = `BS${String(insertId).padStart(3, '0')}`;
+
+    // 2. Update with the real sequential ID
+    await db.query('UPDATE bookings SET bookingId = ? WHERE id = ?', [generatedBookingId, insertId]);
     
     // Auto cascade admin walk-ins dynamically to all_services for the Services layout
     if (uid === 'admin-created') {
@@ -39,11 +46,12 @@ exports.createBooking = async (req, res) => {
         INSERT INTO all_services (
           bookingId, bookingDocId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, trackNumber, vehicleNumber, addVehicle, serviceStatus
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `, [bookingId, result.insertId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, '', vehicleNumber || '', 1, 'Booked']);
+      `, [generatedBookingId, insertId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, '', vehicleNumber || '', 1, 'Booked']);
     }
 
-    res.status(201).json({ id: result.insertId, message: 'Booking created' });
+    res.status(201).json({ id: insertId, bookingId: generatedBookingId, message: 'Booking created' });
   } catch (error) {
+    console.error('Error creating booking:', error);
     res.status(500).json({ message: 'Error creating booking', error: error.message });
   }
 };
