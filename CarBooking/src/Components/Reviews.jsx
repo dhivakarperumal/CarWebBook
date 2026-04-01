@@ -1,10 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "../firebase";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Autoplay } from "swiper/modules";
 import "swiper/css";
-
+import api from "../api";
 import {
   FaChevronLeft,
   FaChevronRight,
@@ -15,19 +13,34 @@ import PageContainer from "./PageContainer";
 
 export default function Reviews() {
   const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
   const prevRef = useRef(null);
   const nextRef = useRef(null);
 
   useEffect(() => {
     const fetchReviews = async () => {
-      const q = query(collection(db, "reviews"), where("status", "==", true));
-      const snap = await getDocs(q);
-      setReviews(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      try {
+        setLoading(true);
+        const res = await api.get("/reviews");
+        
+        // Filter for approved reviews (status === true or status === 1)
+        const approvedReviews = res.data.filter((r) => r.status === 1 || r.status === true);
+        
+        console.log('[Reviews] Fetched:', res.data.length, 'reviews, Approved:', approvedReviews.length);
+        setReviews(approvedReviews);
+      } catch (error) {
+        console.error("[Reviews] Error fetching reviews:", error);
+        setReviews([]);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchReviews();
   }, []);
 
+  if (loading) return null;
+  
   if (!reviews.length) return null;
 
   return (
@@ -165,21 +178,28 @@ export default function Reviews() {
 
                     {/* HEADER */}
                     <div className="flex items-center gap-4 mb-4">
-                      <div className="w-14 h-14 rounded-full overflow-hidden border border-sky-400">
-                        <img
-                          src={
-                            r.image?.startsWith("data")
-                              ? r.image
-                              : "/avatar-placeholder.jpg"
-                          }
-                          className="w-full h-full object-cover"
-                        />
+                      <div className="w-14 h-14 rounded-full overflow-hidden border border-sky-400 bg-slate-700 flex items-center justify-center">
+                        {r.image ? (
+                          <img
+                            src={r.image}
+                            alt={r.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                              e.target.parentElement.innerHTML = '<div className="w-10 h-10 bg-gradient-to-r from-sky-400 to-cyan-500 rounded-full flex items-center justify-center text-white text-lg font-bold">' + r.name.charAt(0).toUpperCase() + '</div>';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-r from-sky-400/20 to-cyan-500/20 flex items-center justify-center text-sky-400 text-lg font-bold">
+                            {r.name?.charAt(0).toUpperCase() || "U"}
+                          </div>
+                        )}
                       </div>
 
                       <div>
                         <h4 className="font-semibold text-white">{r.name}</h4>
                         <div className="flex text-sky-400 text-sm">
-                          {[...Array(r.rating)].map((_, i) => (
+                          {[...Array(r.rating || 5)].map((_, i) => (
                             <FaStar key={i} />
                           ))}
                         </div>
