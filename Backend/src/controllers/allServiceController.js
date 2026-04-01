@@ -272,6 +272,13 @@ exports.updateServiceIssue = async (req, res) => {
       return res.status(404).json({ message: 'Service not found' });
     }
 
+    // Sync issue to bookings table when linked by bookingDocId
+    const [serviceRows] = await db.query('SELECT bookingDocId FROM all_services WHERE id = ?', [id]);
+    if (serviceRows.length && serviceRows[0].bookingDocId) {
+      await db.query('UPDATE bookings SET issue = ? WHERE id = ?', [issue || null, serviceRows[0].bookingDocId]);
+      console.log(`✅ [updateServiceIssue] Synced issue to bookings table for bookingDocId=${serviceRows[0].bookingDocId}`);
+    }
+
     console.log(`✅ [updateServiceIssue] Issue updated successfully`);
     res.json({ message: 'Issue updated successfully' });
   } catch (err) {

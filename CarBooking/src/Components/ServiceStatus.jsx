@@ -74,7 +74,20 @@ useEffect(() => {
         }));
 
       console.log(`✅ [ServiceStatus] Filtered ${bookingData.length} bookings`);
-      setBookings(bookingData);
+
+      // Merge issue from all_services into bookings for user view
+      const bookingsWithServiceIssue = bookingData.map((b) => {
+        const matchedService = (res.data || []).find(
+          (s) => s.bookingId === b.bookingId || s.bookingDocId === b.id
+        );
+        return {
+          ...b,
+          issue: matchedService?.issue || b.issue,
+          issueUpdatedAt: matchedService?.updatedAt || b.updatedAt,
+        };
+      });
+
+      setBookings(bookingsWithServiceIssue);
 
       // Fetch all services to get spare parts
       console.log("🔍 [ServiceStatus] Fetching all services from /all-services...");
@@ -88,6 +101,19 @@ useEffect(() => {
       });
       console.log(`✅ [ServiceStatus] Filtered ${filteredServices.length} services`);
       setServices(filteredServices);
+
+      // Update bookings issue from linked all_services so user sees latest issue text
+      const mergedBookings = bookingData.map((b) => {
+        const matchedService = filteredServices.find(
+          (s) => s.bookingId === b.bookingId || s.bookingDocId === b.id
+        );
+        return {
+          ...b,
+          issue: matchedService?.issue || b.issue,
+          issueUpdatedAt: matchedService?.updatedAt || b.updatedAt,
+        };
+      });
+      setBookings(mergedBookings);
 
       // Fetch spare parts for these services
       console.log("🔍 [ServiceStatus] Fetching spare parts for each service...");
