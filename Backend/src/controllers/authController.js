@@ -148,6 +148,38 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const updatePassword = async (req, res) => {
+  const { uid } = req.params;
+  const { currentPassword, newPassword } = req.body;
+
+  try {
+    // Get current user
+    const [users] = await db.query('SELECT * FROM users WHERE uid = ?', [uid]);
+    if (users.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const user = users[0];
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    // Hash new password
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await db.query('UPDATE users SET password = ? WHERE uid = ?', [hashedNewPassword, uid]);
+
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("Password update error:", err);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -156,5 +188,6 @@ module.exports = {
   toggleUserStatus,
   deleteUser,
   getProfile,
-  updateProfile
+  updateProfile,
+  updatePassword
 };

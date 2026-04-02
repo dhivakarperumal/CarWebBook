@@ -7,6 +7,7 @@ import ServiceStatus from "./ServiceStatus";
 import History from "./History";
 import VehicleBookings from "./VehicleBookings";
 import PageContainer from "./PageContainer";
+import SetPassword from "./SetPassword";
 import { useLocation } from "react-router-dom";
 
 const Account = () => {
@@ -29,6 +30,7 @@ const Account = () => {
     address: "Manage Address",
     servicestatus: "Service Status",
     history: "Service History",
+    password: "Set Password",
   };
 
   const renderComponent = () => {
@@ -45,6 +47,8 @@ const Account = () => {
         return <ManageAddress />;
       case "history":
         return <History />;
+      case "password":
+        return <SetPassword />;
       default:
         return <ServiceStatus />;
     }
@@ -65,15 +69,15 @@ const Account = () => {
               ["vehicle-bookings", "Vehicles"],
               ["history", "History"],
               ["address", "Address"],
+              ["password", "Password"],
             ].map(([key, label]) => (
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
                 className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-semibold transition-all
-                  ${
-                    activeTab === key
-                      ? "bg-gradient-to-r from-sky-500 to-cyan-400 text-black shadow-lg shadow-sky-500/50"
-                      : "bg-slate-700/50 text-white hover:bg-slate-600/50"
+                  ${activeTab === key
+                    ? "bg-gradient-to-r from-sky-500 to-cyan-400 text-black shadow-lg shadow-sky-500/50"
+                    : "bg-slate-700/50 text-white hover:bg-slate-600/50"
                   }`}
               >
                 {label}
@@ -124,6 +128,11 @@ const Account = () => {
                   active={activeTab === "history"}
                   onClick={() => setActiveTab("history")}
                   label="History"
+                />
+                <SidebarButton
+                  active={activeTab === "password"}
+                  onClick={() => setActiveTab("password")}
+                  label="Set Password"
                 />
               </div>
             </div>
