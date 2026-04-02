@@ -5,7 +5,7 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 import { useRef } from "react";
 import LoginModal from "../Auth/LoginModal";
 import RegisterModal from "../Auth/RegisterModal";
-import { FiShoppingCart } from "react-icons/fi";
+import { FiShoppingCart, FiZap, FiCalendar } from "react-icons/fi";
 import api from "../api";
 
 const Navbar = () => {
@@ -201,23 +201,23 @@ const Navbar = () => {
                     onClick={() => navigate(item.path)}
                     className={`relative cursor-pointer text-[14px] font-bold
         ${location.pathname === item.path
-                      ? "text-sky-400 drop-shadow-[0_0_10px_rgba(56,189,248,0.8)]"
-                      : "text-gray-300 hover:text-sky-400 hover:drop-shadow-[0_0_8px_rgba(56,189,248,0.6)]"
-                    }
+                        ? "text-sky-400 drop-shadow-[0_0_10px_rgba(56,189,248,0.8)]"
+                        : "text-gray-300 hover:text-sky-400 hover:drop-shadow-[0_0_8px_rgba(56,189,248,0.6)]"
+                      }
         after:absolute after:left-1/2 after:-bottom-2
         after:h-[2px] after:-translate-x-1/2
         after:bg-gradient-to-r after:from-sky-400 after:to-cyan-300
         after:transition-all after:duration-300
         ${location.pathname === item.path
-                      ? "after:w-full"
-                      : "after:w-0 hover:after:w-full"
-                    }
+                        ? "after:w-full"
+                        : "after:w-0 hover:after:w-full"
+                      }
       `}
-                >
-                  {item.label}
-                </button>
-              ))}
-              
+                  >
+                    {item.label}
+                  </button>
+                ))}
+
               {/* PAGES DROPDOWN */}
               <div className="relative" ref={pagesDropdownRef}>
                 <button
@@ -239,7 +239,7 @@ const Navbar = () => {
                 >
                   PAGES ▼
                 </button>
-                
+
                 {/* PAGES DROPDOWN MENU */}
                 {showPagesDropdown && (
                   <div
@@ -273,14 +273,14 @@ const Navbar = () => {
 
 
                 {/* CART ICON */}
-              <button
-  onClick={() => navigate("/cart")}
-  className="
+                <button
+                  onClick={() => navigate("/cart")}
+                  className="
     relative cursor-pointer
     flex items-center justify-center
-    px-2 py-2
+    h-9 w-9
     rounded-full
-    border border-sky-400 
+    border border-sky-400/60 
     text-sky-400
     bg-black/40
 
@@ -292,12 +292,12 @@ const Navbar = () => {
     active:scale-95
     md:order-none order-first
   "
->
-  <FiShoppingCart size={18} />
+                >
+                  <FiShoppingCart size={18} />
 
-  {cartCount > 0 && (
-    <span
-      className="
+                  {cartCount > 0 && (
+                    <span
+                      className="
         absolute -top-1.5 -right-1.5
         min-w-[18px] h-[18px]
         px-[4px]
@@ -311,11 +311,11 @@ const Navbar = () => {
 
         animate-pulse
       "
-    >
-      {cartCount}
-    </span>
-  )}
-</button>
+                    >
+                      {cartCount}
+                    </span>
+                  )}
+                </button>
 
                 {/* USER AVATAR (SINGLE INSTANCE) */}
                 {!loadingUser &&
@@ -326,7 +326,7 @@ const Navbar = () => {
                           e.stopPropagation();
                           setShowMenu((prev) => !prev);
                         }}
-                        className="h-9 w-9 cursor-pointer rounded-full flex items-center justify-center
+                        className="h-8.5 w-8.5 cursor-pointer rounded-full flex items-center justify-center
                      bg-gradient-to-r from-blue-600 to-cyan-400
                      text-white hover:text-black font-bold shadow-[0_0_15px_rgba(56,189,248,0.6)]"
                       >
@@ -426,15 +426,39 @@ const Navbar = () => {
                   ))}
 
                 {/* 1. QUICK BOOKING BUTTON */}
-                <button
+                {/* <button
                   onClick={() => navigate("/bookservice")}
-                  className="hidden md:flex px-4 py-2 rounded-full
-                             font-bold text-xs border border-white/20
-                             text-white bg-white/10 hover:bg-white/20
-                             hover:scale-105 transition-all duration-300 cursor-pointer uppercase tracking-tight"
+                  className="
+    hidden md:flex
+    items-center justify-center
+    h-9 w-9
+    rounded-full
+    border border-sky-400/60
+    text-sky-400
+    bg-black/40
+
+    hover:bg-sky-400/10
+    hover:text-white
+    hover:shadow-[0_0_12px_rgba(56,189,248,0.6)]
+
+    transition-all duration-300
+    active:scale-95
+  "
+                  title="Quick Booking"
                 >
-                  Quick Booking
-                </button>
+                  <FiCalendar size={16} />
+                </button> */}
+
+                  {/* <button
+              onClick={() => {
+                navigate("/bookservice");
+                setIsOpen(false);
+              }}
+              className="px-5 py-3 rounded-xl font-bold text-xs tracking-[0.2em]
+                         text-white bg-white/10 border border-sky-400/30 shadow-lg"
+            >
+              QUICK BOOKING
+            </button> */}
 
                 {/* 2. SERVICE APPOINTMENT BUTTON */}
                 <button
