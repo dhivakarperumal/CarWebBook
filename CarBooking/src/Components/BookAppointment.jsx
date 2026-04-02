@@ -308,43 +308,30 @@ const BookAppointment = () => {
     <div className="min-h-screen bg-[#0a0a0b] text-white">
       <PageHeader title="Service Appointment" />
 
-      <section className="py-16 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-sky-500/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-indigo-500/10 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2 pointer-events-none"></div>
-
+      <section className="py-16">
         <PageContainer>
           <form
             onSubmit={handleSubmit}
-            className="bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-2xl p-6 md:p-8 shadow-xl"
+            className="bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-2xl p-6 md:p-8"
           >
-            {/* HEADER */}
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-black bg-gradient-to-r from-sky-400 to-cyan-300 bg-clip-text text-transparent">
-                Book Appointment
-              </h2>
-              <p className="text-gray-400 text-sm mt-1">
-                Professional mechanic support
-              </p>
-            </div>
-
             {/* ===== ROW 1 ===== */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
 
               {/* CUSTOMER */}
               <div className="space-y-4">
                 <SectionTitle icon="🧾" title="Customer Details" />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input label="Full Name" name="name" required value={formData.name} onChange={handleChange} error={errors.name} />
-                  <Input label="Mobile Number" name="phone" required value={formData.phone} onChange={handleChange} error={errors.phone} />
-                  <Input label="Email Address" name="email" value={formData.email} onChange={handleChange} />
-                  <Input label="City" name="city" value={formData.city} onChange={handleChange} />
+                  <Input label="Full Name" name="name" placeholder="Enter your full name" value={formData.name} onChange={handleChange} />
+                  <Input label="Mobile Number" name="phone" placeholder="+91 98765 43210" value={formData.phone} onChange={handleChange} />
+                  <Input label="Email Address" name="email" placeholder="example@email.com" value={formData.email} onChange={handleChange} />
+                  <Input label="City" name="city" placeholder="Enter your city" value={formData.city} onChange={handleChange} />
 
                   <div className="col-span-1 sm:col-span-2">
-                    <Input label="Address" name="address" value={formData.address} onChange={handleChange} />
+                    <Input label="Address" name="address" placeholder="Enter complete address" value={formData.address} onChange={handleChange} />
                   </div>
 
-                  <Input label="Pincode" name="pincode" value={formData.pincode} onChange={handleChange} />
+                  <Input label="Pincode" name="pincode" placeholder="600001" value={formData.pincode} onChange={handleChange} />
                 </div>
               </div>
 
@@ -353,33 +340,30 @@ const BookAppointment = () => {
                 <SectionTitle icon="🚘" title="Vehicle Details" />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Select name="vehicleType" value={formData.vehicleType} onChange={handleChange}>
-                    <option className="bg-[#0a0a0b] text-white">Car</option>
-                    <option className="bg-[#0a0a0b] text-white">Bike</option>
-                    <option className="bg-[#0a0a0b] text-white">SUV</option>
+                  <Select label="Vehicle Type" name="vehicleType" value={formData.vehicleType} onChange={handleChange}>
+                    <option value="" disabled className="bg-[#0a0a0b] text-gray-400">
+                      Select Vehicle Type
+                    </option>
+                    <option value="Car" className="bg-[#0a0a0b]">Car</option>
+                    <option value="Bike" className="bg-[#0a0a0b]">Bike</option>
+                    <option value="SUV" className="bg-[#0a0a0b]">SUV</option>
                   </Select>
 
-                  <Input label="Brand" name="brand" value={formData.brand} onChange={handleChange} />
-                  <Input label="Model" name="model" value={formData.model} onChange={handleChange} />
+                  <Input label="Brand" name="brand" placeholder="Toyota, Hyundai..." value={formData.brand} onChange={handleChange} />
+                  <Input label="Model" name="model" placeholder="i20, Innova..." value={formData.model} onChange={handleChange} />
 
-                  <Input
-                    label="Registration Number"
-                    name="registrationNumber"
-                    required
-                    value={formData.registrationNumber}
-                    onChange={handleChange}
-                    error={errors.registrationNumber}
-                  />
+                  <Input label="Registration Number" name="registrationNumber" placeholder="TN 01 AB 1234" value={formData.registrationNumber} onChange={handleChange} />
 
-                  <Select name="fuelType" value={formData.fuelType} onChange={handleChange}>
-                    <option className="bg-[#0a0a0b] text-white">Petrol</option>
-                    <option className="bg-[#0a0a0b] text-white">Diesel</option>
-                    <option className="bg-[#0a0a0b] text-white">EV</option>
-                    <option className="bg-[#0a0a0b] text-white">Hybrid</option>
+                  <Select label="Fuel Type" name="fuelType" value={formData.fuelType} onChange={handleChange}>
+                    <option value="" disabled className="text-gray-400">Select Fuel Type</option>
+                    <option value="Petrol" className="bg-[#0a0a0b]">Petrol</option>
+                    <option value="Diesel" className="bg-[#0a0a0b]">Diesel</option>
+                    <option value="EV" className="bg-[#0a0a0b]">EV</option>
+                    <option value="Hybrid" className="bg-[#0a0a0b]">Hybrid</option>
                   </Select>
 
-                  <Input name="yearOfManufacture" type="number" value={formData.yearOfManufacture} onChange={handleChange} />
-                  <Input name="currentMileage" type="number" value={formData.currentMileage} onChange={handleChange} />
+                  <Input label="Year of Manufacture" name="yearOfManufacture" placeholder="2022" type="number" value={formData.yearOfManufacture} onChange={handleChange} />
+                  <Input label="Current Mileage" name="currentMileage" placeholder="50000 km" type="number" value={formData.currentMileage} onChange={handleChange} />
                 </div>
               </div>
             </div>
@@ -392,27 +376,33 @@ const BookAppointment = () => {
                 <SectionTitle icon="🛠️" title="Service Details" />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Select name="serviceType" value={formData.serviceType} onChange={handleChange}>
-                    <option value="">Select Service</option>
+                  <Select label="Service Type" name="serviceType" value={formData.serviceType} onChange={handleChange}>
+                    <option value="" disabled className="text-gray-400">
+                      Select Service
+                    </option>
                     {Object.keys(SERVICE_PRICES).map((type) => (
-                      <option key={type} className="bg-[#0a0a0b] text-white">
+                      <option key={type} value={type} className="bg-[#0a0a0b]">
                         {type}
                       </option>
                     ))}
                   </Select>
 
-                  <Select name="pickupDrop" value={formData.pickupDrop} onChange={handleChange}>
-                    <option className="bg-[#0a0a0b] text-white">No</option>
-                    <option className="bg-[#0a0a0b] text-white">Yes (+ ₹300)</option>
+                  <Select label="Pickup & Drop" name="pickupDrop" value={formData.pickupDrop} onChange={handleChange}>
+                    <option value="" disabled className="text-gray-400">
+                      Select Option
+                    </option>
+                    <option value="No" className="bg-[#0a0a0b]">No</option>
+                    <option value="Yes" className="bg-[#0a0a0b]">Yes (+ ₹300)</option>
                   </Select>
 
                   <div className="col-span-1 sm:col-span-2">
+                    <label className="text-sm text-gray-300">Describe Problem</label>
                     <textarea
                       name="otherIssue"
                       value={formData.otherIssue}
                       onChange={handleChange}
-                      className="w-full rounded-xl bg-[#0a0a0b] border border-white/10 px-4 py-3 text-white"
-                      placeholder="Describe issue..."
+                      placeholder="Explain your issue clearly..."
+                      className="w-full rounded-xl bg-[#0a0a0b] border border-white/10 px-4 py-3 text-white mt-1"
                     />
                   </div>
                 </div>
@@ -427,16 +417,23 @@ const BookAppointment = () => {
                     label="Preferred Date"
                     name="preferredDate"
                     type="date"
-                    required
                     value={formData.preferredDate}
                     onChange={handleChange}
-                    error={errors.preferredDate}
                   />
 
-                  <Select name="preferredTimeSlot" value={formData.preferredTimeSlot} onChange={handleChange}>
-                    <option className="bg-[#0a0a0b] text-white">Morning</option>
-                    <option className="bg-[#0a0a0b] text-white">Afternoon</option>
-                    <option className="bg-[#0a0a0b] text-white">Evening</option>
+                  <Select label="Time Slot" name="preferredTimeSlot" value={formData.preferredTimeSlot} onChange={handleChange}>
+                    <option value="" disabled className="text-gray-400">
+                      Select Time Slot
+                    </option>
+                    <option value="Morning (9AM–12PM)" className="bg-[#0a0a0b]">
+                      Morning (9AM–12PM)
+                    </option>
+                    <option value="Afternoon (12PM–4PM)" className="bg-[#0a0a0b]">
+                      Afternoon (12PM–4PM)
+                    </option>
+                    <option value="Evening (4PM–7PM)" className="bg-[#0a0a0b]">
+                      Evening (4PM–7PM)
+                    </option>
                   </Select>
                 </div>
               </div>
@@ -444,12 +441,8 @@ const BookAppointment = () => {
 
             {/* BUTTON */}
             <div className="flex justify-end mt-8">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-8 py-3 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-500 font-bold hover:scale-105 transition"
-              >
-                {submitting ? "Scheduling..." : "Schedule Appointment →"}
+              <button className="px-8 py-3 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-500 font-bold">
+                Schedule Appointment →
               </button>
             </div>
           </form>
