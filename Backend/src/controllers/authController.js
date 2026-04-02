@@ -148,9 +148,82 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const { OAuth2Client } = require('google-auth-library');
+const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const googleLogin = async (req, res) => {
+  const { credential } = req.body;
+
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    
+    const { email, name, picture, sub: uid } = ticket.getPayload();
+
+    // Check if user exists
+    let [users] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+    let user;
+
+    if (users.length === 0) {
+      // Create new user if not exists
+      const username = name || email.split('@')[0];
+      const [result] = await db.query(
+        'INSERT INTO users (uid, username, email, mobile, password, role, active, photoURL) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [uid, username, email, '', '', 'user', true, picture]
+      );
+      
+      const [newUsers] = await db.query('SELECT * FROM users WHERE id = ?', [result.insertId]);
+      user = newUsers[0];
+    } else {
+      user = users[0];
+
+      // Update photo if changed OR if it was empty
+      if (!user.photoURL || user.photoURL !== picture) {
+        await db.query('UPDATE users SET photoURL = ? WHERE id = ?', [picture, user.id]);
+        user.photoURL = picture;
+      }
+    }
+
+    // Check if user is active
+    if (!user.active) {
+      return res.status(403).json({ message: "Account is disabled. Please contact admin." });
+    }
+
+    // Create token
+    const token = jwt.sign(
+      { uid: user.uid, role: user.role, email: user.email }, 
+      process.env.JWT_SECRET || 'secret123', 
+      { expiresIn: '1d' }
+    );
+
+    res.json({
+      message: "Google login successful",
+      token,
+      user: {
+        id: user.id,
+        uid: user.uid,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        mobile: user.mobile,
+        photoURL: user.photoURL
+      }
+    });
+
+  } catch (err) {
+    console.error("Google login error:", err);
+    res.status(400).json({ message: "Invalid Google token", error: err.message });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
+  googleLogin,
   getAllUsers,
   updateUserRole,
   toggleUserStatus,

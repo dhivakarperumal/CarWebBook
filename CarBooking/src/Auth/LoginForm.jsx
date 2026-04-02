@@ -3,8 +3,9 @@ import api from "../api";
 import { useAuth } from "../PrivateRouter/AuthContext";
 import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
-import { FaCar, FaGoogle } from "react-icons/fa";
+import { FaCar } from "react-icons/fa";
 import { MdEmail, MdLock } from "react-icons/md";
+import { GoogleLogin } from "@react-oauth/google";
 
 const LoginForm = ({ onSuccess, onOpenRegister }) => {
     const [identifier, setIdentifier] = useState("");
@@ -27,7 +28,6 @@ const LoginForm = ({ onSuccess, onOpenRegister }) => {
             });
 
             login(res.data.user, res.data.token);
-
             onSuccess?.(res.data.user.role || "user");
         } catch (err) {
             toast.error(err.response?.data?.message || err.message || "Login failed");
@@ -37,8 +37,21 @@ const LoginForm = ({ onSuccess, onOpenRegister }) => {
     };
 
     // 🔹 Google Login
-    const handleGoogleLogin = async () => {
-        toast.error("Google Login is disabled. Please use standard login.");
+    const handleGoogleSuccess = async (credentialResponse) => {
+        setLoading(true);
+        try {
+            const res = await api.post("/auth/google-login", {
+                credential: credentialResponse.credential
+            });
+            login(res.data.user, res.data.token);
+            toast.success("Signed in with Google!");
+            onSuccess?.(res.data.user.role || "user");
+        } catch (err) {
+            console.error("Google Login Error", err);
+            toast.error(err.response?.data?.message || "Google login failed");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -51,7 +64,7 @@ const LoginForm = ({ onSuccess, onOpenRegister }) => {
             {/* LOGO */}
             <div className="flex justify-center mb-4">
                 <img
-                    src="/logo.png"   // 🔁 change path if needed
+                    src="/logo.png"
                     alt="Logo"
                     className="h-14 w-auto object-contain
                drop-shadow-[0_0_15px_rgba(56,189,248,0.7)]"
@@ -113,7 +126,7 @@ const LoginForm = ({ onSuccess, onOpenRegister }) => {
                 <button
                     disabled={loading}
                     className="w-full py-2.5 mt-2 rounded-lg font-semibold
-                   bg-gradient-to-r from-sky-500 to-sky-500
+                   bg-sky-500 text-black hover:bg-sky-400
                    cursor-pointer
                    transition disabled:opacity-50"
                 >
@@ -128,18 +141,17 @@ const LoginForm = ({ onSuccess, onOpenRegister }) => {
                 <div className="flex-1 h-px bg-slate-700" />
             </div>
 
-            {/* GOOGLE */}
-            <button
-                onClick={handleGoogleLogin}
-                className="w-full py-2.5 rounded-lg border border-slate-700
-                 flex items-center justify-center gap-3
-                 hover:bg-slate-800 transition cursor-pointer"
-            >
-                <FaGoogle className="text-blue-500 text-base" />
-                <span className="font-medium text-slate-300 text-sm">
-                    Continue with Google
-                </span>
-            </button>
+            {/* GOOGLE LOGIN COMPONENT */}
+            <div className="flex justify-center">
+                <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => toast.error("Google Login Failed")}
+                    useOneTap
+                    theme="filled_black"
+                    shape="pill"
+                    width="100%"
+                />
+            </div>
 
             {/* REGISTER LINK */}
             <p className="text-xs mt-4 text-center text-slate-400">

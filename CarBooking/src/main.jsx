@@ -226,35 +226,39 @@ const router = createBrowserRouter([
   // },
 ]);
 
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <AuthProvider>
-      {/* 🔔 GLOBAL TOASTER */}
-      <Toaster
-        position="top-left"
-        reverseOrder={false}
-        toastOptions={{
-          duration: 4000,
-          style: {
-            borderRadius: "12px",
-            background: "#0B3C8A",
-            color: "#fff",
-          },
-          success: {
-            iconTheme: {
-              primary: "#7CB9FF",
-              secondary: "#fff",
-            },
-          },
-          error: {
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <AuthProvider>
+        {/* 🔔 GLOBAL TOASTER */}
+        <Toaster
+          position="top-left"
+          reverseOrder={false}
+          toastOptions={{
+            duration: 4000,
             style: {
-              background: "#DC2626",
+              borderRadius: "12px",
+              background: "#0B3C8A",
+              color: "#fff",
             },
-          },
-        }}
-      />
-      <RouterProvider router={router} />
-    </AuthProvider>
+            success: {
+              iconTheme: {
+                primary: "#7CB9FF",
+                secondary: "#fff",
+              },
+            },
+            error: {
+              style: {
+                background: "#DC2626",
+              },
+            },
+          }}
+        />
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </GoogleOAuthProvider>
   </StrictMode>
 );
 
