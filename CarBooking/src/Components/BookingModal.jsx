@@ -51,13 +51,34 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
           <p>
             <span className="text-sky-400">Model:</span> {booking.model}
           </p>
+          <p>
+            <span className="text-sky-400">Reg. No:</span> {booking.vehicleNumber || booking.registrationNumber || "N/A"}
+          </p>
 
           <p className="sm:col-span-2">
             <span className="text-sky-400">Issue:</span> {booking.issue}
           </p>
 
+          {booking.preferredDate && (
+            <p>
+              <span className="text-sky-400">Service Date:</span> {new Date(booking.preferredDate).toLocaleDateString()}
+            </p>
+          )}
+
+          {booking.preferredTimeSlot && (
+            <p>
+              <span className="text-sky-400">Time Slot:</span> {booking.preferredTimeSlot}
+            </p>
+          )}
+
+          {booking.assignedEmployeeName && (
+            <p className="sm:col-span-2 bg-sky-500/10 p-2 rounded-lg border border-sky-500/20">
+              <span className="text-sky-400 font-bold">🔧 Assigned Mechanic:</span> {booking.assignedEmployeeName}
+            </p>
+          )}
+
           <p className="sm:col-span-2">
-            <span className="text-sky-400">Address:</span> {booking.address}
+            <span className="text-sky-400">Address:</span> {booking.address || booking.location}
           </p>
         </div>
 
@@ -228,3 +249,5 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
 };
 
 export default BookingModal;
+
+

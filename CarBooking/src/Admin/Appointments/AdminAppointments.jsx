@@ -165,19 +165,19 @@ const AdminAppointments = () => {
       </div>
 
       {/* Appointments List */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className=" overflow-hidden">
+        <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">ID</th>
-                <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">Customer</th>
-                <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">Vehicle</th>
-                <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">Service</th>
-                <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">Schedule</th>
-                <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-widest">Technician</th>
-                <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-widest text-center">Status</th>
-                <th className="px-6 py-4 text-[11px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+              <tr className="bg-[#87a5b3] border-b border-gray-100">
+                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">ID</th>
+                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">Customer</th>
+                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">Vehicle</th>
+                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">Service</th>
+                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">Schedule</th>
+                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">Technician</th>
+                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest text-center">Status</th>
+                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

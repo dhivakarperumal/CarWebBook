@@ -114,6 +114,7 @@ useEffect(() => {
         );
         return {
           ...b,
+          serviceId: matchedService?.id,
           issues: matchedService?.issues || [],
           issue: matchedService?.issue || b.issue,
           issueAmount: matchedService?.issueAmount != null ? matchedService.issueAmount : b.issueAmount,
@@ -294,7 +295,7 @@ useEffect(() => {
             return (
               <div
                 key={booking.id}
-                onClick={() => setSelectedBooking({ ...booking, serviceId: bookingSpares?.serviceId })}
+                onClick={() => setSelectedBooking(booking)}
                 className={`cursor-pointer bg-[#020617] border rounded-xl px-2 md:px-6 py-4 flex justify-between items-center hover:shadow-lg transition ${
                   hasPendingSpares 
                     ? 'border-orange-500/40 hover:shadow-orange-500/30' 
@@ -327,12 +328,12 @@ useEffect(() => {
                   )}
                 </div>
 
-                <span className={`px-4 py-1.5 rounded-full text-sm font-semibold border ${
+                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest border transition-all ${
                   hasPendingSpares 
                     ? 'bg-orange-500/20 text-orange-400 border-orange-500/40'
-                    : 'bg-sky-500/20 text-sky-400 border-sky-500/40'
+                    : 'bg-sky-500/20 text-sky-400 border-sky-500/40 shadow-lg shadow-sky-500/10'
                 }`}>
-                  {STATUS_LABELS[booking.normalizedStatus]}
+                  {(STATUS_LABELS[booking.normalizedStatus] || booking.status || "PENDING").toUpperCase()}
                 </span>
               </div>
             );
