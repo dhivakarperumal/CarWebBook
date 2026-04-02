@@ -75,7 +75,9 @@ const loginUser = async (req, res) => {
         username: user.username,
         email: user.email,
         role: user.role,
-        mobile: user.mobile
+        mobile: user.mobile,
+        photoURL: user.photoURL || "",
+        hasPassword: !!(user.password && user.password.length > 0)
       }
     });
 
@@ -210,7 +212,8 @@ const googleLogin = async (req, res) => {
         email: user.email,
         role: user.role,
         mobile: user.mobile,
-        photoURL: user.photoURL
+        photoURL: user.photoURL,
+        hasPassword: !!(user.password && user.password.length > 0)
       }
     });
 
@@ -224,6 +227,10 @@ const updatePassword = async (req, res) => {
   const { uid } = req.params;
   const { currentPassword, newPassword } = req.body;
 
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ message: "New password must be at least 6 characters" });
+  }
+
   try {
     // Get current user
     const [users] = await db.query('SELECT * FROM users WHERE uid = ?', [uid]);
@@ -232,11 +239,17 @@ const updatePassword = async (req, res) => {
     }
 
     const user = users[0];
+    const isGoogleUser = !user.password || user.password === '';
 
-    // Verify current password
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: "Current password is incorrect" });
+    if (!isGoogleUser) {
+      // Verify current password for non-Google users
+      if (!currentPassword) {
+        return res.status(400).json({ message: "Current password is required" });
+      }
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
     }
 
     // Hash new password
@@ -245,7 +258,11 @@ const updatePassword = async (req, res) => {
     // Update password
     await db.query('UPDATE users SET password = ? WHERE uid = ?', [hashedNewPassword, uid]);
 
-    res.json({ message: "Password updated successfully" });
+    // After password is set, update hasPassword in localStorage
+    res.json({ 
+      message: isGoogleUser ? "Password set successfully" : "Password updated successfully",
+      hasPassword: true
+    });
   } catch (err) {
     console.error("Password update error:", err);
     res.status(500).json({ message: "Internal server error" });
