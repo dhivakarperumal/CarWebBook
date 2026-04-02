@@ -54,8 +54,10 @@ import PricingForm from "./Admin/PricingAll/AddPrice.jsx";
 import ProductBilling from "./Admin/Products/ProductBill.jsx";
 import ShowAllBookings from "./Admin/Bookingservice/BookingShowAll.jsx";
 import AddServiceVehicle from "./Admin/Bookingservice/AddServiceVehicle.jsx";
+import AdminAppointments from "./Admin/Appointments/AdminAppointments.jsx";
 import Contact from "./Components/ContactUs.jsx";
 import BookService from "./Components/BookService.jsx";
+import BookAppointment from "./Components/BookAppointment.jsx";
 import Account from "./Components/Account.jsx";
 import Cart from "./Components/Cart.jsx";
 import BuyVehicles from "./Components/BuyVehicles.jsx";
@@ -97,6 +99,7 @@ const router = createBrowserRouter([
       { path: "/buy-vehicles", element: <BuyVehicles /> },
       { path: "/cart", element: <Cart /> },
       { path: "/bookservice", element: <BookService /> },
+      { path: "/bookappointment", element: <BookAppointment /> },
       { path: "/account", element: <Account /> },
     ],
   },
@@ -134,6 +137,7 @@ const router = createBrowserRouter([
       { path: "addservicestype", element: <AddServicesType /> },
       { path: "addserviceparts", element: <AddServiceParts /> },
       { path: "bookings", element: <ShowAllBookings /> },
+      { path: "appointments", element: <AdminAppointments /> },
       { path: "addbooking", element: <BookingService /> },
       { path: "assignservices", element: <AdminAssignServices /> },
       { path: "addservicevehicle", element: <AddServiceVehicle /> },

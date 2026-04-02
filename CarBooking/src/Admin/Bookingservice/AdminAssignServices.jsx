@@ -481,15 +481,15 @@ export default function AdminAssignServices() {
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto animate-fadeIn">
             <table className="w-full text-left border-collapse whitespace-nowrap">
               <thead>
-                <tr className="bg-gradient-to-r from-black to-cyan-400 text-white">
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Date & Time</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Booking ID</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Vehicle</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Service Detail</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Technician</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Action</th>
+                <tr className="bg-[#87a5b3] text-white">
+                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Date & Time</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Booking ID</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Vehicle</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Service Detail</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Customer</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Technician</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">

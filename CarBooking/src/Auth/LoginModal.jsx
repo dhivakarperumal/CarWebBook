@@ -1,7 +1,19 @@
 import LoginForm from "./LoginForm";
+import { useNavigate } from "react-router-dom";
 
 const LoginModal = ({ open, onClose, onOpenRegister }) => {
+  const navigate = useNavigate();
+
   if (!open) return null;
+
+  const handleLoginSuccess = (role) => {
+    onClose();
+    if (role === "mechanic") {
+      navigate("/employee");
+    } else if (role === "admin") {
+      navigate("/admin");
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
@@ -17,10 +29,10 @@ const LoginModal = ({ open, onClose, onOpenRegister }) => {
         >
           ✕
         </button>
-
+        
         {/* LOGIN FORM */}
         <LoginForm
-          onSuccess={onClose}
+          onSuccess={handleLoginSuccess}
           onOpenRegister={onOpenRegister}
         />
       </div>

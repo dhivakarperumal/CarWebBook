@@ -425,18 +425,27 @@ const Navbar = () => {
                     </button>
                   ))}
 
-                {/* BOOK NOW (DESKTOP ONLY) */}
+                {/* 1. QUICK BOOKING BUTTON */}
                 <button
                   onClick={() => navigate("/bookservice")}
-                  className="hidden md:flex relative px-4 py-2 rounded-full
-             font-bold text-sm  
-             border border-sky-400/60
-             transition-all duration-300
-             text-white bg-gradient-to-r from-blue-600 to-cyan-400 hover:text-black 
-             hover:shadow-[0_0_25px_rgba(56,189,248,0.7)]
-             active:scale-95 cursor-pointer"
+                  className="hidden md:flex px-4 py-2 rounded-full
+                             font-bold text-xs border border-white/20
+                             text-white bg-white/10 hover:bg-white/20
+                             hover:scale-105 transition-all duration-300 cursor-pointer uppercase tracking-tight"
                 >
-                  Book Now
+                  Quick Booking
+                </button>
+
+                {/* 2. SERVICE APPOINTMENT BUTTON */}
+                <button
+                  onClick={() => navigate("/bookappointment")}
+                  className="hidden md:flex px-4 py-2 rounded-full
+                             font-bold text-xs border border-sky-400/60
+                             text-white bg-gradient-to-r from-blue-600 to-cyan-400 
+                             hover:scale-105 hover:shadow-[0_0_20px_rgba(56,189,248,0.5)]
+                             transition-all duration-300 cursor-pointer uppercase tracking-tight"
+                >
+                  Appointments
                 </button>
 
                 {/* HAMBURGER (MOBILE ONLY) */}
@@ -513,17 +522,29 @@ const Navbar = () => {
             )}
           </div>
 
-          <button
-            onClick={() => {
-              navigate("/bookservice");
-              setIsOpen(false);
-            }}
-            className="mt-4 px-5 py-2.5 rounded-md font-bold text-xs tracking-[0.2em]
-                       text-black bg-sky-400
-                       shadow-[0_0_25px_rgba(56,189,248,0.6)]"
-          >
-            BOOK NOW
-          </button>
+          <div className="flex flex-col gap-3 mt-4">
+            <button
+              onClick={() => {
+                navigate("/bookservice");
+                setIsOpen(false);
+              }}
+              className="px-5 py-3 rounded-xl font-bold text-xs tracking-[0.2em]
+                         text-white bg-white/10 border border-sky-400/30 shadow-lg"
+            >
+              QUICK BOOKING
+            </button>
+            <button
+              onClick={() => {
+                navigate("/bookappointment");
+                setIsOpen(false);
+              }}
+              className="px-5 py-3 rounded-xl font-bold text-xs tracking-[0.2em]
+                         text-black bg-sky-400
+                         shadow-[0_0_25px_rgba(56,189,248,0.6)]"
+            >
+              SERVICE APPOINTMENT
+            </button>
+          </div>
         </nav>
       </div>
       <LoginModal

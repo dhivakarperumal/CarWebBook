@@ -13,11 +13,20 @@ async function migrate() {
         mobile VARCHAR(20) NOT NULL,
         password VARCHAR(255) NOT NULL,
         role VARCHAR(50) DEFAULT 'user',
+        photoURL LONGTEXT,
         active BOOLEAN DEFAULT true,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
     await db.query(createTableQuery);
+
+    // Add column if not exists
+    try {
+      await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS photoURL LONGTEXT AFTER role`);
+      console.log('✅ Added photoURL column to users');
+    } catch (err) {
+      console.log('photoURL column may already exist');
+    }
     console.log("Table 'users' created or verified.");
 
     // Add test user

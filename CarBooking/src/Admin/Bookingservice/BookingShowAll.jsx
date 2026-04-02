@@ -292,15 +292,15 @@ const ShowAllBookings = () => {
       {view === "table" && (
         <div className="overflow-x-auto bg-white rounded-2xl shadow-sm">
           <table className="w-full text-sm">
-            <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
+            <thead className="bg-[#87a5b3] text-white">
               <tr>
-                <th className="px-4 py-4">S No</th>
-                <th className="px-4 py-4">Booking ID</th>
-                <th className="px-4 py-4">Customer</th>
-                <th className="px-4 py-4">Car</th>
-                <th className="px-4 py-4">Phone</th>
-                <th className="px-4 py-4">Status</th>
-                <th className="px-4 py-4">Date</th>
+                <th className="px-4 py-4 uppercase text-[10px] font-black tracking-widest">S No</th>
+                <th className="px-4 py-4 uppercase text-[10px] font-black tracking-widest">Booking ID</th>
+                <th className="px-4 py-4 uppercase text-[10px] font-black tracking-widest">Customer</th>
+                <th className="px-4 py-4 uppercase text-[10px] font-black tracking-widest">Car</th>
+                <th className="px-4 py-4 uppercase text-[10px] font-black tracking-widest">Phone</th>
+                <th className="px-4 py-4 uppercase text-[10px] font-black tracking-widest">Status</th>
+                <th className="px-4 py-4 uppercase text-[10px] font-black tracking-widest">Date</th>
               </tr>
             </thead>
             <tbody>

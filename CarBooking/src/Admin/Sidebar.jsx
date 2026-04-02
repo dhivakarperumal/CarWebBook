@@ -67,6 +67,7 @@ const navItems = [
   { path: "/admin", label: "Dashboard", icon: Gauge, exact: true },
 
   { path: "/admin/bookings", label: "Service Bookings", icon: CalendarCheck },
+  { path: "/admin/appointments", label: "Service Appointments", icon: CalendarDays },
   { path: "/admin/assignservices", label: "Assign Services", icon: ClipboardCheck },
   { path: "/admin/services", label: "Active Services", icon: Wrench },
   { path: "/admin/customers", label: "Customers", icon: Users },

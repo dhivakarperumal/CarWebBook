@@ -37,15 +37,30 @@ const migrate = async () => {
         billId VARCHAR(100) UNIQUE,
         customerName VARCHAR(255),
         customerPhone VARCHAR(20),
+        orderType VARCHAR(100) DEFAULT 'shop',
+        paymentMethod VARCHAR(100),
+        paymentStatus VARCHAR(100) DEFAULT 'Pending',
+        status VARCHAR(100) DEFAULT 'Pending',
         items JSON,
         totalItems INT,
         subTotal DECIMAL(10,2),
-        discount DECIMAL(10,2),
+        discount DECIMAL(10,2) DEFAULT 0,
         grandTotal DECIMAL(10,2),
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `;
     await db.query(billsSql);
+    
+    // Add columns if they don't exist
+    try {
+      await db.query(`ALTER TABLE product_bills ADD COLUMN IF NOT EXISTS orderType VARCHAR(100) DEFAULT 'shop'`);
+      await db.query(`ALTER TABLE product_bills ADD COLUMN IF NOT EXISTS paymentMethod VARCHAR(100)`);
+      await db.query(`ALTER TABLE product_bills ADD COLUMN IF NOT EXISTS paymentStatus VARCHAR(100) DEFAULT 'Pending'`);
+      await db.query(`ALTER TABLE product_bills ADD COLUMN IF NOT EXISTS status VARCHAR(100) DEFAULT 'Pending'`);
+      console.log('✅ Added missing columns to product_bills');
+    } catch (err) {
+      console.log('product_bills columns may already exist');
+    }
     console.log('Bills table created successfully');
 
     process.exit(0);
