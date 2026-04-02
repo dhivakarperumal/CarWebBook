@@ -18,6 +18,7 @@ export const STATUS_LABELS = {
   BILL_COMPLETED: "Bill Completed",
   SERVICE_COMPLETED: "Service Completed",
   CANCELLED: "Cancelled",
+  ASSIGNED: "Assigned",
 };
 
 /* ===== NORMALIZER (Firestore → Enum) ===== */
@@ -33,6 +34,7 @@ export const STATUS_NORMALIZER = {
   "Bill Completed": "BILL_COMPLETED",
   "Service Completed": "SERVICE_COMPLETED",
   "Cancelled": "CANCELLED",
+  "Assigned": "ASSIGNED",
 };
 
 const ServiceStatus = () => {
