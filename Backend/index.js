@@ -240,6 +240,9 @@ app.use('/api/addresses', addressRouter);
 const serviceAreaRouter = require('./src/routers/serviceAreaRouter');
 app.use('/api/service-areas', serviceAreaRouter);
 
+const appointmentRouter = require('./src/routers/appointmentRouter');
+app.use('/api/appointments', appointmentRouter);
+
 const vehicleBookingRouter = require('./src/routers/vehicleBookingRouter');
 app.use('/api/vehicle-bookings', vehicleBookingRouter);
 

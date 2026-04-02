@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 /* ===== STATUS LABELS ===== */
 export const STATUS_LABELS = {
   BOOKED: "Booked",
+  APPOINTMENT_BOOKED: "Appointment Booked",
   CALL_VERIFIED: "Call Verified",
   APPROVED: "Approved",
   PROCESSING: "Processing",
@@ -22,6 +23,7 @@ export const STATUS_LABELS = {
 /* ===== NORMALIZER (Firestore → Enum) ===== */
 export const STATUS_NORMALIZER = {
   "Booked": "BOOKED",
+  "Appointment Booked": "APPOINTMENT_BOOKED",
   "Call Verified": "CALL_VERIFIED",
   "Approved": "APPROVED",
   "Processing": "PROCESSING",
@@ -53,78 +55,60 @@ useEffect(() => {
         return;
       }
 
-      console.log("� [ServiceStatus] User email:", user.email);
+      console.log(" [ServiceStatus] User email:", user.email);
 
-      // Fetch bookings
-      console.log("📋 [ServiceStatus] Fetching bookings from /bookings...");
+      // 1. Fetch bookings
+      console.log("📋 [ServiceStatus] Fetching bookings...");
       const res = await api.get("/bookings");
-      console.log("📊 [ServiceStatus] All bookings:", res.data);
       
-      const bookingData = (res.data || [])
-        .filter((b) => {
-          const match = b.email?.toLowerCase() === user.email.toLowerCase();
-          console.log(`   Booking ${b.id}: email="${b.email}" match="${match}"`);
-          return match;
-        })
+      const regularBookings = (res.data || [])
+        .filter((b) => b.email?.toLowerCase() === user.email.toLowerCase())
         .map((raw) => ({
-          id: raw.id,
           ...raw,
-          normalizedStatus:
-            STATUS_NORMALIZER[raw.status] || raw.status,
+          bookingType: 'Booking',
+          normalizedStatus: STATUS_NORMALIZER[raw.status] || raw.status,
         }));
 
-      console.log(`✅ [ServiceStatus] Filtered ${bookingData.length} bookings`);
+      // 2. Fetch separate appointments
+      console.log("📋 [ServiceStatus] Fetching separate appointments...");
+      const appointmentsRes = await api.get("/appointments/my", { params: { uid: user.uid } });
+      const appointmentData = (appointmentsRes.data || []).map(apt => ({
+        ...apt,
+        bookingId: apt.appointmentId,
+        bookingType: 'Appointment',
+        normalizedStatus: STATUS_NORMALIZER[apt.status] || apt.status,
+        // Map common fields
+        issue: apt.serviceType,
+        vehicleNumber: apt.registrationNumber,
+      }));
 
-      // Merge issue from all_services into bookings for user view
-      const bookingsWithServiceIssue = bookingData.map((b) => {
-        const matchedService = (res.data || []).find(
-          (s) => s.bookingId === b.bookingId || s.bookingDocId === b.id
-        );
-        return {
-          ...b,
-          issue: matchedService?.issue || b.issue,
-          issueAmount: matchedService?.issueAmount != null ? matchedService.issueAmount : b.issueAmount,
-          issueStatus: matchedService?.issueStatus || b.issueStatus || 'pending',
-          issueUpdatedAt: matchedService?.updatedAt || b.updatedAt,
-        };
-      });
-
-      setBookings(bookingsWithServiceIssue);
+      // Merge them
+      const combinedData = [...regularBookings, ...appointmentData].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
 
       // Fetch all services to get spare parts and issue entries
-      console.log("🔍 [ServiceStatus] Fetching all services from /all-services...");
+      console.log("🔍 [ServiceStatus] Fetching all services to enrich details...");
       const servicesRes = await api.get("/all-services");
-      console.log("📊 [ServiceStatus] All services:", servicesRes.data);
+      const allServices = servicesRes.data || [];
       
-      const filteredServices = (servicesRes.data || []).filter((s) => {
-        const match = s.email?.toLowerCase() === user.email.toLowerCase();
-        console.log(`   Service ${s.id}: email="${s.email}" match="${match}"`);
-        return match;
-      });
-      console.log(`✅ [ServiceStatus] Filtered ${filteredServices.length} services`);
+      const filteredServicesByEmail = allServices.filter((s) => s.email?.toLowerCase() === user.email.toLowerCase());
 
-      // Enrich services with parts and issue entries from detail endpoint
+      // Enrich combined data with parts and issues
       const enrichedServices = [];
-      for (let service of filteredServices) {
+      for (let service of filteredServicesByEmail) {
         try {
           const detailRes = await api.get(`/all-services/${service.id}`);
-          const details = detailRes.data;
           enrichedServices.push({
             ...service,
-            parts: details.parts || [],
-            issues: details.issues || [],
+            parts: detailRes.data.parts || [],
+            issues: detailRes.data.issues || [],
           });
         } catch (err) {
-          console.error(`❌ [ServiceStatus] Failed to fetch service details for ${service.id}:`, err);
           enrichedServices.push({ ...service, parts: [], issues: [] });
         }
       }
-
-      console.log(`✅ [ServiceStatus] Enriched services with parts and issues`);
       setServices(enrichedServices);
 
-      // Update bookings issue from linked all_services so user sees latest issue text
-      const mergedBookings = bookingData.map((b) => {
+      const finalBookings = combinedData.map((b) => {
         const matchedService = enrichedServices.find(
           (s) => s.bookingId === b.bookingId || s.bookingDocId === b.id
         );
@@ -137,36 +121,23 @@ useEffect(() => {
           issueUpdatedAt: matchedService?.updatedAt || b.updatedAt,
         };
       });
-      setBookings(mergedBookings);
+
+      setBookings(finalBookings);
 
       // Fetch spare parts for these services
-      console.log("🔍 [ServiceStatus] Fetching spare parts for each service...");
       const allSpareParts = [];
-      for (let service of filteredServices) {
-        try {
-          console.log(`📦 [ServiceStatus] Fetching parts for service ${service.id}...`);
-          const partsRes = await api.get(`/all-services/${service.id}`);
-          console.log(`✅ [ServiceStatus] Service ${service.id} response:`, partsRes.data);
-          
-          if (partsRes.data?.parts) {
+      for (let service of enrichedServices) {
+         if (service.parts.length > 0) {
             allSpareParts.push({
               serviceName: service.bookingId,
               serviceId: service.id,
               customerName: service.name,
-              parts: partsRes.data.parts,
+              parts: service.parts,
             });
-            console.log(`✅ [ServiceStatus] Added ${partsRes.data.parts.length} parts for service ${service.id}`);
-          } else {
-            console.log(`ℹ️ [ServiceStatus] No parts found for service ${service.id}`);
-          }
-        } catch (err) {
-          console.error(`❌ [ServiceStatus] Failed to fetch parts for service ${service.id}:`, err);
-        }
+         }
       }
-      console.log("📊 [ServiceStatus] Total spare parts groups:", allSpareParts.length);
       setSpareParts(allSpareParts);
 
-      console.log("👉 [ServiceStatus] Fetch complete");
     } catch (err) {
       console.error("❌ [ServiceStatus] Failed to load data:", err);
     } finally {
@@ -175,7 +146,7 @@ useEffect(() => {
   };
 
   fetchData();
-}, [user]); // 👈 IMPORTANT
+}, [user]);
 
   const handleApproveSpare = async (serviceId, itemId, status, type = 'part') => {
     try {

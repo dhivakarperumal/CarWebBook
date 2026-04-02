@@ -20,10 +20,10 @@ exports.getAllBookings = async (req, res) => {
 
 exports.createBooking = async (req, res) => {
   try {
-    const { 
-      uid, name, email, phone, altPhone, 
-      brand, model, issue, otherIssue, address, 
-      location, latitude, longitude, status, vehicleType = 'car', vehicleNumber 
+    const {
+      uid, name, email, phone, altPhone,
+      brand, model, issue, otherIssue, address,
+      location, latitude, longitude, status, vehicleType = 'car', vehicleNumber
     } = req.body;
 
     // 1. Insert the record first (without bookingId or with a temp one if needed, but we'll update it)
@@ -39,7 +39,7 @@ exports.createBooking = async (req, res) => {
 
     // 2. Update with the real sequential ID
     await db.query('UPDATE bookings SET bookingId = ? WHERE id = ?', [generatedBookingId, insertId]);
-    
+
     // Auto cascade admin walk-ins dynamically to all_services for the Services layout
     if (uid === 'admin-created') {
       await db.query(`
@@ -60,7 +60,7 @@ exports.updateBookingStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, serviceCreated, trackNumber, cancelReason } = req.body;
-    
+
     let query = 'UPDATE bookings SET status = ?';
     const params = [status];
 
@@ -69,22 +69,22 @@ exports.updateBookingStatus = async (req, res) => {
     params.push(id);
 
     await db.query(query, params);
-    
+
     if (status === 'Approved') {
-       const [booking] = await db.query('SELECT * FROM bookings WHERE id = ?', [id]);
-       if (booking.length > 0) {
-         const b = booking[0];
-         const [existing] = await db.query('SELECT * FROM all_services WHERE bookingDocId = ?', [id]);
-          if (existing.length === 0) {
-           await db.query(`
+      const [booking] = await db.query('SELECT * FROM bookings WHERE id = ?', [id]);
+      if (booking.length > 0) {
+        const b = booking[0];
+        const [existing] = await db.query('SELECT * FROM all_services WHERE bookingDocId = ?', [id]);
+        if (existing.length === 0) {
+          await db.query(`
              INSERT INTO all_services (
                bookingId, bookingDocId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, trackNumber, vehicleNumber, addVehicle
              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            `, [b.bookingId, b.id, b.uid, b.name, b.phone, b.email, b.brand, b.model, b.issue, b.otherIssue, b.location, b.address, trackNumber || '', b.vehicleNumber || '', b.vehicleType ? 1 : 0]);
-         }
-       }
+        }
+      }
     }
-    
+
     res.json({ message: 'Booking status updated successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error updating booking status', error: error.message });
@@ -95,9 +95,9 @@ exports.assignEmployee = async (req, res) => {
   try {
     const { id } = req.params;
     const { assignedEmployeeId, assignedEmployeeName } = req.body;
-    
+
     await db.query('UPDATE bookings SET assignedEmployeeId = ?, assignedEmployeeName = ?, status = ? WHERE id = ?', [assignedEmployeeId, assignedEmployeeName, 'Approved', id]);
-    
+
     const [booking] = await db.query('SELECT * FROM bookings WHERE id = ?', [id]);
     if (booking.length > 0) {
       const b = booking[0];
@@ -112,7 +112,7 @@ exports.assignEmployee = async (req, res) => {
         await db.query('UPDATE all_services SET assignedEmployeeId = ?, assignedEmployeeName = ?, serviceStatus = ? WHERE bookingDocId = ?', [assignedEmployeeId, assignedEmployeeName, 'Approved', id]);
       }
     }
-    
+
     res.json({ message: 'Mechanic assigned successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error assigning mechanic', error: error.message });
