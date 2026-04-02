@@ -36,8 +36,8 @@ const EmpAssingCars = () => {
   const fetchAssignedServices = async () => {
     try {
       setLoading(true);
-      // Fetching all bookings, then filtering for the current mechanic
-      const res = await api.get("/bookings");
+      // 🔥 Fetching from all-services to include both bookings and appointments
+      const res = await api.get("/all-services");
       
       const mechanicName = userProfile?.displayName || "";
       const filtered = res.data.filter(s => 
@@ -262,12 +262,13 @@ const EmpAssingCars = () => {
         <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden overflow-x-auto">
           <table className="w-full text-left whitespace-nowrap">
             <thead>
-              <tr>
-                <th className="px-6 py-5">Job ID</th>
-                <th className="px-6 py-5">Customer</th>
-                <th className="px-6 py-5">Vehicle</th>
-                <th className="px-6 py-5">Status</th>
-                <th className="px-6 py-5">Assigned Date</th>
+              <tr className="bg-[#87a5b3] text-white">
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Job ID</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Customer</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Vehicle</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Status</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Assigned Date</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

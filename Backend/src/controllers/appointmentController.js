@@ -101,6 +101,37 @@ exports.updateAppointment = async (req, res) => {
     params.push(id);
 
     await db.query(query, params);
+
+    // 🔹 SYNC WITH all_services
+    if (assignedEmployeeId) {
+      const [aptRows] = await db.query('SELECT * FROM appointments WHERE id = ?', [id]);
+      if (aptRows.length > 0) {
+        const apt = aptRows[0];
+        const [existing] = await db.query('SELECT * FROM all_services WHERE bookingDocId = ? AND bookingId LIKE "APT%"', [id]);
+        
+        if (existing.length === 0) {
+          await db.query(`
+            INSERT INTO all_services (
+              bookingId, bookingDocId, uid, name, phone, email, brand, model, 
+              issue, otherIssue, location, address, trackNumber, vehicleNumber, 
+              addVehicle, assignedEmployeeId, assignedEmployeeName, serviceStatus
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          `, [
+            apt.appointmentId, apt.id, apt.uid, apt.name, apt.phone, apt.email, 
+            apt.brand, apt.model, apt.serviceType, apt.otherIssue, apt.location, 
+            apt.address, '', apt.registrationNumber, 
+            apt.vehicleType === 'bike' ? 1 : 0, 
+            apt.assignedEmployeeId, apt.assignedEmployeeName, 'Approved'
+          ]);
+        } else {
+          await db.query(
+            'UPDATE all_services SET assignedEmployeeId = ?, assignedEmployeeName = ?, serviceStatus = ? WHERE bookingDocId = ? AND bookingId LIKE "APT%"',
+            [apt.assignedEmployeeId, apt.assignedEmployeeName, 'Approved', id]
+          );
+        }
+      }
+    }
+
     res.json({ message: 'Appointment updated successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error updating appointment', error: error.message });

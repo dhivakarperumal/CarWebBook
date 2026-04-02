@@ -341,13 +341,13 @@ const EmpService = () => {
       ) : (
         <div className="overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-gray-50/50">
-              <tr>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Job ID</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Vehicle</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+            <thead>
+              <tr className="bg-[#87a5b3] text-white">
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Job ID</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Customer</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Vehicle</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Status</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
