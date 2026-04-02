@@ -12,14 +12,18 @@ const STATUS_FLOW = [
 
 const STATUS_NORMALIZER = {
   "Booked": "BOOKED",
+  "Appointment Booked": "BOOKED",
   "Call Verified": "CALL_VERIFIED",
+  "Confirmed": "APPROVED",
   "Approved": "APPROVED",
+  "In Progress": "PROCESSING",
   "Processing": "PROCESSING",
   "Waiting for Spare": "WAITING_SPARE",
   "Service Going on": "SERVICE_GOING",
   "Bill Pending": "BILL_PENDING",
   "Bill Completed": "BILL_COMPLETED",
   "Service Completed": "SERVICE_COMPLETED",
+  "Completed": "SERVICE_COMPLETED",
   "Cancelled": "CANCELLED",
 };
 
@@ -37,18 +41,17 @@ const StatusTracker = ({ currentStatus }) => {
         return (
           <div key={status} className="flex flex-col items-center gap-2">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center
-                border-2
+              className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-sm
+                border-2 transition-all duration-500
                 ${
                   isCompleted
-                    ? "bg-sky-500 border-sky-500 text-black"
-                    : "border-gray-600 text-gray-400"
+                    ? "bg-gradient-to-br from-cyan-400 to-blue-600 border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.4)] text-white"
+                    : "border-slate-700 bg-slate-800/50 text-slate-500"
                 }`}
             >
               {index + 1}
             </div>
-
-            <p className="text-xs text-center w-24 text-gray-300">
+            <p className={`text-[10px] font-black text-center w-24 uppercase tracking-widest mt-1 transition-colors ${isCompleted ? 'text-cyan-400' : 'text-slate-500'}`}>
               {status.replace("_", " ")}
             </p>
           </div>
