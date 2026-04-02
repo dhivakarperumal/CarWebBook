@@ -154,8 +154,20 @@ const AllProducts = () => {
                 <tr key={p.docId} className="border-t border-gray-300 hover:bg-gray-50 transition">
                   <td className="p-4">{(page - 1) * ITEMS_PER_PAGE + index + 1}</td>
                   <td className="p-4">
-                    {p.thumbnail ? (
-                      <img src={p.thumbnail} className="w-12 h-12 rounded-lg object-cover border" alt="" />
+                    {(p.images && p.images.length > 0) || p.thumbnail ? (
+                      <img 
+                        src={
+                          (p.images && p.images.length > 0) 
+                            ? p.images[0] 
+                            : (p.thumbnail?.startsWith('[') ? JSON.parse(p.thumbnail)[0] : p.thumbnail)
+                        } 
+                        className="w-12 h-12 rounded-lg object-cover border shadow-sm" 
+                        alt={p.name}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "https://via.placeholder.com/150?text=No+Image";
+                        }}
+                      />
                     ) : (
                       <div className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center text-xs text-gray-500">No Img</div>
                     )}
@@ -197,7 +209,19 @@ const AllProducts = () => {
           {paginatedProducts.map((p) => (
             <div key={p.docId} className="bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-md transition p-4 flex flex-col">
               <div className="relative">
-                <img src={p.thumbnail || ""} className="w-full h-44 object-cover rounded-xl mb-3" alt="" />
+                <img 
+                  src={
+                    (p.images && p.images.length > 0) 
+                      ? p.images[0] 
+                      : (p.thumbnail?.startsWith('[') ? JSON.parse(p.thumbnail)[0] : p.thumbnail)
+                  } 
+                  className="w-full h-44 object-cover rounded-xl mb-3" 
+                  alt={p.name} 
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://via.placeholder.com/400x300?text=Product+Image";
+                  }}
+                />
                 {p.isFeatured && <span className="absolute top-2 left-2 bg-black text-white text-xs px-2 py-0.5 rounded-full">Featured</span>}
               </div>
               <h3 className="font-semibold text-lg text-gray-900">{p.name}</h3>

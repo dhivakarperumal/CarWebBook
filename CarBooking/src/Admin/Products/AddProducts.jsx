@@ -63,6 +63,16 @@ const AddProduct = () => {
   /* LOAD EDIT DATA */
   useEffect(() => {
     if (editData) {
+      let cleanThumbnail = editData.thumbnail || "";
+      if (typeof cleanThumbnail === 'string' && cleanThumbnail.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(cleanThumbnail);
+          cleanThumbnail = Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : "";
+        } catch (e) {
+          console.error("Malformed thumbnail:", e);
+        }
+      }
+
       setProduct({
         ...editData,
         tags: Array.isArray(editData.tags)
@@ -76,7 +86,7 @@ const AddProduct = () => {
       });
       setVariants(editData.variants || []);
       setImages(editData.images || []);
-      setThumbnail(editData.thumbnail || "");
+      setThumbnail(cleanThumbnail);
     }
   }, [editData]);
 
@@ -124,19 +134,37 @@ const AddProduct = () => {
     const imageArray = [];
     for (let i = 0; i < files.length; i++) {
       const options = { maxSizeMB: 0.2, maxWidthOrHeight: 800, useWebWorker: true };
-      const compressedFile = await imageCompression(files[i], options);
-      const base64 = await convertToBase64(compressedFile);
-      imageArray.push(base64);
+      try {
+        const compressedFile = await imageCompression(files[i], options);
+        const base64 = await convertToBase64(compressedFile);
+        imageArray.push(base64);
+      } catch (err) {
+        console.error("Compression failed", err);
+      }
     }
     const updatedImages = [...images, ...imageArray];
     setImages(updatedImages);
-    if (!thumbnail && updatedImages.length > 0) setThumbnail(updatedImages[0]);
+    if (!thumbnail && updatedImages.length > 0) {
+      setThumbnail(updatedImages[0]);
+    }
   };
 
   const removeImage = (index) => {
+    const imageToRemove = images[index];
     const updated = images.filter((_, i) => i !== index);
     setImages(updated);
-    if (index === 0 && updated.length > 0) setThumbnail(updated[0]);
+    
+    // If the removed image was the thumbnail, set the next one as thumbnail
+    if (thumbnail === imageToRemove && updated.length > 0) {
+      setThumbnail(updated[0]);
+    } else if (updated.length === 0) {
+      setThumbnail("");
+    }
+  };
+
+  const handleSetThumbnail = (img) => {
+    setThumbnail(img);
+    toast.success("Main image updated");
   };
 
   /* SUBMIT */
@@ -192,7 +220,8 @@ const AddProduct = () => {
       navigate("/admin/allproducts");
     } catch (error) {
       console.error(error);
-      toast.error("❌ Error saving product");
+      const msg = error.response?.data?.message || error.response?.data?.error || "Error saving product";
+      toast.error(`❌ ${msg}`);
     }
 
     setLoading(false);
@@ -279,13 +308,30 @@ const AddProduct = () => {
           <input type="file" className={inputClass} multiple accept="image/*" onChange={(e) => handleMultipleImages(e.target.files)} />
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {images.map((img, i) => (
-            <div key={i} className="relative">
-              <img src={img} className="w-full h-32 object-cover rounded border" alt="" />
-              <button type="button" onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-black text-white w-6 h-6 text-xs rounded-full">✕</button>
+            <div key={i} className={`relative group border-2 rounded-xl overflow-hidden transition ${thumbnail === img ? 'border-cyan-500 shadow-lg shadow-cyan-500/20' : 'border-transparent'}`}>
+              <img src={img} className="w-full h-32 object-cover" alt="" />
+              
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center gap-2">
+                <button type="button" onClick={() => handleSetThumbnail(img)} className="bg-white text-black px-3 py-1 rounded-full text-xs font-bold hover:bg-cyan-500 hover:text-white transition">
+                  {thumbnail === img ? 'Main Image' : 'Set as Main'}
+                </button>
+                <button type="button" onClick={() => removeImage(i)} className="bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-600 transition">
+                  ✕
+                </button>
+              </div>
+              {thumbnail === img && (
+                <div className="absolute bottom-1 right-1 px-2 py-0.5 bg-cyan-500 text-white text-[10px] font-bold rounded">THUMBNAIL</div>
+              )}
             </div>
           ))}
+          {/* Add Placeholder if empty */}
+          {images.length === 0 && (
+            <div className="col-span-full py-10 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl text-center text-gray-400">
+               No images uploaded yet. Select files above to begin.
+            </div>
+          )}
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">

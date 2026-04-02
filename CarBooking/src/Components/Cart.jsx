@@ -117,7 +117,14 @@ export default function Cart() {
                   {items.map((item) => (
                     <div key={item.id} className="grid grid-cols-1 md:grid-cols-6 mt-3 gap-8 items-center bg-[#0c192c] p-6 rounded-2xl border border-white/10">
                       <div className="md:col-span-2 flex items-center gap-5">
-                        <img src={item.image || "https://via.placeholder.com/100"} className="w-20 h-20 object-cover rounded-xl shrink-0" />
+                        <img 
+                          src={item.image || "https://via.placeholder.com/100?text=No+Image"} 
+                          className="w-20 h-20 object-cover rounded-xl shrink-0" 
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "https://via.placeholder.com/100?text=No+Image";
+                          }}
+                        />
                         <div>
                           <h3 className="font-bold">{item.name}</h3>
                           {item.variant && <p className="text-xs text-sky-400">Variant: {item.variant}</p>}

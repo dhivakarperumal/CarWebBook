@@ -59,7 +59,7 @@ const handleAddToCart = async (product, e) => {
       sku: variant.sku,
       name: product.name,
       price: Number(product.offerPrice) || 0,
-      image: product.thumbnail || "",
+      image: (product.images && product.images.length > 0) ? product.images[0] : (product.thumbnail || ""),
       quantity: 1,
     });
 
@@ -115,9 +115,13 @@ flex flex-col"
                 {/* IMAGE */}
                 <div className="relative h-[260px] overflow-hidden">
                   <img
-                    src={product.thumbnail}
+                    src={(product.images && product.images.length > 0) ? product.images[0] : (product.thumbnail || "")}
                     alt={product.name}
                     className="w-full h-full object-cover transition duration-700 group-hover:scale-110 group-hover:rotate-[0.3deg]"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "https://via.placeholder.com/600x400?text=Product+Image";
+                    }}
                   />
 
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition" />

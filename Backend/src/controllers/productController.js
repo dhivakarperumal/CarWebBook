@@ -45,6 +45,8 @@ exports.updateProduct = async (req, res) => {
       isFeatured, isActive, rating, variants, images, thumbnail, totalStock
     } = req.body;
 
+    console.log(`✏️ Updating product docId: ${docId}`, { name, id });
+
     const sql = `
       UPDATE products SET
       id=?, name=?, slug=?, brand=?, description=?,
@@ -52,24 +54,33 @@ exports.updateProduct = async (req, res) => {
       isFeatured=?, isActive=?, rating=?, variants=?, images=?, thumbnail=?, totalStock=?
       WHERE docId=?
     `;
-    await db.query(sql, [
+    
+    const params = [
       id, name, slug, brand, description,
       mrp, offer, offerPrice,
-      JSON.stringify(tags),
-      JSON.stringify(warranty),
-      JSON.stringify(returnPolicy),
+      JSON.stringify(tags || []),
+      JSON.stringify(warranty || {}),
+      JSON.stringify(returnPolicy || {}),
       isFeatured ? 1 : 0,
       isActive ? 1 : 0,
-      rating,
-      JSON.stringify(variants),
-      JSON.stringify(images),
-      thumbnail,
-      totalStock,
+      rating || "0",
+      JSON.stringify(variants || []),
+      JSON.stringify(images || []),
+      thumbnail || "",
+      totalStock || 0,
       docId
-    ]);
-    res.json({ message: 'Product updated' });
+    ];
+
+    try {
+      await db.query(sql, params);
+      res.json({ message: 'Product updated' });
+    } catch (dbErr) {
+      console.error("❌ SQL Error Updating Product:", dbErr.message);
+      res.status(500).json({ message: 'Database error while updating product', error: dbErr.message });
+    }
   } catch (err) {
-    res.status(500).json({ message: 'Error updating product', error: err.message });
+    console.error("❌ Controller Error:", err.message);
+    res.status(500).json({ message: 'Internal server error during update', error: err.message });
   }
 };
 
