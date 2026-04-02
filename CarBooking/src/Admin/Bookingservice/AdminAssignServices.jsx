@@ -181,7 +181,7 @@ export default function AdminAssignServices() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 p-4 md:p-8">
+    <div className="min-h-screen  text-gray-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* HEADER */}
         {/* MAIN TABS (Separating Booked from Add Service Vehicle) */}

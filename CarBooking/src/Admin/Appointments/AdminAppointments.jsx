@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { getAllAppointments, updateAppointment } from "../../api";
 import api from "../../api";
 import toast from "react-hot-toast";
@@ -13,7 +14,8 @@ import {
   FaTimesCircle,
   FaMapMarkerAlt,
   FaCarSide,
-  FaPhoneAlt
+  FaPhoneAlt,
+  FaPlus
 } from "react-icons/fa";
 import Pagination from "../../Components/Pagination";
 
@@ -39,6 +41,7 @@ const AdminAppointments = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadData();
@@ -107,8 +110,13 @@ const AdminAppointments = () => {
           <p className="text-sm text-gray-500 mt-1">Manage scheduling, technicians, and service status.</p>
         </div>
         <div className="flex items-center gap-2">
-
-          <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-200 flex items-center gap-2 text-sm font-semibold">
+          <button
+            onClick={() => navigate("/admin/book-appointment")}
+            className="flex items-center gap-2 px-6 py-2.5 bg-black text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg shadow-black/10"
+          >
+            <FaPlus /> Add Appointment
+          </button>
+<div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-200 flex items-center gap-2 text-sm font-semibold">
             <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
             Total: {appointments.length}
           </div>
