@@ -322,16 +322,16 @@ const BookAppointment = () => {
                 <SectionTitle icon="🧾" title="Customer Details" />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Input label="Full Name" name="name" placeholder="Enter your full name" value={formData.name} onChange={handleChange} />
-                  <Input label="Mobile Number" name="phone" placeholder="+91 98765 43210" value={formData.phone} onChange={handleChange} />
+                  <Input label="Full Name" name="name" required placeholder="Enter your full name" value={formData.name} onChange={handleChange} error={errors.name} />
+                  <Input label="Mobile Number" name="phone" required placeholder="+91 98765 43210" value={formData.phone} onChange={handleChange} error={errors.phone} />
                   <Input label="Email Address" name="email" placeholder="example@email.com" value={formData.email} onChange={handleChange} />
                   <Input label="City" name="city" placeholder="Enter your city" value={formData.city} onChange={handleChange} />
 
                   <div className="col-span-1 sm:col-span-2">
-                    <Input label="Address" name="address" placeholder="Enter complete address" value={formData.address} onChange={handleChange} />
+                    <Input label="Address" name="address" required placeholder="Enter complete address" value={formData.address} onChange={handleChange} error={errors.address} />
                   </div>
 
-                  <Input label="Pincode" name="pincode" placeholder="600001" value={formData.pincode} onChange={handleChange} />
+                  <Input label="Pincode" name="pincode" placeholder="635802" value={formData.pincode} onChange={handleChange} />
                 </div>
               </div>
 
@@ -340,7 +340,7 @@ const BookAppointment = () => {
                 <SectionTitle icon="🚘" title="Vehicle Details" />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Select label="Vehicle Type" name="vehicleType" value={formData.vehicleType} onChange={handleChange}>
+                  <Select label="Vehicle Type" name="vehicleType" required value={formData.vehicleType} onChange={handleChange}>
                     <option value="" disabled className="bg-[#0a0a0b] text-gray-400">
                       Select Vehicle Type
                     </option>
@@ -352,7 +352,7 @@ const BookAppointment = () => {
                   <Input label="Brand" name="brand" placeholder="Toyota, Hyundai..." value={formData.brand} onChange={handleChange} />
                   <Input label="Model" name="model" placeholder="i20, Innova..." value={formData.model} onChange={handleChange} />
 
-                  <Input label="Registration Number" name="registrationNumber" placeholder="TN 01 AB 1234" value={formData.registrationNumber} onChange={handleChange} />
+                  <Input label="Registration Number" name="registrationNumber" required placeholder="TN 01 AB 1234" value={formData.registrationNumber} onChange={handleChange} error={errors.registrationNumber} />
 
                   <Select label="Fuel Type" name="fuelType" value={formData.fuelType} onChange={handleChange}>
                     <option value="" disabled className="text-gray-400">Select Fuel Type</option>
@@ -362,8 +362,8 @@ const BookAppointment = () => {
                     <option value="Hybrid" className="bg-[#0a0a0b]">Hybrid</option>
                   </Select>
 
-                  <Input label="Year of Manufacture" name="yearOfManufacture" placeholder="2022" type="number" value={formData.yearOfManufacture} onChange={handleChange} />
-                  <Input label="Current Mileage" name="currentMileage" placeholder="50000 km" type="number" value={formData.currentMileage} onChange={handleChange} />
+                  <Input label="Year of Manufacture" name="yearOfManufacture" placeholder="2023" type="number" value={formData.yearOfManufacture} onChange={handleChange} />
+                  <Input label="Current Mileage" name="currentMileage" placeholder="500 km" type="number" value={formData.currentMileage} onChange={handleChange} />
                 </div>
               </div>
             </div>
@@ -376,7 +376,7 @@ const BookAppointment = () => {
                 <SectionTitle icon="🛠️" title="Service Details" />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Select label="Service Type" name="serviceType" value={formData.serviceType} onChange={handleChange}>
+                  <Select label="Service Type" name="serviceType" required value={formData.serviceType} onChange={handleChange} error={errors.serviceType}>
                     <option value="" disabled className="text-gray-400">
                       Select Service
                     </option>
@@ -417,11 +417,13 @@ const BookAppointment = () => {
                     label="Preferred Date"
                     name="preferredDate"
                     type="date"
+                    required
                     value={formData.preferredDate}
                     onChange={handleChange}
+                    error={errors.preferredDate}
                   />
 
-                  <Select label="Time Slot" name="preferredTimeSlot" value={formData.preferredTimeSlot} onChange={handleChange}>
+                  <Select label="Time Slot" name="preferredTimeSlot" required value={formData.preferredTimeSlot} onChange={handleChange}>
                     <option value="" disabled className="text-gray-400">
                       Select Time Slot
                     </option>
@@ -439,10 +441,28 @@ const BookAppointment = () => {
               </div>
             </div>
 
-            {/* BUTTON */}
-            <div className="flex justify-end mt-8">
-              <button className="px-8 py-3 rounded-xl bg-gradient-to-r from-sky-600 to-cyan-500 font-bold">
-                Schedule Appointment →
+            {/* Terms and Submit */}
+            <div className="mt-10 pt-6 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6">
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  name="termsAccepted"
+                  checked={formData.termsAccepted}
+                  onChange={handleChange}
+                  className="w-5 h-5 rounded border-white/20 bg-white/5 accent-sky-500 transition-all cursor-pointer"
+                />
+                <span className="text-sm text-gray-400 group-hover:text-gray-200 transition-colors">
+                  I agree to the <span className="text-sky-400 hover:underline">Terms & Conditions</span> for service booking.
+                </span>
+                {errors.termsAccepted && <p className="text-xs text-red-400">{errors.termsAccepted}</p>}
+              </label>
+
+              <button 
+                type="submit"
+                disabled={submitting}
+                className="w-full md:w-auto px-12 py-4 rounded-full font-black text-white bg-gradient-to-r from-sky-600 to-cyan-500 hover:shadow-[0_0_30px_rgba(14,165,233,0.3)] hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 uppercase tracking-widest text-xs"
+              >
+                {submitting ? "Processing..." : "Schedule Appointment →"}
               </button>
             </div>
           </form>
