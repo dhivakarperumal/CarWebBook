@@ -7,7 +7,8 @@ import {
   AlertCircle,
   CalendarDays,
   User,
-  LogOut
+  LogOut,
+  History
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../../api";
@@ -124,14 +125,12 @@ const EmpDashboard = () => {
   const fetchMyTasks = async () => {
     try {
       setLoading(true);
-      // Fetch bookings and filter those assigned to this staff member
-      // Note: We need a backend way to fetch by staff UID or name.
-      // For now, we'll fetch all and filter client-side if a specific endpoint isn't available.
-      const res = await api.get("/bookings");
-      const allBookings = res.data || [];
+      // 🔥 Fetching from all-services to pick up both bookings and appointments
+      const res = await api.get("/all-services");
+      const allServices = res.data || [];
       
       const myDisplayName = userProfile?.displayName || "";
-      const filtered = allBookings.filter(b => 
+      const filtered = allServices.filter(b => 
         (b.assignedEmployeeName || "").toLowerCase() === myDisplayName.toLowerCase() &&
         b.status !== "Cancelled"
       );
@@ -273,16 +272,15 @@ const EmpDashboard = () => {
             </button>
           </div>
  
-          <div className=" overflow-hidden">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr>
-                    <th className="px-6 py-5 text-left font-bold">S No</th>
-                    <th className="px-6 py-5 text-left font-bold">Vehicle Info</th>
-                    <th className="px-6 py-5 text-left font-bold">Status</th>
-                    <th className="px-6 py-5 text-left font-bold">Customer</th>
-                    <th className="px-6 py-5 text-left font-bold">Actions</th>
+                  <tr className="bg-[#87a5b3] text-white">
+                    <th className="px-6 py-5 text-left font-black uppercase tracking-widest text-white">S No</th>
+                    <th className="px-6 py-5 text-left font-black uppercase tracking-widest text-white">Vehicle Info</th>
+                    <th className="px-6 py-5 text-left font-black uppercase tracking-widest text-white">Status</th>
+                    <th className="px-6 py-5 text-left font-black uppercase tracking-widest text-white">Customer</th>
+                    <th className="px-6 py-5 text-right font-black uppercase tracking-widest text-white">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -311,30 +309,44 @@ const EmpDashboard = () => {
                         <td className="px-6 py-5">
                           <p className="font-medium text-gray-700">{task.name}</p>
                         </td>
-                        <td className="px-6 py-5 text-right flex items-center justify-end gap-2">
-                           {(task.status === "Assigned" || task.status === "Pending") && (
-                             <button
-                               onClick={() => updateServiceStatus(task, "Service Going on")}
-                               className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 shadow-md shadow-blue-100 transition"
+                        <td className="px-6 py-5 text-right">
+                          <div className="flex items-center justify-end gap-3 px-2">
+                             {(task.status === "Assigned" || task.status === "Pending" || task.status === "Approved" || task.status === "Processing") && (
+                               <button
+                                 onClick={() => updateServiceStatus(task, "Service Going on")}
+                                 className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-black shadow-lg shadow-blue-200 hover:bg-blue-700 transition active:scale-95 uppercase tracking-wider"
+                               >
+                                 Start
+                               </button>
+                             )}
+                             {(task.status === "Service Going on" || task.status === "Waiting for Spare") && (
+                               <button
+                                 onClick={() => updateServiceStatus(task, "Service Completed")}
+                                 className="px-4 py-2 bg-green-600 text-white rounded-lg text-xs font-black shadow-lg shadow-green-200 hover:bg-green-700 transition active:scale-95 uppercase tracking-wider"
+                               >
+                                 Done
+                               </button>
+                             )}
+                             
+                             {/* Universal Manage Button for all active items */}
+                             {task.status !== "Completed" && task.status !== "Service Completed" && task.status !== "Cancelled" && (
+                               <button 
+                                 onClick={() => navigate("/employee/services")}
+                                 className="px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-black shadow-lg shadow-slate-200 hover:bg-slate-900 transition active:scale-95 uppercase tracking-wider"
+                                 title="Go to Service Management"
+                               >
+                                 Manage
+                               </button>
+                             )}
+
+                             <button 
+                              onClick={() => navigate("/employee/assignservices")}
+                              className="p-2 text-gray-400 hover:text-blue-600 transition hover:bg-blue-50 rounded-lg"
+                              title="View History"
                              >
-                               Start
+                               <History size={18} />
                              </button>
-                           )}
-                           {task.status === "Service Going on" && (
-                             <button
-                               onClick={() => updateServiceStatus(task, "Service Completed")}
-                               className="px-4 py-2 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 shadow-md shadow-green-100 transition"
-                             >
-                               Done
-                             </button>
-                           )}
-                           <button 
-                            onClick={() => navigate("/employee/assignservices")}
-                            className="p-2 text-gray-400 text-center hover:text-blue-600 transition"
-                            title="View Details"
-                          >
-                            <AlertCircle size={20} />
-                          </button>
+                          </div>
                         </td>
                       </tr>
                     ))
@@ -343,9 +355,8 @@ const EmpDashboard = () => {
               </table>
             </div>
           </div>
-        </div>
 
-        {/* ===== QUICK ACTIONS / PROFILE SUMMARY ===== */}
+          {/* ===== QUICK ACTIONS / PROFILE SUMMARY ===== */}
         <div className="space-y-6">
           <div className="bg-gradient-to-br from-black to-gray-800 rounded-2xl p-6 text-white shadow-xl">
              <h3 className="font-bold mb-4">Daily Goal</h3>
@@ -389,6 +400,7 @@ const EmpDashboard = () => {
           </div>
         </div>
       </div>
+
       {/* ===== ATTENDANCE MODAL ===== */}
       {showAttendanceModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
