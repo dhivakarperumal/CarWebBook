@@ -112,9 +112,12 @@ useEffect(() => {
         const matchedService = enrichedServices.find(
           (s) => s.bookingId === b.bookingId || s.bookingDocId === b.id
         );
+        const liveStatus = matchedService?.serviceStatus || b.status;
         return {
           ...b,
           serviceId: matchedService?.id,
+          status: liveStatus,
+          normalizedStatus: STATUS_NORMALIZER[liveStatus] || liveStatus,
           issues: matchedService?.issues || [],
           issue: matchedService?.issue || b.issue,
           issueAmount: matchedService?.issueAmount != null ? matchedService.issueAmount : b.issueAmount,
