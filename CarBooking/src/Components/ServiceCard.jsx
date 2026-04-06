@@ -11,8 +11,8 @@ const ServiceCard = ({ service }) => {
   border border-sky-400
   shadow-[0_25px_70px_rgba(56,189,248,0.35)]
 
-  md:border-white/10
-  md:shadow-none
+md:border-white/20
+md:shadow-[0_10px_30px_rgba(56,189,248,0.15)]
   md:hover:border-sky-400
   md:hover:shadow-[0_25px_70px_rgba(56,189,248,0.35)]
 
