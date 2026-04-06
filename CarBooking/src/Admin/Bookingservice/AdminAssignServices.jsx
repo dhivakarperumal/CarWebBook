@@ -22,6 +22,7 @@ export default function AdminAssignServices() {
 
   const [mainTab, setMainTab] = useState("all"); // all | booked | addVehicle
   const [tab, setTab] = useState("all");
+  const [dateFilter, setDateFilter] = useState("Today");
   const [searchText, setSearchText] = useState("");
   const [viewMode, setViewMode] = useState("table"); // card | table
   const [currentPage, setCurrentPage] = useState(1);
@@ -106,6 +107,31 @@ export default function AdminAssignServices() {
 
       if (!matches) return false;
 
+      // Date Filter
+      const bookingDate = new Date(b.created_at);
+      const today = new Date();
+      let matchDate = true;
+
+      if (dateFilter === "Today") {
+        matchDate = bookingDate.toDateString() === today.toDateString();
+      } else if (dateFilter === "Yesterday") {
+        const yesterday = new Date();
+        yesterday.setDate(today.getDate() - 1);
+        matchDate = bookingDate.toDateString() === yesterday.toDateString();
+      } else if (dateFilter === "This Week") {
+        const lastWeek = new Date();
+        lastWeek.setDate(today.getDate() - 7);
+        lastWeek.setHours(0, 0, 0, 0);
+        matchDate = bookingDate >= lastWeek;
+      } else if (dateFilter === "This Month") {
+        const lastMonth = new Date();
+        lastMonth.setDate(today.getDate() - 30);
+        lastMonth.setHours(0, 0, 0, 0);
+        matchDate = bookingDate >= lastMonth;
+      }
+
+      if (!matchDate) return false;
+
       // Status filter
       if (tab === "unassigned") return !b.assignedEmployeeId;
       if (tab === "assigned") return !!b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed";
@@ -114,11 +140,11 @@ export default function AdminAssignServices() {
       
       return true;
     });
-  }, [currentMainList, searchText, tab]);
+  }, [currentMainList, searchText, tab, dateFilter]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchText, tab, mainTab]);
+  }, [searchText, tab, mainTab, dateFilter]);
 
   const totalPages = Math.ceil(filteredBookings.length / ITEMS_PER_PAGE);
   const paginatedBookings = useMemo(() => {
@@ -305,8 +331,20 @@ export default function AdminAssignServices() {
             </button>
           </div>
 
-          {/* SEARCH */}
-          <div className="flex items-center gap-3 w-full lg:w-auto flex-shrink-0">
+          {/* SEARCH & FILTERS */}
+          <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto flex-shrink-0">
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="bg-white border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all font-medium"
+            >
+              <option value="Today">Today</option>
+              <option value="Yesterday">Yesterday</option>
+              <option value="This Week">Last 7 Days</option>
+              <option value="This Month">Last 30 Days</option>
+              <option value="All">All Time</option>
+            </select>
+
             <div className="w-full md:w-60 relative">
               <input
                 type="text"
@@ -480,8 +518,8 @@ export default function AdminAssignServices() {
         ) : (
           <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto animate-fadeIn">
             <table className="w-full text-left border-collapse whitespace-nowrap">
-              <thead>
-                <tr className="bg-[#87a5b3] text-white">
+              <thead className="bg-[#87a5b3] text-white">
+                <tr>
                   <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Date & Time</th>
                   <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Booking ID</th>
                   <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Vehicle</th>

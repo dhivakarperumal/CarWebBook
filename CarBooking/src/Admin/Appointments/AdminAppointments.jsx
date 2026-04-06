@@ -176,8 +176,8 @@ const AdminAppointments = () => {
       <div className=" overflow-hidden">
         <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden overflow-x-auto">
           <table className="w-full text-left">
-            <thead>
-              <tr className="bg-[#87a5b3] border-b border-gray-100">
+            <thead className="bg-[#87a5b3] text-white">
+              <tr className="border-b border-gray-100">
                 <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">ID</th>
                 <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">Customer</th>
                 <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">Vehicle</th>

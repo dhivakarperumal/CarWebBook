@@ -50,7 +50,6 @@ const ShowAllBookings = () => {
 
   /* 🔴 POPUP STATE */
   const [popup, setPopup] = useState(null);
-  const [trackNumber, setTrackNumber] = useState("");
   const [cancelReason, setCancelReason] = useState("");
 
   /* 🔥 FETCH BOOKINGS */
@@ -126,7 +125,11 @@ const ShowAllBookings = () => {
     if (booking.status === "Service Completed") return;
 
     if (newStatus === "Approved") {
-      setPopup({ type: "approved", booking });
+      const autoTrackNumber = `TRK${Date.now().toString().slice(-4)}${Math.floor(1000 + Math.random() * 9000)}`;
+      updateStatus(booking, "Approved", {
+        trackNumber: autoTrackNumber,
+        approvedAt: new Date(),
+      });
       return;
     }
 
@@ -157,22 +160,6 @@ const ShowAllBookings = () => {
       console.error(err);
       toast.error("Failed to update status");
     }
-  };
-
-  /* ✅ APPROVED SUBMIT */
-  const submitApproved = async () => {
-    if (!trackNumber.trim()) {
-      toast.error("Track number required");
-      return;
-    }
-
-    await updateStatus(popup.booking, "Approved", {
-      trackNumber: trackNumber.trim(),
-      approvedAt: new Date(),
-    });
-
-    setPopup(null);
-    setTrackNumber("");
   };
 
   /* ❌ CANCEL SUBMIT */
@@ -315,7 +302,7 @@ const ShowAllBookings = () => {
                 onChange={(e) => handleStatusChange(b, e.target.value)}
                 className="mt-4 w-full border px-3 py-2 rounded-lg"
               >
-                {BOOKING_STATUS.slice(BOOKING_STATUS.indexOf(b.status) === -1 ? 0 : BOOKING_STATUS.indexOf(b.status)).map((s) => (
+                {(b.status === "Approved" ? ["Approved"] : BOOKING_STATUS.slice(BOOKING_STATUS.indexOf(b.status) === -1 ? 0 : BOOKING_STATUS.indexOf(b.status))).map((s) => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
@@ -358,7 +345,7 @@ const ShowAllBookings = () => {
                       }
                       className="border px-2 py-1 rounded"
                     >
-                      {BOOKING_STATUS.slice(BOOKING_STATUS.indexOf(b.status) === -1 ? 0 : BOOKING_STATUS.indexOf(b.status)).map((s) => (
+                      {(b.status === "Approved" ? ["Approved"] : BOOKING_STATUS.slice(BOOKING_STATUS.indexOf(b.status) === -1 ? 0 : BOOKING_STATUS.indexOf(b.status))).map((s) => (
                         <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
@@ -383,27 +370,6 @@ const ShowAllBookings = () => {
       {popup && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl w-[350px]">
-            {popup.type === "approved" && (
-              <>
-                <h2 className="font-bold mb-3">Enter Track Number</h2>
-                <input
-                  value={trackNumber}
-                  onChange={(e) => setTrackNumber(e.target.value)}
-                  className="w-full border px-3 py-2 rounded mb-4"
-                  placeholder="Track Number"
-                />
-                <button
-                  onClick={submitApproved}
-                  className="w-full md:w-auto px-10 py-4 rounded-md font-semibold text-white
-    bg-gradient-to-r from-black to-cyan-400
-    hover:scale-105 transition-all duration-300
-    shadow-lg shadow-sky-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Submit
-                </button>
-              </>
-            )}
-
             {popup.type === "cancel" && (
               <>
                 <h2 className="font-bold mb-3">Cancel Reason</h2>

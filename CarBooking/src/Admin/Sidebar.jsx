@@ -67,7 +67,7 @@ const navItems = [
   { path: "/admin", label: "Dashboard", icon: Gauge, exact: true },
 
   {
-    label: "Booking & Appoint",
+    label: "Booking & Appointls",
     icon: ShoppingBag,
     children: [
       { path: "/admin/bookings", label: "Service Bookings", icon: CalendarCheck },
