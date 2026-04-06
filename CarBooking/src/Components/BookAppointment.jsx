@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import PageHeader from "./PageHeader";
 import { createAppointment } from "../api";
 import toast from "react-hot-toast";
+import { FiChevronDown } from "react-icons/fi";
 
 const APPOINTMENT_STATUS = {
   BOOKED: "Appointment Booked",
@@ -33,6 +34,70 @@ const SectionTitle = ({ icon, title }) => (
     <div className="flex-1 h-px bg-gradient-to-r from-sky-400/50 to-transparent ml-4"></div>
   </div>
 );
+
+const CustomSelect = ({ label, name, value, onChange, options, required, error }) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="space-y-1.5"> {/* ✅ SAME as Input */}
+
+      {/* LABEL */}
+      <label className="block text-sm font-medium text-gray-300 ml-1">
+        {label} {required && <span className="text-red-400">*</span>}
+      </label>
+
+      {/* SELECT BOX */}
+      <div className="relative group">
+        <div
+          onClick={() => setOpen(!open)}
+          className={`w-full rounded-xl bg-white/5 border px-4 py-3 text-white
+          transition-all duration-300 backdrop-blur
+          flex items-center justify-between cursor-pointer
+          
+          ${error 
+            ? "border-red-500/50 ring-1 ring-red-500/20" 
+            : "border-white/10 group-focus-within:border-sky-500/50 group-focus-within:ring-4 group-focus-within:ring-sky-500/10"
+          }`}
+        >
+          <span className={`${!value ? "text-gray-500" : "text-white"}`}>
+            {value || "Select option"}
+          </span>
+
+          <FiChevronDown
+            className={`w-4 h-4 text-gray-400 transition ${
+              open ? "rotate-180" : ""
+            }`}
+          />
+        </div>
+
+        {/* DROPDOWN */}
+        {open && (
+          <div className="absolute z-50 mt-2 w-full rounded-xl bg-[#0a0a0b] border border-white	 overflow-hidden">
+            {options.map((opt) => (
+              <div
+                key={opt.value}
+                onClick={() => {
+                  onChange({ target: { name, value: opt.value } });
+                  setOpen(false);
+                }}
+                className={`px-4 py-3 text-sm cursor-pointer transition
+                  ${
+                    value === opt.value
+                      ? "bg-sky-400 text-black"
+                      : "text-white hover:bg-sky-400/20"
+                  }`}
+              >
+                {opt.label}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {error && <p className="text-xs text-red-400 ml-1 mt-1">{error}</p>}
+    </div>
+  );
+};
 
 const Input = forwardRef(({ label, required, error, icon, ...props }, ref) => (
   <div className="space-y-1.5">
@@ -80,8 +145,8 @@ const Select = forwardRef(({ label, required, error, children, icon, ...props },
       >
         {children}
       </select>
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
+        <FiChevronDown className="w-4 h-4 text-gray-400" />
       </div>
     </div>
     {error && <p className="text-xs text-red-400 ml-1 mt-1">{error}</p>}
@@ -327,11 +392,27 @@ const BookAppointment = () => {
                   <Input label="Email Address" name="email" placeholder="example@email.com" value={formData.email} onChange={handleChange} />
                   <Input label="City" name="city" placeholder="Enter your city" value={formData.city} onChange={handleChange} />
 
-                  <div className="col-span-1 sm:col-span-2">
-                    <Input label="Address" name="address" required placeholder="Enter complete address" value={formData.address} onChange={handleChange} error={errors.address} />
-                  </div>
+                  <div className="col-span-1 sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
 
-                  <Input label="Pincode" name="pincode" placeholder="635802" value={formData.pincode} onChange={handleChange} />
+                    <Input
+                      label="Address"
+                      name="address"
+                      required
+                      placeholder="Enter complete address"
+                      value={formData.address}
+                      onChange={handleChange}
+                      error={errors.address}
+                    />
+
+                    <Input
+                      label="Pincode"
+                      name="pincode"
+                      placeholder="635802"
+                      value={formData.pincode}
+                      onChange={handleChange}
+                    />
+
+                  </div>
                 </div>
               </div>
 
@@ -340,21 +421,25 @@ const BookAppointment = () => {
                 <SectionTitle icon="🚘" title="Vehicle Details" />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Select label="Vehicle Type" name="vehicleType" required value={formData.vehicleType} onChange={handleChange}>
-                    <option value="" disabled className="bg-[#0a0a0b] text-gray-400">
-                      Select Vehicle Type
-                    </option>
-                    <option value="Car" className="bg-[#0a0a0b]">Car</option>
-                    <option value="Bike" className="bg-[#0a0a0b]">Bike</option>
-                    <option value="SUV" className="bg-[#0a0a0b]">SUV</option>
-                  </Select>
+                  <CustomSelect
+                    label="Vehicle Type"
+                    name="vehicleType"
+                    value={formData.vehicleType}
+                    onChange={handleChange}
+                    required
+                    options={[
+                      { value: "Car", label: "Car" },
+                      { value: "Bike", label: "Bike" },
+                      { value: "SUV", label: "SUV" },
+                    ]}
+                  />
 
                   <Input label="Brand" name="brand" placeholder="Toyota, Hyundai..." value={formData.brand} onChange={handleChange} />
                   <Input label="Model" name="model" placeholder="i20, Innova..." value={formData.model} onChange={handleChange} />
 
                   <Input label="Registration Number" name="registrationNumber" required placeholder="TN 01 AB 1234" value={formData.registrationNumber} onChange={handleChange} error={errors.registrationNumber} />
 
-                  <Select label="Fuel Type" name="fuelType" value={formData.fuelType} onChange={handleChange}>
+                  {/* <Select label="Fuel Type" name="fuelType" value={formData.fuelType} onChange={handleChange}>
                     <option value="" disabled className="text-gray-400">Select Fuel Type</option>
                     <option value="Petrol" className="bg-[#0a0a0b]">Petrol</option>
                     <option value="Diesel" className="bg-[#0a0a0b]">Diesel</option>
@@ -363,7 +448,7 @@ const BookAppointment = () => {
                   </Select>
 
                   <Input label="Year of Manufacture" name="yearOfManufacture" placeholder="2023" type="number" value={formData.yearOfManufacture} onChange={handleChange} />
-                  <Input label="Current Mileage" name="currentMileage" placeholder="500 km" type="number" value={formData.currentMileage} onChange={handleChange} />
+                  <Input label="Current Mileage" name="currentMileage" placeholder="500 km" type="number" value={formData.currentMileage} onChange={handleChange} /> */}
                 </div>
               </div>
             </div>
@@ -376,24 +461,28 @@ const BookAppointment = () => {
                 <SectionTitle icon="🛠️" title="Service Details" />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Select label="Service Type" name="serviceType" required value={formData.serviceType} onChange={handleChange} error={errors.serviceType}>
-                    <option value="" disabled className="text-gray-400">
-                      Select Service
-                    </option>
-                    {Object.keys(SERVICE_PRICES).map((type) => (
-                      <option key={type} value={type} className="bg-[#0a0a0b]">
-                        {type}
-                      </option>
-                    ))}
-                  </Select>
+                  <CustomSelect
+                    label="Service Type"
+                    name="serviceType"
+                    value={formData.serviceType}
+                    onChange={handleChange}
+                    required
+                    error={errors.serviceType}
+                    options={Object.keys(SERVICE_PRICES).map((type) => ({
+                      value: type,
+                      label: type,
+                    }))}
+                  />
 
-                  <Select label="Pickup & Drop" name="pickupDrop" value={formData.pickupDrop} onChange={handleChange}>
-                    <option value="" disabled className="text-gray-400">
-                      Select Option
-                    </option>
-                    <option value="No" className="bg-[#0a0a0b]">No</option>
-                    <option value="Yes" className="bg-[#0a0a0b]">Yes (+ ₹300)</option>
-                  </Select>
+                  <CustomSelect
+                    label="Pickup & Drop"
+                    value={formData.pickupDrop}
+                    onChange={handleChange}
+                    options={[
+                      { value: "No", label: "No" },
+                      { value: "Yes", label: "Yes (+ ₹300)" },
+                    ]}
+                  />
 
                   <div className="col-span-1 sm:col-span-2">
                     <label className="text-sm text-gray-300">Describe Problem</label>
@@ -423,20 +512,18 @@ const BookAppointment = () => {
                     error={errors.preferredDate}
                   />
 
-                  <Select label="Time Slot" name="preferredTimeSlot" required value={formData.preferredTimeSlot} onChange={handleChange}>
-                    <option value="" disabled className="text-gray-400">
-                      Select Time Slot
-                    </option>
-                    <option value="Morning (9AM–12PM)" className="bg-[#0a0a0b]">
-                      Morning (9AM–12PM)
-                    </option>
-                    <option value="Afternoon (12PM–4PM)" className="bg-[#0a0a0b]">
-                      Afternoon (12PM–4PM)
-                    </option>
-                    <option value="Evening (4PM–7PM)" className="bg-[#0a0a0b]">
-                      Evening (4PM–7PM)
-                    </option>
-                  </Select>
+                  <CustomSelect
+                    label="Time Slot"
+                    name="preferredTimeSlot"
+                    value={formData.preferredTimeSlot}
+                    onChange={handleChange}
+                    required
+                    options={[
+                      { value: "Morning (9AM–12PM)", label: "Morning (9AM–12PM)" },
+                      { value: "Afternoon (12PM–4PM)", label: "Afternoon (12PM–4PM)" },
+                      { value: "Evening (4PM–7PM)", label: "Evening (4PM–7PM)" },
+                    ]}
+                  />
                 </div>
               </div>
             </div>
@@ -457,7 +544,7 @@ const BookAppointment = () => {
                 {errors.termsAccepted && <p className="text-xs text-red-400">{errors.termsAccepted}</p>}
               </label>
 
-              <button 
+              <button
                 type="submit"
                 disabled={submitting}
                 className="w-full md:w-auto px-12 py-4 rounded-full font-black text-white bg-gradient-to-r from-sky-600 to-cyan-500 hover:shadow-[0_0_30px_rgba(14,165,233,0.3)] hover:-translate-y-0.5 active:translate-y-0 transition-all disabled:opacity-50 uppercase tracking-widest text-xs"
