@@ -331,7 +331,7 @@ export default function AdminAssignServices() {
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="bg-white border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all font-medium"
+              className="bg-white border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-3.5 mb-4 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all font-medium"
             >
               <option value="Today">Today</option>
               <option value="Yesterday">Yesterday</option>
@@ -346,11 +346,11 @@ export default function AdminAssignServices() {
                 placeholder="Search bookings..."
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
-                className="w-full bg-white border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all font-medium"
+                className="w-full bg-white border border-gray-200 text-gray-900 text-sm rounded-xl px-4  py-3.5 mb-4 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all font-medium"
               />
             </div>
 
-            <div className="hidden sm:flex p-1 bg-gray-200/50 rounded-xl flex-shrink-0">
+            <div className="hidden   mb-4 sm:flex p-1 bg-gray-200/50 rounded-xl flex-shrink-0">
               <button
                 onClick={() => setViewMode("card")}
                 className={`p-2 rounded-lg transition-all ${viewMode === "card" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
