@@ -171,9 +171,9 @@ export default function ProductDetails() {
 
     // ✅ pick selected variant
     const variant = product.variants?.[selectedVariantIndex] || {};
-    const variantLabel = (variant.position || variant.material) 
-        ? `${variant.position || ''} ${variant.material || ''}`.trim() 
-        : variant.sku;
+    const variantLabel = (variant.position || variant.material)
+      ? `${variant.position || ''} ${variant.material || ''}`.trim()
+      : variant.sku;
 
     if (!variant?.sku) {
       toast.error("Product variant not available");
@@ -217,9 +217,9 @@ export default function ProductDetails() {
     }
 
     const variant = product.variants?.[selectedVariantIndex] || {};
-    const variantLabel = (variant.position || variant.material) 
-        ? `${variant.position || ''} ${variant.material || ''}`.trim() 
-        : variant.sku;
+    const variantLabel = (variant.position || variant.material)
+      ? `${variant.position || ''} ${variant.material || ''}`.trim()
+      : variant.sku;
 
     if (!variant?.sku) {
       toast.error("Product variant not available");
@@ -273,331 +273,338 @@ export default function ProductDetails() {
 
   return (
     <>
-    <PageHeader title={product?.name || "Product Details"} />
-    <section className="bg-black text-white py-20">
-      <PageContainer>
-      <div className="container mx-auto px-6">
-        <div className="grid lg:grid-cols-2 gap-16 items-start">
-          {/* LEFT — IMAGE GALLERY */}
-          <div className="lg:sticky lg:top-24">
-            {/* MAIN IMAGE */}
-            <div
-              className="bg-[#050b14] rounded-2xl p-6 border border-white/10
+      <PageHeader title={product?.name || "Product Details"} />
+      <section className="bg-black text-white py-20">
+        <PageContainer>
+          <div className="container mx-auto px-6">
+            <div className="grid lg:grid-cols-2 gap-16 items-start">
+              {/* LEFT — IMAGE GALLERY */}
+              <div className="lg:sticky lg:top-24">
+                {/* MAIN IMAGE */}
+                <div
+                  className="bg-[#050b14] rounded-2xl p-6 border border-white/10
           shadow-xl shadow-sky-500/10"
-            >
-              <img
-                src={activeSrc}
-                className="w-full h-[360px] md:h-[420px] object-contain"
-              />
-            </div>
-
-            {/* THUMBNAILS */}
-            <div className="grid grid-cols-4 gap-4 mt-6">
-              {productImages.slice(-4).map((img, i) => {
-                const index = productImages.length > 4 ? productImages.length - 4 + i : i;
-
-                return (
-                  <button
-                    key={index}
-                    onClick={() => setActiveImage(index)}
-                    className={`bg-[#050b14] rounded-xl p-2 border transition
-            ${
-              activeImage === index
-                ? "border-sky-400 shadow-md shadow-sky-400/30"
-                : "border-white/10 hover:border-sky-400/50"
-            }`}
-                  >
-                    <img src={img} className="w-full h-20 object-contain" />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* RIGHT — PRODUCT INFO */}
-          <div className="space-y-8">
-            {/* TITLE */}
-            <div>
-              <h1 className="text-3xl md:text-4xl xl:text-5xl font-extrabold leading-tight">
-                {product.name}
-              </h1>
-
-              <div className="flex items-center gap-4 mt-2">
-                <p className="text-gray-400">{product.brand}</p>
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((star) =>
-                    star <= Number(product.rating || 0) ? (
-                      <FaStar key={star} className="text-sky-400 text-sm" />
-                    ) : (
-                      <FaRegStar
-                        key={star}
-                        className="text-gray-500 text-sm"
-                      />
-                    )
-                  )}
-                  {product.rating && (
-                    <span className="text-gray-400 text-xs ml-1">
-                      ({product.rating})
-                    </span>
-                  )}
+                >
+                  <img
+                    src={activeSrc}
+                    className="w-full h-[360px] md:h-[420px] object-contain"
+                  />
                 </div>
-              </div>
-            </div>
 
-            {/* PRICE */}
-            <div className="flex flex-wrap items-center gap-4">
-              <span className="text-sky-400 text-3xl font-bold">
-                ₹{product.offerPrice}
-              </span>
+                {/* THUMBNAILS */}
+                <div className="grid grid-cols-4 gap-4 mt-6">
+                  {productImages.slice(-4).map((img, i) => {
+                    const index = productImages.length > 4 ? productImages.length - 4 + i : i;
 
-              <span className="line-through text-gray-500">₹{product.mrp}</span>
-
-              {product.offer && (
-                <span
-                  className="px-3 py-1 rounded-full text-xs font-bold
-              bg-green-500/20 text-green-400"
-                >
-                  {product.offer}% OFF
-                </span>
-              )}
-            </div>
-
-            {/* DESCRIPTION */}
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
-              <h3 className="font-semibold text-lg mb-2">Description</h3>
-              <p className="text-gray-300 leading-relaxed">
-                {product.description}
-              </p>
-            </div>
-
-            {/* PRODUCT DETAILS */}
-            <div className="mt-6 grid grid-cols-2 gap-y-3 text-xl">
-              {/* QUANTITY */}
-              <span className="text-gray-400">Quantity</span>
-
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={decreaseQty}
-                  className="w-9 h-9 rounded-full bg-[#050b14] border border-sky-400/40
-hover:bg-sky-400 hover:text-black transition"
-                >
-                  −
-                </button>
-
-                <span className="font-bold text-sky-400 min-w-[30px] text-center">
-                  {qty}
-                </span>
-
-                <button
-                  onClick={increaseQty}
-                  disabled={qty >= currentStock}
-                  className={`w-9 h-9 rounded-full border border-sky-400/40 transition
-      ${
-        qty >= currentStock
-          ? "opacity-40 cursor-not-allowed"
-          : "bg-[#050b14] hover:bg-sky-400 hover:text-black"
-      }`}
-                >
-                  +
-                </button>
-              </div>
-
-              {product.variants?.[selectedVariantIndex]?.stock !==
-                undefined && (
-                <>
-                  <span className="text-gray-400">Stock</span>
-
-                  <span
-                    className={`font-medium ${
-                      product.variants[selectedVariantIndex].stock > 0
-                        ? "text-green-400"
-                        : "text-red-400"
-                    }`}
-                  >
-                    {product.variants[selectedVariantIndex].stock > 0
-                      ? `${product.variants[selectedVariantIndex].stock} Available`
-                      : "Out of Stock"}
-                  </span>
-                </>
-              )}
-
-              {/* SKU DROPDOWN */}
-              {product.variants?.length > 0 && (
-                <>
-                  <span className="text-gray-400">SKU</span>
-
-                  <select
-                    value={selectedVariantIndex}
-                    onChange={(e) =>
-                      setSelectedVariantIndex(Number(e.target.value))
-                    }
-                    className="bg-[#050b14] border border-sky-400/40 rounded-lg px-3 py-2
-      text-sky-400 outline-none"
-                  >
-                    {product.variants.map((v, i) => (
-                      <option key={i} value={i} className="bg-black">
-                        {v.sku}
-                      </option>
-                    ))}
-                  </select>
-                </>
-              )}
-
-              {product.variants?.[selectedVariantIndex]?.material && (
-                <>
-                  <span className="text-gray-400">Material</span>
-                  <span className="text-sky-400 font-medium">
-                    {product.variants[selectedVariantIndex].material}
-                  </span>
-                </>
-              )}
-
-              {product.variants?.[selectedVariantIndex]?.position && (
-                <>
-                  <span className="text-gray-400">Position</span>
-                  <span className="text-sky-400 font-medium">
-                    {product.variants[selectedVariantIndex].position}
-                  </span>
-                </>
-              )}
-
-              {product.warrantyAvailable && product.warrantyMonths && (
-                <>
-                  <span className="text-gray-400">Warranty</span>
-                  <span className="text-sky-400 font-medium">
-                    {product.warrantyMonths} Months
-                  </span>
-                </>
-              )}
-
-              {product.returnPolicy?.available &&
-                product.returnPolicy?.days && (
-                  <>
-                    <span className="text-gray-400">Return Policy</span>
-                    <span className="text-sky-400 font-medium">
-                      {product.returnPolicy.days} Days
-                    </span>
-                  </>
-                )}
-            </div>
-
-            {/* CTA BUTTONS */}
-            <div className="mt-15 flex flex-col sm:flex-row gap-4">
-              <button
-                onClick={handleAddToCart}
-                className="flex-1 px-10 py-4 rounded-full font-semibold
-bg-gradient-to-r from-blue-600 to-cyan-400 text-black
-hover:scale-105 transition-all duration-300
-shadow-xl shadow-blue-500/40 cursor-pointer"
-              >
-                Add To Cart
-              </button>
-
-              <button
-                onClick={handleBuyNow}
-                className="flex-1 px-10 py-4 rounded-full font-semibold
-  border border-sky-400 text-sky-400
-  hover:bg-sky-400 hover:text-black
-  transition-all duration-300 cursor-pointer"
-              >
-                Buy Now
-              </button>
-            </div>
-          </div>
-        </div>
-        </div>
-
-        {/* REVIEWS SECTION */}
-        <div className="mt-24 border-t border-white/10 pt-16">
-          <div className="grid lg:grid-cols-3 gap-16">
-            {/* LEFT — REVIEWS LIST */}
-            <div className="lg:col-span-2 space-y-8">
-              <h2 className="text-3xl font-bold mb-8">Customer Reviews</h2>
-              
-              {reviews.length === 0 ? (
-                <p className="text-gray-400 italic">No reviews yet. Be the first to review this product!</p>
-              ) : (
-                <div className="space-y-6">
-                  {reviews.map((rev) => (
-                    <div key={rev.id} className="bg-white/5 border border-white/10 rounded-2xl p-6">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className="w-12 h-12 rounded-full bg-sky-400/20 flex items-center justify-center text-sky-400 font-bold overflow-hidden">
-                          {rev.image ? <img src={rev.image} alt="" className="w-full h-full object-cover" /> : (rev.name?.[0] || "A")}
-                        </div>
-                        <div>
-                          <h4 className="font-semibold">{rev.name}</h4>
-                          <div className="flex items-center gap-1">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              star <= rev.rating ? (
-                                <FaStar key={star} className="text-sky-400 text-xs" />
-                              ) : (
-                                <FaRegStar key={star} className="text-gray-600 text-xs" />
-                              )
-                            ))}
-                          </div>
-                        </div>
-                        <span className="ml-auto text-xs text-gray-500">
-                          {new Date(rev.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-gray-300 leading-relaxed">
-                        {rev.message}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* RIGHT — ADD REVIEW FORM */}
-            <div className="bg-[#050b14] border border-sky-400/20 rounded-3xl p-8 h-fit sticky top-24">
-              <h3 className="text-2xl font-bold mb-6">Write a Review</h3>
-              
-              <form onSubmit={handleSubmitReview} className="space-y-6">
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Rating</label>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
+                    return (
                       <button
-                        key={star}
-                        type="button"
-                        onClick={() => setNewReview({ ...newReview, rating: star })}
-                        className="text-2xl transition-transform hover:scale-110"
+                        key={index}
+                        onClick={() => setActiveImage(index)}
+                        className={`bg-[#050b14] rounded-xl p-2 border transition
+            ${activeImage === index
+                            ? "border-sky-400 shadow-md shadow-sky-400/30"
+                            : "border-white/10 hover:border-sky-400/50"
+                          }`}
                       >
-                        {star <= newReview.rating ? (
-                          <FaStar className="text-sky-400" />
-                        ) : (
-                          <FaRegStar className="text-gray-600" />
-                        )}
+                        <img src={img} className="w-full h-20 object-contain" />
                       </button>
-                    ))}
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* RIGHT — PRODUCT INFO */}
+              <div className="space-y-8">
+                {/* TITLE */}
+                <div>
+                  <h1 className="text-3xl md:text-4xl xl:text-5xl font-extrabold leading-tight">
+                    {product.name}
+                  </h1>
+
+                  <div className="flex items-center gap-4 mt-2">
+                    <p className="text-gray-400">{product.brand}</p>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) =>
+                        star <= Number(product.rating || 0) ? (
+                          <FaStar key={star} className="text-sky-400 text-sm" />
+                        ) : (
+                          <FaRegStar
+                            key={star}
+                            className="text-gray-500 text-sm"
+                          />
+                        )
+                      )}
+                      {product.rating && (
+                        <span className="text-gray-400 text-xs ml-1">
+                          ({product.rating})
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm text-gray-400 mb-2">Message</label>
-                  <textarea
-                    value={newReview.message}
-                    onChange={(e) => setNewReview({ ...newReview, message: e.target.value })}
-                    placeholder="Tell us what you think..."
-                    className="w-full bg-white/5 border border-white/10 rounded-xl p-4 min-h-[120px] focus:border-sky-400 outline-none transition"
-                    required
-                  ></textarea>
+                {/* PRICE + TOTAL SECTION */}
+                <div className="flex flex-col gap-3 mt-2">
+
+                  {/* PRICE ROW */}
+                  <div className="flex flex-wrap items-center gap-4">
+                    <span className="text-sky-400 text-3xl font-bold">
+                      ₹{product.offerPrice}
+                    </span>
+
+                    <span className="line-through text-gray-500">
+                      ₹{product.mrp}
+                    </span>
+
+                    {product.offer && (
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-500/20 text-green-400">
+                        {product.offer}% OFF
+                      </span>
+                    )}
+                  </div>
+
+                  {/* TOTAL ROW */}
+                  <div className="text-sm text-gray-400 flex items-center gap-2">
+                    <span className="text-white font-semibold">Total:</span>
+
+                    <span>
+                      ₹{product.offerPrice} × {qty} =
+                    </span>
+
+                    <span className="text-sky-400 font-bold">
+                      ₹{(product.offerPrice || 0) * qty}
+                    </span>
+                  </div>
+
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={submittingReview}
-                  className="w-full py-4 rounded-full font-semibold bg-sky-400 text-black hover:bg-sky-300 disabled:opacity-50 transition-colors"
-                >
-                  {submittingReview ? "Submitting..." : "Submit Review"}
-                </button>
-              </form>
+
+                {/* PRODUCT DETAILS */}
+                <div className="mt-6 grid grid-cols-2 gap-y-3 text-xl">
+                  {/* QUANTITY */}
+                  <span className="text-gray-400">Quantity</span>
+
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={decreaseQty}
+                      className="w-9 h-9 rounded-full bg-[#050b14] border border-sky-400/40
+hover:bg-sky-400 hover:text-black transition"
+                    >
+                      −
+                    </button>
+
+                    <span className="font-bold text-sky-400 min-w-[30px] text-center">
+                      {qty}
+                    </span>
+
+                    <button
+                      onClick={increaseQty}
+                      disabled={qty >= currentStock}
+                      className={`w-9 h-9 rounded-full border border-sky-400/40 transition
+      ${qty >= currentStock
+                          ? "opacity-40 cursor-not-allowed"
+                          : "bg-[#050b14] hover:bg-sky-400 hover:text-black"
+                        }`}
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  {product.variants?.[selectedVariantIndex]?.stock === 0 && (
+                    <>
+                      <span className="text-gray-400">Stock</span>
+
+                      <span className="font-medium text-red-400">
+                        Out of Stock
+                      </span>
+                    </>
+                  )}
+
+                  {/* SKU DROPDOWN */}
+                  {product.variants?.length > 0 && (
+                    <>
+                      <span className="text-gray-400">SKU</span>
+
+                      <select
+                        value={selectedVariantIndex}
+                        onChange={(e) =>
+                          setSelectedVariantIndex(Number(e.target.value))
+                        }
+                        className="bg-[#050b14] border border-sky-400/40 rounded-lg px-3 py-2
+      text-sky-400 outline-none"
+                      >
+                        {product.variants.map((v, i) => (
+                          <option key={i} value={i} className="bg-black">
+                            {v.sku}
+                          </option>
+                        ))}
+                      </select>
+                    </>
+                  )}
+
+                  {product.variants?.[selectedVariantIndex]?.material && (
+                    <>
+                      <span className="text-gray-400">Material</span>
+                      <span className="text-sky-400 font-medium">
+                        {product.variants[selectedVariantIndex].material}
+                      </span>
+                    </>
+                  )}
+
+                  {product.variants?.[selectedVariantIndex]?.position && (
+                    <>
+                      <span className="text-gray-400">Position</span>
+                      <span className="text-sky-400 font-medium">
+                        {product.variants[selectedVariantIndex].position}
+                      </span>
+                    </>
+                  )}
+
+                  {product.warrantyAvailable && product.warrantyMonths && (
+                    <>
+                      <span className="text-gray-400">Warranty</span>
+                      <span className="text-sky-400 font-medium">
+                        {product.warrantyMonths} Months
+                      </span>
+                    </>
+                  )}
+
+                  {product.returnPolicy?.available &&
+                    product.returnPolicy?.days && (
+                      <>
+                        <span className="text-gray-400">Return Policy</span>
+                        <span className="text-sky-400 font-medium">
+                          {product.returnPolicy.days} Days
+                        </span>
+                      </>
+                    )}
+                </div>
+
+                {/* DESCRIPTION */}
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                  <h3 className="font-semibold text-lg mb-2">Description</h3>
+                  <p className="text-gray-300 leading-relaxed">
+                    {product.description}
+                  </p>
+                </div>
+
+                {/* CTA BUTTONS */}
+                <div className="mt-15 flex flex-col sm:flex-row gap-4">
+                  <button
+                    onClick={handleAddToCart}
+                    className="flex-1 px-10 py-4 rounded-full font-semibold
+bg-gradient-to-r from-blue-600 to-cyan-400 text-black
+hover:scale-105 transition-all duration-300
+shadow-xl shadow-blue-500/40 cursor-pointer"
+                  >
+                    Add To Cart
+                  </button>
+
+                  <button
+                    onClick={handleBuyNow}
+                    className="flex-1 px-10 py-4 rounded-full font-semibold
+  border border-sky-400 text-sky-400
+  hover:bg-sky-400 hover:text-black
+  transition-all duration-300 cursor-pointer"
+                  >
+                    Buy Now
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-      </PageContainer>
-    </section>
+
+          {/* REVIEWS SECTION */}
+          <div className="mt-24 border-t border-white/10 pt-16">
+            <div className="grid lg:grid-cols-3 gap-16">
+              {/* LEFT — REVIEWS LIST */}
+              <div className="lg:col-span-2 space-y-8">
+                <h2 className="text-3xl font-bold mb-8">Customer Reviews</h2>
+
+                {reviews.length === 0 ? (
+                  <p className="text-gray-400 italic">No reviews yet. Be the first to review this product!</p>
+                ) : (
+                  <div className="space-y-6">
+                    {reviews.map((rev) => (
+                      <div key={rev.id} className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                        <div className="flex items-center gap-4 mb-4">
+                          <div className="w-12 h-12 rounded-full bg-sky-400/20 flex items-center justify-center text-sky-400 font-bold overflow-hidden">
+                            {rev.image ? <img src={rev.image} alt="" className="w-full h-full object-cover" /> : (rev.name?.[0] || "A")}
+                          </div>
+                          <div>
+                            <h4 className="font-semibold">{rev.name}</h4>
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                star <= rev.rating ? (
+                                  <FaStar key={star} className="text-sky-400 text-xs" />
+                                ) : (
+                                  <FaRegStar key={star} className="text-gray-600 text-xs" />
+                                )
+                              ))}
+                            </div>
+                          </div>
+                          <span className="ml-auto text-xs text-gray-500">
+                            {new Date(rev.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="text-gray-300 leading-relaxed">
+                          {rev.message}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* RIGHT — ADD REVIEW FORM */}
+              <div className="bg-[#050b14] border border-sky-400/20 rounded-3xl p-8 h-fit sticky top-24">
+                <h3 className="text-2xl font-bold mb-6">Write a Review</h3>
+
+                <form onSubmit={handleSubmitReview} className="space-y-6">
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Rating</label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setNewReview({ ...newReview, rating: star })}
+                          className="text-2xl transition-transform hover:scale-110"
+                        >
+                          {star <= newReview.rating ? (
+                            <FaStar className="text-sky-400" />
+                          ) : (
+                            <FaRegStar className="text-gray-600" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Message</label>
+                    <textarea
+                      value={newReview.message}
+                      onChange={(e) => setNewReview({ ...newReview, message: e.target.value })}
+                      placeholder="Tell us what you think..."
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-4 min-h-[120px] focus:border-sky-400 outline-none transition"
+                      required
+                    ></textarea>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submittingReview}
+                    className="w-full py-4 rounded-full font-semibold bg-sky-400 text-black hover:bg-sky-300 disabled:opacity-50 transition-colors"
+                  >
+                    {submittingReview ? "Submitting..." : "Submit Review"}
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </PageContainer>
+      </section>
     </>
   );
 }

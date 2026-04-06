@@ -36,24 +36,22 @@ flex flex-col"
       )}
 
       {/* IMAGE */}
-      <div className="relative h-[200px] overflow-hidden">
-        <img
-          src={
-            product.images && product.images.length > 0
-              ? product.images[0]
-              : product.thumbnail || ""
-          }
-          alt={product.name}
-          className="w-full h-full object-cover transition duration-700 group-hover:scale-110 group-hover:rotate-[0.3deg]"
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.src =
-              "https://via.placeholder.com/600x400?text=Product+Image";
-          }}
-        />
-
-        <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition" />
-      </div>
+   <div className="relative h-[200px] overflow-hidden rounded-xl bg-[#0a0a0b] flex items-center justify-center">
+  <img
+    src={
+      product.images && product.images.length > 0
+        ? product.images[0]
+        : product.thumbnail || ""
+    }
+    alt={product.name}
+    className="max-h-full max-w-full object-contain scale-110 transition duration-500 group-hover:scale-115"
+    onError={(e) => {
+      e.target.onerror = null;
+      e.target.src =
+        "https://via.placeholder.com/600x400?text=Product+Image";
+    }}
+  />
+</div>
 
       {/* CONTENT */}
       <div className="p-4 space-y-2">
