@@ -136,6 +136,7 @@ const Billings = () => {
         prev.map((b) => (b.id === id ? { ...b, paymentStatus: newStatus } : b))
       );
       toast.success("Status updated to " + newStatus);
+      loadBills(); // Refresh to ensure stats update
     } catch {
       toast.error("Failed to update status");
     }
@@ -175,8 +176,10 @@ const Billings = () => {
         <h2>Car Service Invoice</h2>
 
         <p><b>Invoice:</b> ${bill.invoiceNo}</p>
+        <p><b>Source:</b> ${bill.billingType === 'manual' ? 'Manual Entry' : 'Online Booking'}</p>
         <p><b>Customer:</b> ${bill.customerName}</p>
-        <p><b>Car Number:</b> ${bill.carNumber}</p>
+        <p><b>Car:</b> ${bill.car || "-"}</p>
+        <p><b>Reg. No:</b> ${bill.registrationNumber || "-"}</p>
         <p><b>Mobile:</b> ${bill.mobileNumber || "-"}</p>
 
         <table>
@@ -330,29 +333,42 @@ const Billings = () => {
           <table className="min-w-[700px] text-sm whitespace-nowrap">
             <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
               <tr>
-                <th className="px-4 py-4 text-left">S No</th>
-                <th className="px-4 py-4 text-left">Invoice</th>
-                <th className="px-4 py-4 text-left">Customer</th>
-                <th className="px-4 py-4 text-left">Car No</th>
-                <th className="px-4 py-4 text-left">Total</th>
-                <th className="px-4 py-4 text-left">Status</th>
-                <th className="px-4 py-4 text-left">Actions</th>
+                <th className="px-6 py-4 text-left">S No</th>
+                <th className="px-6 py-4 text-left">Invoice</th>
+                <th className="px-6 py-4 text-left">Customer</th>
+                <th className="px-6 py-4 text-left">Vehicle Info</th>
+                <th className="px-6 py-4 text-left">Source</th>
+                <th className="px-6 py-4 text-left font-bold">Total Amount</th>
+                <th className="px-6 py-4 text-left">Status</th>
+                <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
 
             <tbody>
               {paginatedBills.map((b, i) => (
                 <tr key={b.id} className="border-b border-gray-300">
-                  <td className="px-4 py-4">{i + 1}</td>
-                  <td className="px-4 py-4">{b.invoiceNo}</td>
-                  <td className="px-4 py-4">{b.customerName}</td>
-                  <td className="px-4 py-4">{b.bookingId}</td>
-                  <td className="px-4 py-4">₹{b.grandTotal}</td>
-                  <td className="px-4 py-4">
+                  <td className="px-6 py-4 font-bold text-gray-600">{i + 1}</td>
+                  <td className="px-6 py-4 font-black text-sky-600">{b.invoiceNo}</td>
+                  <td className="px-6 py-4">
+                    <p className="font-bold text-gray-900">{b.customerName}</p>
+                    <p className="text-[10px] text-gray-500">{b.mobileNumber}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="font-bold text-gray-800">{b.car}</p>
+                    <p className="text-[10px] text-sky-600 font-black tracking-wider uppercase">{b.registrationNumber}</p>
+                    <p className="text-[10px] text-gray-400 capitalize">{b.bookingId}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest border ${b.billingType === 'manual' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-sky-50 text-sky-600 border-sky-100'}`}>
+                        {b.billingType || 'Online'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 font-black text-gray-900">₹{b.grandTotal}</td>
+                  <td className="px-6 py-4">
                     <select
                       value={b.paymentStatus?.toLowerCase() || "pending"}
                       onChange={(e) => updateStatus(b.id, e.target.value)}
-                      className={`px-3 py-1.5 rounded-full text-white text-xs font-semibold capitalize border-2 border-transparent hover:border-white/50 outline-none cursor-pointer shadow-sm transition-all focus:ring-2 focus:ring-offset-1 focus:ring-sky-500 appearance-none ${
+                      className={`px-3 py-1.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest border-2 border-transparent outline-none cursor-pointer shadow-sm transition-all appearance-none ${
                         b.paymentStatus?.toLowerCase() === "paid" ? "bg-emerald-500" :
                         b.paymentStatus?.toLowerCase() === "partial" ? "bg-orange-500" :
                         "bg-amber-500"
@@ -363,13 +379,15 @@ const Billings = () => {
                       <option value="paid" className="bg-white text-black">Paid</option>
                     </select>
                   </td>
-                  <td className="px-4 py-4 flex gap-2">
-                    <button onClick={() => fetchAndPrint(b.id)} className="bg-gray-700 text-white px-2 py-1 rounded">
-                      <Printer size={14} />
-                    </button>
-                    <button onClick={() => deleteInvoice(b.id)} className="bg-red-500 text-white px-2 py-1 rounded">
-                      <Trash2 size={14} />
-                    </button>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2">
+                        <button onClick={() => fetchAndPrint(b.id)} className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">
+                        <Printer size={16} />
+                        </button>
+                        <button onClick={() => deleteInvoice(b.id)} className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition">
+                        <Trash2 size={16} />
+                        </button>
+                    </div>
                   </td>
                 </tr>
               ))}
