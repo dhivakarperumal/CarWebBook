@@ -44,7 +44,8 @@ const ShowAllBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [view, setView] = useState("table");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("Booked");
+  const [dateFilter, setDateFilter] = useState("Today");
   const [page, setPage] = useState(1);
 
   /* 🔴 POPUP STATE */
@@ -73,12 +74,35 @@ const ShowAllBookings = () => {
       b.name?.toLowerCase().includes(search.toLowerCase()) ||
       b.phone?.includes(search);
     const matchStatus = statusFilter === "All" || b.status === statusFilter;
-    return matchSearch && matchStatus;
+
+    const bookingDate = new Date(b.created_at);
+    const today = new Date();
+    let matchDate = true;
+
+    if (dateFilter === "Today") {
+      matchDate = bookingDate.toDateString() === today.toDateString();
+    } else if (dateFilter === "Yesterday") {
+      const yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
+      matchDate = bookingDate.toDateString() === yesterday.toDateString();
+    } else if (dateFilter === "This Week") {
+      const lastWeek = new Date();
+      lastWeek.setDate(today.getDate() - 7);
+      lastWeek.setHours(0, 0, 0, 0);
+      matchDate = bookingDate >= lastWeek;
+    } else if (dateFilter === "This Month") {
+      const lastMonth = new Date();
+      lastMonth.setDate(today.getDate() - 30);
+      lastMonth.setHours(0, 0, 0, 0);
+      matchDate = bookingDate >= lastMonth;
+    }
+
+    return matchSearch && matchStatus && matchDate;
   });
 
   useEffect(() => {
     setPage(1);
-  }, [search, statusFilter]);
+  }, [search, statusFilter, dateFilter]);
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginatedData = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
@@ -194,6 +218,18 @@ const ShowAllBookings = () => {
 
   {/* RIGHT → FILTERS + BUTTONS */}
   <div className="flex items-center gap-3 flex-wrap justify-end">
+    <select
+      value={dateFilter}
+      onChange={(e) => setDateFilter(e.target.value)}
+      className="h-[42px] min-w-[140px] border border-gray-300 bg-white px-4 rounded-md text-sm shadow-sm focus:ring-2 focus:ring-black outline-none"
+    >
+      <option value="Today">Today</option>
+      <option value="Yesterday">Yesterday</option>
+      <option value="This Week">Last 7 Days</option>
+      <option value="This Month">Last 30 Days</option>
+      <option value="All">All Time</option>
+    </select>
+
     <select
       value={statusFilter}
       onChange={(e) => setStatusFilter(e.target.value)}

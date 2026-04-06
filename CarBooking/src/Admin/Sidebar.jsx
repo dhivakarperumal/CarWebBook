@@ -66,13 +66,21 @@ const ROLE_PERMISSIONS = {
 const navItems = [
   { path: "/admin", label: "Dashboard", icon: Gauge, exact: true },
 
-  { path: "/admin/bookings", label: "Service Bookings", icon: CalendarCheck },
-  { path: "/admin/appointments", label: "Service Appointments", icon: CalendarDays },
+  {
+    label: "Booking & Appoint",
+    icon: ShoppingBag,
+    children: [
+      { path: "/admin/bookings", label: "Service Bookings", icon: CalendarCheck },
+      { path: "/admin/appointments", label: "Service Appoint", icon: CalendarDays },
+    ],
+  },
+
+  
   { path: "/admin/assignservices", label: "Assign Services", icon: ClipboardCheck },
   { path: "/admin/services", label: "Active Services", icon: Wrench },
-  { path: "/admin/customers", label: "Customers", icon: Users },
+  // { path: "/admin/customers", label: "Customers", icon: Users },
   { path: "/admin/billing", label: "Billing", icon: Receipt },
-  { path: "/admin/service-areas", label: "Service Areas", icon: MapPin },
+  // { path: "/admin/service-areas", label: "Service Areas", icon: MapPin },
 
 
   // { path: "/admin/serviceslist", label: "Service Packages", icon: ShieldCheck },
@@ -85,10 +93,12 @@ const navItems = [
       { path: "/admin/allProducts", label: "Products", icon: Package },
       { path: "/admin/productbilling", label: "Product Billing", icon: CreditCard },
       { path: "/admin/stockdetails", label: "Spare Parts Stock", icon: Boxes },
-      { path: "/admin/orders", label: "Orders", icon: ShoppingCart },
+     
       { path: "/admin/inventory", label: "Parts Inventory", icon: PackageSearch },
     ],
   },
+
+   { path: "/admin/orders", label: "Orders", icon: ShoppingCart },
 
 
   {
@@ -97,9 +107,10 @@ const navItems = [
     children: [
       { path: "/admin/inventory-list", label: "Vehicle Inventory", icon: Truck },
       { path: "/admin/add-vehicle", label: "Add New Vehicle", icon: PlusCircle },
-      { path: "/admin/booked-vehicles", label: "Booked Vehicles", icon: ListChecks },
     ],
   },
+
+  { path: "/admin/booked-vehicles", label: "Booked Vehicles", icon: ListChecks },
 
 
   {
