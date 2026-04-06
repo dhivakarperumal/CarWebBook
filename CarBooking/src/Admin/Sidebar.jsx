@@ -79,6 +79,10 @@ const navItems = [
   { path: "/admin/assignservices", label: "Assign Services", icon: ClipboardCheck },
   { path: "/admin/services", label: "Services Tracking", icon: Wrench },
 
+  { path: "/admin/orders", label: "Orders", icon: ShoppingCart },
+
+  { path: "/admin/booked-vehicles", label: "Booked Vehicles", icon: ListChecks },
+
   { path: "/admin/billing", label: "Billing", icon: Receipt },
 
 
@@ -87,6 +91,8 @@ const navItems = [
     label: "Products",
     icon: ShoppingBag,
     children: [
+      { path: "/admin/inventory-list", label: "Vehicle Inventory", icon: Truck },
+      { path: "/admin/add-vehicle", label: "Add New Vehicle", icon: PlusCircle },
       { path: "/admin/allProducts", label: "Products", icon: Package },
       { path: "/admin/productbilling", label: "Product Billing", icon: CreditCard },
       { path: "/admin/stockdetails", label: "Spare Parts Stock", icon: Boxes },
@@ -95,19 +101,19 @@ const navItems = [
     ],
   },
 
-  { path: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  
 
 
-  {
-    label: "Vehicle Marketplace",
-    icon: Car,
-    children: [
-      { path: "/admin/inventory-list", label: "Vehicle Inventory", icon: Truck },
-      { path: "/admin/add-vehicle", label: "Add New Vehicle", icon: PlusCircle },
-    ],
-  },
+  // {
+  //   label: "Vehicle Marketplace",
+  //   icon: Car,
+  //   children: [
+  //     { path: "/admin/inventory-list", label: "Vehicle Inventory", icon: Truck },
+  //     { path: "/admin/add-vehicle", label: "Add New Vehicle", icon: PlusCircle },
+  //   ],
+  // },
 
-  { path: "/admin/booked-vehicles", label: "Booked Vehicles", icon: ListChecks },
+ 
 
 
   {

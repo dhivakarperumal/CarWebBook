@@ -19,6 +19,7 @@ const AddBillings = () => {
   const [search, setSearch] = useState("");
   const [selectedService, setSelectedService] = useState(null);
   const [parts, setParts] = useState([]);
+  const [invoiceNo, setInvoiceNo] = useState("");
 
   // For Manual Parts Entry
   const [newPart, setNewPart] = useState({ partName: "", qty: 1, price: 0 });
@@ -30,15 +31,23 @@ const AddBillings = () => {
      FETCH SERVICES
   ======================= */
   useEffect(() => {
-    const fetchServices = async () => {
+    const loadInitialData = async () => {
       try {
-        const res = await api.get('/all-services');
-        setServices(res.data);
+        const [servicesRes, billingsRes] = await Promise.all([
+          api.get('/all-services'),
+          api.get('/billings')
+        ]);
+        setServices(servicesRes.data);
+        
+        // Calculate next invoice number
+        const nextNum = (billingsRes.data.length + 1).toString().padStart(3, '0');
+        setInvoiceNo(`INV-${nextNum}`);
       } catch {
-        toast.error("Failed to load services");
+        toast.error("Failed to load initial data");
+        setInvoiceNo(`INV-${Date.now()}`);
       }
     };
-    fetchServices();
+    loadInitialData();
   }, []);
 
   /* =======================
@@ -103,10 +112,8 @@ const AddBillings = () => {
     }
 
     try {
-      const invoiceNo = `INV-${Date.now()}`;
-
       const payload = {
-        invoiceNo,
+        invoiceNo: invoiceNo || `INV-${Date.now()}`,
         serviceId: activeTab === "online" ? selectedService.id : null,
         bookingId: activeTab === "online" ? selectedService.bookingId : `MANUAL-${Date.now()}`,
         uid: activeTab === "online" ? selectedService.uid : null,
@@ -159,7 +166,15 @@ const AddBillings = () => {
       <div className="flex justify-between items-center bg-gray-50 -m-6 p-8 rounded-t-3xl border-b border-gray-100 mb-2">
         <div>
           <h2 className="text-2xl font-black text-gray-900 tracking-tight">Generate Billing Invoice</h2>
-          <p className="text-xs text-gray-500 mt-1 uppercase font-bold tracking-widest">Create invoices for online bookings or manual walk-ins</p> 
+          <div className="flex items-center gap-2 mt-2">
+            <span className="bg-black text-white px-2 py-0.5 rounded text-[10px] font-black uppercase">Invoice No</span>
+            <input 
+                type="text" 
+                value={invoiceNo}
+                onChange={(e) => setInvoiceNo(e.target.value)}
+                className="bg-transparent border-b border-gray-300 focus:border-black outline-none font-black text-sm text-sky-600 transition-all px-1"
+            />
+          </div>
         </div>
         <div className="flex items-center p-1 bg-gray-200 rounded-xl">
           <button 
@@ -285,9 +300,9 @@ const AddBillings = () => {
       )}
 
       {/* PARTS MANAGEMENT */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Spare Parts & Inventory</h3>
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Spare Parts & Inventory</h3>
             {activeTab === "manual" && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
                     <div className="flex flex-col gap-1.5">
