@@ -118,8 +118,9 @@ const BookService = () => {
     if (currentUser) {
       setFormData(prev => ({
         ...prev,
-        name: currentUser.displayName || "",
+        name: currentUser.username || "",
         email: currentUser.email || "",
+        phone: currentUser.mobile || "",
       }));
     }
   }, [currentUser]);
@@ -264,7 +265,7 @@ const BookService = () => {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <Input label="Phone Number" name="phone" placeholder="+91 00000 00000" required error={errors.phone} onChange={handleChange} />
+              <Input label="Phone Number" name="phone" value={formData.phone} placeholder="+91 00000 00000" required error={errors.phone} onChange={handleChange} />
               <Input label="Alternative Phone" name="altPhone" placeholder="Optional" onChange={handleChange} />
             </div>
 
