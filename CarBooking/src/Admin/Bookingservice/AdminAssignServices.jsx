@@ -516,30 +516,34 @@ export default function AdminAssignServices() {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden overflow-x-auto animate-fadeIn">
-            <table className="w-full text-left border-collapse whitespace-nowrap">
+          <div className="overflow-x-auto bg-white rounded-2xl shadow-sm animate-fadeIn">
+            <table className="w-full text-sm text-left">
               <thead className="bg-[#87a5b3] text-white">
                 <tr>
-                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Date & Time</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">S No</th>
                   <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Booking ID</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Customer</th>
                   <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Vehicle</th>
                   <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Service Detail</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Customer</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Date & Time</th>
                   <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Technician</th>
                   <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
                   <th className="px-8 py-5 text-[10px] font-black text-white uppercase tracking-widest text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {paginatedBookings.map((item) => (
+                {paginatedBookings.map((item, idx) => (
                   <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
                     <td className="px-8 py-6">
-                       <span className="text-xs font-black text-blue-900 block">{formatBookingDate(item)}</span>
-                       <span className="text-[10px] font-bold text-gray-400 mt-1 block">{formatBookingTime(item)}</span>
+                      <span className="text-sm font-black text-gray-800">{idx + 1 + (currentPage - 1) * ITEMS_PER_PAGE}</span>
                     </td>
                     <td className="px-8 py-6">
                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none">#{item.id}</span>
                        <span className="text-xs font-black text-blue-900 block mt-1">{item.bookingId || "BKG-NEW"}</span>
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-black text-gray-800">{item.name}</p>
+                      <p className="text-xs font-bold text-gray-400 mt-0.5">{item.phone}</p>
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2">
@@ -557,8 +561,8 @@ export default function AdminAssignServices() {
                       </p>
                     </td>
                     <td className="px-8 py-6">
-                      <p className="text-sm font-black text-gray-800">{item.name}</p>
-                      <p className="text-xs font-bold text-gray-400 mt-0.5">{item.phone}</p>
+                       <span className="text-xs font-black text-blue-900 block">{formatBookingDate(item)}</span>
+                       <span className="text-[10px] font-bold text-gray-400 mt-1 block">{formatBookingTime(item)}</span>
                     </td>
                     <td className="px-8 py-6">
                       {item.assignedEmployeeName ? (
