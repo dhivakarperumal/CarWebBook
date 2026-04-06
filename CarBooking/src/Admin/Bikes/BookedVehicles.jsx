@@ -32,6 +32,8 @@ const BookedVehicles = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState(null);
+  const [dateFilter, setDateFilter] = useState("all"); // "all", "today"
+  const [deliveryFilter, setDeliveryFilter] = useState(false); // only confirmed/booked
 
   /* PAGINATION */
   const [currentPage, setCurrentPage] = useState(1);
@@ -70,6 +72,17 @@ const BookedVehicles = () => {
     }
   };
 
+  const updateStatus = async (id, newStatus) => {
+    try {
+      toast.loading("Updating status...", { id: "status-update" });
+      await api.put(`/vehicle-bookings/${id}/status`, { status: newStatus });
+      toast.success("Status updated successfully", { id: "status-update" });
+      fetchBookings();
+    } catch {
+      toast.error("Failed to update status", { id: "status-update" });
+    }
+  };
+
   const stats = useMemo(() => {
     const activeBookings = bookings.filter(b => (b.status || "").toLowerCase() !== "cancelled");
     const total = activeBookings.length;
@@ -78,15 +91,35 @@ const BookedVehicles = () => {
     return { total, totalAdvance, confirmed };
   }, [bookings]);
 
-  const filteredBookings = bookings.filter((b) => {
-    const searchLower = search.toLowerCase();
-    return (
-      (b.bookingId || "").toLowerCase().includes(searchLower) ||
-      (b.vehicleName || "").toLowerCase().includes(searchLower) ||
-      (b.customerName || "").toLowerCase().includes(searchLower) ||
-      (b.customerPhone || "").toLowerCase().includes(searchLower)
-    );
-  });
+  const filteredBookings = useMemo(() => {
+    return bookings.filter((b) => {
+      // 1. Search Filter
+      const searchLower = search.toLowerCase();
+      const matchSearch = (
+        (b.bookingId || "").toLowerCase().includes(searchLower) ||
+        (b.vehicleName || "").toLowerCase().includes(searchLower) ||
+        (b.customerName || "").toLowerCase().includes(searchLower) ||
+        (b.customerPhone || "").toLowerCase().includes(searchLower)
+      );
+
+      // 2. Date Filter
+      let matchDate = true;
+      if (dateFilter === "today") {
+        const today = new Date().toLocaleDateString("en-IN");
+        const bDate = new Date(b.createdAt).toLocaleDateString("en-IN");
+        matchDate = today === bDate;
+      }
+
+      // 3. Delivery Filter (Confirmed/Booked statuses)
+      let matchDelivery = true;
+      if (deliveryFilter) {
+        const status = (b.status || "").toLowerCase();
+        matchDelivery = status === "confirmed" || status === "booked";
+      }
+
+      return matchSearch && matchDate && matchDelivery;
+    });
+  }, [bookings, search, dateFilter, deliveryFilter]);
 
   const totalPages = Math.ceil(filteredBookings.length / bookingsPerPage);
   const paginatedBookings = useMemo(() => {
@@ -103,17 +136,7 @@ const BookedVehicles = () => {
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fadeIn">
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100">
-        <div className="flex items-center gap-5">
-          <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-black to-slate-800 flex items-center justify-center shadow-xl shadow-slate-200 rotate-3">
-             <FaCar className="text-white w-8 h-8 -rotate-3" />
-          </div>
-          <div>
-             <h1 className="text-3xl font-black text-gray-900">Vehicle Marketplace Bookings</h1>
-             <p className="text-sm font-bold text-gray-400 mt-1 uppercase tracking-widest">Manage marketplace sales & republish vehicles</p>
-          </div>
-        </div>
-      </div>
+
 
       {/* STATS */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
@@ -122,33 +145,64 @@ const BookedVehicles = () => {
         <StatCard title="Confirmed" value={stats.confirmed} icon={<FaCheckCircle />} gradient="from-indigo-600 to-indigo-400" />
       </div>
 
-      {/* SEARCH */}
-      <div className="relative max-w-2xl mx-auto md:mx-0">
-        <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
-        <input
-          placeholder="Search by ID, Vehicle or Customer..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-14 pr-6 py-4 bg-white border border-gray-200 rounded-[1.5rem] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold text-gray-700 shadow-sm"
-        />
+      {/* SEARCH & FILTERS */}
+      <div className="flex flex-col md:flex-row items-center gap-4">
+        <div className="relative flex-1">
+          <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            placeholder="Search by ID, Vehicle or Customer..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-14 pr-6 py-4 bg-white border border-gray-200 rounded-[1.5rem] focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold text-gray-700 shadow-sm"
+          />
+        </div>
+        
+        <div className="flex items-center gap-2 p-1.5 bg-gray-100 rounded-2xl border border-gray-200">
+           <button 
+             onClick={() => setDateFilter("all")}
+             className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dateFilter === 'all' ? 'bg-white text-black shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
+           >
+             All Time
+           </button>
+           <button 
+             onClick={() => setDateFilter("today")}
+             className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dateFilter === 'today' ? 'bg-black text-white shadow-lg shadow-black/20' : 'text-gray-400 hover:text-gray-600'}`}
+           >
+             Today
+           </button>
+        </div>
+
+        <button 
+          onClick={() => setDeliveryFilter(!deliveryFilter)}
+          className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
+            deliveryFilter 
+            ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-200' 
+            : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'
+          }`}
+        >
+          <FaCheckCircle className={deliveryFilter ? 'text-white' : 'text-gray-300'} />
+          Delivery Ready
+        </button>
       </div>
 
       {/* TABLE */}
       <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden overflow-x-auto">
         <table className="w-full text-left border-collapse whitespace-nowrap">
-          <thead>
-            <tr className="bg-gray-50/50">
-              <th className="px-8 py-6 font-black text-gray-400 uppercase tracking-widest text-[10px]">Booking Info</th>
-              <th className="px-8 py-6 font-black text-gray-400 uppercase tracking-widest text-[10px]">Vehicle</th>
-              <th className="px-8 py-6 font-black text-gray-400 uppercase tracking-widest text-[10px]">Customer</th>
-              <th className="px-8 py-6 font-black text-gray-400 uppercase tracking-widest text-[10px]">Advance</th>
-              <th className="px-8 py-6 font-black text-gray-400 uppercase tracking-widest text-[10px]">Status</th>
-              <th className="px-8 py-6 font-black text-gray-400 uppercase tracking-widest text-[10px] text-right">Actions</th>
+          <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
+            <tr>
+              <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-left">S No</th>
+              <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-left">Booking Info</th>
+              <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-left">Vehicle</th>
+              <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-left">Customer</th>
+              <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-left">Advance</th>
+              <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-left">Status</th>
+              <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {paginatedBookings.map((b) => (
+            {paginatedBookings.map((b, i) => (
               <tr key={b.id} className="hover:bg-blue-50/30 transition-all group">
+                <td className="px-8 py-6 font-black text-gray-500">{(currentPage - 1) * bookingsPerPage + i + 1}</td>
                 <td className="px-8 py-6 font-black text-blue-600">{b.bookingId} <br/> <span className="text-[10px] text-gray-400 font-bold">{new Date(b.createdAt).toLocaleDateString("en-IN")}</span></td>
                 <td className="px-8 py-6">
                   <div className="font-black text-gray-900 uppercase tracking-tight">{b.vehicleName}</div>
@@ -160,21 +214,32 @@ const BookedVehicles = () => {
                 </td>
                 <td className="px-8 py-6 font-black text-emerald-600 text-lg">₹ {Number(b.advanceAmount).toLocaleString()}</td>
                 <td className="px-8 py-6">
-                  <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${
-                    (b.status || "").toLowerCase() === "cancelled"
-                      ? "bg-red-50 text-red-600 border-red-100"
-                      : (b.status || "").toLowerCase() === "confirmed" || (b.status || "").toLowerCase() === "booked"
-                      ? "bg-emerald-50 text-emerald-600 border-emerald-100"
-                      : "bg-amber-50 text-amber-600 border-amber-100"
-                  }`}>
-                    {b.status || "Booked"}
-                  </span>
+                  {(b.status || "").toLowerCase() === "cancelled" ? (
+                    <span className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-red-50 text-red-600 border border-red-100 block text-center">
+                      Cancelled
+                    </span>
+                  ) : (
+                    <select 
+                      value={b.status || "Booked"}
+                      onChange={(e) => updateStatus(b.id, e.target.value)}
+                      className={`w-full px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none border transition-all cursor-pointer text-center appearance-none ${
+                        (b.status || "").toLowerCase() === "confirmed" || (b.status || "").toLowerCase() === "booked"
+                          ? "bg-emerald-50 text-emerald-600 border-emerald-100 focus:ring-2 focus:ring-emerald-200"
+                          : "bg-amber-50 text-amber-600 border-amber-100 focus:ring-2 focus:ring-amber-200"
+                      }`}
+                    >
+                      <option value="Booked">Booked</option>
+                      <option value="Confirmed">Confirmed</option>
+                      <option value="Delivered">Delivered</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  )}
                 </td>
                 <td className="px-8 py-6 text-right">
                   <div className="flex items-center justify-end gap-3">
                     <button 
                       onClick={() => setSelectedBooking(b)}
-                      className="p-3 rounded-2xl bg-gray-50 text-gray-400 hover:bg-black hover:text-white transition-all shadow-sm"
+                      className="p-3 rounded-2xl bg-gray-50 text-gray-400 hover:bg-black hover:text-white transition-all shadow-sm group-hover:scale-110 active:scale-95"
                       title="View Details"
                     >
                       <FaEye size={16} />
@@ -182,7 +247,7 @@ const BookedVehicles = () => {
                     {(b.status || "").toLowerCase() !== "cancelled" && (
                       <button 
                         onClick={() => handleCancelAndRepublish(b.id)}
-                        className="p-3 rounded-2xl bg-red-50 text-red-400 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                        className="p-3 rounded-2xl bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition-all shadow-sm group-hover:scale-110 active:scale-95"
                         title="Cancel & Republish"
                       >
                         <FaUndo size={16} />
