@@ -385,8 +385,22 @@ const AdminAppointments = () => {
                           <button
                             key={opt}
                             onClick={() => {
-                              setSelectedAppointment(prev => ({ ...prev, status: opt }));
-                              setPendingChanges(prev => ({ ...prev, status: opt }));
+                              setSelectedAppointment(prev => {
+                                const updated = { ...prev, status: opt };
+                                if (opt === 'Cancelled') {
+                                  updated.assignedEmployeeId = null;
+                                  updated.assignedEmployeeName = null;
+                                }
+                                return updated;
+                              });
+                              setPendingChanges(prev => {
+                                const updated = { ...prev, status: opt };
+                                if (opt === 'Cancelled') {
+                                  updated.assignedEmployeeId = null;
+                                  updated.assignedEmployeeName = null;
+                                }
+                                return updated;
+                              });
                             }}
                             className={`px-3 py-2 rounded-xl text-[10px] font-black tracking-tight border transition-all duration-300 ${
                               (pendingChanges.status ?? selectedAppointment.status) === opt
@@ -402,8 +416,14 @@ const AdminAppointments = () => {
 
                     {/* Mechanic Assignment */}
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-600 ml-1">Assign Technician</label>
+                      <div className="flex justify-between items-center ml-1">
+                        <label className="text-xs font-bold text-gray-600">Assign Technician</label>
+                        {(pendingChanges.status ?? selectedAppointment.status) !== 'Confirmed' && (
+                          <span className="text-[9px] text-amber-600 font-bold uppercase tracking-tighter bg-amber-50 px-2 py-0.5 rounded">Status must be "Confirmed" to assign</span>
+                        )}
+                      </div>
                       <select
+                        disabled={(pendingChanges.status ?? selectedAppointment.status) !== 'Confirmed'}
                         value={pendingChanges.assignedEmployeeId ?? selectedAppointment.assignedEmployeeId ?? ""}
                         onChange={(e) => {
                           const tech = technicians.find(t => t.id === Number(e.target.value));
@@ -413,7 +433,11 @@ const AdminAppointments = () => {
                             assignedEmployeeName: tech?.name || null
                           }));
                         }}
-                        className="w-full px-4 py-3 rounded-xl border border-gray-100 text-sm font-bold bg-gray-50 outline-none focus:ring-2 focus:ring-sky-500/20"
+                        className={`w-full px-4 py-3 rounded-xl border border-gray-100 text-sm font-bold bg-gray-50 outline-none transition-all ${
+                          (pendingChanges.status ?? selectedAppointment.status) === 'Confirmed' 
+                            ? 'focus:ring-2 focus:ring-sky-500/20' 
+                            : 'opacity-50 cursor-not-allowed bg-gray-100'
+                        }`}
                       >
                         <option value="">Unassigned</option>
                         {technicians.map(t => <option key={t.id} value={t.id}>{t.name} ({t.status})</option>)}
