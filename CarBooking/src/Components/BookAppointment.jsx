@@ -476,6 +476,7 @@ const BookAppointment = () => {
 
                   <CustomSelect
                     label="Pickup & Drop"
+                    name="pickupDrop"
                     value={formData.pickupDrop}
                     onChange={handleChange}
                     options={[
