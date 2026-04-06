@@ -337,3 +337,10 @@ table img:hover {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Calendar icon color fix */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 1;
+  cursor: pointer;
+}

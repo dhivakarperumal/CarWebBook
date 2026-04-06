@@ -122,7 +122,7 @@ export default function ProductDetails() {
     setSubmittingReview(true);
     try {
       await api.post("/reviews", {
-        name: user.name || user.email || "Anonymous",
+        name: user.username || user.email || "Anonymous",
         rating: newReview.rating,
         message: newReview.message,
         productId: product.docId,
