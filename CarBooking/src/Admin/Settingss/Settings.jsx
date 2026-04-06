@@ -80,6 +80,14 @@ const Settings = () => {
         path="/admin/settings/reviews"
       />
 
+
+         <SettingCard
+        icon={<FaFileInvoice />}
+        title="Services Reports"
+        desc="Set up and manage services."
+        path="/admin/reports"
+      />
+
     </div>
   );
 };

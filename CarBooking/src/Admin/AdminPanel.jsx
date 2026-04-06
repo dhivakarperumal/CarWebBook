@@ -37,14 +37,14 @@ const AdminLayout = () => {
         className={`
           flex flex-col flex-1 min-w-0 min-h-screen
           transition-[margin] duration-300
-          ${isLargeScreen ? (sidebarCollapsed ? "lg:ml-20" : "lg:ml-64") : ""}
+          ${isLargeScreen ? (sidebarCollapsed ? "lg:ml-20" : "lg:ml-72") : ""}
         `}
       >
         {/* Header */}
         <Header onMenuClick={() => setSidebarOpen(true)} />
 
         {/* Page Content */}
-        <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-4 sm:p-5 lg:p-6">
+        <main className="flex-1 w-full overflow-y-auto overflow-x-hidden p-8 sm:p-5 lg:p-6">
           <Outlet />
         </main>
 

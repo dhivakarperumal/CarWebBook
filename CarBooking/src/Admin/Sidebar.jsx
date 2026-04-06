@@ -75,12 +75,12 @@ const navItems = [
     ],
   },
 
-  
+
   { path: "/admin/assignservices", label: "Assign Services", icon: ClipboardCheck },
   { path: "/admin/services", label: "Services Tracking", icon: Wrench },
- 
+
   { path: "/admin/billing", label: "Billing", icon: Receipt },
- 
+
 
 
   {
@@ -90,12 +90,12 @@ const navItems = [
       { path: "/admin/allProducts", label: "Products", icon: Package },
       { path: "/admin/productbilling", label: "Product Billing", icon: CreditCard },
       { path: "/admin/stockdetails", label: "Spare Parts Stock", icon: Boxes },
-     
+
       { path: "/admin/inventory", label: "Parts Inventory", icon: PackageSearch },
     ],
   },
 
-   { path: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { path: "/admin/orders", label: "Orders", icon: ShoppingCart },
 
 
   {
@@ -129,7 +129,7 @@ const navItems = [
 
 
 
-  { path: "/admin/reports", label: "Service Reports", icon: FileBarChart2 },
+  // { path: "/admin/reports", label: "Service Reports", icon: FileBarChart2 },
 
   { path: "/", label: "Back Home", icon: Home },
 ];
@@ -234,7 +234,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         flex flex-col transition-all duration-300
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0
-        ${collapsed ? "w-20" : "w-64"}`}
+        ${collapsed ? "w-20" : "w-72"}`}
       >
         {/* ========== LOGO ========== */}
         <div className="flex items-center gap-3 px-4 py-6 border-b border-slate-100">
@@ -283,21 +283,21 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 <div key={item.label}>
                   <button
                     onClick={() => toggleMenu(item.label)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-200
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded transition-all duration-200
                     ${hasActiveChild
-                        ? "bg-emerald-50 text-emerald-700 shadow-sm"
-                        : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                        ? "text-cyan-700 bg-cyan-50 border-l-4 border-cyan-500"
+                        : "text-black/80 hover:bg-gradient-to-r hover:from-cyan-400 hover:to-black/30 hover:text-white"
                       }`}
                   >
-                    <Icon className={`w-5 h-5 shrink-0 ${hasActiveChild ? "text-emerald-600" : "text-slate-600"}`} />
+                    <Icon className={`w-5 h-5 shrink-0 ${hasActiveChild ? "text-cyan-600" : "text-slate-600"}`} />
 
                     {!collapsed && (
                       <>
-                        <span className="flex-1 text-left text-sm font-bold">
+                        <span className="flex-1 text-left text-base" style={{ fontWeight: 900, letterSpacing: '0.01em' }}>
                           {item.label}
                         </span>
                         <ChevronDown
-                          className={`w-4 h-4 transition-transform ${isMenuOpen ? "rotate-180" : ""} ${hasActiveChild ? "text-emerald-600" : ""}`}
+                          className={`w-4 h-4 transition-transform ${isMenuOpen ? "rotate-180" : ""} ${hasActiveChild ? "text-cyan-600" : ""}`}
                         />
                       </>
                     )}
@@ -328,7 +328,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                         >
 
                           <SubIcon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-slate-500"}`} />
-                          <span className="font-semibold">{sub.label}</span>
+                          <span className="text-base" style={{ fontWeight: 900 }}>{sub.label}</span>
                         </NavLink>
                       );
                     })}
@@ -354,7 +354,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   }`}
               >
                 <Icon className={`w-5 h-5 shrink-0 ${isActive ? "text-white" : "text-slate-600"}`} />
-                {!collapsed && <span className="font-bold">{item.label}</span>}
+                {!collapsed && <span className="text-base" style={{ fontWeight: 900 }}>{item.label}</span>}
               </NavLink>
             );
           })}
