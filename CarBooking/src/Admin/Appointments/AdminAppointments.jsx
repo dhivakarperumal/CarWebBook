@@ -31,13 +31,20 @@ const AdminAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+
+  const openModal = (apt) => {
+    setSelectedAppointment(apt);
+    setPendingChanges({});
+  };
   const [technicians, setTechnicians] = useState([]);
 
   // Filters
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("Appointment Booked");
   const [typeFilter, setTypeFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState(new Date().toISOString().split('T')[0]);
+  const [dateFilter, setDateFilter] = useState("Today");
   const [searchTerm, setSearchTerm] = useState("");
+  const [pendingChanges, setPendingChanges] = useState({});
+  const [saving, setSaving] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -63,27 +70,59 @@ const AdminAppointments = () => {
     }
   };
 
-  const handleUpdate = async (id, data) => {
+  const handleSaveChanges = async () => {
+    if (!selectedAppointment || Object.keys(pendingChanges).length === 0) return;
+    setSaving(true);
     try {
-      await updateAppointment(id, data);
-      toast.success("Updated successfully");
+      await updateAppointment(selectedAppointment.id, pendingChanges);
+      toast.success("Appointment updated successfully");
+      setPendingChanges({});
+      setSelectedAppointment(null);
       loadData();
-      if (selectedAppointment && selectedAppointment.id === id) {
-        setSelectedAppointment(prev => ({ ...prev, ...data }));
-      }
     } catch (err) {
       toast.error("Update failed");
+    } finally {
+      setSaving(false);
     }
   };
 
   const filtered = appointments.filter(a => {
     const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
     const matchesType = typeFilter === 'all' || a.vehicleType === typeFilter;
-    const matchesDate = !dateFilter || a.preferredDate?.startsWith(dateFilter);
     const matchesSearch = !searchTerm ||
       a.appointmentId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.phone?.includes(searchTerm);
+
+    // Named date filter based on preferredDate
+    let matchesDate = true;
+    if (dateFilter !== 'All Time') {
+      const apptDate = a.preferredDate ? new Date(a.preferredDate) : null;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (!apptDate) {
+        matchesDate = false;
+      } else if (dateFilter === 'Today') {
+        const d = new Date(apptDate);
+        d.setHours(0, 0, 0, 0);
+        matchesDate = d.getTime() === today.getTime();
+      } else if (dateFilter === 'Yesterday') {
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+        const d = new Date(apptDate);
+        d.setHours(0, 0, 0, 0);
+        matchesDate = d.getTime() === yesterday.getTime();
+      } else if (dateFilter === 'This Week') {
+        const lastWeek = new Date(today);
+        lastWeek.setDate(today.getDate() - 7);
+        matchesDate = new Date(apptDate) >= lastWeek;
+      } else if (dateFilter === 'This Month') {
+        const lastMonth = new Date(today);
+        lastMonth.setDate(today.getDate() - 30);
+        matchesDate = new Date(apptDate) >= lastMonth;
+      }
+    }
 
     return matchesStatus && matchesType && matchesDate && matchesSearch;
   });
@@ -156,15 +195,20 @@ const AdminAppointments = () => {
             <option value="SUV">SUV</option>
           </select>
 
-          <input
-            type="date"
+          <select
             value={dateFilter}
-            onChange={e => setDateFilter(e.target.value)}
+            onChange={e => { setDateFilter(e.target.value); setCurrentPage(1); }}
             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-black outline-none bg-white font-medium"
-          />
+          >
+            <option value="Today">Today</option>
+            <option value="Yesterday">Yesterday</option>
+            <option value="This Week">This Week</option>
+            <option value="This Month">This Month</option>
+            <option value="All Time">All Time</option>
+          </select>
 
           <button
-            onClick={() => { setStatusFilter('all'); setTypeFilter('all'); setDateFilter(''); setSearchTerm(''); }}
+            onClick={() => { setStatusFilter('Appointment Booked'); setTypeFilter('all'); setDateFilter('Today'); setSearchTerm(''); setCurrentPage(1); }}
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold transition"
           >
             <FaFilter /> Reset
@@ -229,7 +273,7 @@ const AdminAppointments = () => {
                       </div>
                     ) : (
                       <button 
-                        onClick={() => setSelectedAppointment(apt)}
+                        onClick={() => openModal(apt)}
                         className="text-xs italic text-gray-400 underline decoration-dotted hover:text-sky-500 transition-colors"
                       >
                         Unassigned
@@ -243,7 +287,7 @@ const AdminAppointments = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button 
-                      onClick={() => setSelectedAppointment(apt)}
+                      onClick={() => openModal(apt)}
                       className="px-4 py-2 bg-sky-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-sky-600 transition-all shadow-sm shadow-sky-500/20"
                     >
                       Manage / Assign
@@ -342,11 +386,15 @@ const AdminAppointments = () => {
                         {STATUS_OPTIONS.map(opt => (
                           <button
                             key={opt}
-                            onClick={() => handleUpdate(selectedAppointment.id, { status: opt })}
-                            className={`px-3 py-2 rounded-xl text-[10px] font-black tracking-tight border transition-all duration-300 ${selectedAppointment.status === opt
+                            onClick={() => {
+                              setSelectedAppointment(prev => ({ ...prev, status: opt }));
+                              setPendingChanges(prev => ({ ...prev, status: opt }));
+                            }}
+                            className={`px-3 py-2 rounded-xl text-[10px] font-black tracking-tight border transition-all duration-300 ${
+                              (pendingChanges.status ?? selectedAppointment.status) === opt
                                 ? 'bg-black text-white border-black shadow-lg shadow-black/20'
                                 : 'bg-white text-gray-400 border-gray-100 hover:border-gray-300'
-                              }`}
+                            }`}
                           >
                             {opt}
                           </button>
@@ -358,13 +406,14 @@ const AdminAppointments = () => {
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-gray-600 ml-1">Assign Technician</label>
                       <select
-                        value={selectedAppointment.assignedEmployeeId || ""}
+                        value={pendingChanges.assignedEmployeeId ?? selectedAppointment.assignedEmployeeId ?? ""}
                         onChange={(e) => {
                           const tech = technicians.find(t => t.id === Number(e.target.value));
-                          handleUpdate(selectedAppointment.id, {
+                          setPendingChanges(prev => ({
+                            ...prev,
                             assignedEmployeeId: tech?.id || null,
                             assignedEmployeeName: tech?.name || null
-                          });
+                          }));
                         }}
                         className="w-full px-4 py-3 rounded-xl border border-gray-100 text-sm font-bold bg-gray-50 outline-none focus:ring-2 focus:ring-sky-500/20"
                       >
@@ -377,8 +426,8 @@ const AdminAppointments = () => {
                     <div className="space-y-2">
                       <label className="text-xs font-bold text-gray-600 ml-1">Confirm/Update Time Slot</label>
                       <select
-                        value={selectedAppointment.preferredTimeSlot}
-                        onChange={(e) => handleUpdate(selectedAppointment.id, { preferredTimeSlot: e.target.value })}
+                        value={pendingChanges.preferredTimeSlot ?? selectedAppointment.preferredTimeSlot}
+                        onChange={(e) => setPendingChanges(prev => ({ ...prev, preferredTimeSlot: e.target.value }))}
                         className="w-full px-4 py-3 rounded-xl border border-gray-100 text-sm font-bold bg-gray-50 outline-none focus:ring-2 focus:ring-sky-500/20"
                       >
                         <option>Morning (9AM–12PM)</option>
@@ -395,6 +444,23 @@ const AdminAppointments = () => {
                 </div>
               </div>
 
+            </div>
+
+            {/* Modal Footer - Save Button */}
+            <div className="px-8 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
+              <button
+                onClick={() => setSelectedAppointment(null)}
+                className="px-6 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-100 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveChanges}
+                disabled={saving || Object.keys(pendingChanges).length === 0}
+                className="px-8 py-2.5 rounded-xl bg-black text-white text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition shadow-lg shadow-black/10 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
             </div>
           </div>
         </div>

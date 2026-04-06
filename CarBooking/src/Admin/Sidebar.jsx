@@ -293,7 +293,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
 
                     {!collapsed && (
                       <>
-                        <span className="flex-1 text-left text-base" style={{ fontWeight: 900, letterSpacing: '0.01em' }}>
+                        <span className="flex-1 text-left text-base" style={{ fontWeight: 800, letterSpacing: '0.01em' }}>
                           {item.label}
                         </span>
                         <ChevronDown
@@ -328,7 +328,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                         >
 
                           <SubIcon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-slate-500"}`} />
-                          <span className="text-base" style={{ fontWeight: 900 }}>{sub.label}</span>
+                          <span className="text-base" style={{ fontWeight: 800 }}>{sub.label}</span>
                         </NavLink>
                       );
                     })}
@@ -354,7 +354,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                   }`}
               >
                 <Icon className={`w-5 h-5 shrink-0 ${isActive ? "text-white" : "text-slate-600"}`} />
-                {!collapsed && <span className="text-base" style={{ fontWeight: 900 }}>{item.label}</span>}
+                {!collapsed && <span className="text-base" style={{ fontWeight: 800 }}>{item.label}</span>}
               </NavLink>
             );
           })}
