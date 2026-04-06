@@ -178,9 +178,9 @@ const BookAppointment = () => {
     if (user) {
       setFormData(prev => ({
         ...prev,
-        name: user.displayName || "",
+        name: user.username || "",
         email: user.email || "",
-        phone: user.phoneNumber || ""
+        phone: user.mobile || ""
       }));
     }
   }, [user]);
