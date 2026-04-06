@@ -26,7 +26,6 @@ export default function PricingSwiper() {
   return (
     <section className="py-15 bg-black text-white">
       <div className="container mx-auto px-6">
-
         {/* Heading */}
         <div className="text-center mb-14">
           <h2 className="text-4xl font-extrabold">Our Pricing Plans</h2>
@@ -40,8 +39,9 @@ export default function PricingSwiper() {
           spaceBetween={30}
           breakpoints={{
             0: { slidesPerView: 1 },
-            768: { slidesPerView: 2 },
+            640: { slidesPerView: 2 },
             1024: { slidesPerView: 3 },
+            1280: { slidesPerView: 4 },
           }}
         >
           {packages.map((pkg) => (
@@ -52,7 +52,6 @@ export default function PricingSwiper() {
             </SwiperSlide>
           ))}
         </Swiper>
-
       </div>
     </section>
   );

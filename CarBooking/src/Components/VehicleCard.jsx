@@ -15,7 +15,6 @@ export default function VehicleCard({
   handleBookNow,
   bookingInProgress,
 }) {
-
   const images = vehicle.images
     ? typeof vehicle.images === "string"
       ? JSON.parse(vehicle.images)
@@ -32,7 +31,6 @@ export default function VehicleCard({
           : "hover:border-sky-400 hover:shadow-2xl hover:shadow-sky-500/20"
       }`}
     >
-
       {/* SOLD OUT OVERLAY */}
       {vehicle.status === "booked" && (
         <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] z-20 flex items-center justify-center p-4">
@@ -45,7 +43,7 @@ export default function VehicleCard({
       )}
 
       {/* IMAGE */}
-      <div className="relative h-48 bg-slate-800 overflow-hidden">
+      <div className="relative h-40 bg-slate-800 overflow-hidden">
         {mainImage ? (
           <img
             src={mainImage}
@@ -73,10 +71,9 @@ export default function VehicleCard({
       </div>
 
       {/* CONTENT */}
-      <div className="p-5">
-
+      <div className="p-4">
         {/* TITLE */}
-        <h3 className="text-xl font-bold text-white mb-2 line-clamp-2">
+        <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">
           {vehicle.title}
         </h3>
 
@@ -92,29 +89,32 @@ export default function VehicleCard({
         </div>
 
         {/* PRICE */}
-        <div className="mb-4 pb-4 border-b border-sky-500/20">
-          <p className="text-3xl font-bold text-sky-400">
-            ₹{Number(vehicle.expected_price).toLocaleString("en-IN")}
-          </p>
+        <div className="mb-3 pb-3 border-b border-sky-500/20 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider">
+              Price
+            </p>
+            <p className="text-xl font-bold text-sky-400">
+              ₹{Number(vehicle.expected_price).toLocaleString("en-IN")}
+            </p>
+          </div>
 
-          <div className="flex mt-2">
-            <div className="text-right">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wider">
-                Advance
-              </p>
+          <div className="text-right">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider">
+              Advance
+            </p>
 
-              <p className="text-sm font-bold text-sky-300">
-                ₹{Number(vehicle.advance_amount_paid || 5000).toLocaleString(
-                  "en-IN"
-                )}
-              </p>
-            </div>
+            <p className="text-sm font-bold text-sky-300">
+              ₹
+              {Number(vehicle.advance_amount_paid || 5000).toLocaleString(
+                "en-IN",
+              )}
+            </p>
           </div>
         </div>
 
         {/* QUICK INFO */}
         <div className="grid grid-cols-2 gap-2 mb-4 text-xs">
-
           <div className="flex items-center gap-1 text-gray-300">
             <FaCalendarAlt size={12} className="text-sky-400" />
             <span>{vehicle.yom || "N/A"}</span>
@@ -134,7 +134,6 @@ export default function VehicleCard({
             <FaCog size={12} className="text-sky-400" />
             <span>{vehicle.transmission}</span>
           </div>
-
         </div>
 
         {/* LOCATION */}
@@ -149,7 +148,6 @@ export default function VehicleCard({
 
         {/* BUTTONS */}
         <div className="flex gap-2">
-
           {vehicle.status === "booked" ? (
             <button
               disabled
@@ -175,9 +173,7 @@ export default function VehicleCard({
               </button>
             </>
           )}
-
         </div>
-
       </div>
     </div>
   );

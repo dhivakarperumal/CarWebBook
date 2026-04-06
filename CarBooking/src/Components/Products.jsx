@@ -313,7 +313,7 @@ export default function Products() {
       <PageHeader title="Our Products" />
       <section className="bg-black py-24">
         <PageContainer>
-          <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {products.map((product) => (
               <ProductCard
                 key={product.docId}
