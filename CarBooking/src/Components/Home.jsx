@@ -6,6 +6,7 @@ import PricingSwiper from "./PricingSwiper";
 import BrandSwiper from "./BrandSwiper";
 import Reviews from "./Reviews";
 import BookingBanner from "./BookingBanner";
+import ProductSwiper from "./ProductSwiper";
 
 export default function Home() {
 
@@ -17,6 +18,7 @@ export default function Home() {
       <ServiceSwiper />
       <BookingBanner />
       <PricingSwiper />
+      <ProductSwiper />
       <BrandSwiper />
       <Reviews />
      </h1>
