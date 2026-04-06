@@ -66,6 +66,7 @@ export default function ServiceSwiper() {
               0: { slidesPerView: 1 },
               640: { slidesPerView: 2 },
               1024: { slidesPerView: 3 },
+              1280: { slidesPerView: 4 },
             }}
           >
             {services.map((service) => (
