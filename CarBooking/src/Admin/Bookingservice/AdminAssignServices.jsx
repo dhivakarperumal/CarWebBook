@@ -210,7 +210,7 @@ export default function AdminAssignServices() {
   return (
     <div className="min-h-screen text-gray-900 p-4 md:p-8 space-y-8 animate-fadeIn">
       <div className="max-w-7xl mx-auto space-y-8">
-        
+
         {/* TOP TABS & ACTIONS */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* MAIN TABS */}
