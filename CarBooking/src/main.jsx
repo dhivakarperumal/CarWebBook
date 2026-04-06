@@ -108,7 +108,7 @@ const router = createBrowserRouter([
   {
     path: "/employee",
     element: (
-      <PrivateRoute allowedRoles={["employee", "manager", "staff", "receptionist", "gym_manager", "mechanic"]}>
+      <PrivateRoute allowedRoles={["admin", "employee", "manager", "staff", "receptionist", "gym_manager", "mechanic"]}>
         <EmpAdminLayout />
       </PrivateRoute>
     ),

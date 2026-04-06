@@ -41,7 +41,7 @@ export default function Services() {
   const [viewMode, setViewMode] = useState("table"); // "card" | "table"
 
   const [mainTab, setMainTab] = useState("booked"); // booked | addVehicle
-  const [subTab, setSubTab] = useState(isMechanic ? "assigned" : "unassigned"); // assigned | unassigned
+  const [subTab, setSubTab] = useState("assigned"); // assigned
 
   const [services, setServices] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -50,6 +50,7 @@ export default function Services() {
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("All Time");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -118,6 +119,7 @@ export default function Services() {
 
   const searchedServices = useMemo(() => {
     return services.filter((s) => {
+      // 1) Text search
       const text = `
         ${s.bookingId || ""}
         ${s.name || ""}
@@ -126,9 +128,36 @@ export default function Services() {
         ${s.model || ""}
         ${s.vehicleNumber || ""}
       `.toLowerCase();
-      return text.includes(search.toLowerCase());
+      if (!text.includes(search.toLowerCase())) return false;
+
+      // 2) Date filter
+      if (dateFilter === "All Time") return true;
+      if (!s.created_at) return false;
+
+      const bookingDate = new Date(s.created_at);
+      const today = new Date();
+
+      if (dateFilter === "Today") {
+        return bookingDate.toDateString() === today.toDateString();
+      } else if (dateFilter === "Yesterday") {
+        const yesterday = new Date();
+        yesterday.setDate(today.getDate() - 1);
+        return bookingDate.toDateString() === yesterday.toDateString();
+      } else if (dateFilter === "This Week") {
+        const lastWeek = new Date();
+        lastWeek.setDate(today.getDate() - 7);
+        lastWeek.setHours(0, 0, 0, 0);
+        return bookingDate >= lastWeek;
+      } else if (dateFilter === "This Month") {
+        const lastMonth = new Date();
+        lastMonth.setDate(today.getDate() - 30);
+        lastMonth.setHours(0, 0, 0, 0);
+        return bookingDate >= lastMonth;
+      }
+
+      return true;
     });
-  }, [services, search]);
+  }, [services, search, dateFilter]);
 
   const bookedServices = searchedServices.filter((s) => !s.addVehicle);
   const addVehicleServices = searchedServices.filter((s) => s.addVehicle);
@@ -363,7 +392,7 @@ export default function Services() {
         </div>
 
         {/* 🔍 SEARCH AND ADD PARTS */}
-        <div className="mb-6 flex flex-wrap gap-4 items-center">
+        <div className="mb-6 flex flex-col md:flex-row flex-wrap gap-4 items-center justify-between">
           <input
             type="text"
             placeholder="Search booking, name, phone, car..."
@@ -372,52 +401,45 @@ export default function Services() {
               setSearch(e.target.value);
               setCurrentPage(1);
             }}
-            className="flex-1 rounded-xl border border-gray-300 bg-white p-4 text-gray-800 placeholder-gray-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all shadow-sm"
+            className="w-full md:w-80 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all shadow-sm"
           />
-          <button
-            onClick={() => navigate(`${pathPrefix}/addserviceparts`)}
-            className="rounded-xl bg-blue-600 px-6 py-4 font-bold text-white transition-all hover:bg-blue-700 shadow-md whitespace-nowrap"
-          >
-            + Add Service Parts
-          </button>
+          <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
+            <select
+              value={dateFilter}
+              onChange={(e) => {
+                setDateFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-600 shadow-sm flex-1 md:flex-none"
+            >
+              <option value="All Time">All Time</option>
+              <option value="Today">Today</option>
+              <option value="Yesterday">Yesterday</option>
+              <option value="This Week">This Week</option>
+              <option value="This Month">This Month</option>
+            </select>
+            <button
+              onClick={() => navigate(`${pathPrefix}/addserviceparts`)}
+              className="flex-1 md:flex-none rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-blue-700 shadow-md whitespace-nowrap"
+            >
+              + Add Service Parts
+            </button>
+          </div>
         </div>
 
 
         {/* 🔹 SUB TABS */}
-        {!isMechanic ? (
-          <div className="mb-8 flex space-x-2">
-            <button
-              onClick={() => {
-                setSubTab("assigned");
-                setCurrentPage(1);
-              }}
-              className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${subTab === "assigned"
-                ? "bg-blue-600 text-white shadow-md"
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                }`}
-            >
-              Assigned ({assignedCount})
-            </button>
-            <button
-              onClick={() => {
-                setSubTab("unassigned");
-                setCurrentPage(1);
-              }}
-              className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${subTab === "unassigned"
-                ? "bg-blue-600 text-white shadow-md"
-                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                }`}
-            >
-              Unassigned ({unassignedCount})
-            </button>
-          </div>
-        ) : (
-          <div className="mb-8 flex space-x-2">
+        <div className="mb-8 flex space-x-2">
+          {!isMechanic ? (
+            <div className="rounded-full bg-blue-600 px-5 py-2 text-sm font-bold text-white shadow-md">
+              Assigned Services ({assignedCount})
+            </div>
+          ) : (
             <div className="rounded-full bg-blue-600 px-5 py-2 text-sm font-bold text-white shadow-md">
               My Assigned Tasks ({assignedCount})
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* 📋 DYNAMIC VIEW (CARD OR TABLE) */}
         {viewMode === "card" ? (
@@ -665,19 +687,23 @@ export default function Services() {
             <table className="min-w-full text-left text-sm text-gray-600 whitespace-nowrap">
               <thead className="border-b border-gray-200 bg-gray-50 text-gray-900">
                 <tr>
+                  <th className="px-6 py-4 font-bold">S No</th>
                   <th className="px-6 py-4 font-bold">ID</th>
                   <th className="px-6 py-4 font-bold">Customer</th>
                   <th className="px-6 py-4 font-bold">Vehicle</th>
-                  <th className="px-6 py-4 font-bold">Status</th>
                   <th className="px-6 py-4 font-bold">Issue</th>
                   <th className="px-6 py-4 font-bold">Spare Parts</th>
+                  <th className="px-6 py-4 font-bold">Status</th>
                   <th className="px-6 py-4 font-bold">Mechanic</th>
                   <th className="px-6 py-4 font-bold text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {paginatedData.map((item) => (
+                {paginatedData.map((item, index) => (
                   <tr key={item.id} className="transition-all hover:bg-gray-50">
+                    <td className="px-6 py-4 font-semibold text-gray-900 whitespace-nowrap">
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </td>
                     <td className="px-6 py-4 font-semibold text-gray-900 whitespace-nowrap">
                       {item.bookingId || `SER-${item.id}`}
                     </td>
@@ -688,25 +714,6 @@ export default function Services() {
                     <td className="px-6 py-4">
                       <p className="font-bold text-blue-600">{item.vehicleNumber || 'N/A'}</p>
                       <p className="text-xs text-gray-500">{item.brand} {item.model}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      {item.assignedEmployeeId ? (
-                        <select
-                          value={item.serviceStatus || "Booked"}
-                          onChange={(e) => handleStatusChange(item, e.target.value)}
-                          className="rounded-lg border border-gray-200 bg-white p-1.5 text-xs text-gray-800 shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                        >
-                          {BOOKING_STATUS.slice(BOOKING_STATUS.indexOf(item.serviceStatus || "Booked") === -1 ? 0 : BOOKING_STATUS.indexOf(item.serviceStatus || "Booked")).map((s) => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span
-                          className={`inline-flex rounded-full px-2 py-1 text-xs font-bold ${getStatusColor(item.serviceStatus)}`}
-                        >
-                          {item.serviceStatus || "Booked"}
-                        </span>
-                      )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="space-y-2">
@@ -816,6 +823,25 @@ export default function Services() {
                         </div>
                       )}
                     </td>
+                    <td className="px-6 py-4">
+                      {item.assignedEmployeeId ? (
+                        <select
+                          value={item.serviceStatus || "Booked"}
+                          onChange={(e) => handleStatusChange(item, e.target.value)}
+                          className="rounded-lg border border-gray-200 bg-white p-1.5 text-xs text-gray-800 shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                        >
+                          {BOOKING_STATUS.slice(BOOKING_STATUS.indexOf(item.serviceStatus || "Booked") === -1 ? 0 : BOOKING_STATUS.indexOf(item.serviceStatus || "Booked")).map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span
+                          className={`inline-flex rounded-full px-2 py-1 text-xs font-bold ${getStatusColor(item.serviceStatus)}`}
+                        >
+                          {item.serviceStatus || "Booked"}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 font-semibold text-gray-800">
                       {item.assignedEmployeeName ? (
                         item.assignedEmployeeName
@@ -836,7 +862,7 @@ export default function Services() {
                         {/* Add Spare Button - Show only when Processing */}
                         {item.serviceStatus === "Processing" && (
                           <button
-                            onClick={() => navigate("/employee/addserviceparts", { state: { service: item } })}
+                            onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })}
                             className="rounded-lg p-2 text-orange-400 hover:bg-orange-50 hover:text-orange-600 transition-all border border-transparent hover:border-orange-100"
                             title="Add Spare Parts"
                           >
