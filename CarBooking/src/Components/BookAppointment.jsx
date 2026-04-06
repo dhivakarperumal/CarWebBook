@@ -492,6 +492,7 @@ const BookAppointment = () => {
                   <Input
                     label="Preferred Date"
                     name="preferredDate"
+                    min={new Date().toISOString().split("T")[0]} 
                     type="date"
                     required
                     value={formData.preferredDate}
