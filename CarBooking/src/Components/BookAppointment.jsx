@@ -35,8 +35,8 @@ const SectionTitle = ({ icon, title }) => (
   </div>
 );
 
-const CustomSelect = ({ label, name, value, onChange, options, required, error }) => {
-  const [open, setOpen] = useState(false);
+const CustomSelect = ({ label, name, value, onChange, options, required, error, openDropdown, setOpenDropdown }) => {
+  const isOpen = openDropdown === name;
 
   return (
     <div className="space-y-1.5"> {/* ✅ SAME as Input */}
@@ -49,42 +49,43 @@ const CustomSelect = ({ label, name, value, onChange, options, required, error }
       {/* SELECT BOX */}
       <div className="relative group">
         <div
-          onClick={() => setOpen(!open)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpenDropdown(isOpen ? null : name);
+          }}
           className={`w-full rounded-xl bg-white/5 border px-4 py-3 text-white
           transition-all duration-300 backdrop-blur
           flex items-center justify-between cursor-pointer
           
-          ${error 
-            ? "border-red-500/50 ring-1 ring-red-500/20" 
-            : "border-white/10 group-focus-within:border-sky-500/50 group-focus-within:ring-4 group-focus-within:ring-sky-500/10"
-          }`}
+          ${error
+              ? "border-red-500/50 ring-1 ring-red-500/20"
+              : "border-white/10 group-focus-within:border-sky-500/50 group-focus-within:ring-4 group-focus-within:ring-sky-500/10"
+            }`}
         >
           <span className={`${!value ? "text-gray-500" : "text-white"}`}>
             {value || "Select option"}
           </span>
 
           <FiChevronDown
-            className={`w-4 h-4 text-gray-400 transition ${
-              open ? "rotate-180" : ""
-            }`}
+            className={`w-4 h-4 text-gray-400 transition ${open ? "rotate-180" : ""
+              }`}
           />
         </div>
 
         {/* DROPDOWN */}
-        {open && (
+        {isOpen && (
           <div className="absolute z-50 mt-2 w-full rounded-xl bg-[#0a0a0b] border border-white	 overflow-hidden">
             {options.map((opt) => (
               <div
                 key={opt.value}
                 onClick={() => {
                   onChange({ target: { name, value: opt.value } });
-                  setOpen(false);
+                  setOpenDropdown(null);
                 }}
                 className={`px-4 py-3 text-sm cursor-pointer transition
-                  ${
-                    value === opt.value
-                      ? "bg-sky-400 text-black"
-                      : "text-white hover:bg-sky-400/20"
+                  ${value === opt.value
+                    ? "bg-sky-400 text-black"
+                    : "text-white hover:bg-sky-400/20"
                   }`}
               >
                 {opt.label}
@@ -123,41 +124,20 @@ const Input = forwardRef(({ label, required, error, icon, ...props }, ref) => (
   </div>
 ));
 
-const Select = forwardRef(({ label, required, error, children, icon, ...props }, ref) => (
-  <div className="space-y-1.5">
-    <label className="block text-sm font-medium text-gray-300 ml-1">
-      {label} {required && <span className="text-red-400">*</span>}
-    </label>
-    <div className="relative group">
-      {icon && (
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-sky-400 transition-colors pointer-events-none">
-          {icon}
-        </span>
-      )}
-      <select
-        ref={ref}
-        {...props}
-        style={{ colorScheme: 'dark' }}
-        className={`w-full rounded-xl bg-white/5 border px-4 py-3 text-white transition-all duration-300
-        appearance-none focus:outline-none focus:bg-white/10 bg-[#0a0a0b]
-        ${icon ? "pl-11" : ""}
-        ${error ? "border-red-500/50 ring-1 ring-red-500/20" : "border-white/10 focus:border-sky-500/50 focus:ring-4 focus:ring-sky-500/10"}`}
-      >
-        {children}
-      </select>
-      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-        <FiChevronDown className="w-4 h-4 text-gray-400" />
-      </div>
-    </div>
-    {error && <p className="text-xs text-red-400 ml-1 mt-1">{error}</p>}
-  </div>
-));
 
 const BookAppointment = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
   const [estimatedCost, setEstimatedCost] = useState(0);
+
+  const [openDropdown, setOpenDropdown] = useState(null);
+
+  useEffect(() => {
+    const handleClick = () => setOpenDropdown(null);
+    window.addEventListener("click", handleClick);
+    return () => window.removeEventListener("click", handleClick);
+  }, []);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -426,6 +406,8 @@ const BookAppointment = () => {
                     name="vehicleType"
                     value={formData.vehicleType}
                     onChange={handleChange}
+                    openDropdown={openDropdown}
+                    setOpenDropdown={setOpenDropdown}
                     required
                     options={[
                       { value: "Car", label: "Car" },
@@ -464,6 +446,8 @@ const BookAppointment = () => {
                   <CustomSelect
                     label="Service Type"
                     name="serviceType"
+                    openDropdown={openDropdown}
+                    setOpenDropdown={setOpenDropdown}
                     value={formData.serviceType}
                     onChange={handleChange}
                     required
@@ -477,6 +461,8 @@ const BookAppointment = () => {
                   <CustomSelect
                     label="Pickup & Drop"
                     name="pickupDrop"
+                    openDropdown={openDropdown}
+                    setOpenDropdown={setOpenDropdown}
                     value={formData.pickupDrop}
                     onChange={handleChange}
                     options={[
@@ -516,6 +502,8 @@ const BookAppointment = () => {
                   <CustomSelect
                     label="Time Slot"
                     name="preferredTimeSlot"
+                    openDropdown={openDropdown}
+                    setOpenDropdown={setOpenDropdown}
                     value={formData.preferredTimeSlot}
                     onChange={handleChange}
                     required
