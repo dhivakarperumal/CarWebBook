@@ -54,7 +54,7 @@ const Navbar = () => {
     try {
       const res = await api.get(`/cart/${userId}`);
       const items = res.data || [];
-      const count = items.reduce((sum, item) => sum + (item.quantity || 1), 0);
+      const count = items.length;
       setCartCount(count);
     } catch {
       setCartCount(0);
@@ -94,10 +94,10 @@ const Navbar = () => {
 
   const links = [
     { label: "HOME", path: "/" },
-    { label: "SERVICES", path: "/services" },
-    { label: "PRICING", path: "/pricing" },
     { label: "PRODUCTS", path: "/products" },
+    { label: "PRICING", path: "/pricing" },
     { label: "BUY VEHICLES", path: "/buy-vehicles" },
+    { label: "SERVICES", path: "/services" },
   ];
 
   const pageLinks = [
