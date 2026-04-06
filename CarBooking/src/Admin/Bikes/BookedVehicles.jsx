@@ -219,20 +219,20 @@ const BookedVehicles = () => {
                       Cancelled
                     </span>
                   ) : (
-                    <select 
-                      value={b.status || "Booked"}
-                      onChange={(e) => updateStatus(b.id, e.target.value)}
-                      className={`w-full px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none border transition-all cursor-pointer text-center appearance-none ${
-                        (b.status || "").toLowerCase() === "confirmed" || (b.status || "").toLowerCase() === "booked"
-                          ? "bg-emerald-50 text-emerald-600 border-emerald-100 focus:ring-2 focus:ring-emerald-200"
-                          : "bg-amber-50 text-amber-600 border-amber-100 focus:ring-2 focus:ring-amber-200"
-                      }`}
-                    >
-                      <option value="Booked">Booked</option>
-                      <option value="Confirmed">Confirmed</option>
-                      <option value="Delivered">Delivered</option>
-                      <option value="Cancelled">Cancelled</option>
-                    </select>
+                      <select 
+                        value={b.status || "Booked"}
+                        onChange={(e) => updateStatus(b.id, e.target.value)}
+                        className={`w-full px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest outline-none border transition-all cursor-pointer text-center appearance-none ${
+                          (b.status || "").toLowerCase() === "sold" || (b.status || "").toLowerCase() === "confirmed" || (b.status || "").toLowerCase() === "booked"
+                            ? "bg-emerald-50 text-emerald-600 border-emerald-100 focus:ring-2 focus:ring-emerald-200"
+                            : "bg-amber-50 text-amber-600 border-amber-100 focus:ring-2 focus:ring-amber-200"
+                        }`}
+                      >
+                        <option value="Booked">Booked</option>
+                        <option value="Confirmed">Confirmed</option>
+                        <option value="Sold">Sold</option>
+                        <option value="Cancelled">Cancelled</option>
+                      </select>
                   )}
                 </td>
                 <td className="px-8 py-6 text-right">

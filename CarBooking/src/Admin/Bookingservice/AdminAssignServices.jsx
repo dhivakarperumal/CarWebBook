@@ -208,8 +208,9 @@ export default function AdminAssignServices() {
   }
 
   return (
-    <div className="min-h-screen  text-gray-900 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <div className="min-h-screen text-gray-900 p-4 md:p-8 space-y-8 animate-fadeIn">
+      <div className="max-w-7xl mx-auto space-y-8">
+        
         {/* TOP TABS & ACTIONS */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           {/* MAIN TABS */}
@@ -297,9 +298,9 @@ export default function AdminAssignServices() {
             {/* Assigned */}
             <button
               onClick={() => setTab("assigned")}
-              className={`flex-1 md:flex-none flex-shrink-0 px-2 md:px-3 py-4 rounded text-sm font-bold transition-all ${tab === "assigned"
-                  ? "bg-white text-blue-600 shadow-sm"
-                  : "text-gray-500 hover:text-gray-700"
+              className={`flex-1 md:flex-none flex-shrink-0 px-6 py-4 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${tab === "assigned"
+                  ? "bg-black text-white shadow-lg shadow-black/20"
+                  : "bg-white text-gray-400 hover:text-gray-600 border border-gray-100"
                 }`}
             >
               Assigned ({assignedCount})
