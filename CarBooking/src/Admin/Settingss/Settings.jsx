@@ -40,25 +40,22 @@ const Settings = () => {
 
       <h2 className="text-2xl font-semibold"></h2>
 
-      <SettingCard
-        icon={<FaUserCog />}
-        title="Profile Settings"
-        desc="Update personal information and change password."
-        path="/admin/settings/profile"
-      />
+    
 
-      {/* <SettingCard
-        icon={<FaBell />}
-        title="Notification Settings"
-        desc="Configure notification preferences and alerts."
-        path="/admin/settings/notifications"
-      /> */}
 
       <SettingCard
         icon={<FaUsers />}
         title="User Management"
         desc="Manage user roles, permissions, and accounts."
-        path="/admin/settings/usermanagement"
+        path="/admin/customers"
+      />
+
+
+      <SettingCard
+        icon={<FaUsers />}
+        title="Service Areas"
+        desc="Manage user roles, permissions, and accounts."
+        path="/admin/service-areas"
       />
 
       <SettingCard
