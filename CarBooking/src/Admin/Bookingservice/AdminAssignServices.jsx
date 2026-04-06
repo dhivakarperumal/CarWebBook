@@ -21,12 +21,12 @@ export default function AdminAssignServices() {
   const [loadingEmployees, setLoadingEmployees] = useState(false);
 
   const [mainTab, setMainTab] = useState("all"); // all | booked | addVehicle
-  const [tab, setTab] = useState("all");
+  const [tab, setTab] = useState("unassigned");
   const [dateFilter, setDateFilter] = useState("Today");
   const [searchText, setSearchText] = useState("");
   const [viewMode, setViewMode] = useState("table"); // card | table
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   const formatBookingDate = (b) => {
     if (b.createdDate) return b.createdDate;
     if (!b.created_at) return "N/A";
@@ -79,6 +79,7 @@ export default function AdminAssignServices() {
 
   const currentMainList = useMemo(() => {
     return bookings.filter(b => {
+      if ((b.status || "").toLowerCase() === "booked") return false;
       if (mainTab === "all") return true;
       const isAddVehicle = b.uid === 'admin-created';
       return mainTab === "booked" ? !isAddVehicle : isAddVehicle;
@@ -87,7 +88,7 @@ export default function AdminAssignServices() {
 
   const assignedCount = currentMainList.filter((b) => b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed").length;
   const unassignedCount = currentMainList.filter((b) => !b.assignedEmployeeId).length;
-  const bookedCount = currentMainList.filter((b) => (b.status || "").toLowerCase() === "booked").length;
+  const approvedCount = currentMainList.filter((b) => (b.status || "").toLowerCase() === "approved").length;
   const completedCount = currentMainList.filter((b) => (b.status || "").toLowerCase() === "service completed").length;
   const allCount = currentMainList.length;
 
@@ -135,9 +136,9 @@ export default function AdminAssignServices() {
       // Status filter
       if (tab === "unassigned") return !b.assignedEmployeeId;
       if (tab === "assigned") return !!b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed";
-      if (tab === "booked") return (b.status || "").toLowerCase() === "booked";
+      if (tab === "approved") return (b.status || "").toLowerCase() === "approved";
       if (tab === "completed") return (b.status || "").toLowerCase() === "service completed";
-      
+
       return true;
     });
   }, [currentMainList, searchText, tab, dateFilter]);
@@ -209,123 +210,117 @@ export default function AdminAssignServices() {
   return (
     <div className="min-h-screen  text-gray-900 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* HEADER */}
-        {/* MAIN TABS (Separating Booked from Add Service Vehicle) */}
-        <div className="flex w-full space-x-2 md:w-auto flex-1 max-w-xl bg-gray-100 p-1 rounded-xl">
-          <button
-            onClick={() => setMainTab("all")}
-            className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${
-              mainTab === "all"
-                ? "bg-white text-blue-600 shadow"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            All Services
-          </button>
-          <button
-            onClick={() => setMainTab("booked")}
-            className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${
-              mainTab === "booked"
-                ? "bg-white text-blue-600 shadow"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Customer Bookings
-          </button>
-          <button
-            onClick={() => setMainTab("addVehicle")}
-            className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${
-              mainTab === "addVehicle"
-                ? "bg-white text-blue-600 shadow"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Walk-ins
-          </button>
-        </div>
-
-        {/* HEADER ACTIONS */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-6">
-          <button
-            onClick={async () => {
-              setSelectedBooking(null);
-              setSelectedEmployeeId("");
-              await fetchEmployees();
-              setGlobalModalVisible(true);
-            }}
-            className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-cyan-500/30 transition-all font-semibold"
-          >
-            <Plus className="w-5 h-5" />
-            Assign Service
-          </button>
-          
-          {mainTab === "addVehicle" && (
+        {/* TOP TABS & ACTIONS */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          {/* MAIN TABS */}
+          <div className="flex w-full space-x-2 md:w-auto flex-1 max-w-xl bg-gray-100 p-1 rounded-xl">
             <button
-              onClick={() => window.location.href = "/admin/addservicevehicle"}
-              className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-xl hover:shadow-lg transition-all font-semibold"
+              onClick={() => setMainTab("all")}
+              className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${mainTab === "all"
+                  ? "bg-white text-blue-600 shadow"
+                  : "text-gray-500 hover:text-gray-700"
+                }`}
+            >
+              All Services
+            </button>
+            <button
+              onClick={() => setMainTab("booked")}
+              className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${mainTab === "booked"
+                  ? "bg-white text-blue-600 shadow"
+                  : "text-gray-500 hover:text-gray-700"
+                }`}
+            >
+              Customer Bookings
+            </button>
+            <button
+              onClick={() => setMainTab("addVehicle")}
+              className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${mainTab === "addVehicle"
+                  ? "bg-white text-blue-600 shadow"
+                  : "text-gray-500 hover:text-gray-700"
+                }`}
+            >
+              Walk-ins
+            </button>
+          </div>
+
+          {/* HEADER ACTIONS */}
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            <button
+              onClick={async () => {
+                setSelectedBooking(null);
+                setSelectedEmployeeId("");
+                await fetchEmployees();
+                setGlobalModalVisible(true);
+              }}
+              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-cyan-500/30 transition-all font-semibold"
             >
               <Plus className="w-5 h-5" />
-              Register New Vehicle
+              Assign Service
             </button>
-          )}
+
+            {mainTab === "addVehicle" && (
+              <button
+                onClick={() => window.location.href = "/admin/addservicevehicle"}
+                className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-xl hover:shadow-lg transition-all font-semibold"
+              >
+                <Plus className="w-5 h-5" />
+                Register New Vehicle
+              </button>
+            )}
+          </div>
         </div>
 
         {/* CONTROLS (TABS & SEARCH) */}
         <div className="flex  flex-col lg:flex-row gap-4 justify-between items-stretch lg:items-center bg-gray-50 p-3 rounded border border-gray-100">
           {/* TABS */}
-          <div className="flex w-full gap-2 bg-gray-200/50 px-2 py-1 rounded overflow-x-auto whitespace-nowrap no-scrollbar">
-            {/* Booked */}
+          <div className="flex w-full items-center gap-2 bg-gray-200/50 p-3 rounded-xl overflow-x-auto whitespace-nowrap no-scrollbar">
+            {/* Approved */}
             <button
-              onClick={() => setTab("booked")}
-              className={`flex-1 md:flex-none flex-shrink-0 px-2 md:px-3 py-2 rounded text-sm font-semibold transition-all ${
-                tab === "booked"
+              onClick={() => setTab("approved")}
+              className={`flex-1 md:flex-none flex-shrink-0 px-2 md:px-3 py-4 rounded text-sm font-semibold transition-all ${tab === "approved"
                   ? "bg-white text-blue-600 shadow-sm"
                   : "text-gray-500 hover:text-gray-700"
-              }`}
+                }`}
             >
-              Booked ({bookedCount})
+              Approved ({approvedCount})
             </button>
             {/* Unassigned */}
             <button
               onClick={() => setTab("unassigned")}
-              className={`flex-1 md:flex-none flex-shrink-0 px-2 md:px-3 py-2 rounded text-sm font-semibold transition-all ${
-                tab === "unassigned"
+              className={`flex-1 md:flex-none flex-shrink-0 px-2 md:px-3 py-4 rounded text-sm font-bold transition-all ${tab === "unassigned"
                   ? "bg-white text-blue-600 shadow-sm"
                   : "text-gray-500 hover:text-gray-700"
-              }`}
+                }`}
             >
               Unassigned ({unassignedCount})
             </button>
             {/* Assigned */}
             <button
               onClick={() => setTab("assigned")}
-              className={`flex-1 md:flex-none flex-shrink-0 px-2 md:px-3 py-2 rounded text-sm font-semibold transition-all ${
-                tab === "assigned"
+              className={`flex-1 md:flex-none flex-shrink-0 px-2 md:px-3 py-4 rounded text-sm font-bold transition-all ${tab === "assigned"
                   ? "bg-white text-blue-600 shadow-sm"
                   : "text-gray-500 hover:text-gray-700"
-              }`}
+                }`}
             >
               Assigned ({assignedCount})
             </button>
             {/* Completed */}
             <button
               onClick={() => setTab("completed")}
-              className={`flex-1 md:flex-none flex-shrink-0 px-2 md:px-3 py-2 rounded text-sm font-semibold transition-all ${
-                tab === "completed"
+              className={`flex-1 md:flex-none flex-shrink-0 px-2 md:px-3 py-4 rounded text-sm font-bold transition-all ${tab === "completed"
                   ? "bg-white text-blue-600 shadow-sm"
                   : "text-gray-500 hover:text-gray-700"
-              }`}
+                }`}
             >
               Completed ({completedCount})
             </button>
             {/* All */}
             <button
               onClick={() => setTab("all")}
-              className={`flex-1 md:flex-none flex-shrink-0 px-2 md:px-3 py-2 rounded text-sm font-semibold transition-all ${
-                tab === "all"
+              className={`flex-1 md:flex-none flex-shrink-0 px-2 md:px-3 py-4 rounded text-sm font-bold transition-all ${tab === "all"
                   ? "bg-white text-blue-600 shadow-sm"
                   : "text-gray-500 hover:text-gray-700"
-              }`}
+                }`}
             >
               All ({allCount})
             </button>
@@ -354,21 +349,19 @@ export default function AdminAssignServices() {
                 className="w-full bg-white border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 transition-all font-medium"
               />
             </div>
-            
-           <div className="hidden sm:flex p-1 bg-gray-200/50 rounded-xl flex-shrink-0">
+
+            <div className="hidden sm:flex p-1 bg-gray-200/50 rounded-xl flex-shrink-0">
               <button
                 onClick={() => setViewMode("card")}
-                className={`p-2 rounded-lg transition-all ${
-                  viewMode === "card" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
-                }`}
+                className={`p-2 rounded-lg transition-all ${viewMode === "card" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
+                  }`}
               >
                 <LayoutGrid size={18} />
               </button>
               <button
                 onClick={() => setViewMode("table")}
-                className={`p-2 rounded-lg transition-all ${
-                  viewMode === "table" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
-                }`}
+                className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
+                  }`}
               >
                 <List size={18} />
               </button>
@@ -388,7 +381,7 @@ export default function AdminAssignServices() {
                 className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all duration-500 flex flex-col group relative overflow-hidden"
               >
                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                   <LayoutGrid size={80} className="text-blue-900" />
+                  <LayoutGrid size={80} className="text-blue-900" />
                 </div>
 
                 <div className="flex justify-between items-start mb-6">
@@ -402,29 +395,28 @@ export default function AdminAssignServices() {
                   </div>
 
                   <div
-                    className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest border transition-all ${
-                      (item.status || "").toLowerCase() === "service completed"
+                    className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest border transition-all ${(item.status || "").toLowerCase() === "service completed"
                         ? "bg-emerald-100 text-emerald-700 border-emerald-200"
                         : item.assignedEmployeeId
-                        ? "bg-blue-100 text-blue-700 border-blue-200"
-                        : "bg-amber-100 text-amber-700 border-amber-200"
-                    }`}
+                          ? "bg-blue-100 text-blue-700 border-blue-200"
+                          : "bg-amber-100 text-amber-700 border-amber-200"
+                      }`}
                   >
-                    {(item.status || "").toLowerCase() === "service completed" 
-                      ? "COMPLETED" 
-                      : item.assignedEmployeeId 
-                      ? "ASSIGNED" 
-                      : "UNASSIGNED"}
+                    {(item.status || "").toLowerCase() === "service completed"
+                      ? "COMPLETED"
+                      : item.assignedEmployeeId
+                        ? "ASSIGNED"
+                        : "UNASSIGNED"}
                   </div>
                 </div>
 
                 <div className="space-y-4 flex-1 relative z-10">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap mb-2">
-                       <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
-                          {item.vehicleType || 'Car'}
-                       </span>
-                       <h3 className="text-xl font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                        {item.vehicleType || 'Car'}
+                      </span>
+                      <h3 className="text-xl font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
                         {item.brand} {item.model}
                       </h3>
                       {item.uid === 'admin-created' && (
@@ -436,27 +428,27 @@ export default function AdminAssignServices() {
                         {item.vehicleNumber}
                       </p>
                     )}
-                    
+
                     <div className="flex flex-wrap gap-4 mt-4 py-3 border-y border-gray-50">
-                       <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
-                             <Calendar className="w-4 h-4 text-gray-400" />
-                          </div>
-                          <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">{formatBookingDate(item)}</span>
-                       </div>
-                       <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
-                             <Clock className="w-4 h-4 text-gray-400" />
-                          </div>
-                          <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">{formatBookingTime(item)}</span>
-                       </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                        </div>
+                        <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">{formatBookingDate(item)}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
+                          <Clock className="w-4 h-4 text-gray-400" />
+                        </div>
+                        <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">{formatBookingTime(item)}</span>
+                      </div>
                     </div>
                   </div>
 
                   {item.issue && (
                     <div className="bg-amber-50/30 p-4 rounded-2xl border border-amber-100/50">
-                       <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Reported Issue</p>
-                       <p className="text-sm font-bold text-gray-700 leading-snug">{item.issue}</p>
+                      <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Reported Issue</p>
+                      <p className="text-sm font-bold text-gray-700 leading-snug">{item.issue}</p>
                     </div>
                   )}
 
@@ -468,7 +460,7 @@ export default function AdminAssignServices() {
                         <p className="text-sm font-black text-gray-800">{item.name}</p>
                       </div>
                     </div>
-                    
+
                     {item.phone && (
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400 text-xs">📞</div>
@@ -493,13 +485,13 @@ export default function AdminAssignServices() {
 
                   {item.assignedEmployeeName && (
                     <div className="flex items-center gap-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 group/staff">
-                       <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-200">
-                          <UserCheck className="w-5 h-5 text-white" />
-                       </div>
-                       <div>
-                          <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Assigned Technician</p>
-                          <p className="text-sm font-black text-emerald-800">{item.assignedEmployeeName}</p>
-                       </div>
+                      <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-200">
+                        <UserCheck className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Assigned Technician</p>
+                        <p className="text-sm font-black text-emerald-800">{item.assignedEmployeeName}</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -538,8 +530,8 @@ export default function AdminAssignServices() {
                       <span className="text-sm font-black text-gray-800">{idx + 1 + (currentPage - 1) * ITEMS_PER_PAGE}</span>
                     </td>
                     <td className="px-8 py-6">
-                       <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none">#{item.id}</span>
-                       <span className="text-xs font-black text-blue-900 block mt-1">{item.bookingId || "BKG-NEW"}</span>
+                      <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none">#{item.id}</span>
+                      <span className="text-xs font-black text-blue-900 block mt-1">{item.bookingId || "BKG-NEW"}</span>
                     </td>
                     <td className="px-8 py-6">
                       <p className="text-sm font-black text-gray-800">{item.name}</p>
@@ -561,8 +553,8 @@ export default function AdminAssignServices() {
                       </p>
                     </td>
                     <td className="px-8 py-6">
-                       <span className="text-xs font-black text-blue-900 block">{formatBookingDate(item)}</span>
-                       <span className="text-[10px] font-bold text-gray-400 mt-1 block">{formatBookingTime(item)}</span>
+                      <span className="text-xs font-black text-blue-900 block">{formatBookingDate(item)}</span>
+                      <span className="text-[10px] font-bold text-gray-400 mt-1 block">{formatBookingTime(item)}</span>
                     </td>
                     <td className="px-8 py-6">
                       {item.assignedEmployeeName ? (
@@ -577,13 +569,12 @@ export default function AdminAssignServices() {
                       )}
                     </td>
                     <td className="px-8 py-6">
-                       <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest border ${
-                        (item.status || "").toLowerCase() === "service completed"
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest border ${(item.status || "").toLowerCase() === "service completed"
                           ? "bg-emerald-50 text-emerald-700 border-emerald-100"
                           : item.assignedEmployeeId
-                          ? "bg-blue-50 text-blue-700 border-blue-100"
-                          : "bg-amber-50 text-amber-700 border-amber-100"
-                      }`}>
+                            ? "bg-blue-50 text-blue-700 border-blue-100"
+                            : "bg-amber-50 text-amber-700 border-amber-100"
+                        }`}>
                         {(item.status || "Booked").toUpperCase()}
                       </span>
                     </td>
@@ -605,7 +596,7 @@ export default function AdminAssignServices() {
             </table>
           </div>
         )}
-        <Pagination 
+        <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}

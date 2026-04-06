@@ -77,14 +77,11 @@ const navItems = [
 
   
   { path: "/admin/assignservices", label: "Assign Services", icon: ClipboardCheck },
-  { path: "/admin/services", label: "Active Services", icon: Wrench },
-  // { path: "/admin/customers", label: "Customers", icon: Users },
+  { path: "/admin/services", label: "Services Tracking", icon: Wrench },
+ 
   { path: "/admin/billing", label: "Billing", icon: Receipt },
-  // { path: "/admin/service-areas", label: "Service Areas", icon: MapPin },
+ 
 
-
-  // { path: "/admin/serviceslist", label: "Service Packages", icon: ShieldCheck },
-  // { path: "/admin/priceslist", label: "Service Pricing", icon: BarChart3 },
 
   {
     label: "Products",
