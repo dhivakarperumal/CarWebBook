@@ -36,7 +36,7 @@ flex flex-col"
       )}
 
       {/* IMAGE */}
-      <div className="relative h-[260px] overflow-hidden">
+      <div className="relative h-[200px] overflow-hidden">
         <img
           src={
             product.images && product.images.length > 0
@@ -56,7 +56,7 @@ flex flex-col"
       </div>
 
       {/* CONTENT */}
-      <div className="p-6 space-y-3">
+      <div className="p-4 space-y-2">
         {/* BRAND */}
         <p className="text-gray-400 text-xs uppercase tracking-widest">
           {product.brand}
@@ -64,7 +64,7 @@ flex flex-col"
 
         {/* NAME + STOCK */}
         <div className="flex items-start justify-between gap-4">
-          <h3 className="text-white text-lg font-bold leading-tight">
+          <h3 className="text-white text-base font-bold leading-tight">
             {product.name}
           </h3>
 
@@ -82,7 +82,7 @@ flex flex-col"
 
         {/* PRICE */}
         <div className="flex items-center gap-3">
-          <span className="text-white text-2xl font-extrabold">
+          <span className="text-white text-xl font-extrabold">
             ₹{product.offerPrice}
           </span>
 
@@ -113,7 +113,7 @@ flex flex-col"
             }}
             className="relative overflow-hidden group
             text-xs font-semibold uppercase tracking-wider
-            px-5 py-2.5 rounded-full mt-2 md:mt-0 self-start md:self-auto
+            px-4 py-2 rounded-full mt-2 md:mt-0 self-start md:self-auto
 
             bg-gradient-to-r from-sky-500 to-cyan-400
             text-black
@@ -131,7 +131,7 @@ flex flex-col"
             md:hover:shadow-lg md:hover:shadow-sky-400/40"
           >
             <span className="relative z-10 flex items-center gap-2">
-              View Details
+              View 
               <span className="transition-transform duration-300 md:group-hover:translate-x-1">
                 →
               </span>

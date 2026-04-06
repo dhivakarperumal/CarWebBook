@@ -42,7 +42,7 @@ export default function Pricing() {
           <div className="relative">
 
             {/* Pricing Cards */}
-            <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {packages.map((pkg) => (
                 <PricingCard key={pkg.id} pkg={pkg} />
               ))}
