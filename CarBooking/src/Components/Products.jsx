@@ -14,6 +14,7 @@ export default function Products() {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sort, setSort] = useState("");
 
   const PRODUCTS_PER_PAGE = 8;
 
@@ -35,9 +36,25 @@ export default function Products() {
     fetchProducts();
   }, []);
 
-  const filteredProducts = products.filter((p) =>
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredProducts = products
+    .filter((p) =>
+      p.name.toLowerCase().includes(search.toLowerCase())
+    )
+    .sort((a, b) => {
+      if (sort === "low-high") {
+        return Number(a.offerPrice) - Number(b.offerPrice);
+      }
+      if (sort === "high-low") {
+        return Number(b.offerPrice) - Number(a.offerPrice);
+      }
+      if (sort === "a-z") {
+        return a.name.localeCompare(b.name);
+      }
+      if (sort === "z-a") {
+        return b.name.localeCompare(a.name);
+      }
+      return 0;
+    });
 
   const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
 
@@ -97,7 +114,9 @@ export default function Products() {
       <section className="bg-black py-24">
         <PageContainer>
 
-          <div className="mb-8 flex justify-between items-center">
+          <div className="mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+
+            {/* LEFT — SEARCH */}
             <input
               type="text"
               placeholder="Search products..."
@@ -108,6 +127,23 @@ export default function Products() {
               }}
               className="w-full md:w-80 px-4 py-2 rounded-lg bg-[#0a0a0b] border border-white/20 text-white outline-none focus:border-sky-400"
             />
+
+            {/* RIGHT — SORT */}
+            <select
+              value={sort}
+              onChange={(e) => {
+                setSort(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full md:w-60 px-4 py-2 rounded-lg bg-[#0a0a0b] border border-white/20 text-white outline-none focus:border-sky-400"
+            >
+              <option value="">Sort By</option>
+              <option value="low-high">Price: Low → High</option>
+              <option value="high-low">Price: High → Low</option>
+              <option value="a-z">Name: A → Z</option>
+              <option value="z-a">Name: Z → A</option>
+            </select>
+
           </div>
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {paginatedProducts.map((product) => (
@@ -118,54 +154,51 @@ export default function Products() {
               />
             ))}
           </div>
-         <div className="flex justify-center items-center mt-10 gap-3 flex-wrap">
+          <div className="flex justify-center items-center mt-10 gap-3 flex-wrap">
 
-  {/* PREV BUTTON */}
-  <button
-    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-    disabled={currentPage === 1}
-    className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm
-      ${
-        currentPage === 1
-          ? "bg-white/5 text-gray-500 cursor-not-allowed"
-          : "bg-white/10 text-white hover:bg-white/20"
-      }`}
-  >
-    <FiChevronLeft />
-  </button>
+            {/* PREV BUTTON */}
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm
+      ${currentPage === 1
+                  ? "bg-white/5 text-gray-500 cursor-not-allowed"
+                  : "bg-white/10 text-white hover:bg-white/20"
+                }`}
+            >
+              <FiChevronLeft />
+            </button>
 
-  {/* PAGE NUMBERS */}
-  {[...Array(totalPages)].map((_, i) => (
-    <button
-      key={i}
-      onClick={() => setCurrentPage(i + 1)}
-      className={`px-4 py-2 rounded-md text-sm ${
-        currentPage === i + 1
-          ? "bg-sky-400 text-black"
-          : "bg-white/10 text-white hover:bg-white/20"
-      }`}
-    >
-      {i + 1}
-    </button>
-  ))}
+            {/* PAGE NUMBERS */}
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setCurrentPage(i + 1)}
+                className={`px-4 py-2 rounded-md text-sm ${currentPage === i + 1
+                    ? "bg-sky-400 text-black"
+                    : "bg-white/10 text-white hover:bg-white/20"
+                  }`}
+              >
+                {i + 1}
+              </button>
+            ))}
 
-  {/* NEXT BUTTON */}
-  <button
-    onClick={() =>
-      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-    }
-    disabled={currentPage === totalPages}
-    className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm
-      ${
-        currentPage === totalPages
-          ? "bg-white/5 text-gray-500 cursor-not-allowed"
-          : "bg-white/10 text-white hover:bg-white/20"
-      }`}
-  >
-    <FiChevronRight />
-  </button>
+            {/* NEXT BUTTON */}
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+              className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm
+      ${currentPage === totalPages
+                  ? "bg-white/5 text-gray-500 cursor-not-allowed"
+                  : "bg-white/10 text-white hover:bg-white/20"
+                }`}
+            >
+              <FiChevronRight />
+            </button>
 
-</div>
+          </div>
         </PageContainer>
       </section>
     </>
