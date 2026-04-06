@@ -39,10 +39,10 @@ const AdminAppointments = () => {
   const [technicians, setTechnicians] = useState([]);
 
   // Filters
-  const [statusFilter, setStatusFilter] = useState("Appointment Booked");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState("Today");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("All Time");
   const [searchTerm, setSearchTerm] = useState("");
+  const [assignmentFilter, setAssignmentFilter] = useState("unassigned");
   const [pendingChanges, setPendingChanges] = useState({});
   const [saving, setSaving] = useState(false);
 
@@ -63,7 +63,7 @@ const AdminAppointments = () => {
       ]);
       setAppointments(appRes.data || []);
       setTechnicians(techRes.data?.filter(s => s.role === 'mechanic' || s.role === 'technician') || []);
-    } catch (err) {
+    } catch {
       toast.error("Failed to load appointments");
     } finally {
       setLoading(false);
@@ -79,7 +79,7 @@ const AdminAppointments = () => {
       setPendingChanges({});
       setSelectedAppointment(null);
       loadData();
-    } catch (err) {
+    } catch {
       toast.error("Update failed");
     } finally {
       setSaving(false);
@@ -88,7 +88,6 @@ const AdminAppointments = () => {
 
   const filtered = appointments.filter(a => {
     const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
-    const matchesType = typeFilter === 'all' || a.vehicleType === typeFilter;
     const matchesSearch = !searchTerm ||
       a.appointmentId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -124,7 +123,10 @@ const AdminAppointments = () => {
       }
     }
 
-    return matchesStatus && matchesType && matchesDate && matchesSearch;
+    const matchesAssignment = assignmentFilter === 'all' ||
+      (assignmentFilter === 'assigned' ? !!a.assignedEmployeeId : !a.assignedEmployeeId);
+
+    return matchesStatus && matchesDate && matchesSearch && matchesAssignment;
   });
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
@@ -164,7 +166,7 @@ const AdminAppointments = () => {
 
       {/* Filters */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="relative">
             <input
               type="text"
@@ -185,17 +187,6 @@ const AdminAppointments = () => {
           </select>
 
           <select
-            value={typeFilter}
-            onChange={e => setTypeFilter(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-black outline-none bg-white font-medium"
-          >
-            <option value="all">All Vehicle Types</option>
-            <option value="Car">Car</option>
-            <option value="Bike">Bike</option>
-            <option value="SUV">SUV</option>
-          </select>
-
-          <select
             value={dateFilter}
             onChange={e => { setDateFilter(e.target.value); setCurrentPage(1); }}
             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-black outline-none bg-white font-medium"
@@ -207,12 +198,17 @@ const AdminAppointments = () => {
             <option value="All Time">All Time</option>
           </select>
 
-          <button
-            onClick={() => { setStatusFilter('Appointment Booked'); setTypeFilter('all'); setDateFilter('Today'); setSearchTerm(''); setCurrentPage(1); }}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold transition"
+          <select
+            value={assignmentFilter}
+            onChange={e => { setAssignmentFilter(e.target.value); setCurrentPage(1); }}
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-black outline-none bg-white font-medium"
           >
-            <FaFilter /> Reset
-          </button>
+            <option value="all">All Assignments</option>
+            <option value="assigned">Assigned</option>
+            <option value="unassigned">Unassigned</option>
+          </select>
+
+       
         </div>
       </div>
 
@@ -222,6 +218,7 @@ const AdminAppointments = () => {
           <table className="w-full text-left">
             <thead className="bg-[#87a5b3] text-white">
               <tr className="border-b border-gray-100">
+                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">S No</th>
                 <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">ID</th>
                 <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">Customer</th>
                 <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">Vehicle</th>
@@ -234,11 +231,12 @@ const AdminAppointments = () => {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
-                <tr><td colSpan="8" className="px-6 py-12 text-center text-gray-400">Loading...</td></tr>
+                <tr><td colSpan="9" className="px-6 py-12 text-center text-gray-400">Loading...</td></tr>
               ) : paginated.length === 0 ? (
-                <tr><td colSpan="8" className="px-6 py-12 text-center text-gray-400">No appointments found</td></tr>
-              ) : paginated.map(apt => (
+                <tr><td colSpan="9" className="px-6 py-12 text-center text-gray-400">No appointments found</td></tr>
+              ) : paginated.map((apt, index) => (
                 <tr key={apt.id} className="hover:bg-gray-50/50 transition duration-200">
+                  <td className="px-6 py-4 font-black text-sm text-gray-600">{(currentPage - 1) * itemsPerPage + index + 1}</td>
                   <td className="px-6 py-4 font-black text-sm text-sky-600">{apt.appointmentId}</td>
                   <td className="px-6 py-4">
                     <p className="text-sm font-bold text-gray-900">{apt.name}</p>
