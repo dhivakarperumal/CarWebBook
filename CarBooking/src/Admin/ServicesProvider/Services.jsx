@@ -298,8 +298,9 @@ export default function Services() {
                  {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
                    <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all" title="Add Parts"><FaPlus /></button>
                  )}
-                 <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all"><FaEye /></button>
-                 <button onClick={() => handleDelete(item.id)} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all"><FaTrash /></button>
+                 <button onClick={() => { setEditingIssueId(item.id); setIssueEntries([...(item.issues || [])]); setIssueModalVisible(true); }} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all" title="Edit Log"><FaEdit /></button>
+                 <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all" title="View Details"><FaEye /></button>
+                 <button onClick={() => handleDelete(item.id)} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all" title="Delete"><FaTrash /></button>
               </div>
             </div>
           ))}
@@ -314,6 +315,7 @@ export default function Services() {
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Identifier</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Customer Profile</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Vehicle Spec</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Issues</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Mechanic Allocation</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-center">Workflow</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Actions</th>
@@ -322,7 +324,7 @@ export default function Services() {
             <tbody className="divide-y divide-gray-50">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-8 py-24 text-center">
+                  <td colSpan="8" className="px-8 py-24 text-center">
                      <div className="flex flex-col items-center justify-center">
                         <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mb-4 border border-gray-100 text-gray-300">
                           <FaWrench size={24}/>
@@ -340,6 +342,11 @@ export default function Services() {
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2 mb-1"><p className="text-sm font-black text-gray-800 uppercase tracking-tight">{item.brand} {item.model}</p></div>
                       <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{item.vehicleNumber || "UNSPECIFIED"}</p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]" title={item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}>
+                        {item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}
+                      </p>
                     </td>
                     <td className="px-8 py-6">
                       {item.assignedEmployeeName ? (
@@ -362,8 +369,9 @@ export default function Services() {
                         {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
                           <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-emerald-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Add Parts"><FaPlus /></button>
                         )}
-                        <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"><FaEye /></button>
-                        <button onClick={() => handleDelete(item.id)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-red-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"><FaTrash /></button>
+                        <button onClick={() => { setEditingIssueId(item.id); setIssueEntries([...(item.issues || [])]); setIssueModalVisible(true); }} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-amber-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log"><FaEdit /></button>
+                        <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="View Details"><FaEye /></button>
+                        <button onClick={() => handleDelete(item.id)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-red-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Delete"><FaTrash /></button>
                       </div>
                     </td>
                   </tr>
