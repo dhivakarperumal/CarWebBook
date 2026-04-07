@@ -25,6 +25,7 @@ const AddBillings = () => {
   });
 
   const [services, setServices] = useState([]);
+  const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedService, setSelectedService] = useState(null);
   const [parts, setParts] = useState([]);
@@ -42,11 +43,13 @@ const AddBillings = () => {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        const [servicesRes, billingsRes] = await Promise.all([
+        const [servicesRes, billingsRes, productsRes] = await Promise.all([
           api.get('/all-services'),
-          api.get('/billings')
+          api.get('/billings'),
+          api.get('/products')
         ]);
         setServices(servicesRes.data);
+        setProducts(productsRes.data || []);
         
         // Calculate next invoice number
         const nextNum = (billingsRes.data.length + 1).toString().padStart(3, '0');
@@ -293,17 +296,39 @@ const AddBillings = () => {
   <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
 
     {/* Part Name */}
-    <div className="flex flex-col">
+    <div className="flex flex-col sm:col-span-1">
       <label className="text-[10px] font-bold text-gray-400 mb-1">
-        Component Name
+        Component Name (Search or Type)
       </label>
-      <input
-        type="text"
-        placeholder="Enter part name"
-        className="border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-semibold outline-none focus:border-gray-300"
-        value={newPart.partName}
-        onChange={e => setNewPart({ ...newPart, partName: e.target.value })}
-      />
+      <div className="relative group">
+        <input
+          type="text"
+          placeholder="Type or select a spare part..."
+          list="spare-parts-list"
+          className="w-full border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-semibold outline-none focus:border-gray-300 transition-all"
+          value={newPart.partName}
+          onChange={e => {
+            const val = e.target.value;
+            const matchedProduct = products.find(p => p.name === val);
+            if (matchedProduct) {
+              setNewPart({
+                ...newPart,
+                partName: val,
+                price: Number(matchedProduct.offerPrice || matchedProduct.mrp || 0)
+              });
+            } else {
+              setNewPart({ ...newPart, partName: val });
+            }
+          }}
+        />
+        <datalist id="spare-parts-list">
+          {products.map(p => (
+            <option key={p.docId || p.id} value={p.name}>
+              ₹{p.offerPrice || p.mrp}
+            </option>
+          ))}
+        </datalist>
+      </div>
     </div>
 
     {/* Quantity */}
