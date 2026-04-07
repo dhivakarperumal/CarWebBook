@@ -285,21 +285,34 @@ export default function AdminAssignServices() {
         />
       </div>
 
-      {/* CHANNEL TABS */}
-      <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200 shadow-inner w-fit">
-        {[
-          { id: "all", label: "Global Stream" },
-          { id: "booked", label: "Customer Portal" },
-          { id: "addVehicle", label: "Field Walk-ins" }
-        ].map(t => (
-          <button
-            key={t.id}
-            onClick={() => setMainTab(t.id)}
-            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mainTab === t.id ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}
-          >
-            {t.label}
-          </button>
-        ))}
+      {/* CHANNEL TABS & SEARCH CONSOLIDATION */}
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+        <div className="flex bg-gray-100 p-1.5 rounded-[1.5rem] border border-gray-200 shadow-inner w-full lg:w-fit overflow-x-auto no-scrollbar">
+          {[
+            { id: "all", label: "Global Stream" },
+            { id: "booked", label: "Customer Portal" },
+            { id: "addVehicle", label: "Field Walk-ins" }
+          ].map(t => (
+            <button
+              key={t.id}
+              onClick={() => setMainTab(t.id)}
+              className={`px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === t.id ? "bg-white text-black shadow-[0_8px_30px_rgb(0,0,0,0.12)] scale-[1.02]" : "text-gray-400 hover:text-gray-600"}`}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative group w-full lg:max-w-md">
+          <FaSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-all duration-300" />
+          <input
+            type="text"
+            placeholder="Track booking, mobile, personnel..."
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className="w-full pl-16 pr-8 py-4.5 bg-white border border-gray-100 rounded-[2rem] focus:ring-8 focus:ring-black/5 focus:border-black outline-none transition-all duration-500 font-bold text-gray-700 shadow-xl shadow-slate-200/50"
+          />
+        </div>
       </div>
 
       {/* STATUS TABS & SEARCH */}
@@ -323,16 +336,7 @@ export default function AdminAssignServices() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-          <div className="relative group flex-1 lg:min-w-[300px]">
-            <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors" />
-            <input
-              type="text"
-              placeholder="Track booking, mobile, personnel..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              className="w-full pl-14 pr-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-inner"
-            />
-          </div>
+         
 
           <select
             value={dateFilter}
