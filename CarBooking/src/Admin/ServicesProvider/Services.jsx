@@ -60,6 +60,8 @@ export default function Services() {
 
   const [issueModalVisible, setIssueModalVisible] = useState(false);
   const [editingIssueId, setEditingIssueId] = useState(null);
+  const [activeModalTab, setActiveModalTab] = useState("issues");
+  const [editingParts, setEditingParts] = useState([]);
 
   const loadData = async () => {
     try {
@@ -289,7 +291,7 @@ export default function Services() {
                   </div>
                 </div>
                 <div className="rounded-2xl bg-blue-50/50 border border-blue-100 p-4 overflow-hidden">
-                   <div className="flex justify-between items-center mb-3"><span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Diagnostic Log</span><button onClick={() => { setEditingIssueId(item.id); setIssueEntries([...(item.issues || [])]); setIssueModalVisible(true); }} className="text-[9px] font-black text-blue-600 uppercase hover:underline">Edit Log</button></div>
+                   <div className="flex justify-between items-center mb-3"><span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Diagnostic Log & Parts</span><button onClick={() => { setEditingIssueId(item.id); setIssueEntries([...(item.issues || [])]); setEditingParts([...(item.parts || [])]); setActiveModalTab("issues"); setIssueModalVisible(true); }} className="text-[9px] font-black text-blue-600 uppercase hover:underline">Edit</button></div>
                    <div className="space-y-2">{item.issues?.slice(0, 2).map((iss, i) => <p key={i} className="text-xs font-bold text-gray-600 line-clamp-1 flex items-center gap-2"><span className="w-1 h-1 bg-blue-400 rounded-full" />{iss.issue}</p>) || <p className="text-xs italic text-gray-400">No log entries</p>}</div>
                 </div>
               </div>
@@ -298,7 +300,7 @@ export default function Services() {
                  {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
                    <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all" title="Add Parts"><FaPlus /></button>
                  )}
-                 <button onClick={() => { setEditingIssueId(item.id); setIssueEntries([...(item.issues || [])]); setIssueModalVisible(true); }} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all" title="Edit Log"><FaEdit /></button>
+                 <button onClick={() => { setEditingIssueId(item.id); setIssueEntries([...(item.issues || [])]); setEditingParts([...(item.parts || [])]); setActiveModalTab("issues"); setIssueModalVisible(true); }} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all" title="Edit Log & Parts"><FaEdit /></button>
                  <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all" title="View Details"><FaEye /></button>
                  <button onClick={() => handleDelete(item.id)} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all" title="Delete"><FaTrash /></button>
               </div>
@@ -369,7 +371,7 @@ export default function Services() {
                         {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
                           <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-emerald-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Add Parts"><FaPlus /></button>
                         )}
-                        <button onClick={() => { setEditingIssueId(item.id); setIssueEntries([...(item.issues || [])]); setIssueModalVisible(true); }} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-amber-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log"><FaEdit /></button>
+                        <button onClick={() => { setEditingIssueId(item.id); setIssueEntries([...(item.issues || [])]); setEditingParts([...(item.parts || [])]); setActiveModalTab("issues"); setIssueModalVisible(true); }} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-amber-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
                         <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="View Details"><FaEye /></button>
                         <button onClick={() => handleDelete(item.id)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-red-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Delete"><FaTrash /></button>
                       </div>
@@ -410,36 +412,78 @@ export default function Services() {
       {issueModalVisible && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
           <div className="w-full max-w-3xl max-h-[85vh] flex flex-col rounded-[3rem] bg-white shadow-2xl border border-white animate-in zoom-in-95 duration-200 overflow-hidden">
-            <div className="px-10 py-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+            <div className="px-10 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                 <div className="flex items-center gap-5">
                   <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20"><FaWrench size={24}/></div>
-                  <div><h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Technical Log</h2><p className="text-[10px] text-blue-600 font-black uppercase tracking-widest mt-1">Diagnostic Registry & Valuation</p></div>
+                  <div><h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Active Log Registry</h2><p className="text-[10px] text-blue-600 font-black uppercase tracking-widest mt-1">Diagnostics & Spare Parts</p></div>
                 </div>
                 <button onClick={() => { setIssueModalVisible(false); setEditingIssueId(null); }} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-100 text-gray-400 hover:text-red-500 transition-all shadow-sm"><FaTimes size={18} /></button>
             </div>
-            <div className="flex-1 overflow-y-auto p-10 space-y-6 no-scrollbar">
-              {issueEntries.map((entry, idx) => (
-                <div key={idx} className="p-8 border border-gray-100 rounded-[2.5rem] bg-gray-50/30 hover:bg-white hover:shadow-2xl transition-all duration-500">
-                   <div className="flex items-center justify-between mb-5"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-4 py-1.5 bg-white rounded-full border border-gray-100">LOG ENTRY #{idx + 1}</span><button onClick={() => { const copy = [...issueEntries]; copy.splice(idx, 1); setIssueEntries(copy); }} className="text-red-500 text-[9px] font-black uppercase tracking-widest hover:underline px-4">Remove Entry</button></div>
-                  <textarea value={entry.issue || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issue: e.target.value }; setIssueEntries(copy); }} className="w-full bg-white border border-gray-100 rounded-[1.5rem] p-5 text-xs font-bold text-gray-700 focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner" rows={3} placeholder="Provide technical diagnostic details..."/>
-                  <div className="mt-5 flex gap-4">
-                     <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₹</span><input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Valuation Amount" className="w-full pl-10 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
-                     <div className="px-6 flex items-center bg-white border border-gray-100 rounded-xl"><span className="text-[9px] font-black uppercase tracking-widest text-gray-300 mr-2">Workflow:</span><span className={`text-[9px] font-black uppercase tracking-widest ${entry.issueStatus === "approved" ? "text-emerald-500" : "text-amber-500 font-bold"}`}>{entry.issueStatus || "pending"}</span></div>
-                  </div>
-                </div>
-              ))}
-              {issueEntries.length === 0 && <div className="py-20 text-center text-gray-300 font-black uppercase tracking-widest text-[10px] border-2 border-dashed border-gray-100 rounded-[3rem]">Initial diagnostic log empty</div>}
+            
+            <div className="flex px-10 bg-gray-50/50 border-b border-gray-100">
+               <button onClick={() => setActiveModalTab("issues")} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "issues" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Diagnostic Issues</button>
+               <button onClick={() => setActiveModalTab("parts")} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "parts" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Spare Parts</button>
             </div>
+
+            <div className="flex-1 overflow-y-auto p-10 space-y-6 no-scrollbar">
+              {activeModalTab === "issues" ? (
+                <>
+                  {issueEntries.map((entry, idx) => (
+                    <div key={idx} className="p-8 border border-gray-100 rounded-[2.5rem] bg-gray-50/30 hover:bg-white hover:shadow-2xl transition-all duration-500">
+                       <div className="flex items-center justify-between mb-5"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-4 py-1.5 bg-white rounded-full border border-gray-100">LOG ENTRY #{idx + 1}</span><button onClick={() => { const copy = [...issueEntries]; copy.splice(idx, 1); setIssueEntries(copy); }} className="text-red-500 text-[9px] font-black uppercase tracking-widest hover:underline px-4">Remove Entry</button></div>
+                      <textarea value={entry.issue || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issue: e.target.value }; setIssueEntries(copy); }} className="w-full bg-white border border-gray-100 rounded-[1.5rem] p-5 text-xs font-bold text-gray-700 focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner" rows={3} placeholder="Provide technical diagnostic details..."/>
+                      <div className="mt-5 flex gap-4">
+                         <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₹</span><input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Valuation Amount" className="w-full pl-10 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
+                         <select value={entry.issueStatus || "pending"} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueStatus: e.target.value }; setIssueEntries(copy); }} className={`px-6 py-4 bg-white border border-gray-100 rounded-xl text-[9px] font-black uppercase tracking-widest outline-none ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500 font-bold"}`}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+                      </div>
+                    </div>
+                  ))}
+                  {issueEntries.length === 0 && <div className="py-20 text-center text-gray-300 font-black uppercase tracking-widest text-[10px] border-2 border-dashed border-gray-100 rounded-[3rem]">Initial diagnostic log empty</div>}
+                </>
+              ) : (
+                <>
+                  {editingParts.map((part, idx) => (
+                    <div key={idx} className="p-8 border border-gray-100 rounded-[2.5rem] bg-gray-50/30 hover:bg-white hover:shadow-2xl transition-all duration-500">
+                       <div className="flex items-center justify-between mb-5"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-4 py-1.5 bg-white rounded-full border border-gray-100">PART REQUEST #{idx + 1}</span><button onClick={() => { const copy = [...editingParts]; copy.splice(idx, 1); setEditingParts(copy); }} className="text-red-500 text-[9px] font-black uppercase tracking-widest hover:underline px-4">Remove Part</button></div>
+                      <input type="text" value={part.partName || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], partName: e.target.value }; setEditingParts(copy); }} className="w-full bg-white border border-gray-100 rounded-[1.5rem] px-5 py-4 text-xs font-bold text-gray-700 focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner" placeholder="Part Name" />
+                      <div className="mt-5 flex gap-4">
+                         <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-widest text-gray-400">Qty</span><input type="number" value={part.qty || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], qty: e.target.value }; setEditingParts(copy); }} placeholder="Qty" className="w-full pl-16 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
+                         <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₹</span><input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-10 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
+                         <select value={part.status || "pending"} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], status: e.target.value }; setEditingParts(copy); }} className={`px-6 py-4 bg-white border border-gray-100 rounded-xl text-[9px] font-black uppercase tracking-widest outline-none ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500 font-bold"}`}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+                      </div>
+                    </div>
+                  ))}
+                  {editingParts.length === 0 && <div className="py-20 text-center text-gray-300 font-black uppercase tracking-widest text-[10px] border-2 border-dashed border-gray-100 rounded-[3rem]">No spare parts requested</div>}
+                </>
+              )}
+            </div>
+            
             <div className="px-10 py-6 pb-12 border-t border-gray-100 bg-gray-50/50 flex gap-4">
-               <button onClick={() => setIssueEntries([...issueEntries, { issue: '', issueAmount: '', issueStatus: 'pending' }])} className="px-8 py-4 rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Append Work Entry</button>
+               {activeModalTab === "issues" ? (
+                 <button onClick={() => setIssueEntries([...issueEntries, { issue: '', issueAmount: '', issueStatus: 'pending' }])} className="px-8 py-4 rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Append Work Entry</button>
+               ) : (
+                 <button onClick={() => setEditingParts([...editingParts, { partName: '', qty: 1, price: 0, status: 'pending' }])} className="px-8 py-4 rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Append Spare Part</button>
+               )}
                <button onClick={async () => {
                   try {
-                    const toSave = issueEntries.filter(e => e.issue?.trim());
-                    for (const entry of toSave) {
-                      if (entry.id) await api.put(`/all-services/${editingIssueId}/issues/${entry.id}`, { issue: entry.issue.trim(), issueAmount: Number(entry.issueAmount || 0) });
-                      else await api.post(`/all-services/${editingIssueId}/issues`, { issue: entry.issue.trim(), issueAmount: Number(entry.issueAmount || 0) });
+                    // Synchronize Issues
+                    const issuesToSave = issueEntries.filter(e => e.issue?.trim());
+                    for (const entry of issuesToSave) {
+                      if (entry.id) await api.put(`/all-services/${editingIssueId}/issues/${entry.id}`, { issue: entry.issue.trim(), issueAmount: Number(entry.issueAmount || 0), issueStatus: entry.issueStatus || 'pending' });
+                      else await api.post(`/all-services/${editingIssueId}/issues`, { issue: entry.issue.trim(), issueAmount: Number(entry.issueAmount || 0), issueStatus: entry.issueStatus || 'pending' });
                     }
-                    toast.success('Technical log synchronized'); setIssueModalVisible(false); setEditingIssueId(null); loadData();
+                    
+                    // Synchronize Parts
+                    const partsToSave = editingParts.filter(p => p.partName?.trim());
+                    if (partsToSave.length > 0 || editingParts.length === 0) {
+                       await api.post(`/all-services/${editingIssueId}/parts`, { parts: partsToSave.map(p => ({ ...p, status: p.status || 'pending'})) });
+                    }
+
+                    toast.success('Manifest synchronized successfully'); 
+                    setIssueModalVisible(false); 
+                    setEditingIssueId(null); 
+                    setActiveModalTab("issues");
+                    loadData();
                   } catch (error) { toast.error('Synchronization failed'); }
                }} className="flex-1 rounded-2xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Synchronize Manifest</button>
             </div>
