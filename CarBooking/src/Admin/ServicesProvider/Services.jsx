@@ -129,7 +129,7 @@ export default function Services() {
       total: services.length,
       assigned: services.filter(s => !!s.assignedEmployeeId).length,
       unassigned: services.filter(s => !s.assignedEmployeeId).length,
-      completed: services.filter(s => (s.serviceStatus || "").toLowerCase().includes("completed")).length
+      completed: services.filter(s => (s.serviceStatus || s.status || "").toLowerCase().includes("completed")).length
     };
   }, [services]);
 
@@ -145,8 +145,15 @@ export default function Services() {
   const totalPages = Math.ceil(listData.length / itemsPerPage);
   const paginatedData = listData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const getMappedStatus = (status) => {
+    if (!status) return "Booked";
+    const found = STATUS_STEPS.find(s => s.toLowerCase() === status.toLowerCase());
+    return found || "Booked";
+  };
+
   const getStatusColor = (status) => {
-    switch (status) {
+    const mapped = getMappedStatus(status);
+    switch (mapped) {
       case "Booked": case "Approved": return "bg-indigo-100 text-indigo-700";
       case "Processing": return "bg-purple-100 text-purple-700";
       case "Waiting for Spare": return "bg-yellow-100 text-yellow-800";
@@ -166,6 +173,16 @@ export default function Services() {
       loadData();
     } catch {
       toast.error("Failed to delete service");
+    }
+  };
+
+  const handleUpdateStatus = async (id, newStatus) => {
+    try {
+      await api.put(`/all-services/${id}/status`, { serviceStatus: newStatus });
+      toast.success(`Status updated to ${newStatus}`);
+      loadData();
+    } catch (error) {
+      toast.error("Failed to update status");
     }
   };
 
@@ -248,7 +265,13 @@ export default function Services() {
                   <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block mb-1">SERVICE ID</span>
                   <p className="text-sm font-black text-blue-900">{item.bookingId || `SER-${item.id}`}</p>
                 </div>
-                <div className={`px-4 py-2 rounded-full text-[10px] font-black tracking-widest border transition-all ${getStatusColor(item.serviceStatus)}`}>{(item.serviceStatus || "Booked").toUpperCase()}</div>
+                <select 
+                  value={getMappedStatus(item.serviceStatus || item.status)}
+                  onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
+                  className={`px-4 py-2 rounded-[1.5rem] text-[10px] font-black tracking-widest border transition-all outline-none cursor-pointer appearance-none text-center ${getStatusColor(item.serviceStatus || item.status)}`}
+                >
+                  {STATUS_STEPS.map(s => <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>)}
+                </select>
               </div>
               <div className="space-y-5 flex-1 relative z-10">
                 <div>
@@ -272,6 +295,9 @@ export default function Services() {
               </div>
               <div className="mt-8 pt-6 border-t border-gray-50 flex gap-3">
                  {!item.assignedEmployeeId && <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="flex-1 rounded-2xl bg-black py-4 text-[10px] font-black text-white hover:bg-blue-600 transition-all uppercase tracking-widest">Assign Technician</button>}
+                 {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                   <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all" title="Add Parts"><FaPlus /></button>
+                 )}
                  <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all"><FaEye /></button>
                  <button onClick={() => handleDelete(item.id)} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all"><FaTrash /></button>
               </div>
@@ -322,8 +348,24 @@ export default function Services() {
                         <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-3 py-2 rounded-xl border border-amber-100">Pending Assignment</button>
                       )}
                     </td>
-                    <td className="px-8 py-6 text-center"><span className={`px-3 py-1.5 rounded-full text-[9px] font-black border tracking-widest uppercase transition-all ${getStatusColor(item.serviceStatus)}`}>{item.serviceStatus || "Booked"}</span></td>
-                    <td className="px-8 py-6 text-right"><div className="flex justify-end gap-2"><button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"><FaEye /></button><button onClick={() => handleDelete(item.id)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-red-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"><FaTrash /></button></div></td>
+                    <td className="px-8 py-6 text-center">
+                      <select
+                        value={getMappedStatus(item.serviceStatus || item.status)}
+                        onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
+                        className={`px-3 py-1.5 rounded-full text-[9px] font-black border tracking-widest uppercase transition-all outline-none cursor-pointer appearance-none text-center ${getStatusColor(item.serviceStatus || item.status)}`}
+                      >
+                        {STATUS_STEPS.map(s => <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>)}
+                      </select>
+                    </td>
+                    <td className="px-8 py-6 text-right">
+                      <div className="flex justify-end gap-2">
+                        {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                          <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-emerald-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Add Parts"><FaPlus /></button>
+                        )}
+                        <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"><FaEye /></button>
+                        <button onClick={() => handleDelete(item.id)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-red-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all"><FaTrash /></button>
+                      </div>
+                    </td>
                   </tr>
                 ))
               )}
