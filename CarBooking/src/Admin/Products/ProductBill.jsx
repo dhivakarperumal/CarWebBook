@@ -181,7 +181,7 @@ const ProductBilling = () => {
   };
 
   const inputClass = "w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm focus:ring-2 focus:ring-black outline-none transition";
-  const btnClass = "bg-gradient-to-r from-black to-cyan-400 text-white px-6 py-3 rounded hover:from-cyan-400 hover:to-black transition-all duration-500 ease-in-out hover:scale-105 hover:shadow-lg";
+  const btnClass = "bg-black text-white px-6 py-3 rounded-xl hover:bg-gray-800 transition-all font-bold shadow-lg active:scale-95";
 
   return (
     <div className="max-w-6xl mx-auto bg-white p-4 rounded-2xl shadow space-y-6">
@@ -248,7 +248,7 @@ const ProductBilling = () => {
       {/* CART TABLE */}
       <div className="overflow-x-auto bg-white rounded-xl mt-4 shadow">
         <table className="w-full text-sm whitespace-nowrap">
-          <thead className="bg-gradient-to-r from-black to-cyan-400 text-white text-left">
+          <thead className="bg-black text-white text-left">
             <tr>
               <th className="px-4 py-4">S No</th>
               <th className="px-4 py-4">Product</th>
