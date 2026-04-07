@@ -22,10 +22,10 @@ export default function Reviews() {
       try {
         setLoading(true);
         const res = await api.get("/reviews");
-        
+
         // Filter for approved reviews (status === true or status === 1)
         const approvedReviews = res.data.filter((r) => r.status === 1 || r.status === true);
-        
+
         console.log('[Reviews] Fetched:', res.data.length, 'reviews, Approved:', approvedReviews.length);
         setReviews(approvedReviews);
       } catch (error) {
@@ -40,7 +40,7 @@ export default function Reviews() {
   }, []);
 
   if (loading) return null;
-  
+
   if (!reviews.length) return null;
 
   return (
@@ -152,29 +152,13 @@ export default function Reviews() {
               {reviews.map((r) => (
                 <SwiperSlide key={r.id}>
                   <div
-                    className="group relative h-[280px] rounded-3xl p-8
-                      bg-[#050b14]/80 backdrop-blur-xl
-                      border border-sky-400 overflow-hidden mt-5 mb-5
-                      hover:-translate-y-2
-                      hover:border-sky-400/40
-                      hover:shadow-[0_15px_40px_rgba(56,189,248,0.25)]
-
-                      transition-all duration-700 ease-out
-                      flex flex-col mr-0.5 min-h-0"
+                    className="relative h-[280px] rounded-3xl p-8
+  bg-[#050b14]/80 backdrop-blur-xl
+  border border-sky-400 overflow-hidden mt-5 mb-5
+  transition-all duration-300
+  flex flex-col mr-0.5 min-h-0"
                   >
-                    {/* Glow sweep */}
-                    <div
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100
-                        bg-gradient-to-r from-sky-500/20 via-sky-400/30 to-sky-500/20
-                        transition duration-700"
-                    />
 
-                    {/* Inner glass ring */}
-                    <div
-                      className="absolute inset-0 rounded-3xl opacity-0 group-hover:opacity-100
-                        shadow-[inset_0_0_40px_rgba(56,189,248,0.4)]
-                        transition duration-700"
-                    />
 
                     {/* HEADER */}
                     <div className="flex items-center gap-4 mb-4">
@@ -207,13 +191,13 @@ export default function Reviews() {
                     </div>
 
                     {/* MESSAGE */}
-                    <div className="flex-1 overflow-hidden">
-  <div className="h-full overflow-y-auto pr-2 custom-scroll">
-    <p className="text-gray-300 italic leading-relaxed">
-      “{r.message}”
-    </p>
-  </div>
-</div>
+                    <div className="flex-1 min-h-0">
+                      <div className="h-full overflow-y-auto pr-2 no-scrollbar">
+                        <p className="text-gray-300 italic leading-relaxed">
+                          “{r.message}”
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </SwiperSlide>
               ))}
