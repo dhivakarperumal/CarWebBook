@@ -1,10 +1,34 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import api from "../../api";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { FaTable, FaThLarge } from "react-icons/fa";
-import { FaEdit, FaTrash } from "react-icons/fa";
 import Pagination from "../../Components/Pagination";
+import { 
+  FaTable, 
+  FaThLarge, 
+  FaEdit, 
+  FaTrashAlt, 
+  FaThList, 
+  FaWarehouse, 
+  FaStar, 
+  FaCheckCircle,
+  FaSearch,
+  FaPlus
+} from "react-icons/fa";
+
+const StatCard = ({ title, value, icon, gradient }) => (
+  <div className="bg-white border border-gray-300 rounded-md p-6 shadow-sm hover:shadow-md transition">
+    <div className="flex justify-between items-center">
+      <div>
+        <p className="text-xs text-slate-500 uppercase font-black tracking-widest">{title}</p>
+        <h2 className="text-2xl font-black text-slate-900 mt-1">{value}</h2>
+      </div>
+      <div className={`p-4 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-lg shadow-black/10`}>
+        {icon}
+      </div>
+    </div>
+  </div>
+);
 
 const ITEMS_PER_PAGE = 6;
 
@@ -30,6 +54,15 @@ const AllProducts = () => {
   };
 
   useEffect(() => { fetchProducts(); }, []);
+
+  /* STATS */
+  const stats = useMemo(() => {
+    const totalProducts = products.length;
+    const totalStock = products.reduce((sum, p) => sum + Number(p.totalStock || 0), 0);
+    const featuredCount = products.filter(p => p.isFeatured).length;
+    const activeCount = products.filter(p => p.isActive).length;
+    return { totalProducts, totalStock, featuredCount, activeCount };
+  }, [products]);
 
   /* DELETE */
   const handleDelete = async (docId) => {
@@ -79,51 +112,80 @@ const AllProducts = () => {
   if (loading) return <div className="p-6">Loading products...</div>;
 
   return (
-    <div className="p-6 min-h-screen">
-      {/* HEADER */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
-        <div className="w-full max-w-md">
+    <div className="p-6 min-h-screen space-y-8 animate-fadeIn">
+      {/* STATS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard 
+          title="Total Products" 
+          value={stats.totalProducts} 
+          icon={<FaThList />} 
+          gradient="from-blue-600 to-blue-400" 
+        />
+        <StatCard 
+          title="Total Stock" 
+          value={stats.totalStock} 
+          icon={<FaWarehouse />} 
+          gradient="from-emerald-600 to-emerald-400" 
+        />
+        <StatCard 
+          title="Featured Items" 
+          value={stats.featuredCount} 
+          icon={<FaStar />} 
+          gradient="from-amber-600 to-amber-400" 
+        />
+        <StatCard 
+          title="Active Products" 
+          value={stats.activeCount} 
+          icon={<FaCheckCircle />} 
+          gradient="from-indigo-600 to-indigo-400" 
+        />
+      </div>
+
+      {/* SEARCH/FILTERS ROW */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div className="lg:col-span-4 relative group">
+          <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors" />
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder="Search catalog by name..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full border border-gray-300 bg-white px-4 py-3 rounded-md text-sm shadow-sm focus:ring-2 focus:ring-black outline-none transition"
+            className="w-full pl-12 pr-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-sm"
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="lg:col-span-8 flex flex-wrap items-center justify-end gap-4">
           <select
             value={filter}
             onChange={(e) => { setFilter(e.target.value); setPage(1); }}
-            className="h-[42px] w-full sm:w-auto flex-1 min-w-[140px] border border-gray-300 bg-white px-4 rounded-md text-sm shadow-sm focus:ring-2 focus:ring-black outline-none transition"
+            className="h-[56px] px-8 bg-white border border-gray-200 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm"
           >
-            <option value="all">All</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="featured">Featured</option>
+            <option value="all">Global Catalog</option>
+            <option value="active">Active Only</option>
+            <option value="inactive">Inactive Only</option>
+            <option value="featured">Featured Listing</option>
           </select>
 
-          <div className="flex w-full sm:w-auto gap-2">
+          <div className="flex h-[56px] bg-gray-50 p-1 rounded-2xl border border-gray-100 shadow-inner">
             <button
               onClick={() => setView("table")}
-              className={`h-[42px] flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 rounded-md text-sm border shadow-sm transition ${view === "table" ? "bg-black text-white border-black" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"}`}
+              className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}
             >
               <FaTable /> Table
             </button>
             <button
               onClick={() => setView("card")}
-              className={`h-[42px] flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 rounded-md text-sm border shadow-sm transition ${view === "card" ? "bg-black text-white border-black" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-100"}`}
+              className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === "card" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}
             >
-              <FaThLarge /> Card
+              <FaThLarge /> Cards
             </button>
           </div>
 
           <button
             onClick={() => navigate("/admin/addproducts")}
-            className="h-[42px] w-full sm:w-auto bg-black text-white px-5 rounded-md font-bold shadow hover:bg-gray-900 transition"
+            className="h-[56px] px-10 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 flex items-center gap-3 active:scale-95"
           >
-            + Add Product
+            <FaPlus /> Build New Product
           </button>
         </div>
       </div>
@@ -194,8 +256,8 @@ const AllProducts = () => {
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-2">
-                      <button onClick={() => handleEdit(p)} className="p-3 rounded-full border border-gray-300 transition"><FaEdit /></button>
-                      <button onClick={() => handleDelete(p.docId)} className="p-3 rounded-full border border-gray-300 transition"><FaTrash /></button>
+                      <button onClick={() => handleEdit(p)} className="p-3 rounded-full border border-gray-300 transition hover:bg-black hover:text-white"><FaEdit /></button>
+                      <button onClick={() => handleDelete(p.docId)} className="p-3 rounded-full border border-gray-300 transition hover:bg-red-50 hover:text-red-600"><FaTrashAlt /></button>
                     </div>
                   </td>
                 </tr>
