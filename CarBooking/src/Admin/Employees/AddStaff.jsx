@@ -366,7 +366,7 @@ const AddEditStaff = () => {
           await api.post('/staff', payload);
           toast.success('Staff added successfully');
         }
-        setTimeout(() => navigate('/admin/staff'), 800);
+        setTimeout(() => navigate('/admin/employees'), 800);
       } catch (err) {
         console.error(err);
         throw err;

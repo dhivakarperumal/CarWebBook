@@ -666,12 +666,12 @@ export default function AdminAssignServices() {
                 >
                   <option value="">Select a booking...</option>
                   {bookings
-                    .filter((b) => !b.assignedEmployeeId)
-                    .map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.brand} {b.model} - {b.name}
-                      </option>
-                    ))}
+                  .filter((b) => !b.assignedEmployeeId && (b.status || "").toLowerCase() === "approved")
+                  .map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.brand} {b.model} - {b.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
