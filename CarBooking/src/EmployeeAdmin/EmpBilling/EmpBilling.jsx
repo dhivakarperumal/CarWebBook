@@ -9,7 +9,8 @@ import {
   AlertCircle,
   LayoutGrid,
   List,
-  Plus
+  Plus,
+  Trash
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -117,6 +118,27 @@ const EmpBilling = () => {
       toast.error("Failed to load bill details");
     } finally {
       setDetailLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async (id, newStatus) => {
+    try {
+      await api.patch(`/billings/${id}`, { paymentStatus: newStatus });
+      toast.success(`Payment status updated to ${newStatus}`);
+      loadData();
+    } catch {
+      toast.error("Failed to update status");
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this invoice permanently?")) return;
+    try {
+      await api.delete(`/billings/${id}`);
+      toast.success("Invoice deleted");
+      loadData();
+    } catch {
+      toast.error("Failed to delete invoice");
     }
   };
 
@@ -274,7 +296,19 @@ const EmpBilling = () => {
           {paginatedBills.map((bill) => (
             <div key={bill.id} className="group bg-white rounded-[2rem] border border-gray-100 p-8 hover:shadow-2xl hover:border-blue-100 transition-all duration-500 flex flex-col">
               <div className="flex justify-between items-start mb-6">
-                 <StatusBadge status={bill.paymentStatus} />
+                 <select 
+                   value={bill.paymentStatus?.toLowerCase() || "pending"}
+                   onChange={(e) => handleUpdateStatus(bill.id, e.target.value)}
+                   className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 border-transparent transition-all outline-none cursor-pointer appearance-none text-center shadow-sm ${
+                    bill.paymentStatus?.toLowerCase() === "paid" ? "bg-emerald-500 text-white" :
+                    bill.paymentStatus?.toLowerCase() === "partial" ? "bg-orange-500 text-white" :
+                    "bg-amber-500 text-white"
+                   }`}
+                 >
+                   <option value="pending" className="bg-white text-black">Pending</option>
+                   <option value="partial" className="bg-white text-black">Partial</option>
+                   <option value="paid" className="bg-white text-black">Paid</option>
+                 </select>
                  <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">INV: {bill.invoiceNo}</span>
               </div>
 
@@ -302,9 +336,9 @@ const EmpBilling = () => {
               <div className="mt-auto flex items-center gap-3">
                  <button 
                   onClick={() => fetchAndPrint(bill.id)}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 text-white rounded-xl text-xs font-black hover:bg-black transition-all shadow-lg shadow-gray-200"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 text-white rounded-xl text-[10px] font-black hover:bg-black transition-all shadow-lg"
                  >
-                    <Printer size={16} /> Print Copy
+                    <Printer size={16} /> Print
                  </button>
                  <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs" title="View Detail">
                     <History size={16} />
@@ -344,7 +378,19 @@ const EmpBilling = () => {
                     <p className="font-black text-emerald-600">₹{Number(bill.grandTotal).toLocaleString()}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <StatusBadge status={bill.paymentStatus} />
+                    <select 
+                      value={bill.paymentStatus?.toLowerCase() || "pending"}
+                      onChange={(e) => handleUpdateStatus(bill.id, e.target.value)}
+                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 border-transparent transition-all outline-none cursor-pointer appearance-none text-center shadow-sm ${
+                        bill.paymentStatus?.toLowerCase() === "paid" ? "bg-emerald-500 text-white" :
+                        bill.paymentStatus?.toLowerCase() === "partial" ? "bg-orange-500 text-white" :
+                        "bg-amber-500 text-white"
+                      }`}
+                    >
+                      <option value="pending" className="bg-white text-black">Pending</option>
+                      <option value="partial" className="bg-white text-black">Partial</option>
+                      <option value="paid" className="bg-white text-black">Paid</option>
+                    </select>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
@@ -361,6 +407,13 @@ const EmpBilling = () => {
                         title="Print"
                        >
                           <Printer size={16} />
+                       </button>
+                       <button 
+                        onClick={() => handleDelete(bill.id)}
+                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete"
+                       >
+                          <Trash size={16} />
                        </button>
                     </div>
                   </td>

@@ -131,13 +131,20 @@ export default function Services() {
   }, [services, search, dateFilter]);
 
   const stats = useMemo(() => {
+    const relevantServices = isMechanic 
+      ? services.filter(s => (s.assignedEmployeeName || "").toLowerCase() === (userProfile?.displayName || "").toLowerCase())
+      : services;
+
     return {
-      total: services.length,
-      assigned: services.filter(s => !!s.assignedEmployeeId).length,
-      unassigned: services.filter(s => !s.assignedEmployeeId).length,
-      completed: services.filter(s => (s.serviceStatus || s.status || "").toLowerCase().includes("completed")).length
+      total: relevantServices.length,
+      assigned: relevantServices.filter(s => !!s.assignedEmployeeId).length,
+      unassigned: isMechanic ? 0 : relevantServices.filter(s => !s.assignedEmployeeId).length,
+      completed: relevantServices.filter(s => {
+        const sStat = (s.serviceStatus || s.status || "").toLowerCase();
+        return sStat.includes("completed") || sStat.includes("bill completed");
+      }).length
     };
-  }, [services]);
+  }, [services, isMechanic, userProfile]);
 
   const currentMainList = mainTab === "booked" ? searchedServices.filter(s => !s.addVehicle) : searchedServices.filter(s => s.addVehicle);
   const assignedServices = currentMainList.filter(s => {
@@ -299,8 +306,12 @@ export default function Services() {
               </div>
               <div className="space-y-5 flex-1 relative z-10">
                 <div>
-                  <h3 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors uppercase">{item.brand} {item.model}</h3>
-                  <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 w-fit px-3 py-1 rounded-xl border border-blue-100 mt-1">{item.vehicleNumber || "UNSPECIFIED"}</p>
+                  <h3 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors uppercase truncate">
+                    {item.brand || "Unspecified"} {item.model || "Vehicle"}
+                  </h3>
+                  <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 w-fit px-3 py-1 rounded-xl border border-blue-100 mt-1">
+                    {item.vehicleNumber || "NO PLATE"}
+                  </p>
                 </div>
                 <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100 space-y-4">
                   <div className="flex items-center gap-4">
@@ -317,14 +328,14 @@ export default function Services() {
                    <div className="space-y-2">{item.issues?.slice(0, 2).map((iss, i) => <p key={i} className="text-xs font-bold text-gray-600 line-clamp-1 flex items-center gap-2"><span className="w-1 h-1 bg-blue-400 rounded-full" />{iss.issue}</p>) || <p className="text-xs italic text-gray-400">No log entries</p>}</div>
                 </div>
               </div>
-              <div className="mt-8 pt-6 border-t border-gray-50 flex gap-3">
-                 {!item.assignedEmployeeId && <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="flex-1 rounded-2xl bg-black py-4 text-[10px] font-black text-white hover:bg-blue-600 transition-all uppercase tracking-widest">Assign Technician</button>}
+              <div className="mt-6 pt-6 border-t border-gray-50 flex flex-wrap gap-2">
+                 {!item.assignedEmployeeId && <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="w-full rounded-2xl bg-black py-4 text-[10px] font-black text-white hover:bg-blue-600 transition-all uppercase tracking-widest mb-2">Assign Technician</button>}
                  {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
-                   <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all" title="Add Parts"><FaPlus /></button>
+                   <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all border border-transparent hover:border-emerald-100" title="Add Parts"><FaPlus className="mr-2" /> Parts</button>
                  )}
-                                   <button onClick={() => handleOpenIssueModal(item)} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all" title="Edit Log & Parts"><FaEdit /></button>
-                 <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all" title="View Details"><FaEye /></button>
-                 <button onClick={() => handleDelete(item.id)} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all" title="Delete"><FaTrash /></button>
+                 <button onClick={() => handleOpenIssueModal(item)} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all border border-transparent hover:border-amber-100" title="Edit Log & Parts"><FaEdit className="mr-2" /> Log</button>
+                 <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100" title="View Details"><FaEye /></button>
+                 <button onClick={() => handleDelete(item.id)} className="h-11 w-11 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all border border-transparent hover:border-red-100" title="Delete"><FaTrash /></button>
               </div>
             </div>
           ))}

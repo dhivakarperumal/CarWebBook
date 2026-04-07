@@ -268,7 +268,7 @@ const OverallAttendance = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-2xl shadow-slate-200/50">
+      <div className=" overflow-hidden ">
         {loading ? (
           <div className="p-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Synchronizing Data...</div>
         ) : paginatedData.length === 0 ? (
