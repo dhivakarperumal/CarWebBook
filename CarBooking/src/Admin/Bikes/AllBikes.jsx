@@ -109,15 +109,10 @@ const AllBikes = ({ defaultType = "all" }) => {
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fadeIn">
       
       {/* HEADER */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 ">
         <div className="flex items-center gap-5">
-          <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-black to-blue-800 flex items-center justify-center shadow-xl shadow-blue-200 rotate-3">
-             {defaultType === 'Car' ? <Car className="text-white w-8 h-8 -rotate-3" /> : <Bike className="text-white w-8 h-8 -rotate-3" />}
-          </div>
-          <div>
-             <h1 className="text-3xl font-black text-gray-900">{defaultType === 'all' ? 'Vehicle Inventory' : `${defaultType} Inventory`}</h1>
-             <p className="text-sm font-bold text-gray-400 mt-1 uppercase tracking-widest">Manage your marketplace listings</p>
-          </div>
+         
+         
         </div>
 
         <div className="flex flex-wrap items-center gap-4">

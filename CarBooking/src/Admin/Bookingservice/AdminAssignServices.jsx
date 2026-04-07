@@ -88,15 +88,8 @@ export default function AdminAssignServices() {
     });
   }, [bookings, mainTab]);
 
-  const assignedCount = currentMainList.filter((b) => b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed").length;
-  const unassignedCount = currentMainList.filter((b) => !b.assignedEmployeeId).length;
-  const approvedCount = currentMainList.filter((b) => (b.status || "").toLowerCase() === "approved").length;
-  const completedCount = currentMainList.filter((b) => (b.status || "").toLowerCase() === "service completed").length;
-  const allCount = currentMainList.length;
-
-  /* 🔍 SEARCH */
-  const filteredBookings = useMemo(() => {
-    return currentMainList.filter((b) => {
+  const dateFilteredList = useMemo(() => {
+    const baseList = currentMainList.filter((b) => {
       const search = searchText.toLowerCase();
 
       const matchSearch =
@@ -142,8 +135,21 @@ export default function AdminAssignServices() {
         matchDate = bookingDate >= lastMonth;
       }
 
-      if (!matchDate) return false;
+      return matchDate;
+    });
 
+    return baseList;
+  }, [currentMainList, searchText, dateFilter]);
+
+  // Dynamic counts based on date filtered data
+  const assignedCount = dateFilteredList.filter((b) => b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed").length;
+  const unassignedCount = dateFilteredList.filter((b) => !b.assignedEmployeeId).length;
+  const approvedCount = dateFilteredList.filter((b) => (b.status || "").toLowerCase() === "approved").length;
+  const completedCount = dateFilteredList.filter((b) => (b.status || "").toLowerCase() === "service completed").length;
+  const allCount = dateFilteredList.length;
+
+  const filteredBookings = useMemo(() => {
+    return dateFilteredList.filter((b) => {
       // Status filter
       if (tab === "unassigned") return !b.assignedEmployeeId;
       if (tab === "assigned") return !!b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed";
@@ -152,7 +158,7 @@ export default function AdminAssignServices() {
 
       return true;
     });
-  }, [currentMainList, searchText, tab, dateFilter]);
+  }, [dateFilteredList, tab]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -264,7 +270,7 @@ export default function AdminAssignServices() {
                 await fetchEmployees();
                 setGlobalModalVisible(true);
               }}
-              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-500 text-white px-5 py-2.5 rounded-xl hover:shadow-lg hover:shadow-cyan-500/30 transition-all font-semibold"
+              className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-xl hover:bg-gray-800 transition-all font-semibold shadow-lg"
             >
               <Plus className="w-5 h-5" />
               Assign Service
@@ -273,7 +279,7 @@ export default function AdminAssignServices() {
             {mainTab === "addVehicle" && (
               <button
                 onClick={() => window.location.href = "/admin/addservicevehicle"}
-                className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-xl hover:shadow-lg transition-all font-semibold"
+                className="flex items-center gap-2 bg-black text-white px-5 py-2.5 rounded-xl hover:bg-gray-800 transition-all font-semibold"
               >
                 <Plus className="w-5 h-5" />
                 Register New Vehicle
@@ -512,7 +518,7 @@ export default function AdminAssignServices() {
                   {!item.assignedEmployeeId && (
                     <button
                       onClick={() => openAssignModal(item)}
-                      className="mt-8 w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-500/25 hover:bg-blue-700 hover:-translate-y-1 transition-all duration-300 uppercase tracking-widest text-xs"
+                      className="mt-8 w-full bg-black text-white font-black py-4 rounded-2xl shadow-xl hover:bg-gray-800 transition-all duration-300 uppercase tracking-widest text-xs"
                     >
                       Assign Mechanic
                     </button>
@@ -524,7 +530,7 @@ export default function AdminAssignServices() {
         ) : (
           <div className="overflow-x-auto bg-white rounded-3xl shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden animate-fadeIn">
             <table className="w-full text-sm text-left whitespace-nowrap">
-              <thead className="bg-[#87a5b3] text-white">
+              <thead className="bg-black text-white">
                 <tr>
                   <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">S No</th>
                   <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Booking ID</th>
@@ -608,7 +614,7 @@ export default function AdminAssignServices() {
                         {!item.assignedEmployeeId ? (
                           <button
                             onClick={() => openAssignModal(item)}
-                            className="bg-black text-white text-[10px] font-black px-4 py-2.5 rounded-xl hover:bg-blue-600 transition-all uppercase tracking-widest shadow-lg shadow-black/10"
+                            className="bg-black text-white text-[10px] font-black px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-all uppercase tracking-widest shadow-lg shadow-black/10"
                           >
                             Assign
                           </button>
@@ -699,7 +705,7 @@ export default function AdminAssignServices() {
               <button
                 disabled={!selectedBooking || !selectedEmployeeId || assigning}
                 onClick={assignEmployee}
-                className="flex-1 px-4 py-3 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-blue-500/20"
+                className="flex-1 px-4 py-3 text-sm font-bold text-white bg-black hover:bg-gray-800 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md"
               >
                 {assigning ? "Assigning..." : "Assign"}
               </button>
@@ -767,7 +773,7 @@ export default function AdminAssignServices() {
               <button
                 disabled={!selectedEmployeeId || assigning}
                 onClick={assignEmployee}
-                className="flex-1 px-4 py-3 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-blue-500/20"
+                className="flex-1 px-4 py-3 text-sm font-bold text-white bg-black hover:bg-gray-800 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md"
               >
                 {assigning ? "Assigning..." : "Assign"}
               </button>

@@ -420,7 +420,7 @@ export default function Services() {
             </select>
             <button
               onClick={() => navigate(`${pathPrefix}/addserviceparts`)}
-              className="flex-1 md:flex-none rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-blue-700 shadow-md whitespace-nowrap"
+              className="flex-1 md:flex-none rounded-xl bg-black px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-gray-800 shadow-md whitespace-nowrap"
             >
               + Add Service Parts
             </button>
@@ -431,11 +431,11 @@ export default function Services() {
         {/* 🔹 SUB TABS */}
         <div className="mb-8 flex space-x-2">
           {!isMechanic ? (
-            <div className="rounded-full bg-blue-600 px-5 py-2 text-sm font-bold text-white shadow-md">
+            <div className="rounded-full bg-black px-5 py-2 text-sm font-bold text-white shadow-md">
               Assigned Services ({assignedCount})
             </div>
           ) : (
-            <div className="rounded-full bg-blue-600 px-5 py-2 text-sm font-bold text-white shadow-md">
+            <div className="rounded-full bg-black px-5 py-2 text-sm font-bold text-white shadow-md">
               My Assigned Tasks ({assignedCount})
             </div>
           )}
@@ -642,7 +642,7 @@ export default function Services() {
                           setSelectedBooking(item);
                           setModalVisible(true);
                         }}
-                        className="flex-1 rounded-xl bg-blue-50 p-2.5 text-sm font-bold text-blue-600 hover:bg-blue-600 hover:text-white transition-all border border-blue-100 hover:border-blue-600"
+                        className="flex-1 rounded-xl bg-black p-2.5 text-sm font-bold text-white hover:bg-gray-800 transition-all border border-black"
                       >
                         Assign
                       </button>
@@ -684,7 +684,7 @@ export default function Services() {
           /* TABLE VIEW */
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm text-gray-600 whitespace-nowrap">
-              <thead className="border-b border-gray-200 bg-gray-50 text-gray-900">
+              <thead className="border-b border-gray-200 bg-black text-white">
                 <tr>
                   <th className="px-6 py-4 font-bold">S No</th>
                   <th className="px-6 py-4 font-bold">ID</th>
@@ -850,7 +850,7 @@ export default function Services() {
                             setSelectedBooking(item);
                             setModalVisible(true);
                           }}
-                          className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-600 hover:text-white transition-all border border-blue-100"
+                          className="rounded-lg bg-black px-3 py-1.5 text-xs font-bold text-white hover:bg-gray-800 transition-all border border-black shadow-sm"
                         >
                           Assign Mode
                         </button>

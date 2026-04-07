@@ -173,7 +173,7 @@ const EmpBookings = () => {
               <div className="mt-auto">
                  <button 
                   onClick={() => navigate(`/employee/cars`)}
-                  className="w-full py-4 bg-gray-50 text-gray-500 font-black text-xs uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 group-hover:bg-blue-600 group-hover:text-white group-hover:shadow-xl group-hover:shadow-blue-200 transition-all duration-300"
+                  className="w-full py-4 bg-black text-white font-black text-xs uppercase tracking-widest rounded-2xl flex items-center justify-center gap-2 group-hover:bg-black group-hover:text-white group-hover:shadow-xl group-hover:shadow-blue-200 transition-all duration-300"
                  >
                     <CheckCircle2 size={16} /> Update Progress
                  </button>

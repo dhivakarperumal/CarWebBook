@@ -560,22 +560,15 @@ const AddBike = ({ defaultType = "Bike" }) => {
   return (
     <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
       {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 ">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-3xl bg-blue-600 flex items-center justify-center shadow-xl shadow-blue-200">
-            {form.type === "Car" ? <Car className="text-white w-8 h-8" /> : <Bike className="text-white w-8 h-8" />}
-          </div>
-          <div>
-            <h1 className="text-3xl font-black text-gray-900 leading-tight">
-              {id ? `Edit ${form.type} Details` : `List Your ${form.type}`}
-            </h1>
-            <p className="text-gray-500 font-medium">Sell your vehicle faster with detailed specifications</p>
-          </div>
+       
+         
         </div>
         <div className="flex items-center gap-3">
           <button 
-            onClick={() => navigate(form.type === "Car" ? "/admin/cars" : "/admin/bikes")}
-            className="px-6 py-3 rounded-2xl font-black text-gray-500 uppercase tracking-widest hover:bg-gray-50 transition-all"
+            onClick={() => navigate(form.type === "Car" ? "/admin/inventory-list" : "/admin/inventory-list")}
+            className="px-6 py-3 rounded-2xl font-black border border-gray-200 text-gray-500 uppercase tracking-widest hover:bg-gray-50 transition-all"
           >
             Cancel
           </button>
