@@ -81,6 +81,7 @@ export const Select = forwardRef(
 
 const BookService = () => {
   const [vehicleType, setVehicleType] = useState("car");
+  const [serviceType, setServiceType] = useState("home"); // home | shop
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -128,7 +129,7 @@ const BookService = () => {
   const searchTimeoutRef = useRef(null);
   const searchLocation = async (query) => {
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
-    
+
     if (!query || query.length < 3) {
       setLocationResults([]);
       return;
@@ -179,8 +180,8 @@ const BookService = () => {
         try {
           const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`);
           if (!res.ok) {
-            const errorMsg = res.status === 429 
-              ? "Location service is busy. Please wait 2nd and try." 
+            const errorMsg = res.status === 429
+              ? "Location service is busy. Please wait 2nd and try."
               : `Service error: ${res.status}`;
             toast.error(errorMsg);
             setTimeout(() => setLocationLoading(false), 2000);
@@ -222,8 +223,10 @@ const BookService = () => {
     if (!formData.brand) newErrors.brand = "Brand is required";
     if (!formData.model) newErrors.model = "Model is required";
     if (!formData.issue) newErrors.issue = "Issue is required";
-    if (!formData.location) newErrors.location = "Location is required";
-    if (!formData.address) newErrors.address = "Address is required";
+    if (serviceType === "home") {
+      if (!formData.location) newErrors.location = "Location is required";
+      if (!formData.address) newErrors.address = "Address is required";
+    }
 
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
@@ -233,6 +236,7 @@ const BookService = () => {
       const bookingId = `BS${Math.floor(100000 + Math.random() * 900000)}`;
       const bookingData = {
         ...formData,
+        place: serviceType,
         bookingId,
         uid: currentUser.uid,
         vehicleType,
@@ -258,7 +262,7 @@ const BookService = () => {
         <section className="py-12 max-w-4xl mx-auto">
           <form className="rounded-3xl border border-sky-500/20 bg-white/5 backdrop-blur-xl p-8 md:p-12 space-y-6">
             <h2 className="text-3xl font-black text-sky-400 mb-8">Service Booking</h2>
-            
+
             <div className="grid md:grid-cols-2 gap-6">
               <Input label="Full Name" name="name" placeholder="John Doe" required error={errors.name} value={formData.name} onChange={handleChange} />
               <Input label="Email Address" name="email" placeholder="john@example.com" disabled value={formData.email} onChange={handleChange} />
@@ -298,19 +302,46 @@ const BookService = () => {
 
             {formData.issue === "Others" && <Input label="Describe Issue" name="otherIssue" onChange={handleChange} />}
 
-            <div className="space-y-4">
-              <label className="block text-sm text-gray-300 font-medium ml-1">Search Location *</label>
-              <input type="text" value={locationQuery} placeholder="Search area..." onChange={(e) => { setLocationQuery(e.target.value); searchLocation(e.target.value); }} className="w-full bg-white/10 rounded-xl border border-white/20 px-5 py-3 text-white focus:ring-2 focus:ring-sky-400 outline-none" />
-              {locationResults.length > 0 && (
-                <div className="mt-2 rounded-xl bg-black border border-white/20 max-h-56 overflow-y-auto">
-                  {locationResults.map(p => <div key={p.place_id} onClick={() => handleSelectLocation(p)} className="px-4 py-3 cursor-pointer text-sm hover:bg-white/10">{p.display_name}</div>)}
-                </div>
-              )}
-              <button type="button" onClick={handleUseCurrentLocation} className="px-6 py-2 rounded-lg bg-sky-500 font-bold hover:bg-sky-600 transition tracking-wide text-xs">USE CURRENT LOCATION</button>
+
+            <div className="flex gap-6 py-4 border-y border-white/10">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  value="home"
+                  checked={serviceType === "home"}
+                  onChange={() => setServiceType("home")}
+                  className="accent-sky-400 w-5 h-5"
+                />
+                <span className="font-bold">Home Service</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  value="shop"
+                  checked={serviceType === "shop"}
+                  onChange={() => setServiceType("shop")}
+                  className="accent-sky-400 w-5 h-5"
+                />
+                <span className="font-bold">Shop Service</span>
+              </label>
             </div>
 
-            <Textarea label="Service Address" name="address" required error={errors.address} onChange={handleChange} />
+            {serviceType === "home" && (
+              <>
+                <div className="space-y-4">
+                  <label className="block text-sm text-gray-300 font-medium ml-1">Search Location *</label>
+                  <input type="text" value={locationQuery} placeholder="Search area..." onChange={(e) => { setLocationQuery(e.target.value); searchLocation(e.target.value); }} className="w-full bg-white/10 rounded-xl border border-white/20 px-5 py-3 text-white focus:ring-2 focus:ring-sky-400 outline-none" />
+                  {locationResults.length > 0 && (
+                    <div className="mt-2 rounded-xl bg-black border border-white/20 max-h-56 overflow-y-auto">
+                      {locationResults.map(p => <div key={p.place_id} onClick={() => handleSelectLocation(p)} className="px-4 py-3 cursor-pointer text-sm hover:bg-white/10">{p.display_name}</div>)}
+                    </div>
+                  )}
+                  <button type="button" onClick={handleUseCurrentLocation} className="px-6 py-2 rounded-lg bg-sky-500 font-bold hover:bg-sky-600 transition tracking-wide text-xs">USE CURRENT LOCATION</button>
+                </div>
 
+                <Textarea label="Service Address" name="address" required error={errors.address} onChange={handleChange} />
+              </>)}
             <div className="flex justify-end pt-8">
               <button onClick={handleSubmit} disabled={submitting} className="w-full md:w-auto px-12 py-4 rounded-full font-black text-white bg-gradient-to-r from-blue-600 to-cyan-400 hover:shadow-[0_0_20px_rgba(56,189,248,0.5)] transition-all cursor-pointer">
                 {submitting ? "BOOKING..." : "BOOK SERVICE →"}

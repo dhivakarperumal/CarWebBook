@@ -23,15 +23,15 @@ exports.createBooking = async (req, res) => {
     const {
       uid, name, email, phone, altPhone,
       brand, model, issue, otherIssue, address,
-      location, latitude, longitude, status, vehicleType = 'car', vehicleNumber
+      location, latitude, longitude, status, vehicleType = 'car', vehicleNumber, place
     } = req.body;
 
     // 1. Insert the record first (without bookingId or with a temp one if needed, but we'll update it)
     const [result] = await db.query(
       `INSERT INTO bookings 
-      (bookingId, uid, name, email, phone, altPhone, brand, model, issue, otherIssue, address, location, latitude, longitude, status, vehicleType, vehicleNumber) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ['TEMP', uid, name, email, phone, altPhone, brand, model, issue, otherIssue, address, location, latitude, longitude, status || 'Booked', vehicleType, vehicleNumber]
+      (bookingId, uid, name, email, phone, altPhone, brand, model, issue, otherIssue, address, location, latitude, longitude, status, vehicleType, vehicleNumber, place) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ['TEMP', uid, name, email, phone, altPhone, brand, model, issue, otherIssue, address, location, latitude, longitude, status || 'Booked', vehicleType, vehicleNumber, place]
     );
 
     const insertId = result.insertId;
@@ -78,8 +78,8 @@ exports.updateBookingStatus = async (req, res) => {
         if (existing.length === 0) {
           await db.query(`
              INSERT INTO all_services (
-               bookingId, bookingDocId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, trackNumber, vehicleNumber, addVehicle
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               bookingId, bookingDocId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, trackNumber, vehicleNumber, addVehicle, place,
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            `, [b.bookingId, b.id, b.uid, b.name, b.phone, b.email, b.brand, b.model, b.issue, b.otherIssue, b.location, b.address, trackNumber || '', b.vehicleNumber || '', b.vehicleType ? 1 : 0]);
         }
       }
