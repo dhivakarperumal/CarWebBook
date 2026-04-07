@@ -24,6 +24,7 @@ const EmpAddBilling = () => {
   const { profileName: userProfile } = useAuth();
 
   const [services, setServices] = useState([]);
+  const [products, setProducts] = useState([]);
   const [search, setSearch] = useState("");
   const [selectedService, setSelectedService] = useState(null);
   const [parts, setParts] = useState([]);
@@ -48,11 +49,16 @@ const EmpAddBilling = () => {
      FETCH ASSIGNED SERVICES ONLY
   ======================= */
   useEffect(() => {
-    const fetchMyServices = async () => {
+    const fetchInitialData = async () => {
       try {
         setLoading(true);
-        const res = await api.get('/all-services');
+        const [res, prodRes] = await Promise.all([
+          api.get('/all-services'),
+          api.get('/products')
+        ]);
 
+        setProducts(prodRes.data || []);
+        
         const mechanicName = userProfile?.displayName || "";
         const myServices = res.data.filter(s => {
           const assignedMatch = (s.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase();
@@ -68,7 +74,7 @@ const EmpAddBilling = () => {
         setLoading(false);
       }
     };
-    if (userProfile?.displayName) fetchMyServices();
+    if (userProfile?.displayName) fetchInitialData();
   }, [userProfile]);
 
   /* =======================
@@ -248,41 +254,42 @@ const EmpAddBilling = () => {
               </div>
 
               {selectionMode === 'online' ? (
-                <div className="space-y-4">
-                  <div className="relative group">
-                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-colors w-5 h-5" />
-                    <input
-                      placeholder="Search assigned cars by ID, name or plate..."
-                      className="w-full pl-14 pr-6 py-4.5 rounded-2xl border border-gray-100 bg-gray-50 font-bold text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-slideUp">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Quick Search</label>
+                    <div className="relative group">
+                      <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-colors w-5 h-5" />
+                      <input
+                        placeholder="Search Booking ID / Plate / Name..."
+                        className="w-full pl-14 pr-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 font-bold text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                      />
+                    </div>
                   </div>
 
-                  {search && (
-                    <div className="bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden animate-slideUp">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Verified Assigned Jobs</label>
+                    <select
+                      className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 font-black text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all cursor-pointer appearance-none shadow-sm"
+                      value={selectedService?.id || ""}
+                      onChange={(e) => {
+                        const s = services.find(srv => String(srv.id) === String(e.target.value));
+                        if (s) selectService(s);
+                        else setSelectedService(null);
+                      }}
+                    >
+                      <option value="" className="text-gray-400 italic">-- Select Verified Job --</option>
                       {services
-                        .filter(s => `${s.bookingId} ${s.name} ${s.phone}`.toLowerCase().includes(search.toLowerCase()))
+                        .filter(s => `${s.bookingId} ${s.name} ${s.phone} ${s.brand} ${s.model}`.toLowerCase().includes(search.toLowerCase()))
                         .map(s => (
-                          <div
-                            key={s.id}
-                            onClick={() => { selectService(s); setSearch(""); }}
-                            className="p-5 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 transition-all group flex items-center justify-between"
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-blue-500 border border-gray-100 shadow-sm group-hover:border-blue-200">
-                                <Car size={24} />
-                              </div>
-                              <div>
-                                <p className="font-black text-gray-900 leading-none mb-1 group-hover:text-blue-600 transition-colors uppercase">{s.bookingId}</p>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{s.name} | {s.brand} {s.model}</p>
-                              </div>
-                            </div>
-                            <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
-                          </div>
-                        ))}
-                    </div>
-                  )}
+                          <option key={s.id} value={s.id}>
+                            {s.bookingId} | {s.name.toUpperCase()}
+                          </option>
+                        ))
+                      }
+                    </select>
+                  </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slideUp">
@@ -324,17 +331,39 @@ const EmpAddBilling = () => {
   <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
 
     {/* Part Name */}
-    <div className="flex flex-col">
+    <div className="flex flex-col sm:col-span-1">
       <label className="text-[10px] font-bold text-gray-400 mb-1">
-        Component Name
+        Component Name (Search or Type)
       </label>
-      <input
-        type="text"
-        placeholder="Enter part name"
-        className="border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-semibold outline-none focus:border-gray-300"
-        value={newPart.partName}
-        onChange={e => setNewPart({ ...newPart, partName: e.target.value })}
-      />
+      <div className="relative group">
+        <input
+          type="text"
+          placeholder="Type or select a spare part..."
+          list="spare-parts-list-emp"
+          className="w-full border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-semibold outline-none focus:border-gray-300 transition-all"
+          value={newPart.partName}
+          onChange={e => {
+            const val = e.target.value;
+            const matchedProduct = products.find(p => p.name === val);
+            if (matchedProduct) {
+              setNewPart({
+                ...newPart,
+                partName: val,
+                price: Number(matchedProduct.offerPrice || matchedProduct.mrp || 0)
+              });
+            } else {
+              setNewPart({ ...newPart, partName: val });
+            }
+          }}
+        />
+        <datalist id="spare-parts-list-emp">
+          {products.map(p => (
+            <option key={p.docId || p.id} value={p.name}>
+              ₹{p.offerPrice || p.mrp}
+            </option>
+          ))}
+        </datalist>
+      </div>
     </div>
 
     {/* Quantity */}
