@@ -7,6 +7,8 @@ import {
   FaMoneyBillWave,
   FaCheckCircle,
   FaTimesCircle,
+  FaShoppingCart,
+  FaStar,
   FaEye,
   FaUndo,
 } from "react-icons/fa";
@@ -92,7 +94,15 @@ const BookedVehicles = () => {
     const total = activeBookings.length;
     const totalAdvance = activeBookings.reduce((sum, b) => sum + Number(b.advanceAmount || 0), 0);
     const confirmed = activeBookings.filter(b => (b.status || "").toLowerCase() === "confirmed" || (b.status || "").toLowerCase() === "booked").length;
-    return { total, totalAdvance, confirmed };
+    
+    const soldBookings = bookings.filter(b => (b.status || "").toLowerCase() === "sold");
+    const soldCount = soldBookings.length;
+    const totalRevenue = soldBookings.reduce((sum, b) => {
+      const net = Number(b.totalPrice || 0) - Number(b.negotiation || 0);
+      return sum + net;
+    }, 0);
+
+    return { total, totalAdvance, confirmed, soldCount, totalRevenue };
   }, [bookings]);
 
   const filteredBookings = useMemo(() => {
@@ -117,7 +127,8 @@ const BookedVehicles = () => {
       // 3. Status Filter
       let matchStatus = true;
       if (statusFilter !== "all") {
-        matchStatus = (b.status || "").toLowerCase() === statusFilter.toLowerCase();
+        const currentStatus = (b.status || "booked").toLowerCase();
+        matchStatus = currentStatus === statusFilter.toLowerCase();
       }
 
       // 4. Delivery Filter (Confirmed/Booked statuses)
@@ -149,10 +160,12 @@ const BookedVehicles = () => {
 
 
       {/* STATS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         <StatCard title="Active Bookings" value={stats.total} icon={<FaCalendarCheck />} gradient="from-blue-600 to-blue-400" />
         <StatCard title="Advance Collected" value={`₹ ${stats.totalAdvance.toLocaleString("en-IN")}`} icon={<FaMoneyBillWave />} gradient="from-emerald-600 to-emerald-400" />
         <StatCard title="Confirmed" value={stats.confirmed} icon={<FaCheckCircle />} gradient="from-indigo-600 to-indigo-400" />
+        <StatCard title="Sold Vehicles" value={stats.soldCount} icon={<FaShoppingCart />} gradient="from-rose-600 to-rose-400" />
+        <StatCard title="Total Revenue" value={`₹ ${stats.totalRevenue.toLocaleString("en-IN")}`} icon={<FaStar />} gradient="from-amber-600 to-amber-400" />
       </div>
 
       {/* SEARCH & FILTERS */}
@@ -285,7 +298,7 @@ const BookedVehicles = () => {
             ))}
             {paginatedBookings.length === 0 && (
               <tr>
-                <td colSpan="6" className="px-8 py-20 text-center text-gray-400 font-bold">No vehicle bookings found.</td>
+                <td colSpan="7" className="px-8 py-20 text-center text-gray-400 font-bold">No vehicle bookings found.</td>
               </tr>
             )}
           </tbody>
