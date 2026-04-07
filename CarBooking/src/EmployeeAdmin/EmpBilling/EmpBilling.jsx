@@ -10,7 +10,8 @@ import {
   LayoutGrid,
   List,
   Plus,
-  Trash
+  Trash,
+  History
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -340,9 +341,20 @@ const EmpBilling = () => {
                  >
                     <Printer size={16} /> Print
                  </button>
-                 <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 font-bold text-xs" title="View Detail">
+                 <button 
+                   onClick={() => showDetails(bill.id)}
+                   className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm" 
+                   title="View Detail"
+                 >
                     <History size={16} />
-                 </div>
+                 </button>
+                 <button 
+                   onClick={() => handleDelete(bill.id)}
+                   className="w-10 h-10 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm" 
+                   title="Delete"
+                 >
+                    <Trash size={16} />
+                 </button>
               </div>
             </div>
           ))}
@@ -508,7 +520,6 @@ const EmpBilling = () => {
   );
 };
 
-/* Using History icon from lucide-react, I'll import it */
-import { History } from "lucide-react";
+
 
 export default EmpBilling;

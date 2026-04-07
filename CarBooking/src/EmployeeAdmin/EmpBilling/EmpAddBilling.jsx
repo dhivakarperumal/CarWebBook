@@ -42,6 +42,7 @@ const EmpAddBilling = () => {
 
   const [newPart, setNewPart] = useState({ partName: "", qty: 1, price: 0 });
 
+  const [generatedInv, setGeneratedInv] = useState("");
   const [labour, setLabour] = useState("");
   const [gstPercent, setGstPercent] = useState(0); 
 
@@ -52,12 +53,15 @@ const EmpAddBilling = () => {
     const fetchInitialData = async () => {
       try {
         setLoading(true);
-        const [res, prodRes] = await Promise.all([
+        const [res, prodRes, billCountRes] = await Promise.all([
           api.get('/all-services'),
-          api.get('/products')
+          api.get('/products'),
+          api.get('/billings')
         ]);
 
         setProducts(prodRes.data || []);
+        const nextIdx = (billCountRes.data?.length || 0) + 1;
+        setGeneratedInv(`INV${String(nextIdx).padStart(3, '0')}`);
         
         const mechanicName = userProfile?.displayName || "";
         const myServices = res.data.filter(s => {
@@ -158,7 +162,7 @@ const EmpAddBilling = () => {
     }
 
     try {
-      const invoiceNo = `INV-EMP-${Date.now()}`;
+      const invoiceNo = generatedInv;
 
       const payload = {
         invoiceNo,
@@ -219,7 +223,7 @@ const EmpAddBilling = () => {
             <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none">Generate Billing Invoice</h1>
             <div className="flex items-center gap-3 pt-1">
               <span className="bg-black text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg tracking-widest uppercase shadow-lg shadow-black/20">Invoice No</span>
-              <span className="text-blue-600 font-black text-sm uppercase tracking-wider underline underline-offset-4 decoration-2">INV-{Math.floor(100 + Math.random() * 900)}</span>
+              <span className="text-blue-600 font-black text-sm uppercase tracking-wider underline underline-offset-4 decoration-2">{generatedInv}</span>
             </div>
           </div>
         </div>
