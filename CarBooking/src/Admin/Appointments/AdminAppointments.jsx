@@ -16,7 +16,13 @@ import {
   FaCarSide,
   FaPhoneAlt,
   FaPlus,
-  FaSearch
+  FaSearch,
+  FaThLarge,
+  FaTable,
+  FaHashtag,
+  FaBriefcase,
+  FaUserTie,
+  FaMotorcycle
 } from "react-icons/fa";
 import Pagination from "../../Components/Pagination";
 
@@ -46,6 +52,7 @@ const AdminAppointments = () => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [view, setView] = useState("table"); // "table" | "card"
 
   const openModal = (apt) => {
     setSelectedAppointment(apt);
@@ -57,7 +64,7 @@ const AdminAppointments = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("All Time");
   const [searchTerm, setSearchTerm] = useState("");
-  const [assignmentFilter, setAssignmentFilter] = useState("unassigned");
+  const [assignmentFilter, setAssignmentFilter] = useState("all");
   const [pendingChanges, setPendingChanges] = useState({});
   const [saving, setSaving] = useState(false);
 
@@ -106,9 +113,9 @@ const AdminAppointments = () => {
     const matchesSearch = !searchTerm ||
       a.appointmentId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.phone?.includes(searchTerm);
+      a.phone?.includes(searchTerm) ||
+      a.registrationNumber?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Named date filter based on preferredDate
     let matchesDate = true;
     if (dateFilter !== 'All Time') {
       const apptDateStr = a.preferredDate || a.preferred_date;
@@ -173,14 +180,15 @@ const AdminAppointments = () => {
       {/* HEADER SECTION */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
-         
+          <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Appointment Scheduler</h1>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Orchestrate service appointments & technician loading</p>
         </div>
 
         <button
           onClick={() => navigate("/admin/book-appointment")}
           className="h-[56px] px-10 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-3 active:scale-95"
         >
-          <FaPlus /> Registry New Appointment
+          <FaPlus /> New Appointment Entry
         </button>
       </div>
 
@@ -212,130 +220,195 @@ const AdminAppointments = () => {
         />
       </div>
 
-      {/* FILTERS WORKFLOW */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
-        <div className="lg:col-span-3 relative group">
-          <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors" />
+      {/* FILTERS WORKFLOW CONSOLIDATION - SINGLE ROW OPTIMIZATION */}
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-4 bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-slate-200/50">
+        <div className="relative group w-full lg:max-w-xs xl:max-w-md">
+          <FaSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-all duration-300" />
           <input
             type="text"
             placeholder="Search ID, Customer, Phone..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-14 pr-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-sm"
+            className="w-full pl-15 pr-6 py-4 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:ring-8 focus:ring-black/5 focus:border-black outline-none transition-all duration-300 font-bold text-gray-700 shadow-inner"
           />
         </div>
 
-        <div className="lg:col-span-9 flex flex-wrap items-center justify-end gap-3">
+        <div className="flex flex-wrap lg:flex-nowrap items-center justify-end gap-3 w-full lg:w-auto">
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="h-[56px] px-8 bg-white border border-gray-200 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm"
+            className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm transition-all"
           >
-            <option value="all">Any Status</option>
-            {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+            <option value="all">Global Status</option>
+            {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
           </select>
 
           <select
             value={dateFilter}
             onChange={e => { setDateFilter(e.target.value); setCurrentPage(1); }}
-            className="h-[56px] px-8 bg-white border border-gray-200 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm"
+            className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm transition-all"
           >
-            <option value="Today">Today's Schedule</option>
+            <option value="Today">Today Only</option>
             <option value="Yesterday">Yesterday</option>
             <option value="This Week">This Week</option>
             <option value="This Month">This Month</option>
             <option value="All Time">Full History</option>
           </select>
 
-          <select
-            value={assignmentFilter}
-            onChange={e => { setAssignmentFilter(e.target.value); setCurrentPage(1); }}
-            className="h-[56px] px-8 bg-white border border-gray-200 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm"
-          >
-            <option value="all">All Assignments</option>
-            <option value="assigned">Assigned Staff</option>
-            <option value="unassigned">Open Orders</option>
-          </select>
+          <div className="flex h-[56px] bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner shrink-0">
+            <button
+              onClick={() => setView("table")}
+              className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}
+            >
+              <FaTable /> Table
+            </button>
+            <button
+              onClick={() => setView("card")}
+              className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === "card" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}
+            >
+              <FaThLarge /> Cards
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Appointments List */}
-      <div className=" overflow-hidden">
-        <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-[#87a5b3] text-white">
-              <tr className="border-b border-gray-100">
-                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">S No</th>
-                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">ID</th>
-                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">Customer</th>
-                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">Vehicle</th>
-                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">Service</th>
-                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">Schedule</th>
-                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest">Technician</th>
-                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest text-center">Status</th>
-                <th className="px-6 py-4 text-[11px] font-black text-white uppercase tracking-widest text-right">Actions</th>
+      {/* Appointments Viewport */}
+      {view === "card" ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
+          {paginated.map((apt) => (
+            <div
+              key={apt.id}
+              className="group bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:border-sky-100 transition-all duration-500 flex flex-col relative overflow-hidden"
+            >
+               <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                {apt.vehicleType === 'bike' ? <FaMotorcycle size={80}/> : <FaCarSide size={80} />}
+              </div>
+
+              <div className="flex justify-between items-start mb-6 relative z-10">
+                <div>
+                  <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest leading-none block mb-1">APPT ID</span>
+                  <p className="text-sm font-black text-sky-900">{apt.appointmentId}</p>
+                </div>
+                <div className={`px-4 py-2 rounded-full text-[10px] font-black tracking-widest border transition-all ${getStatusColor(apt.status)}`}>
+                  {(apt.status || "BOOKED").toUpperCase()}
+                </div>
+              </div>
+
+              <div className="space-y-5 flex-1 relative z-10">
+                <div>
+                   <div className="flex items-center gap-2 mb-1">
+                    <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${apt.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-sky-100 text-sky-600'}`}>
+                        {apt.vehicleType || 'Car'}
+                    </span>
+                    <h3 className="text-xl font-black text-gray-900 group-hover:text-sky-600 transition-colors uppercase">{apt.brand} {apt.model}</h3>
+                   </div>
+                   <p className="text-[10px] font-black text-sky-500 uppercase tracking-widest bg-sky-50 w-fit px-3 py-1 rounded-xl border border-sky-100">{apt.registrationNumber || "UNSPECIFIED"}</p>
+                </div>
+
+                <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100 space-y-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400">
+                      <FaUserTie size={14}/>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Subscriber Profile</p>
+                      <p className="text-sm font-black text-gray-800">{apt.name}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400 text-xs">
+                      <FaBriefcase />
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Provision Type</p>
+                      <p className="text-sm font-bold text-gray-500">{apt.serviceType}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between border-t border-gray-100 pt-5">
+                   <div className="flex items-center gap-3">
+                      <FaCalendarAlt className="text-sky-500" size={14}/>
+                      <span className="text-[11px] font-black text-gray-400 uppercase tracking-wider">{new Date(apt.preferredDate || apt.preferred_date).toLocaleDateString()}</span>
+                   </div>
+                   <div className="flex items-center gap-3">
+                      <FaClock className="text-amber-500" size={14}/>
+                      <span className="text-[11px] font-black text-gray-400 uppercase tracking-wider">{apt.preferredTimeSlot}</span>
+                   </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => openModal(apt)}
+                className="mt-8 w-full bg-black text-white font-black py-4 rounded-2xl shadow-xl hover:bg-sky-600 transition-all duration-300 uppercase tracking-widest text-[10px] flex items-center justify-center gap-3"
+              >
+                <FaUserCog /> Manage Parameters
+              </button>
+            </div>
+          ))}
+          {paginated.length === 0 && <div className="col-span-full py-20 text-center text-gray-400 font-black uppercase tracking-widest text-xs">No schedule found for designated metrics</div>}
+        </div>
+      ) : (
+        <div className="overflow-hidden bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 animate-fadeIn">
+          <table className="w-full text-left text-sm whitespace-nowrap">
+            <thead className="bg-black text-white">
+              <tr>
+                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">S No</th>
+                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Identifier</th>
+                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Client Profile</th>
+                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Vehicle Spec</th>
+                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Workstream</th>
+                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Schedule Log</th>
+                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest text-center">Status protocol</th>
+                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest text-right">Control</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {loading ? (
-                <tr><td colSpan="9" className="px-6 py-12 text-center text-gray-400">Loading...</td></tr>
+                <tr><td colSpan="8" className="px-8 py-24 text-center text-gray-400 animate-pulse font-black uppercase tracking-widest text-[10px]">Synchronizing schedule...</td></tr>
               ) : paginated.length === 0 ? (
-                <tr><td colSpan="9" className="px-6 py-12 text-center text-gray-400">No appointments found</td></tr>
+                <tr><td colSpan="8" className="px-8 py-24 text-center text-gray-400 font-black uppercase tracking-widest text-[10px]">No schedule found for designated metrics</td></tr>
               ) : paginated.map((apt, index) => (
-                <tr key={apt.id} className="hover:bg-gray-50/50 transition duration-200">
-                  <td className="px-6 py-4 font-black text-sm text-gray-600">{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                  <td className="px-6 py-4 font-black text-sm text-sky-600">{apt.appointmentId}</td>
-                  <td className="px-6 py-4">
-                    <p className="text-sm font-bold text-gray-900">{apt.name}</p>
-                    <p className="text-xs text-gray-500">{apt.phone}</p>
+                <tr key={apt.id} className="hover:bg-sky-50/30 transition-colors group">
+                  <td className="px-8 py-6">
+                    <span className="text-xs font-black text-gray-400">{(currentPage - 1) * itemsPerPage + index + 1}</span>
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <FaCarSide className="text-gray-400 text-xs" />
-                      <span className="text-sm font-medium text-gray-700">{apt.brand} {apt.model}</span>
+                  <td className="px-8 py-6">
+                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none mb-1">#ID {apt.id}</span>
+                    <span className="text-xs font-black text-sky-600">{apt.appointmentId}</span>
+                  </td>
+                  <td className="px-8 py-6">
+                    <p className="text-sm font-black text-gray-900 font-inter">{apt.name}</p>
+                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{apt.phone}</p>
+                  </td>
+                  <td className="px-8 py-6">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${apt.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-sky-100 text-sky-600'}`}>
+                        {apt.vehicleType || 'Car'}
+                      </span>
+                      <p className="text-sm font-black text-gray-800 uppercase tracking-tight">{apt.brand} {apt.model}</p>
                     </div>
-                    <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded ml-6">{apt.registrationNumber}</span>
+                    <p className="text-[10px] font-black text-sky-500 uppercase tracking-widest">{apt.registrationNumber || "UNSPECIFIED"}</p>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="text-xs font-bold text-gray-800">{apt.serviceType}</span>
-                    {apt.emergencyService && <span className="ml-2 bg-red-100 text-red-600 text-[10px] px-1.5 py-0.5 rounded font-black uppercase">Urgent</span>}
+                  <td className="px-8 py-6">
+                    <p className="text-xs font-black text-gray-800 uppercase tracking-widest">{apt.serviceType}</p>
+                    {apt.emergencyService && <span className="inline-block mt-1 bg-rose-100 text-rose-600 text-[9px] px-2 py-0.5 rounded font-black uppercase tracking-wider">Critical / Urgent</span>}
                   </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                      <FaCalendarAlt className="text-sky-500" /> {new Date(apt.preferredDate || apt.preferred_date).toLocaleDateString()}
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[10px] text-gray-400 mt-1">
-                      <FaClock /> {apt.preferredTimeSlot}
-                    </div>
+                  <td className="px-8 py-6">
+                    <p className="text-xs font-black text-gray-800">{new Date(apt.preferredDate || apt.preferred_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                    <p className="text-[10px] font-black text-amber-500 uppercase mt-1 tracking-wider">{apt.preferredTimeSlot}</p>
                   </td>
-                  <td className="px-6 py-4">
-                    {apt.assignedEmployeeName ? (
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-black border border-gray-200 uppercase">
-                          {apt.assignedEmployeeName.charAt(0)}
-                        </div>
-                        <span className="text-xs font-semibold text-gray-700">{apt.assignedEmployeeName}</span>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => openModal(apt)}
-                        className="text-xs italic text-gray-400 underline decoration-dotted hover:text-black transition-colors"
-                      >
-                        Unassigned
-                      </button>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-black border tracking-wider uppercase ${getStatusColor(apt.status)}`}>
+                  <td className="px-8 py-6 text-center">
+                    <span className={`px-3 py-1.5 rounded-full text-[9px] font-black border tracking-widest uppercase transition-all ${getStatusColor(apt.status)}`}>
                       {apt.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-8 py-6 text-right">
                     <button
                       onClick={() => openModal(apt)}
-                      className="px-4 py-2 bg-sky-500 text-white rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-sky-600 transition-all shadow-sm shadow-sky-500/20"
+                      className="h-10 px-6 bg-gray-50 text-gray-400 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm border border-transparent hover:shadow-xl shadow-black/10"
                     >
-                      Manage / Assign
+                      Manage
                     </button>
                   </td>
                 </tr>
@@ -343,124 +416,119 @@ const AdminAppointments = () => {
             </tbody>
           </table>
         </div>
+      )}
 
-        {totalPages > 1 && (
-          <div className="p-6 bg-gray-50/30 border-t border-gray-100">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </div>
-        )}
-      </div>
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
 
       {/* Details & Assignment Modal */}
       {selectedAppointment && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedAppointment(null)}></div>
-          <div className="relative bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="relative bg-white rounded-[3rem] w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-white">
             {/* Modal Header */}
-            <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-sky-500 flex items-center justify-center text-white shadow-lg shadow-sky-500/20">
-                  <FaWrench size={20} />
+            <div className="px-10 py-8 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+              <div className="flex items-center gap-5">
+                <div className="w-14 h-14 rounded-2xl bg-black flex items-center justify-center text-white shadow-xl shadow-black/20">
+                  <FaWrench size={24} />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-gray-900 tracking-tight">Appointment Details</h3>
-                  <p className="text-xs text-sky-500 font-bold uppercase tracking-widest">{selectedAppointment.appointmentId}</p>
+                  <h3 className="text-xl font-black text-gray-900 uppercase tracking-tight">Technical Workbench</h3>
+                  <p className="text-[10px] text-sky-500 font-black uppercase tracking-widest mt-1">Diagnostic Report & Logic Assignment • {selectedAppointment.appointmentId}</p>
                 </div>
               </div>
-              <button onClick={() => setSelectedAppointment(null)} className="p-2 hover:bg-gray-200 rounded-lg transition">
-                <FaTimesCircle className="text-gray-400" size={20} />
+              <button 
+                onClick={() => setSelectedAppointment(null)} 
+                className="w-10 h-10 flex items-center justify-center bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-red-500 hover:border-red-100 transition-all shadow-sm"
+              >
+                <FaTimesCircle size={20} />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-8 overflow-y-auto max-h-[calc(90vh-160px)] grid md:grid-cols-2 gap-8">
+            <div className="p-10 overflow-y-auto max-h-[calc(85vh-160px)] grid md:grid-cols-2 gap-10">
 
-              {/* Left Column: Info */}
-              <div className="space-y-8">
+              <div className="space-y-10">
                 <div>
-                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Customer Info</h4>
-                  <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center border border-gray-200"><FaUserCog className="text-gray-400 text-xs" /></div>
-                      <span className="text-sm font-bold">{selectedAppointment.name}</span>
+                  <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-4 ml-1">Subscriber Metadata</h4>
+                  <div className="bg-gray-50/50 rounded-[2rem] p-6 border border-gray-100 space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center border border-gray-100 text-gray-300"><FaUserCog size={14} /></div>
+                      <div>
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Client Identity</p>
+                        <p className="text-sm font-black text-gray-800">{selectedAppointment.name}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center border border-gray-200"><FaPhoneAlt className="text-gray-400 text-xs" /></div>
-                      <span className="text-sm text-gray-600">{selectedAppointment.phone}</span>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center border border-gray-100 text-gray-300"><FaPhoneAlt size={14} /></div>
+                      <div>
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Auth Phone</p>
+                        <p className="text-sm font-black text-gray-500">{selectedAppointment.phone}</p>
+                      </div>
                     </div>
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center border border-gray-200 shrink-0"><FaMapMarkerAlt className="text-gray-400 text-xs" /></div>
-                      <span className="text-xs text-gray-500 leading-relaxed">{selectedAppointment.address}, {selectedAppointment.city} - {selectedAppointment.pincode}</span>
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center border border-gray-100 text-gray-300 shrink-0"><FaMapMarkerAlt size={14} /></div>
+                      <div>
+                        <p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Geolocation</p>
+                        <p className="text-[11px] font-bold text-gray-400 leading-snug">{selectedAppointment.address}, {selectedAppointment.city} - {selectedAppointment.pincode}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Vehicle Details</h4>
-                  <div className="grid grid-cols-2 gap-3">
+                   <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-4 ml-1">Hardware Matrix</h4>
+                  <div className="grid grid-cols-2 gap-4">
                     {[
-                      { l: 'Type', v: selectedAppointment.vehicleType },
+                      { l: 'Structure', v: selectedAppointment.vehicleType },
                       { l: 'Brand', v: selectedAppointment.brand },
-                      { l: 'Model', v: selectedAppointment.model },
-                      { l: 'Reg. No', v: selectedAppointment.registrationNumber },
-                      { l: 'Fuel', v: selectedAppointment.fuelType },
-                      { l: 'Year', v: selectedAppointment.yearOfManufacture },
+                      { l: 'Designat.', v: selectedAppointment.model },
+                      { l: 'Plate ID', v: selectedAppointment.registrationNumber },
                     ].map(item => (
-                      <div key={item.l} className="bg-gray-50 border border-gray-100 p-3 rounded-xl">
-                        <p className="text-[9px] font-black text-gray-400 uppercase mb-1">{item.l}</p>
-                        <p className="text-sm font-bold text-gray-800">{item.v || 'N/A'}</p>
+                      <div key={item.l} className="bg-gray-50/50 border border-gray-100 p-4 rounded-2xl">
+                        <p className="text-[9px] font-black text-gray-300 uppercase mb-1">{item.l}</p>
+                        <p className="text-xs font-black text-gray-800 uppercase tracking-tight">{item.v || 'PROTOTYPE'}</p>
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
 
-              {/* Right Column: Management */}
-              <div className="space-y-8">
+              <div className="space-y-10">
                 <div>
-                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Service Management</h4>
-                  <div className="space-y-6 bg-white border border-gray-200 rounded-3xl p-6 shadow-sm">
-                    <div className="space-y-2">
-                      <label className="block text-xs font-bold text-gray-600 ml-1">
-                        Current Status
-                      </label>
-
+                   <h4 className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-4 ml-1">Logic Controls</h4>
+                  <div className="space-y-6 bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm">
+                    <div className="space-y-3">
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Workflow Stage</label>
                       <select
                         value={pendingChanges.status ?? selectedAppointment.status}
                         onChange={(e) => {
                           const value = e.target.value;
-
                           setPendingChanges(prev => {
                             const updated = { ...prev, status: value };
-
                             if (value === 'Cancelled') {
                               updated.assignedEmployeeId = null;
                               updated.assignedEmployeeName = null;
                             }
-
                             return updated;
                           });
                         }}
-                        className="w-full px-4 py-2 rounded-xl border border-gray-300 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-black"
+                        className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-xs font-black text-gray-800 uppercase tracking-widest focus:bg-white focus:ring-8 focus:ring-black/5 focus:border-black outline-none transition-all shadow-inner"
                       >
-                        {STATUS_OPTIONS.map(opt => (
-                          <option key={opt} value={opt}>
-                            {opt}
-                          </option>
-                        ))}
+                        {STATUS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt.toUpperCase()}</option>)}
                       </select>
                     </div>
 
-                    {/* Mechanic Assignment */}
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <div className="flex justify-between items-center ml-1">
-                        <label className="text-xs font-bold text-gray-600">Assign Technician</label>
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Personnel Allocation</label>
                         {(pendingChanges.status ?? selectedAppointment.status) !== 'Confirmed' && (
-                          <span className="text-[9px] text-amber-600 font-bold uppercase tracking-tighter bg-amber-50 px-2 py-0.5 rounded">Status must be "Confirmed" to assign</span>
+                          <span className="text-[8px] text-amber-600 font-black uppercase bg-amber-50 px-2 py-1 rounded-lg border border-amber-100">CONFIRMATION REQ.</span>
                         )}
                       </div>
                       <select
@@ -474,23 +542,22 @@ const AdminAppointments = () => {
                             assignedEmployeeName: tech?.name || null
                           }));
                         }}
-                        className={`w-full px-5 py-3.5 rounded-2xl border border-gray-100 text-sm font-black bg-gray-50 outline-none transition-all ${(pendingChanges.status ?? selectedAppointment.status) === 'Confirmed'
-                            ? 'focus:ring-4 focus:ring-black/5 focus:border-black cursor-pointer shadow-sm'
-                            : 'opacity-50 cursor-not-allowed grayscale'
+                        className={`w-full px-6 py-4 rounded-2xl border border-gray-100 text-xs font-black bg-gray-50 outline-none transition-all ${(pendingChanges.status ?? selectedAppointment.status) === 'Confirmed'
+                            ? 'focus:bg-white focus:ring-8 focus:ring-black/5 focus:border-black cursor-pointer shadow-inner'
+                            : 'opacity-30 cursor-not-allowed grayscale'
                           }`}
                       >
-                        <option value="">-- Select Technician --</option>
-                        {technicians.map(t => <option key={t.id} value={t.id}>{t.name} ({t.status})</option>)}
+                        <option value="">-- SELECT OPERATIVE --</option>
+                        {technicians.map(t => <option key={t.id} value={t.id}>{t.name.toUpperCase()} [{t.status}]</option>)}
                       </select>
                     </div>
 
-                    {/* Time Slot confirmed */}
-                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-600 ml-1">Confirm/Update Time Slot</label>
+                    <div className="space-y-3">
+                      <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Temporal Window</label>
                       <select
                         value={pendingChanges.preferredTimeSlot ?? selectedAppointment.preferredTimeSlot}
                         onChange={(e) => setPendingChanges(prev => ({ ...prev, preferredTimeSlot: e.target.value }))}
-                        className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 text-sm font-black bg-gray-50 outline-none focus:ring-4 focus:ring-black/5 focus:border-black cursor-pointer shadow-sm transition-all"
+                        className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 text-xs font-black text-gray-800 uppercase tracking-widest focus:bg-white focus:ring-8 focus:ring-black/5 focus:border-black outline-none transition-all shadow-inner"
                       >
                         <option>Morning (9AM–12PM)</option>
                         <option>Afternoon (12PM–4PM)</option>
@@ -500,28 +567,28 @@ const AdminAppointments = () => {
                   </div>
                 </div>
 
-                <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4">
-                  <h5 className="text-[10px] font-black text-amber-600 uppercase mb-2">Customer Problem Description</h5>
-                  <p className="text-sm text-amber-900 leading-relaxed italic">"{selectedAppointment.otherIssue || 'No specific issue described'}"</p>
+                <div className="bg-amber-50/50 border border-amber-100 rounded-[2rem] p-6 relative">
+                  <span className="absolute -top-3 left-6 bg-white border border-amber-100 px-3 py-1 rounded-full text-[9px] font-black text-amber-500 uppercase tracking-widest">Diagnostic Manifest</span>
+                  <p className="text-sm text-amber-900 font-bold leading-relaxed italic mt-2">"{selectedAppointment.otherIssue || 'No diagnostic notes provided'}"</p>
                 </div>
               </div>
 
             </div>
 
-            {/* Modal Footer - Save Button */}
-            <div className="px-8 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
+            {/* Modal Footer */}
+            <div className="px-10 py-5 mb-10 p-5 pb-10 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3">
               <button
                 onClick={() => setSelectedAppointment(null)}
-                className="px-6 py-2.5 rounded-xl border border-gray-200 text-sm font-bold text-gray-600 hover:bg-gray-100 transition"
+                className="px-8 py-3 rounded-2xl border border-gray-200 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-white hover:text-black transition-all"
               >
-                Cancel
+                Abort
               </button>
               <button
                 onClick={handleSaveChanges}
                 disabled={saving || Object.keys(pendingChanges).length === 0}
-                className="px-8 py-2.5 rounded-xl bg-black text-white text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition shadow-lg shadow-black/10 disabled:opacity-40 disabled:cursor-not-allowed"
+                className="px-10 py-3 rounded-2xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:scale-105 transition-all shadow-xl shadow-black/10 disabled:opacity-20"
               >
-                {saving ? 'Saving...' : 'Save Changes'}
+                {saving ? 'Synchronizing...' : 'Sychronize Manifest'}
               </button>
             </div>
           </div>

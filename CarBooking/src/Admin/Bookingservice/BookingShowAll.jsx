@@ -254,24 +254,24 @@ const ShowAllBookings = () => {
         />
       </div>
 
-      {/* SEARCH AND FILTERS CONSOLIDATION */}
-      <div className="flex flex-col lg:flex-row gap-6 justify-between items-center bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-slate-200/50">
-        <div className="relative group w-full lg:max-w-md">
+      {/* SEARCH AND FILTERS CONSOLIDATION - SINGLE ROW OPTIMIZATION */}
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-4 bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-slate-200/50">
+        <div className="relative group w-full lg:max-w-xs xl:max-w-md">
           <FaSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-all" />
           <input
             type="text"
             placeholder="Search ID, customer, vehicle number..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-16 pr-8 py-4.5 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:ring-8 focus:ring-black/5 focus:border-black outline-none transition-all duration-300 font-bold text-gray-700 shadow-inner"
+            className="w-full pl-15 pr-6 py-4 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:ring-8 focus:ring-black/5 focus:border-black outline-none transition-all duration-300 font-bold text-gray-700 shadow-inner"
           />
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-3 w-full lg:w-auto">
+        <div className="flex flex-wrap lg:flex-nowrap items-center justify-end gap-3 w-full lg:w-auto">
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm transition-all"
+            className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm transition-all min-w-[160px]"
           >
             <option value="Today">Today Only</option>
             <option value="Yesterday">Yesterday</option>
@@ -283,7 +283,7 @@ const ShowAllBookings = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm transition-all"
+            className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm transition-all min-w-[160px]"
           >
             <option value="All">Global Registry</option>
             {BOOKING_STATUS.map((s) => (
@@ -291,7 +291,7 @@ const ShowAllBookings = () => {
             ))}
           </select>
 
-          <div className="flex h-[56px] bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner">
+          <div className="flex h-[56px] bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner shrink-0">
             <button
               onClick={() => setView("table")}
               className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}
@@ -504,16 +504,17 @@ const ShowAllBookings = () => {
                 />
             </div>
 
-            <div className="flex gap-3">
+            {/* Modal Footer - Upgraded Spacing */}
+            <div className="px-10 py-8 pb-12 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 rounded-b-[2.5rem]">
                 <button
                   onClick={() => setPopup(null)}
-                  className="flex-1 rounded-2xl bg-gray-100 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest hover:bg-gray-200 transition-all"
+                  className="px-8 py-3.5 rounded-2xl border border-gray-200 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-white hover:text-black transition-all"
                 >
                   Terminate
                 </button>
                 <button
                   onClick={submitCancel}
-                  className="flex-1 rounded-2xl bg-black py-4 text-[10px] font-black text-white uppercase tracking-widest hover:bg-rose-600 transition-all shadow-xl shadow-black/10"
+                  className="px-10 py-3.5 rounded-2xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-rose-600 transition-all shadow-xl shadow-black/10"
                 >
                   Confirm Revoke
                 </button>
