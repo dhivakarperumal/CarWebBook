@@ -265,7 +265,7 @@ const AdminAppointments = () => {
                   <td className="px-6 py-4">
                     {apt.assignedEmployeeName ? (
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-sky-100 flex items-center justify-center text-[10px] font-bold text-sky-600 border border-sky-200 uppercase">
+                        <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-[10px] font-bold text-black border border-gray-200 uppercase">
                           {apt.assignedEmployeeName.charAt(0)}
                         </div>
                         <span className="text-xs font-semibold text-gray-700">{apt.assignedEmployeeName}</span>
@@ -273,7 +273,7 @@ const AdminAppointments = () => {
                     ) : (
                       <button 
                         onClick={() => openModal(apt)}
-                        className="text-xs italic text-gray-400 underline decoration-dotted hover:text-sky-500 transition-colors"
+                        className="text-xs italic text-gray-400 underline decoration-dotted hover:text-black transition-colors"
                       >
                         Unassigned
                       </button>
