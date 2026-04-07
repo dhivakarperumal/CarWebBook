@@ -364,55 +364,64 @@ const AdminAppointments = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {loading ? (
-                <tr><td colSpan="8" className="px-8 py-24 text-center text-gray-400 animate-pulse font-black uppercase tracking-widest text-[10px]">Synchronizing schedule...</td></tr>
-              ) : paginated.length === 0 ? (
-                <tr><td colSpan="8" className="px-8 py-24 text-center text-gray-400 font-black uppercase tracking-widest text-[10px]">No schedule found for designated metrics</td></tr>
-              ) : paginated.map((apt, index) => (
-                <tr key={apt.id} className="hover:bg-sky-50/30 transition-colors group">
-                  <td className="px-8 py-6">
-                    <span className="text-xs font-black text-gray-400">{(currentPage - 1) * itemsPerPage + index + 1}</span>
-                  </td>
-                  <td className="px-8 py-6">
-                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none mb-1">#ID {apt.id}</span>
-                    <span className="text-xs font-black text-sky-600">{apt.appointmentId}</span>
-                  </td>
-                  <td className="px-8 py-6">
-                    <p className="text-sm font-black text-gray-900 font-inter">{apt.name}</p>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{apt.phone}</p>
-                  </td>
-                  <td className="px-8 py-6">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${apt.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-sky-100 text-sky-600'}`}>
-                        {apt.vehicleType || 'Car'}
-                      </span>
-                      <p className="text-sm font-black text-gray-800 uppercase tracking-tight">{apt.brand} {apt.model}</p>
-                    </div>
-                    <p className="text-[10px] font-black text-sky-500 uppercase tracking-widest">{apt.registrationNumber || "UNSPECIFIED"}</p>
-                  </td>
-                  <td className="px-8 py-6">
-                    <p className="text-xs font-black text-gray-800 uppercase tracking-widest">{apt.serviceType}</p>
-                    {apt.emergencyService && <span className="inline-block mt-1 bg-rose-100 text-rose-600 text-[9px] px-2 py-0.5 rounded font-black uppercase tracking-wider">Critical / Urgent</span>}
-                  </td>
-                  <td className="px-8 py-6">
-                    <p className="text-xs font-black text-gray-800">{new Date(apt.preferredDate || apt.preferred_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-                    <p className="text-[10px] font-black text-amber-500 uppercase mt-1 tracking-wider">{apt.preferredTimeSlot}</p>
-                  </td>
-                  <td className="px-8 py-6 text-center">
-                    <span className={`px-3 py-1.5 rounded-full text-[9px] font-black border tracking-widest uppercase transition-all ${getStatusColor(apt.status)}`}>
-                      {apt.status}
-                    </span>
-                  </td>
-                  <td className="px-8 py-6 text-right">
-                    <button
-                      onClick={() => openModal(apt)}
-                      className="h-10 px-6 bg-gray-50 text-gray-400 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm border border-transparent hover:shadow-xl shadow-black/10"
-                    >
-                      Manage
-                    </button>
+              {paginated.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="px-8 py-24 text-center">
+                     <div className="flex flex-col items-center justify-center">
+                        <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mb-4 border border-gray-100 text-gray-300">
+                          <FaWrench size={24}/>
+                        </div>
+                        <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">No active scheduling protocols found for criteria</p>
+                     </div>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                paginated.map((apt, index) => (
+                  <tr key={apt.id} className="hover:bg-blue-50/30 transition-colors group">
+                    <td className="px-8 py-6">
+                      <span className="text-xs font-black text-gray-400">{(currentPage - 1) * itemsPerPage + index + 1}</span>
+                    </td>
+                    <td className="px-8 py-6">
+                      <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none mb-1">REQ ID: {apt.id}</span>
+                      <span className="text-xs font-black text-blue-900 leading-none">{apt.appointmentId || "APT-NEW"}</span>
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-black text-gray-900 font-inter">{apt.name}</p>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{apt.phone}</p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${apt.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-sky-100 text-sky-600'}`}>
+                          {apt.vehicleType || 'Car'}
+                        </span>
+                        <p className="text-sm font-black text-gray-800 uppercase tracking-tight">{apt.brand} {apt.model}</p>
+                      </div>
+                      <p className="text-[10px] font-black text-sky-500 uppercase tracking-widest">{apt.registrationNumber || "UNSPECIFIED"}</p>
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="text-xs font-black text-gray-800 uppercase tracking-widest">{apt.serviceType}</p>
+                      {apt.emergencyService && <span className="inline-block mt-1 bg-rose-100 text-rose-600 text-[9px] px-2 py-0.5 rounded font-black uppercase tracking-wider">Critical / Urgent</span>}
+                    </td>
+                    <td className="px-8 py-6">
+                      <p className="text-xs font-black text-gray-800">{new Date(apt.preferredDate || apt.preferred_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                      <p className="text-[10px] font-black text-amber-500 uppercase mt-1 tracking-wider">{apt.preferredTimeSlot}</p>
+                    </td>
+                    <td className="px-8 py-6 text-center">
+                      <span className={`px-3 py-1.5 rounded-full text-[9px] font-black border tracking-widest uppercase transition-all ${getStatusColor(apt.status)}`}>
+                        {apt.status}
+                      </span>
+                    </td>
+                    <td className="px-8 py-6 text-right">
+                      <button
+                        onClick={() => openModal(apt)}
+                        className="h-10 px-6 bg-gray-50 text-gray-400 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shadow-sm border border-transparent hover:shadow-xl shadow-black/10"
+                      >
+                        Manage
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
