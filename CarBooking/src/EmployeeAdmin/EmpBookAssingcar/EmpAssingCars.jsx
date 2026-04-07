@@ -261,20 +261,22 @@ const EmpAssingCars = () => {
 
         <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden overflow-x-auto">
           <table className="w-full text-left whitespace-nowrap">
-            <thead>
-              <tr className="bg-[#87a5b3] text-white">
+            <thead className="bg-black text-white">
+              <tr>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Job ID</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Customer</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Vehicle</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Status</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Assigned Date</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white text-right">Actions</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {paginatedServices.map((item) => (
                 <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-xs font-bold text-gray-400">#{item.id}</td>
+                  <td className="px-6 py-4 text-xs font-bold text-gray-400">
+                    #{item.bookingId || item.appointmentId || item.id}
+                  </td>
                   <td className="px-6 py-4">
                     <p className="font-black text-gray-800">{item.customer_name || item.name}</p>
                     <p className="text-[10px] text-gray-400 font-bold">{item.phone || "No Phone"}</p>
@@ -291,7 +293,7 @@ const EmpAssingCars = () => {
                   <td className="px-6 py-4">
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{new Date(item.created_at || item.createdAt).toLocaleDateString()}</p>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4">
                     <button 
                       onClick={() => window.location.href = "/employee/cars"}
                       className="bg-black text-white text-[10px] font-black px-4 py-2 rounded-xl hover:bg-gray-800 transition-all uppercase tracking-widest shadow-lg shadow-black/10"

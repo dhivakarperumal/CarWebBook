@@ -141,10 +141,14 @@ const EmpDashboard = () => {
       const staffRes = await api.get("/staff");
       const totalStaffCount = (staffRes.data || []).length;
 
+      const normalize = (s) => (s || "").toLowerCase().trim();
       setStats({
-        pending: filtered.filter(b => b.status === "Booked" || b.status === "Pending").length,
-        inProgress: filtered.filter(b => ["Call Verified", "Approved", "Processing", "Service Going on"].includes(b.status)).length,
-        completed: filtered.filter(b => ["Service Completed", "Completed"].includes(b.status)).length,
+        pending: filtered.filter(b => {
+          const s = normalize(b.status || b.serviceStatus);
+          return ["assigned", "approved", "booked", "pending"].includes(s) || s === "";
+        }).length,
+        inProgress: filtered.filter(b => ["processing", "service going on", "waiting for spare", "call verified"].includes(normalize(b.status || b.serviceStatus))).length,
+        completed: filtered.filter(b => ["service completed", "completed", "bill pending", "bill completed"].includes(normalize(b.status || b.serviceStatus))).length,
       });
     } catch (err) {
       console.error("Error fetching tasks:", err);
@@ -179,20 +183,28 @@ const EmpDashboard = () => {
     }
   };
 
-  const StatusBadge = ({ status }) => {
-    const styles = {
-      "Pending": "bg-yellow-100 text-yellow-700",
-      "Processing": "bg-orange-100 text-orange-700",
-      "Assigned": "bg-blue-100 text-blue-700",
-      "Service Going on": "bg-indigo-100 text-indigo-700",
-      "Bill Pending": "bg-purple-100 text-purple-700",
-      "Bill Completed": "bg-cyan-100 text-cyan-700",
-      "Service Completed": "bg-green-100 text-green-700",
-      "Completed": "bg-green-100 text-green-700",
+  const StatusBadge = ({ status, bStatus }) => {
+    const map = {
+      "Booked": "bg-blue-50 text-blue-700 border-blue-200",
+      "Pending": "bg-yellow-50 text-yellow-700 border-yellow-200",
+      "Approved": "bg-sky-50 text-sky-700 border-sky-200",
+      "Processing": "bg-orange-50 text-orange-700 border-orange-200",
+      "Assigned": "bg-blue-50 text-blue-700 border-blue-200",
+      "Service Going on": "bg-indigo-50 text-indigo-700 border-indigo-200",
+      "Waiting for Spare": "bg-purple-50 text-purple-700 border-purple-200",
+      "Bill Pending": "bg-purple-50 text-purple-700 border-purple-200",
+      "Bill Completed": "bg-sky-100 text-sky-700 border-sky-200",
+      "Service Completed": "bg-emerald-50 text-emerald-700 border-emerald-200",
+      "Completed": "bg-emerald-50 text-emerald-700 border-emerald-200",
     };
+    
+    const displayStatus = status || bStatus || "Assigned";
+    const s = (displayStatus || "").toLowerCase().trim();
+    const styleClass = map[displayStatus] || map[s] || "bg-gray-50 text-gray-600 border-gray-200";
+
     return (
-      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${styles[status] || "bg-gray-100 text-gray-700"}`}>
-        {status}
+      <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border shadow-sm inline-block ${styleClass}`}>
+        {displayStatus}
       </span>
     );
   };
@@ -214,46 +226,29 @@ const EmpDashboard = () => {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => navigate("/")}
-            className="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition shadow-sm flex items-center gap-2"
-          >
-            <CalendarDays size={18} /> View Schedule
-          </button>
-        </div>
+
       </div>
 
       {/* ===== QUICK STATS ===== */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl">
-            <Clock size={24} />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium">Pending Tasks</p>
-            <h3 className="text-2xl font-bold text-gray-800">{stats.pending}</h3>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="p-4 bg-indigo-50 text-indigo-600 rounded-2xl">
-            <Wrench size={24} />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium">In Progress</p>
-            <h3 className="text-2xl font-bold text-gray-800">{stats.inProgress}</h3>
-          </div>
-        </div>
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-          <div className="p-4 bg-green-50 text-green-600 rounded-2xl">
-            <CheckCircle2 size={24} />
-          </div>
-          <div>
-            <p className="text-sm text-gray-500 font-medium">Jobs Completed</p>
-            <h3 className="text-2xl font-bold text-gray-800">{stats.completed}</h3>
-          </div>
-        </div>
-        
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatCard 
+          icon={<ClipboardList size={24} />} 
+          title="Assigned Tasks" 
+          value={stats.pending} 
+          color="blue"
+        />
+        <StatCard 
+          icon={<Wrench size={24} />} 
+          title="In Progress" 
+          value={stats.inProgress} 
+          color="indigo"
+        />
+        <StatCard 
+          icon={<CheckCircle2 size={24} />} 
+          title="Jobs Completed" 
+          value={stats.completed} 
+          color="emerald"
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-10">
@@ -274,13 +269,14 @@ const EmpDashboard = () => {
  
             <div className="overflow-x-auto bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm">
               <table className="min-w-full text-sm">
-                <thead>
-                  <tr className="bg-[#87a5b3] text-white">
-                    <th className="px-6 py-5 text-left font-black uppercase tracking-widest text-white">S No</th>
-                    <th className="px-6 py-5 text-left font-black uppercase tracking-widest text-white">Vehicle Info</th>
-                    <th className="px-6 py-5 text-left font-black uppercase tracking-widest text-white">Status</th>
-                    <th className="px-6 py-5 text-left font-black uppercase tracking-widest text-white">Customer</th>
-                    <th className="px-6 py-5 text-right font-black uppercase tracking-widest text-white">Actions</th>
+                <thead className="bg-black text-white">
+                  <tr>
+                    <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">S No</th>
+                    <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">ID</th>
+                    <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">Vehicle Info</th>
+                    <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">Status</th>
+                    <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">Customer</th>
+                    <th className="px-6 py-5 text-right text-[10px] font-black uppercase tracking-widest text-white">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -300,17 +296,20 @@ const EmpDashboard = () => {
                           {ind+1}
                         </td>
                         <td className="px-6 py-5">
+                          <p className="text-xs font-black text-gray-400">#{task.bookingId || task.appointmentId || task.id}</p>
+                        </td>
+                        <td className="px-6 py-5">
                           <p className="font-bold text-gray-800">{task.brand} {task.model}</p>
                           <p className="text-xs text-gray-500">{task.vehicleNumber || "No Plate"}</p>
                         </td>
                         <td className="px-6 py-5">
-                          <StatusBadge status={task.status} />
+                          <StatusBadge status={task.status} bStatus={task.serviceStatus} />
                         </td>
                         <td className="px-6 py-5">
                           <p className="font-medium text-gray-700">{task.name}</p>
                         </td>
-                        <td className="px-6 py-5 text-right">
-                          <div className="flex items-center justify-end gap-3 px-2">
+                        <td className="px-6 py-5 ">
+                          <div className="flex items-center justify-start gap-3 px-2">
                              {(task.status === "Assigned" || task.status === "Pending" || task.status === "Approved" || task.status === "Processing") && (
                                <button
                                  onClick={() => updateServiceStatus(task, "Service Going on")}
@@ -448,3 +447,24 @@ const EmpDashboard = () => {
 };
 
 export default EmpDashboard;
+
+/* ===== Sub-Components ===== */
+const StatCard = ({ icon, title, value, color }) => {
+  const colorMap = {
+    blue: "from-blue-600 to-blue-700 bg-blue-50 text-blue-600 border-blue-100",
+    indigo: "from-indigo-600 to-indigo-700 bg-indigo-50 text-indigo-600 border-indigo-100",
+    emerald: "from-emerald-600 to-emerald-700 bg-emerald-50 text-emerald-600 border-emerald-100",
+  };
+
+  return (
+    <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-100 flex items-center gap-5 hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+      <div className={`p-4 rounded-2xl shadow-inner ${colorMap[color].split(" ").slice(2).join(" ")}`}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.1em] mb-1">{title}</p>
+        <h3 className="text-3xl font-black text-gray-900 leading-none">{value}</h3>
+      </div>
+    </div>
+  );
+};

@@ -140,6 +140,14 @@ const Header = ({ onMenuClick }) => {
   }, []);
 
 
+  const isLast24Hours = (timestamp) => {
+    if (!timestamp) return false;
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now - date;
+    return diff >= 0 && diff <= 24 * 60 * 60 * 1000;
+  };
+
   const isToday = (timestamp) => {
     if (!timestamp) return false;
     const date = new Date(timestamp);
@@ -157,14 +165,15 @@ const Header = ({ onMenuClick }) => {
         const res = await api.get("/bookings");
         const allBookings = res.data || [];
         const myName = (profileName?.displayName || "").toLowerCase();
-        // Show bookings assigned to this employee with new/pending status
+        // Show bookings assigned to this employee with new/pending status and within last 24h
         const myNew = allBookings.filter((b) => {
           const assignedTo = (b.assignedEmployeeName || "").toLowerCase();
           const isAssignedToMe = assignedTo === myName;
-          const isNewStatus = ["assigned", "booked", "pending"].includes(
-            (b.status || "").toLowerCase()
-          );
-          return isAssignedToMe && isNewStatus && b.status !== "Cancelled";
+          const status = (b.status || b.serviceStatus || "").toLowerCase();
+          const isNewStatus = ["assigned", "booked", "pending", "approved"].includes(status);
+          const isRecent = isLast24Hours(b.createdAt || b.created_at || b.updatedAt);
+          
+          return isAssignedToMe && isNewStatus && b.status !== "Cancelled" && isRecent;
         });
         setAssignedNotifications(myNew);
       } catch (err) {
