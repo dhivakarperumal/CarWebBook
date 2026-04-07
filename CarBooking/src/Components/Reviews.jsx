@@ -152,15 +152,15 @@ export default function Reviews() {
               {reviews.map((r) => (
                 <SwiperSlide key={r.id}>
                   <div
-                    className="group relative min-h-[260px] rounded-3xl p-8
+                    className="group relative h-[280px] rounded-3xl p-8
                       bg-[#050b14]/80 backdrop-blur-xl
                       border border-sky-400 overflow-hidden mt-5 mb-5
                       hover:-translate-y-2
                       hover:border-sky-400/40
-                      hover:shadow-[0_35px_120px_rgba(56,189,248,0.45)]
+                      hover:shadow-[0_15px_40px_rgba(56,189,248,0.25)]
 
                       transition-all duration-700 ease-out
-                      flex flex-col mr-0.5"
+                      flex flex-col mr-0.5 min-h-0"
                   >
                     {/* Glow sweep */}
                     <div
@@ -207,9 +207,13 @@ export default function Reviews() {
                     </div>
 
                     {/* MESSAGE */}
-                    <p className="text-gray-300 italic leading-relaxed flex-1 overflow-hidden">
-                      “{r.message}”
-                    </p>
+                    <div className="flex-1 overflow-hidden">
+  <div className="h-full overflow-y-auto pr-2 custom-scroll">
+    <p className="text-gray-300 italic leading-relaxed">
+      “{r.message}”
+    </p>
+  </div>
+</div>
                   </div>
                 </SwiperSlide>
               ))}
