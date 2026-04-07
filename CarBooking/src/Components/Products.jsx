@@ -11,12 +11,27 @@ import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 export default function Products() {
   const [products, setProducts] = useState([]);
+  const brands = [...new Set(products.map(p => p.brand).filter(Boolean))];
+  const prices = products.map(p => Number(p.offerPrice || 0)).filter(p => p > 0);
+  const [showFilters, setShowFilters] = useState(false);
+
+  const minPrice = prices.length ? Math.min(...prices) : 0;
+  const maxPrice = prices.length ? Math.max(...prices) : 1000;
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [sort, setSort] = useState("");
 
-  const PRODUCTS_PER_PAGE = 8;
+  const [filters, setFilters] = useState({
+    minPrice: "",
+    maxPrice: "",
+    brand: [],
+    rating: "",
+    stock: "",
+    offer: false,
+  });
+
+  const PRODUCTS_PER_PAGE = 6;
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -36,10 +51,55 @@ export default function Products() {
     fetchProducts();
   }, []);
 
+  useEffect(() => {
+    if (products.length > 0) {
+      const prices = products.map(p => Number(p.offerPrice || 0)).filter(p => p > 0);
+      const max = Math.max(...prices);
+
+      setFilters(prev => ({
+        ...prev,
+        maxPrice: max
+      }));
+    }
+  }, [products]);
+
   const filteredProducts = products
-    .filter((p) =>
-      p.name.toLowerCase().includes(search.toLowerCase())
-    )
+    .filter((p) => {
+      const searchValue = search.toLowerCase();
+
+      return (
+        p.name.toLowerCase().includes(searchValue) ||
+        p.brand?.toLowerCase().includes(searchValue) ||
+        String(p.offerPrice).includes(searchValue)
+      );
+    })
+
+    .filter((p) => {
+      const price = Number(p.offerPrice || 0);
+
+      // Price Range
+      if (filters.minPrice && price < Number(filters.minPrice)) return false;
+      if (filters.maxPrice && price > Number(filters.maxPrice)) return false;
+
+      // BRAND MULTI SELECT
+      if (filters.brand.length > 0 && !filters.brand.includes(p.brand)) {
+        return false;
+      }
+
+      // Rating
+      if (filters.rating && Number(p.rating || 0) < Number(filters.rating))
+        return false;
+
+      // Stock
+      if (filters.stock === "in" && p.totalStock <= 0) return false;
+      if (filters.stock === "out" && p.totalStock > 0) return false;
+
+      // Offer
+      if (filters.offer && !p.offerPrice) return false;
+
+      return true;
+    })
+
     .sort((a, b) => {
       if (sort === "low-high") {
         return Number(a.offerPrice) - Number(b.offerPrice);
@@ -125,34 +185,235 @@ export default function Products() {
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full md:w-80 px-4 py-2 rounded-lg bg-[#0a0a0b] border border-white/20 text-white outline-none focus:border-sky-400"
+              className="w-full md:w-80 px-4 py-2 rounded-lg bg-[#0a0a0b] border border-white/20 ring-1 text-white outline-none focus:border-sky-400"
             />
 
-            {/* RIGHT — SORT */}
-            <select
-              value={sort}
-              onChange={(e) => {
-                setSort(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full md:w-60 px-4 py-2 rounded-lg bg-[#0a0a0b] border border-white/20 text-white outline-none focus:border-sky-400"
-            >
-              <option value="">Sort By</option>
-              <option value="low-high">Price: Low → High</option>
-              <option value="high-low">Price: High → Low</option>
-              <option value="a-z">Name: A → Z</option>
-              <option value="z-a">Name: Z → A</option>
-            </select>
+            {/* RIGHT — FILTER + SORT */}
+            <div className="flex w-full md:w-auto gap-2">
 
+              {/* 🔥 FILTER ICON BUTTON */}
+              <button
+                onClick={() => setShowFilters(true)}
+                className="md:hidden px-3 py-2 bg-sky-500 text-black rounded-lg"
+              >
+                ☰
+              </button>
+
+              {/* SORT */}
+              <select
+                value={sort}
+                onChange={(e) => {
+                  setSort(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full md:w-60 px-4 py-2 rounded-lg bg-[#0a0a0b] border border-white/20 text-white outline-none focus:border-sky-400"
+              >
+                <option value="">Sort By</option>
+                <option value="low-high">Price: Low → High</option>
+                <option value="high-low">Price: High → Low</option>
+                <option value="a-z">Name: A → Z</option>
+                <option value="z-a">Name: Z → A</option>
+              </select>
+
+            </div>
           </div>
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {paginatedProducts.map((product) => (
-              <ProductCard
-                key={product.docId}
-                product={product}
-                handleAddToCart={handleAddToCart}
-              />
-            ))}
+
+          {/* Products Section */}
+          <div className="flex gap-6">
+
+            {/* 🔥 FILTER + OVERLAY WRAPPER */}
+            <>
+              {/* 🔥 OVERLAY (MOBILE ONLY) */}
+              {showFilters && (
+                <div
+                  className="fixed inset-0 bg-black/50 z-40 md:hidden"
+                  onClick={() => setShowFilters(false)}
+                />
+              )}
+
+              {/* 🔥 FILTER SIDEBAR */}
+              <div
+                className={`
+  fixed md:static top-0 left-0 h-full md:h-auto w-72 md:w-64
+  bg-[#0a0a0b] border border-sky-500/20
+  rounded-none md:rounded-xl
+  p-4 space-y-5 z-50
+  overflow-y-auto   // ✅ ADD THIS
+  transform transition-transform duration-300
+  ${showFilters ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+`}
+              >
+
+                {/* 🔥 MOBILE HEADER */}
+                <div className="flex justify-between items-center md:hidden mb-3">
+                  <h3 className="text-sky-400 font-semibold text-lg">Filters</h3>
+                  <button
+                    onClick={() => setShowFilters(false)}
+                    className="text-white text-xl"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* 🔥 DESKTOP TITLE */}
+                <h3 className="hidden md:block text-sky-400 font-semibold text-lg">
+                  Filter Options
+                </h3>
+
+                {/* 🔥 PRICE */}
+                <div>
+                  <p className="text-sm text-sky-300 mb-2">Price Range</p>
+
+                  <input
+                    type="range"
+                    min={minPrice}
+                    max={maxPrice}
+                    value={filters.maxPrice || maxPrice}
+                    onChange={(e) =>
+                      setFilters({ ...filters, maxPrice: e.target.value })
+                    }
+                    className="w-full accent-sky-400 cursor-pointer"
+                  />
+
+                  <p className="text-xs text-gray-400 mt-1">
+                    ₹{minPrice} - ₹{filters.maxPrice || maxPrice}
+                  </p>
+                </div>
+
+                {/* 🔥 BRAND (CHECKBOX) */}
+                <div>
+                  <p className="text-sm text-sky-300 mb-2">Brands</p>
+
+                  <div className="max-h-40 overflow-y-auto space-y-1 pr-1 no-scrollbar">
+                    {brands.map((b) => (
+                      <label
+                        key={b}
+                        className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={filters.brand.includes(b)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFilters({
+                                ...filters,
+                                brand: [...filters.brand, b],
+                              });
+                            } else {
+                              setFilters({
+                                ...filters,
+                                brand: filters.brand.filter((item) => item !== b),
+                              });
+                            }
+                          }}
+                          className="accent-sky-400"
+                        />
+                        {b}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 🔥 RATING */}
+                <div>
+                  <p className="text-sm text-sky-300 mb-2">Ratings</p>
+
+                  {[
+                    { label: "All Ratings", value: "" },
+                    { label: "4★ & up", value: "4" },
+                    { label: "3★ & up", value: "3" },  
+                  ].map((r) => (
+                    <label
+                      key={r.label}
+                      className="flex items-center gap-2 text-sm text-gray-300 mb-1 cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name="rating"
+                        checked={filters.rating === r.value}
+                        onChange={() =>
+                          setFilters({ ...filters, rating: r.value })
+                        }
+                        className="accent-sky-400"
+                      />
+                      {r.label}
+                    </label>
+                  ))}
+                </div>
+
+                {/* 🔥 STOCK */}
+                <div>
+                  <p className="text-sm text-sky-300 mb-2">Availability</p>
+
+                  {[
+                    { label: "All", value: "" },
+                    { label: "In Stock", value: "in" },
+                    { label: "Out of Stock", value: "out" },
+                  ].map((s) => (
+                    <label
+                      key={s.label}
+                      className="flex items-center gap-2 text-sm text-gray-300 mb-1 cursor-pointer"
+                    >
+                      <input
+                        type="radio"
+                        name="stock"
+                        checked={filters.stock === s.value}
+                        onChange={() =>
+                          setFilters({ ...filters, stock: s.value })
+                        }
+                        className="accent-sky-400"
+                      />
+                      {s.label}
+                    </label>
+                  ))}
+                </div>
+
+                {/* 🔥 OFFER */}
+                <div className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={filters.offer}
+                    onChange={(e) =>
+                      setFilters({ ...filters, offer: e.target.checked })
+                    }
+                    className="accent-sky-400"
+                  />
+                  <span className="text-sm text-gray-300">Offers Only</span>
+                </div>
+
+                {/* 🔥 CLEAR BUTTON */}
+                <button
+                  onClick={() =>
+                    setFilters({
+                      minPrice: "",
+                      maxPrice: "",
+                      brand: [],
+                      rating: "",
+                      stock: "",
+                      offer: false,
+                    })
+                  }
+                  className="w-full bg-sky-500/20 hover:bg-sky-500 text-sky-300 hover:text-black py-2 rounded-lg text-sm font-medium transition-all"
+                >
+                  Clear Filters
+                </button>
+
+              </div>
+            </>
+
+            {/* 🔥 PRODUCTS GRID */}
+            <div className="flex-1">
+              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+                {paginatedProducts.map((product) => (
+                  <ProductCard
+                    key={product.docId}
+                    product={product}
+                    handleAddToCart={handleAddToCart}
+                  />
+                ))}
+              </div>
+            </div>
+
           </div>
           <div className="flex justify-center items-center mt-10 gap-3 flex-wrap">
 
@@ -175,8 +436,8 @@ export default function Products() {
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
                 className={`px-4 py-2 rounded-md text-sm ${currentPage === i + 1
-                    ? "bg-sky-400 text-black"
-                    : "bg-white/10 text-white hover:bg-white/20"
+                  ? "bg-sky-400 text-black"
+                  : "bg-white/10 text-white hover:bg-white/20"
                   }`}
               >
                 {i + 1}
