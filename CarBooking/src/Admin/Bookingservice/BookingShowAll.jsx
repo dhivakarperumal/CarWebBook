@@ -395,7 +395,7 @@ const ShowAllBookings = () => {
           ))}
         </div>
       ) : (
-        <div className="overflow-hidden bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 animate-fadeIn">
+        <div className="overflow-hidden bg-white rounded-lg shadow-2xl shadow-blue-900/5 border border-gray-100 animate-fadeIn">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-black text-white">
               <tr>

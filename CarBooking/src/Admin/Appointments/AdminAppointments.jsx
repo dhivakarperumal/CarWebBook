@@ -349,7 +349,7 @@ const AdminAppointments = () => {
           {paginated.length === 0 && <div className="col-span-full py-20 text-center text-gray-400 font-black uppercase tracking-widest text-xs">No schedule found for designated metrics</div>}
         </div>
       ) : (
-        <div className="overflow-hidden bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 animate-fadeIn">
+        <div className="overflow-hidden bg-white rounded-lg shadow-2xl shadow-blue-900/5 border border-gray-100 animate-fadeIn">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-black text-white">
               <tr>
