@@ -2,13 +2,22 @@ import { useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import { useNavigate } from "react-router-dom";
 import {
-  Search,
-  Trash2,
-  Plus,
-  Printer,
-} from "lucide-react";
+  FaSearch,
+  FaTrashAlt,
+  FaPlus,
+  FaPrint,
+  FaFileInvoiceDollar,
+  FaClock,
+  FaCheckCircle,
+} from "react-icons/fa";
 import toast from "react-hot-toast";
 import Pagination from "../../Components/Pagination";
+
+const formatValue = (num) => {
+  if (num >= 100000) return (num / 100000).toFixed(1) + " L";
+  if (num >= 1000) return (num / 1000).toFixed(1) + " K";
+  return num.toLocaleString();
+};
 
 /* =========================
    STATUS BADGE
@@ -34,10 +43,17 @@ const StatusBadge = ({ status }) => {
 /* =========================
    STAT CARD
 ========================= */
-const StatCard = ({ title, value }) => (
-  <div className="bg-white rounded-md border border-gray-300 shadow p-5">
-    <p className="text-sm text-gray-500">{title}</p>
-    <p className="text-2xl font-bold mt-1">{value}</p>
+const StatCard = ({ title, value, icon, gradient }) => (
+  <div className="bg-white border border-gray-300 rounded-md p-6 shadow-sm hover:shadow-md transition">
+    <div className="flex justify-between items-center">
+      <div>
+        <p className="text-xs text-slate-500 uppercase font-black tracking-widest">{title}</p>
+        <h2 className="text-2xl font-black text-slate-900 mt-1">{value}</h2>
+      </div>
+      <div className={`p-4 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-lg shadow-black/10`}>
+        {icon}
+      </div>
+    </div>
   </div>
 );
 
@@ -81,6 +97,10 @@ const Billings = () => {
 
   const pendingCount = bills.filter(
     (b) => b.paymentStatus?.toLowerCase() !== "paid"
+  ).length;
+
+  const paidCount = bills.filter(
+    (b) => b.paymentStatus?.toLowerCase() === "paid"
   ).length;
 
   /* =========================
@@ -228,17 +248,33 @@ const Billings = () => {
         <button
           onClick={() => navigate("/admin/addbillings")}
           className="h-[42px] w-full sm:w-auto bg-black text-white px-5 rounded-md font-bold shadow
-             hover:bg-gray-900 transition flex items-center justify-center gap-2"
+             hover:bg-gray-900 transition flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
         >
-          <Plus size={16} />
+          <FaPlus size={14} />
           Create Invoice
         </button>
       </div>
 
       {/* STATS */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <StatCard title="Total Revenue" value={`₹${totalRevenue}`} />
-        <StatCard title="Pending Invoices" value={pendingCount} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <StatCard 
+          title="Total Revenue" 
+          value={`₹ ${formatValue(totalRevenue)}`} 
+          icon={<FaFileInvoiceDollar />}
+          gradient="from-emerald-600 to-emerald-400"
+        />
+        <StatCard 
+          title="Paid Invoices" 
+          value={paidCount} 
+          icon={<FaCheckCircle />}
+          gradient="from-blue-600 to-blue-400"
+        />
+        <StatCard 
+          title="Pending Invoices" 
+          value={pendingCount} 
+          icon={<FaClock />}
+          gradient="from-amber-600 to-amber-400"
+        />
       </div>
 
       {/* FILTER BAR */}
@@ -247,8 +283,8 @@ const Billings = () => {
 
           {/* LEFT : SEARCH */}
           <div className="relative w-full md:max-w-md">
-            <Search
-              size={18}
+            <FaSearch
+              size={14}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             />
             <input
@@ -382,10 +418,10 @@ const Billings = () => {
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
                         <button onClick={() => fetchAndPrint(b.id)} className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">
-                        <Printer size={16} />
+                        <FaPrint size={14} />
                         </button>
                         <button onClick={() => deleteInvoice(b.id)} className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition">
-                        <Trash2 size={16} />
+                        <FaTrashAlt size={14} />
                         </button>
                     </div>
                   </td>

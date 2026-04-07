@@ -14,6 +14,20 @@ import {
 import Pagination from "../../Components/Pagination";
 import { useAuth } from "../../PrivateRouter/AuthContext.jsx";
 
+const StatCard = ({ title, value, icon, gradient }) => (
+  <div className="bg-white border border-gray-300 rounded-md p-6 shadow-sm hover:shadow-md transition">
+    <div className="flex justify-between items-center">
+      <div>
+        <p className="text-xs text-slate-500 uppercase font-black tracking-widest">{title}</p>
+        <h2 className="text-2xl font-black text-slate-900 mt-1">{value}</h2>
+      </div>
+      <div className={`p-4 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-lg shadow-black/10`}>
+        {icon}
+      </div>
+    </div>
+  </div>
+);
+
 
 const Staffs = () => {
   const { profileName: userProfile } = useAuth();
@@ -100,41 +114,25 @@ const Staffs = () => {
       </div>
 
       {/* ===== TOP CARDS ===== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 mb-5 gap-6">
-
-        {/* Total Staff */}
-        <div className="bg-white rounded-md border border-gray-300 shadow-sm  p-5 flex justify-between items-center">
-          <div>
-            <p className="text-sm text-gray-500">Total Staff</p>
-            <h2 className="text-3xl font-bold text-gray-900">{totalStaff}</h2>
-          </div>
-          <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center">
-            <FaUsers className="text-white text-xl" />
-          </div>
-        </div>
-
-        {/* Active Staff */}
-        <div className="bg-white rounded-md border border-gray-300 shadow-sm  p-5 flex justify-between items-center">
-          <div>
-            <p className="text-sm text-gray-500">Active Staff</p>
-            <h2 className="text-3xl font-bold text-gray-900">{activeStaff}</h2>
-          </div>
-          <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
-            <FaUserCheck className="text-white text-xl" />
-          </div>
-        </div>
-
-        {/* Inactive Staff */}
-        <div className="bg-white rounded-md border border-gray-300 shadow-sm  p-5 flex justify-between items-center">
-          <div>
-            <p className="text-sm text-gray-500">Inactive Staff</p>
-            <h2 className="text-3xl font-bold text-gray-900">{inactiveStaff}</h2>
-          </div>
-          <div className="w-12 h-12 bg-red-500 rounded-xl flex items-center justify-center">
-            <FaUserTimes className="text-white text-xl" />
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mb-5 gap-6">
+        <StatCard 
+          title="Total Technicians" 
+          value={totalStaff} 
+          icon={<FaUsers />} 
+          gradient="from-blue-600 to-blue-400" 
+        />
+        <StatCard 
+          title="Active Staff" 
+          value={activeStaff} 
+          icon={<FaUserCheck />} 
+          gradient="from-emerald-600 to-emerald-400" 
+        />
+        <StatCard 
+          title="Inactive Staff" 
+          value={inactiveStaff} 
+          icon={<FaUserTimes />} 
+          gradient="from-rose-600 to-rose-400" 
+        />
       </div>
 
 
