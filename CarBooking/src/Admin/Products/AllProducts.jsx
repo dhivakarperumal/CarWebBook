@@ -13,7 +13,8 @@ import {
   FaStar, 
   FaCheckCircle,
   FaSearch,
-  FaPlus
+  FaPlus,
+  FaTrash
 } from "react-icons/fa";
 
 const StatCard = ({ title, value, icon, gradient }) => (

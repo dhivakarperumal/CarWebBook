@@ -3,15 +3,14 @@ import api from "../../api";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
-  Plus,
-  Filter,
-  RotateCcw,
-  Pencil,
-  Trash2,
-  Box,
-  AlertTriangle,
-  ShoppingCart,
-} from "lucide-react";
+  FaBoxOpen,
+  FaExclamationTriangle,
+  FaTimesCircle,
+  FaPlus,
+  FaSearch,
+  FaEdit,
+  FaTrashAlt
+} from "react-icons/fa";
 import Pagination from "../../Components/Pagination";
 
 /* =======================
@@ -35,14 +34,16 @@ const inputStyle = `
 /* =======================
    STAT CARD
 ======================= */
-const StatCard = ({ title, value, icon, color }) => (
-  <div className="bg-white p-5 rounded-md border border-gray-300 shadow flex justify-between items-center">
-    <div>
-      <p className="text-gray-500 text-sm">{title}</p>
-      <h2 className={`text-2xl font-bold ${color}`}>{value}</h2>
-    </div>
-    <div className={`p-3 rounded-full ${color.replace("text", "bg")}/10`}>
-      {icon}
+const StatCard = ({ title, value, icon, gradient }) => (
+  <div className="bg-white border border-gray-300 rounded-md p-6 shadow-sm hover:shadow-md transition">
+    <div className="flex justify-between items-center">
+      <div>
+        <p className="text-xs text-slate-500 uppercase font-black tracking-widest">{title}</p>
+        <h2 className="text-2xl font-black text-slate-900 mt-1">{value}</h2>
+      </div>
+      <div className={`p-4 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-lg shadow-black/10`}>
+        {icon}
+      </div>
     </div>
   </div>
 );
@@ -185,18 +186,32 @@ const Inventory = () => {
       <div className="flex justify-end">
         <button
           onClick={() => navigate("/admin/additemsinventory")}
-          className="bg-black hover:bg-orange-500 font-bold text-white px-5 py-3 rounded-md flex items-center gap-2 shadow"
+          className="flex items-center gap-2 bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 active:scale-95"
         >
-          <Plus size={18} /> Add New Item
+          <FaPlus size={14} /> Add New Item
         </button>
       </div>
 
       {/* ===== DASHBOARD CARDS ===== */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <StatCard title="Total Items" value={totalItems} icon={<Box />} color="text-blue-600" />
-        <StatCard title="Low Stock Alerts" value={lowStock} icon={<AlertTriangle />} color="text-yellow-600" />
-        <StatCard title="Out of Stock Items" value={outOfStock} icon={<ShoppingCart />} color="text-red-600" />
-        {/* <StatCard title="Received Orders This Month" value={receivedOrders} icon={<ShoppingCart />} color="text-green-600" /> */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <StatCard 
+          title="Total Spare Parts" 
+          value={totalItems} 
+          icon={<FaBoxOpen />} 
+          gradient="from-blue-600 to-blue-400" 
+        />
+        <StatCard 
+          title="Low Stock Alerts" 
+          value={lowStock} 
+          icon={<FaExclamationTriangle />} 
+          gradient="from-amber-600 to-amber-400" 
+        />
+        <StatCard 
+          title="Out of Stock" 
+          value={outOfStock} 
+          icon={<FaTimesCircle />} 
+          gradient="from-rose-600 to-rose-400" 
+        />
       </div>
 
       {/* ===== FILTER + ADD ===== */}
@@ -275,15 +290,15 @@ const Inventory = () => {
                   <td className="px-3 py-4 flex gap-2 justify-center">
                     <button
                       onClick={() => navigate(`/admin/additemsinventory/${item.id}`)}
-                      className="p-3 rounded-full  border border-gray-300  transition"
+                      className="p-3 rounded-full border border-gray-300 transition hover:bg-black hover:text-white"
                     >
-                      <Pencil size={14} />
+                      <FaEdit size={14} />
                     </button>
                     <button
                       onClick={() => handleDelete(item.id)}
-                      className="p-3 rounded-full  border border-gray-300  transition"
+                      className="p-3 rounded-full border border-gray-300 transition hover:bg-red-50 hover:text-red-600"
                     >
-                      <Trash2 size={14} />
+                      <FaTrashAlt size={14} />
                     </button>
                   </td>
                 </tr>

@@ -2,7 +2,17 @@ import React, { useEffect, useState, useMemo } from "react";
 import api from "../../api";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { FaTable, FaThLarge, FaPlus } from "react-icons/fa";
+import { 
+  FaTable, 
+  FaThLarge, 
+  FaPlus, 
+  FaSearch, 
+  FaBoxOpen, 
+  FaHistory,
+  FaCheckCircle,
+  FaExclamationTriangle
+} from "react-icons/fa";
+import Pagination from "../../Components/Pagination";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -70,37 +80,41 @@ const StockDetails = () => {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* HEADER */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div className="w-full md:w-72">
+    <div className="p-6 max-w-7xl mx-auto space-y-10 animate-fadeIn">
+      {/* HEADER ROW */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div className="lg:col-span-6 relative group">
+          <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors" />
           <input
             type="text"
-            placeholder="Search product..."
+            placeholder="Scan or search inventory catalog..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full border border-gray-300 bg-white px-4 py-3 rounded-md text-sm shadow-sm focus:ring-2 focus:ring-black outline-none transition"
+            className="w-full pl-14 pr-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-sm"
           />
         </div>
 
-        <div className="flex gap-3 items-center justify-end">
-          <button
-            onClick={() => setView("table")}
-            className={`flex items-center gap-2 px-3 py-2.5 rounded ${view === "table" ? "bg-black text-white" : "bg-gray-200 text-gray-700"}`}
-          >
-            <FaTable /> Table
-          </button>
-          <button
-            onClick={() => setView("card")}
-            className={`flex items-center gap-2 px-3 py-2.5 rounded ${view === "card" ? "bg-black text-white" : "bg-gray-200 text-gray-700"}`}
-          >
-            <FaThLarge /> Card
-          </button>
+        <div className="lg:col-span-6 flex flex-wrap items-center justify-end gap-3">
+          <div className="flex h-[56px] bg-gray-50 p-1 rounded-2xl border border-gray-100 shadow-inner">
+            <button
+              onClick={() => setView("table")}
+              className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}
+            >
+              <FaTable /> Table
+            </button>
+            <button
+              onClick={() => setView("card")}
+              className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === "card" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}
+            >
+              <FaThLarge /> Cards
+            </button>
+          </div>
+
           <button
             onClick={() => navigate("/admin/addstock")}
-            className="flex items-center gap-2 bg-black text-white px-4 py-2.5 rounded"
+            className="h-[56px] px-10 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 flex items-center gap-3"
           >
-            <FaPlus /> Add Stock
+            <FaPlus /> Refill Stock
           </button>
         </div>
       </div>
@@ -124,10 +138,26 @@ const StockDetails = () => {
                 <React.Fragment key={p.docId}>
                   <tr className="border-t border-gray-300">
                     <td className="p-3 font-medium">{i + 1}</td>
-                    <td className="p-3">
-                      {p.thumbnail ? (
-                        <img src={p.thumbnail} alt={p.name} className="w-12 h-12 object-cover rounded" />
-                      ) : "No Image"}
+                    <td className="p-4">
+                      {p.thumbnail || (p.images && p.images.length > 0) ? (
+                        <img 
+                          src={
+                            (p.images && p.images.length > 0) 
+                              ? p.images[0] 
+                              : (p.thumbnail?.startsWith('[') ? JSON.parse(p.thumbnail)[0] : p.thumbnail)
+                          } 
+                          alt={p.name} 
+                          className="w-14 h-14 object-cover rounded-xl border border-gray-200 shadow-sm transition-transform hover:scale-105" 
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = "https://via.placeholder.com/150?text=No+Img";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-xl bg-gray-50 flex items-center justify-center border border-dashed border-gray-300">
+                          <FaBoxOpen className="text-gray-200" size={20} />
+                        </div>
+                      )}
                     </td>
                     <td className="p-3 font-medium">{p.name}</td>
                     <td className="p-3">{p.variants?.length || 0}</td>
@@ -136,12 +166,12 @@ const StockDetails = () => {
                         {p.totalStock || 0}
                       </span>
                     </td>
-                    <td className="p-3">
+                    <td className="p-4">
                       <button
                         onClick={() => setExpanded(expanded === p.docId ? null : p.docId)}
-                        className="bg-gray-200 px-3 py-1 rounded text-xs"
+                        className={`px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${expanded === p.docId ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}
                       >
-                        {expanded === p.docId ? "Hide" : "Manage"}
+                        {expanded === p.docId ? "Close Panel" : "View Inventory"}
                       </button>
                     </td>
                   </tr>
@@ -242,21 +272,13 @@ const StockDetails = () => {
       )}
 
       {/* PAGINATION */}
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2">
-          <button onClick={() => setPage((p) => p - 1)} disabled={page === 1} className="px-3 py-1 border rounded disabled:opacity-40">Prev</button>
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => setPage(i + 1)}
-              className={`px-3 py-1 rounded ${page === i + 1 ? "bg-black text-white" : "bg-gray-200 text-gray-700"}`}
-            >
-              {i + 1}
-            </button>
-          ))}
-          <button onClick={() => setPage((p) => p + 1)} disabled={page === totalPages} className="px-3 py-1 border rounded disabled:opacity-40">Next</button>
-        </div>
-      )}
+      <div className="flex justify-center mt-10">
+        <Pagination 
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+        />
+      </div>
     </div>
   );
 };
