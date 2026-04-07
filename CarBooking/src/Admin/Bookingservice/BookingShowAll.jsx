@@ -74,28 +74,36 @@ const ShowAllBookings = () => {
       b.bookingId?.toLowerCase().includes(search.toLowerCase()) ||
       b.name?.toLowerCase().includes(search.toLowerCase()) ||
       b.phone?.includes(search);
-    const matchStatus = statusFilter === "All" || b.status === statusFilter;
+    const matchStatus =
+      statusFilter === "All" ||
+      (b.status || "").toLowerCase() === statusFilter.toLowerCase();
 
     const bDateStr = b.created_at || b.createdAt;
     const bookingDate = bDateStr ? new Date(bDateStr) : null;
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     let matchDate = true;
 
     if (dateFilter === "Today") {
-      matchDate = bookingDate && bookingDate.toDateString() === today.toDateString();
+      if (!bookingDate) return false;
+      const d = new Date(bookingDate);
+      d.setHours(0, 0, 0, 0);
+      matchDate = d.getTime() === today.getTime();
     } else if (dateFilter === "Yesterday") {
-      const yesterday = new Date();
+      if (!bookingDate) return false;
+      const yesterday = new Date(today);
       yesterday.setDate(today.getDate() - 1);
-      matchDate = bookingDate.toDateString() === yesterday.toDateString();
+      const d = new Date(bookingDate);
+      d.setHours(0, 0, 0, 0);
+      matchDate = d.getTime() === yesterday.getTime();
     } else if (dateFilter === "This Week") {
-      const lastWeek = new Date();
+      const lastWeek = new Date(today);
       lastWeek.setDate(today.getDate() - 7);
-      lastWeek.setHours(0, 0, 0, 0);
       matchDate = bookingDate >= lastWeek;
     } else if (dateFilter === "This Month") {
-      const lastMonth = new Date();
+      const lastMonth = new Date(today);
       lastMonth.setDate(today.getDate() - 30);
-      lastMonth.setHours(0, 0, 0, 0);
       matchDate = bookingDate >= lastMonth;
     }
 
@@ -358,6 +366,13 @@ const ShowAllBookings = () => {
                   </td>
                 </tr>
               ))}
+              {paginatedData.length === 0 && (
+                <tr>
+                  <td colSpan="7" className="px-4 py-12 text-center text-gray-500 font-medium">
+                    No bookings found for the selected filters.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
