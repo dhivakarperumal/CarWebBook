@@ -111,6 +111,13 @@ exports.assignMechanic = async (req, res) => {
       'UPDATE all_services SET assignedEmployeeId = ?, assignedEmployeeName = ?, serviceStatus = ? WHERE id = ?',
       [assignedEmployeeId, assignedEmployeeName, serviceStatus || 'Processing', id]
     );
+
+    // Sync back to bookings for consistency if linked
+    const [service] = await db.query('SELECT bookingDocId FROM all_services WHERE id = ?', [id]);
+    if (service.length && service[0].bookingDocId) {
+       await db.query('UPDATE bookings SET assignedEmployeeId = ?, assignedEmployeeName = ?, status = ? WHERE id = ?', 
+       [assignedEmployeeId, assignedEmployeeName, 'Approved', service[0].bookingDocId]);
+    }
     res.json({ message: 'Mechanic assigned' });
   } catch (err) {
     res.status(500).json({ message: 'Error assigning mechanic', error: err.message });

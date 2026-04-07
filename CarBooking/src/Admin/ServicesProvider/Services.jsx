@@ -49,7 +49,7 @@ export default function Services() {
   const [serviceParts, setServiceParts] = useState({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [dateFilter, setDateFilter] = useState("Today");
+  const [dateFilter, setDateFilter] = useState("All Time");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -100,8 +100,12 @@ export default function Services() {
     return services.filter((s) => {
       const text = `${s.bookingId || ""} ${s.name || ""} ${s.phone || ""} ${s.brand || ""} ${s.model || ""} ${s.vehicleNumber || ""}`.toLowerCase();
       if (!text.includes(search.toLowerCase())) return false;
+      
       const bDateStr = s.created_at || s.createdAt;
+      // If filtering by history, don't block records with missing dates
+      if (dateFilter === "All Time") return true;
       if (!bDateStr) return false;
+
       const bookingDate = new Date(bDateStr);
       const today = new Date();
       if (dateFilter === "Today") return bookingDate.toDateString() === today.toDateString();

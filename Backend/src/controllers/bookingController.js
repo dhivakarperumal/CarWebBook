@@ -78,9 +78,16 @@ exports.updateBookingStatus = async (req, res) => {
         if (existing.length === 0) {
           await db.query(`
              INSERT INTO all_services (
-               bookingId, bookingDocId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, trackNumber, vehicleNumber, addVehicle, place,
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-           `, [b.bookingId, b.id, b.uid, b.name, b.phone, b.email, b.brand, b.model, b.issue, b.otherIssue, b.location, b.address, trackNumber || '', b.vehicleNumber || '', b.vehicleType ? 1 : 0]);
+               bookingId, bookingDocId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, trackNumber, vehicleNumber, addVehicle, place, serviceStatus
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           `, [b.bookingId, b.id, b.uid, b.name, b.phone, b.email, b.brand, b.model, b.issue, b.otherIssue, b.location, b.address, trackNumber || '', b.vehicleNumber || '', b.vehicleType ? 1 : 0, b.place || '', 'Approved']);
+        } else {
+          await db.query(`
+            UPDATE all_services SET 
+              bookingId = ?, uid = ?, name = ?, phone = ?, email = ?, brand = ?, model = ?, issue = ?, otherIssue = ?, 
+              location = ?, address = ?, trackNumber = ?, vehicleNumber = ?, addVehicle = ?, place = ?, serviceStatus = ?
+            WHERE bookingDocId = ?
+          `, [b.bookingId, b.uid, b.name, b.phone, b.email, b.brand, b.model, b.issue, b.otherIssue, b.location, b.address, trackNumber || '', b.vehicleNumber || '', b.vehicleType ? 1 : 0, b.place || '', 'Approved', id]);
         }
       }
     }
@@ -105,11 +112,17 @@ exports.assignEmployee = async (req, res) => {
       if (existing.length === 0) {
         await db.query(`
           INSERT INTO all_services (
-            bookingId, bookingDocId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, trackNumber, vehicleNumber, addVehicle, assignedEmployeeId, assignedEmployeeName, serviceStatus
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `, [b.bookingId, b.id, b.uid, b.name, b.phone, b.email, b.brand, b.model, b.issue, b.otherIssue, b.location, b.address, '', b.vehicleNumber || '', b.vehicleType ? 1 : 0, assignedEmployeeId, assignedEmployeeName, 'Approved']);
+            bookingId, bookingDocId, uid, name, phone, email, brand, model, issue, otherIssue, location, address, trackNumber, vehicleNumber, addVehicle, assignedEmployeeId, assignedEmployeeName, serviceStatus, place
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [b.bookingId, b.id, b.uid, b.name, b.phone, b.email, b.brand, b.model, b.issue, b.otherIssue, b.location, b.address, '', b.vehicleNumber || '', b.vehicleType ? 1 : 0, assignedEmployeeId, assignedEmployeeName, 'Approved', b.place || '']);
       } else {
-        await db.query('UPDATE all_services SET assignedEmployeeId = ?, assignedEmployeeName = ?, serviceStatus = ? WHERE bookingDocId = ?', [assignedEmployeeId, assignedEmployeeName, 'Approved', id]);
+        await db.query(`
+          UPDATE all_services SET 
+            assignedEmployeeId = ?, assignedEmployeeName = ?, serviceStatus = ?, 
+            bookingId = ?, uid = ?, name = ?, phone = ?, email = ?, brand = ?, model = ?, 
+            issue = ?, otherIssue = ?, location = ?, address = ?, vehicleNumber = ?, place = ?
+          WHERE bookingDocId = ?
+        `, [assignedEmployeeId, assignedEmployeeName, 'Approved', b.bookingId, b.uid, b.name, b.phone, b.email, b.brand, b.model, b.issue, b.otherIssue, b.location, b.address, b.vehicleNumber || '', b.place || '', id]);
       }
     }
 

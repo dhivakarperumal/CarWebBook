@@ -26,9 +26,19 @@ exports.getStaffById = async (req, res) => {
 /* 🔑 GENERATE EMPLOYEE ID */
 exports.generateEmployeeId = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT COUNT(*) as count FROM staff');
-    const count = rows[0].count + 1;
-    const employeeId = `EMP${String(count).padStart(4, '0')}`;
+    // Get the maximum employee_id currently in the table
+    const [rows] = await db.query("SELECT employee_id FROM staff WHERE employee_id LIKE 'EMP%' ORDER BY CAST(SUBSTRING(employee_id, 4) AS UNSIGNED) DESC LIMIT 1");
+    
+    let nextCount = 1;
+    if (rows.length > 0) {
+      const lastId = rows[0].employee_id;
+      const lastNum = parseInt(lastId.replace('EMP', ''), 10);
+      if (!isNaN(lastNum)) {
+        nextCount = lastNum + 1;
+      }
+    }
+    
+    const employeeId = `EMP${String(nextCount).padStart(4, '0')}`;
     res.json({ employeeId });
   } catch (err) {
     res.status(500).json({ message: 'Error generating ID', error: err.message });
@@ -53,6 +63,12 @@ exports.addStaff = async (req, res) => {
     
     // Generate unique user ID
     const uid = crypto.randomUUID();
+
+    // Check if user already exists in users table by email or mobile
+    const [existingUser] = await db.query('SELECT * FROM users WHERE email = ? OR mobile = ?', [email, phone]);
+    if (existingUser.length > 0) {
+      return res.status(400).json({ message: 'User with this email or phone already exists in the system' });
+    }
 
     // 1. Insert into users table for login
     await db.query(
@@ -101,17 +117,29 @@ exports.updateStaff = async (req, res) => {
       photo, aadhar_doc, id_doc, certificate_doc
     } = req.body;
 
-    // Get current staff email to update the user account too
+    // Get current staff to update the user account too
     const [existing] = await db.query('SELECT email, uid FROM staff WHERE id=?', [id]);
-    if (existing.length) {
-      const oldEmail = existing[0].email;
-      const uid = existing[0].uid;
-      // Update users table too
-      await db.query(
-        'UPDATE users SET username=?, email=?, mobile=?, role=? WHERE email=? OR uid=?',
-        [name, email, phone, role || 'staff', oldEmail, uid]
-      );
+    if (!existing.length) {
+      return res.status(404).json({ message: 'Staff member not found' });
     }
+
+    const oldEmail = existing[0].email;
+    const uid = existing[0].uid;
+
+    // Check if new email or phone is already taken by ANOTHER user
+    const [duplicateCheck] = await db.query(
+      'SELECT * FROM users WHERE (email = ? OR mobile = ?) AND uid != ?',
+      [email, phone, uid]
+    );
+    if (duplicateCheck.length > 0) {
+      return res.status(400).json({ message: 'Email or Phone is already in use by another account' });
+    }
+
+    // Update users table
+    await db.query(
+      'UPDATE users SET username=?, email=?, mobile=?, role=? WHERE uid=?',
+      [name, email, phone, role || 'staff', uid]
+    );
 
     const sql = `
       UPDATE staff SET
