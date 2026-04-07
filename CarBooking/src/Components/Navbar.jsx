@@ -21,16 +21,20 @@ const Navbar = () => {
   const [cartCount, setCartCount] = useState(0);
   const [showPages, setShowPages] = useState(false);
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(".pages-dropdown")) {
-        setShowPages(false);
-      }
-    };
+  // useEffect(() => {
+  //   const handleClickOutside = (e) => {
+  //     if (!e.target.closest(".pages-dropdown")) {
+  //       setShowPages(false);
+  //     }
+  //   };
 
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
+  //   document.addEventListener("click", handleClickOutside);
+  //   return () => document.removeEventListener("click", handleClickOutside);
+  // }, []);
+
+  useEffect(() => {
+  setIsOpen(false);
+}, [location.pathname]);
 
   const handleLogout = async () => {
     try {
@@ -109,7 +113,7 @@ const Navbar = () => {
   const pagesDropdownRef = useRef(null);
 
   return (
-    <header className="sticky top-0 z-50">
+    <header className="sticky top-0 z-50 relative">
       <div className="bg-black backdrop-blur-md border-b border-sky-400/20">
         <PageContainer>
           <div className="relative flex items-center justify-between h-18">
@@ -497,10 +501,13 @@ const Navbar = () => {
 
       {/* MOBILE MENU */}
       <div
-        className={`md:hidden bg-black/95 backdrop-blur transition-all duration-300 overflow-hidden
-        ${isOpen ? "max-h-[520px] border-t border-sky-400/20" : "max-h-0"}`}
-      >
-        <nav className="flex flex-col px-6 py-6 gap-6">
+  className={`md:hidden bg-black/95 backdrop-blur transition-all duration-300 fixed top-[72px] left-0 w-full z-40
+  ${isOpen 
+    ? "max-h-[calc(100vh-72px)] border-t border-sky-400/20 overflow-y-auto pointer-events-auto" 
+    : "max-h-0 overflow-hidden pointer-events-none"}
+`}
+>
+        <nav className="flex flex-col px-6 py-6 gap-6 max-h-[80vh] overflow-y-auto">
           {links.map((item) => (
             <button
               key={item.label}
@@ -520,15 +527,18 @@ const Navbar = () => {
           ))}
 
           {/* MOBILE PAGES DROPDOWN */}
-          <div>
+          <div ref={pagesDropdownRef}>
             <button
-              onClick={() => setShowPagesDropdown(!showPagesDropdown)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowPagesDropdown(!showPagesDropdown);
+              }}
               className="text-xs font-bold tracking-[0.2em] text-left transition text-gray-300 hover:text-sky-400 w-full"
             >
               PAGES {showPagesDropdown ? "▼" : "▶"}
             </button>
             {showPagesDropdown && (
-              <div className="mt-2 flex flex-col gap-2 pl-4 border-l-2 border-sky-400/30">
+              <div className="mt-2 flex flex-col gap-4 pl-4 border-l-2 border-sky-400/30">
                 {pageLinks.map((item) => (
                   <button
                     key={item.label}
