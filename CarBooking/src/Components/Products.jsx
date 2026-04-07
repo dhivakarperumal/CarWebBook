@@ -11,10 +11,20 @@ import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 export default function Products() {
   const [products, setProducts] = useState([]);
+  const brands = [...new Set(products.map(p => p.brand).filter(Boolean))];
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [sort, setSort] = useState("");
+
+  const [filters, setFilters] = useState({
+    minPrice: "",
+    maxPrice: "",
+    brand: [],
+    rating: "",
+    stock: "",
+    offer: false,
+  });
 
   const PRODUCTS_PER_PAGE = 8;
 
@@ -37,9 +47,42 @@ export default function Products() {
   }, []);
 
   const filteredProducts = products
-    .filter((p) =>
-      p.name.toLowerCase().includes(search.toLowerCase())
-    )
+    .filter((p) => {
+      const searchValue = search.toLowerCase();
+
+      return (
+        p.name.toLowerCase().includes(searchValue) ||
+        p.brand?.toLowerCase().includes(searchValue) ||
+        String(p.offerPrice).includes(searchValue)
+      );
+    })
+
+    .filter((p) => {
+      const price = Number(p.offerPrice || 0);
+
+      // Price Range
+      if (filters.minPrice && price < Number(filters.minPrice)) return false;
+      if (filters.maxPrice && price > Number(filters.maxPrice)) return false;
+
+      // BRAND MULTI SELECT
+      if (filters.brand.length > 0 && !filters.brand.includes(p.brand)) {
+        return false;
+      }
+
+      // Rating
+      if (filters.rating && Number(p.rating || 0) < Number(filters.rating))
+        return false;
+
+      // Stock
+      if (filters.stock === "in" && p.totalStock <= 0) return false;
+      if (filters.stock === "out" && p.totalStock > 0) return false;
+
+      // Offer
+      if (filters.offer && !p.offerPrice) return false;
+
+      return true;
+    })
+
     .sort((a, b) => {
       if (sort === "low-high") {
         return Number(a.offerPrice) - Number(b.offerPrice);
@@ -125,7 +168,7 @@ export default function Products() {
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full md:w-80 px-4 py-2 rounded-lg bg-[#0a0a0b] border border-white/20 text-white outline-none focus:border-sky-400"
+              className="w-full md:w-80 px-4 py-2 rounded-lg bg-[#0a0a0b] border border-white/20 ring-1 text-white outline-none focus:border-sky-400"
             />
 
             {/* RIGHT — SORT */}
@@ -135,7 +178,7 @@ export default function Products() {
                 setSort(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full md:w-60 px-4 py-2 rounded-lg bg-[#0a0a0b] border border-white/20 text-white outline-none focus:border-sky-400"
+              className="w-full md:w-60 ring-1 cursor-pointer px-4 py-2 rounded-lg bg-[#0a0a0b] border border-white/20 text-white outline-none focus:border-sky-400"
             >
               <option value="">Sort By</option>
               <option value="low-high">Price: Low → High</option>
@@ -145,14 +188,162 @@ export default function Products() {
             </select>
 
           </div>
-          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {paginatedProducts.map((product) => (
-              <ProductCard
-                key={product.docId}
-                product={product}
-                handleAddToCart={handleAddToCart}
-              />
-            ))}
+
+          {/* Products Section */}
+          <div className="flex gap-6">
+
+            <div className="w-full md:w-64 bg-[#0a0a0b] border border-sky-500/20 rounded-xl p-4 space-y-5">
+
+              {/* TITLE */}
+              <h3 className="text-sky-400 font-semibold text-lg">Filter Options</h3>
+
+              {/* PRICE */}
+              <div>
+                <p className="text-sm text-sky-300 mb-2">Price Range</p>
+
+                <input
+                  type="range"
+                  min="0"
+                  max="1000"
+                  value={filters.maxPrice || 1000}
+                  onChange={(e) =>
+                    setFilters({ ...filters, maxPrice: e.target.value })
+                  }
+                  className="w-full accent-sky-400 cursor-pointer"
+                />
+
+                <p className="text-xs text-gray-400 mt-1">
+                  ₹0 - ₹{filters.maxPrice || 1000}
+                </p>
+              </div>
+
+              {/* BRAND */}
+              <div>
+                <p className="text-sm text-sky-300 mb-2">Brands</p>
+
+                <div className="max-h-40 overflow-y-auto space-y-1 pr-1 no-scrollbar">
+                  {brands.map((b) => (
+                    <label
+                      key={b}
+                      className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filters.brand.includes(b)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFilters({
+                              ...filters,
+                              brand: [...filters.brand, b],
+                            });
+                          } else {
+                            setFilters({
+                              ...filters,
+                              brand: filters.brand.filter((item) => item !== b),
+                            });
+                          }
+                        }}
+                        className="accent-sky-400"
+                      />
+                      {b}
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* RATING */}
+              <div>
+                <p className="text-sm text-sky-300 mb-2">Ratings</p>
+
+                {[
+                  { label: "4★ & up", value: "4" },
+                  { label: "3★ & up", value: "3" },
+                  { label: "All Ratings", value: "" },
+                ].map((r) => (
+                  <label key={r.label} className="flex items-center gap-2 text-sm text-gray-300 mb-1 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="rating"
+                      checked={filters.rating === r.value}
+                      onChange={() =>
+                        setFilters({ ...filters, rating: r.value })
+                      }
+                      className="accent-sky-400"
+                    />
+                    {r.label}
+                  </label>
+                ))}
+              </div>
+
+              {/* STOCK */}
+              <div>
+                <p className="text-sm text-sky-300 mb-2">Availability</p>
+
+                {[
+                  { label: "All", value: "" },
+                  { label: "In Stock", value: "in" },
+                  { label: "Out of Stock", value: "out" },
+                ].map((s) => (
+                  <label key={s.label} className="flex items-center gap-2 text-sm text-gray-300 mb-1 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="stock"
+                      checked={filters.stock === s.value}
+                      onChange={() =>
+                        setFilters({ ...filters, stock: s.value })
+                      }
+                      className="accent-sky-400"
+                    />
+                    {s.label}
+                  </label>
+                ))}
+              </div>
+
+              {/* OFFER */}
+              <div className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filters.offer}
+                  onChange={(e) =>
+                    setFilters({ ...filters, offer: e.target.checked })
+                  }
+                  className="accent-sky-400"
+                />
+                <span className="text-sm text-gray-300">Offers Only</span>
+              </div>
+
+              {/* CLEAR BUTTON */}
+              <button
+                onClick={() =>
+                  setFilters({
+                    minPrice: "",
+                    maxPrice: "",
+                    brand: [],
+                    rating: "",
+                    stock: "",
+                    offer: false,
+                  })
+                }
+                className="w-full bg-sky-500/20 hover:bg-sky-500 text-sky-300 hover:text-black py-2 rounded-lg text-sm font-medium transition-all"
+              >
+                Clear Filters
+              </button>
+
+            </div>
+
+            {/* 🔥 PRODUCTS GRID */}
+            <div className="flex-1">
+              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {paginatedProducts.map((product) => (
+                  <ProductCard
+                    key={product.docId}
+                    product={product}
+                    handleAddToCart={handleAddToCart}
+                  />
+                ))}
+              </div>
+            </div>
+
           </div>
           <div className="flex justify-center items-center mt-10 gap-3 flex-wrap">
 
@@ -175,8 +366,8 @@ export default function Products() {
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
                 className={`px-4 py-2 rounded-md text-sm ${currentPage === i + 1
-                    ? "bg-sky-400 text-black"
-                    : "bg-white/10 text-white hover:bg-white/20"
+                  ? "bg-sky-400 text-black"
+                  : "bg-white/10 text-white hover:bg-white/20"
                   }`}
               >
                 {i + 1}
