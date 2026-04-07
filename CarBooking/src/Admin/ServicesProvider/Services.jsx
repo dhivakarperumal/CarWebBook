@@ -428,18 +428,6 @@ export default function Services() {
         </div>
 
 
-        {/* 🔹 SUB TABS */}
-        <div className="mb-8 flex space-x-2">
-          {!isMechanic ? (
-            <div className="rounded-full bg-black px-5 py-2 text-sm font-bold text-white shadow-md">
-              Assigned Services ({assignedCount})
-            </div>
-          ) : (
-            <div className="rounded-full bg-black px-5 py-2 text-sm font-bold text-white shadow-md">
-              My Assigned Tasks ({assignedCount})
-            </div>
-          )}
-        </div>
 
         {/* 📋 DYNAMIC VIEW (CARD OR TABLE) */}
         {viewMode === "card" ? (
@@ -493,7 +481,7 @@ export default function Services() {
                           <p className="text-xs font-black uppercase tracking-wider text-blue-700">
                             Service Issues
                           </p>
-                          {isMechanic && item.assignedEmployeeName && (
+                          {item.assignedEmployeeName && (
                             <button
                               onClick={() => {
                                 setEditingIssueId(item.id);
@@ -508,9 +496,10 @@ export default function Services() {
                                 setIssueEntries(initialIssues);
                                 setIssueModalVisible(true);
                               }}
-                              className="text-xs font-bold text-blue-600 hover:underline"
+                              className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                              title="Edit Issue"
                             >
-                              Edit
+                              <FaEdit size={12} />
                             </button>
                           )}
                         </div>
@@ -770,7 +759,7 @@ export default function Services() {
                           <p className="text-xs text-gray-400 italic">No issue entries yet.</p>
                         )}
 
-                        {isMechanic && item.assignedEmployeeName && (
+                        {item.assignedEmployeeName && (
                           <button
                             onClick={() => {
                               setEditingIssueId(item.id);
@@ -785,9 +774,9 @@ export default function Services() {
                               setIssueEntries(initialIssues);
                               setIssueModalVisible(true);
                             }}
-                            className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline"
+                            className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm font-black text-[10px] uppercase tracking-widest w-fit"
                           >
-                            Edit
+                            <FaEdit size={10} /> Edit Issue
                           </button>
                         )}
                       </div>
