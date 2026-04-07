@@ -102,9 +102,14 @@ const ServiceDetails = () => {
                     SERVICE DETAILS
                   </h2>
 
-                  <p className="text-gray-400 leading-relaxed whitespace-pre-line">
-                    {service.bigDescription}
-                  </p>
+                  <ul className="space-y-1">
+                    {service.bigDescription?.split("\n").map((item, index) => (
+                      <li key={index} className="flex items-start gap-2 text-gray-400">
+                        <span className="text-sky-400 mt-1">•</span>
+                        <span className="leading-6">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
 
@@ -145,7 +150,7 @@ const ServiceDetails = () => {
               )}
 
               {/* SPARE PARTS INCLUDED */}
-              {service.sparePartsIncluded && (
+              {service.sparePartsIncluded?.length > 0 && (
                 <div className="mt-12">
                   <h2 className="text-sky-400 text-sm font-bold tracking-[0.25em] mb-6">
                     SPARE PARTS INCLUDED
