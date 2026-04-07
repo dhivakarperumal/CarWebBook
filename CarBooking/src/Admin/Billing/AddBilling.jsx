@@ -277,40 +277,73 @@ const AddBillings = () => {
 
           {/* 📦 INVENTORY MANAGEMENT */}
           <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-black/5 border border-gray-50 overflow-hidden">
-            <div className="p-8 border-b border-gray-50 flex items-center justify-between">
-              <div>
-                <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Spare Parts Inventory</h3>
-                <p className="text-[10px] text-gray-400 mt-1 font-bold">List of components used in this service cycle</p>
-              </div>
-                  <div className="flex gap-4 p-2 bg-gray-50 rounded-2xl border border-gray-100 items-center">
-                    <input 
-                      type="text" placeholder="Component Name..." 
-                      className="bg-transparent text-[11px] font-black outline-none px-3 w-48 placeholder:text-gray-300"
-                      value={newPart.partName}
-                      onChange={e => setNewPart({...newPart, partName: e.target.value})}
-                    />
-                    <div className="h-6 w-px bg-gray-200" />
-                    <input 
-                      type="number" placeholder="Qty" 
-                      className="bg-transparent text-[11px] font-black outline-none w-12 text-center placeholder:text-gray-300"
-                      value={newPart.qty}
-                      onChange={e => setNewPart({...newPart, qty: Number(e.target.value)})}
-                    />
-                    <div className="h-6 w-px bg-gray-200" />
-                    <input 
-                      type="number" placeholder="Unit Price (₹)" 
-                      className="bg-transparent text-[11px] font-black outline-none w-28 text-right pr-2 placeholder:text-gray-300"
-                      value={newPart.price}
-                      onChange={e => setNewPart({...newPart, price: Number(e.target.value)})}
-                    />
-                    <button 
-                      onClick={addManualPart}
-                      className="bg-black text-white p-2.5 rounded-xl hover:scale-110 active:scale-95 transition-all shadow-lg shadow-black/20"
-                    >
-                      <FaPlus size={12} />
-                    </button>
-                  </div>
-            </div>
+            <div className="p-8 border-b border-gray-50">
+  
+  {/* Header */}
+  <div className="mb-4">
+    <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
+      Spare Parts Inventory
+    </h3>
+    <p className="text-[10px] text-gray-400 mt-1 font-bold">
+      List of components used in this service cycle
+    </p>
+  </div>
+
+  {/* Inputs */}
+  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+
+    {/* Part Name */}
+    <div className="flex flex-col">
+      <label className="text-[10px] font-bold text-gray-400 mb-1">
+        Component Name
+      </label>
+      <input
+        type="text"
+        placeholder="Enter part name"
+        className="border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-semibold outline-none focus:border-gray-300"
+        value={newPart.partName}
+        onChange={e => setNewPart({ ...newPart, partName: e.target.value })}
+      />
+    </div>
+
+    {/* Quantity */}
+    <div className="flex flex-col">
+      <label className="text-[10px] font-bold text-gray-400 mb-1">
+        Quantity
+      </label>
+      <input
+        type="number"
+        placeholder="Qty"
+        className="border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-semibold outline-none focus:border-gray-300"
+        value={newPart.qty}
+        onChange={e => setNewPart({ ...newPart, qty: Number(e.target.value) })}
+      />
+    </div>
+
+    {/* Price */}
+    <div className="flex flex-col">
+      <label className="text-[10px] font-bold text-gray-400 mb-1">
+        Unit Price (₹)
+      </label>
+      <input
+        type="number"
+        placeholder="₹"
+        className="border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-semibold outline-none focus:border-gray-300"
+        value={newPart.price}
+        onChange={e => setNewPart({ ...newPart, price: Number(e.target.value) })}
+      />
+    </div>
+
+    {/* Button */}
+    <button
+      onClick={addManualPart}
+      className="bg-black text-white px-4 py-3 rounded-xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-black/20 text-xs font-bold h-fit"
+    >
+      + Add Part
+    </button>
+
+  </div>
+</div>
 
             <div className="overflow-hidden">
               <table className="min-w-full text-[11px] font-bold">
