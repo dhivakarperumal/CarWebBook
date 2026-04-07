@@ -66,7 +66,6 @@ const AddBillings = () => {
     try {
       setSelectedService(s);
       
-      // Fetch parts from backend for this service
       const res = await api.get(`/all-services/${s.id}`);
       const data = res.data;
 
@@ -265,25 +264,15 @@ const AddBillings = () => {
                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Walk-in Information</h3>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <InputField label="Customer Name" value={manualCustomer.name} onChange={v => setManualCustomer({...manualCustomer, name: v})} placeholder="Full Name" />
-                    <InputField label="Contact Number" value={manualCustomer.phone} onChange={v => setManualCustomer({...manualCustomer, phone: v})} placeholder="Mobile No" />
-                    <InputField label="Vehicle Brand" value={manualCustomer.brand} onChange={v => setManualCustomer({...manualCustomer, brand: v})} placeholder="e.g. Honda" />
-                    <InputField label="Vehicle Model" value={manualCustomer.model} onChange={v => setManualCustomer({...manualCustomer, model: v})} placeholder="e.g. Shine" />
-                    <InputField label="Plate Number" value={manualCustomer.regNo} onChange={v => setManualCustomer({...manualCustomer, regNo: v})} placeholder="MH-12-XX-XXXX" />
+                    <InputField label="Customer Name" value={manualCustomer.name} onChange={v => setManualCustomer({...manualCustomer, name: v})} placeholder="Enter Customer Full Name" />
+                    <InputField label="Contact Number" value={manualCustomer.phone} onChange={v => setManualCustomer({...manualCustomer, phone: v})} placeholder="Ex: +91 98765 43210" />
+                    <InputField label="Vehicle Brand" value={manualCustomer.brand} onChange={v => setManualCustomer({...manualCustomer, brand: v})} placeholder="Ex: Honda Motors" />
+                    <InputField label="Vehicle Model" value={manualCustomer.model} onChange={v => setManualCustomer({...manualCustomer, model: v})} placeholder="Ex: Unicorn 160 BS6" />
+                    <InputField label="Plate Number" value={manualCustomer.regNo} onChange={v => setManualCustomer({...manualCustomer, regNo: v})} placeholder="Ex: MH-12-XX-1234" />
                   </div>
                 </div>
               )}
             </div>
-
-            {/* PREVIEW STRIP */}
-            {selectedService && activeTab === "online" && (
-              <div className="bg-black p-8 text-white grid grid-cols-2 lg:grid-cols-4 gap-8 border-t border-white/5 animate-slideDown">
-                <MetricBox label="Customer" val={selectedService.name} />
-                <MetricBox label="Contact" val={selectedService.phone} />
-                <MetricBox label="Vehicle" val={`${selectedService.brand} ${selectedService.model}`} />
-                <MetricBox label="Ref ID" val={selectedService.bookingId} />
-              </div>
-            )}
           </div>
 
           {/* 📦 INVENTORY MANAGEMENT */}
@@ -293,34 +282,34 @@ const AddBillings = () => {
                 <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Spare Parts Inventory</h3>
                 <p className="text-[10px] text-gray-400 mt-1 font-bold">List of components used in this service cycle</p>
               </div>
-              {activeTab === "manual" && (
-                <div className="flex gap-4 p-2 bg-gray-50 rounded-2xl border border-gray-100">
-                  <input 
-                    type="text" placeholder="Part Name" 
-                    className="bg-transparent text-xs font-black outline-none px-3 w-40"
-                    value={newPart.partName}
-                    onChange={e => setNewPart({...newPart, partName: e.target.value})}
-                  />
-                  <input 
-                    type="number" placeholder="Qty" 
-                    className="bg-transparent text-xs font-black outline-none w-16 text-center"
-                    value={newPart.qty}
-                    onChange={e => setNewPart({...newPart, qty: Number(e.target.value)})}
-                  />
-                  <input 
-                    type="number" placeholder="Price" 
-                    className="bg-transparent text-xs font-black outline-none w-24 text-right"
-                    value={newPart.price}
-                    onChange={e => setNewPart({...newPart, price: Number(e.target.value)})}
-                  />
-                  <button 
-                    onClick={addManualPart}
-                    className="bg-black text-white p-2 rounded-xl hover:scale-105 transition-transform"
-                  >
-                    <FaPlus size={10} />
-                  </button>
-                </div>
-              )}
+                  <div className="flex gap-4 p-2 bg-gray-50 rounded-2xl border border-gray-100 items-center">
+                    <input 
+                      type="text" placeholder="Component Name..." 
+                      className="bg-transparent text-[11px] font-black outline-none px-3 w-48 placeholder:text-gray-300"
+                      value={newPart.partName}
+                      onChange={e => setNewPart({...newPart, partName: e.target.value})}
+                    />
+                    <div className="h-6 w-px bg-gray-200" />
+                    <input 
+                      type="number" placeholder="Qty" 
+                      className="bg-transparent text-[11px] font-black outline-none w-12 text-center placeholder:text-gray-300"
+                      value={newPart.qty}
+                      onChange={e => setNewPart({...newPart, qty: Number(e.target.value)})}
+                    />
+                    <div className="h-6 w-px bg-gray-200" />
+                    <input 
+                      type="number" placeholder="Unit Price (₹)" 
+                      className="bg-transparent text-[11px] font-black outline-none w-28 text-right pr-2 placeholder:text-gray-300"
+                      value={newPart.price}
+                      onChange={e => setNewPart({...newPart, price: Number(e.target.value)})}
+                    />
+                    <button 
+                      onClick={addManualPart}
+                      className="bg-black text-white p-2.5 rounded-xl hover:scale-110 active:scale-95 transition-all shadow-lg shadow-black/20"
+                    >
+                      <FaPlus size={12} />
+                    </button>
+                  </div>
             </div>
 
             <div className="overflow-hidden">
@@ -371,6 +360,31 @@ const AddBillings = () => {
 
         {/* 💳 SUMMARY SIDEBAR */}
         <div className="space-y-8 h-fit">
+          
+          {activeTab === "online" ? (
+            selectedService ? (
+              <div className="bg-black p-8 text-white rounded-[2.5rem] shadow-2xl shadow-black/20 animate-slideDown">
+                <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6">Service Overview</h2>
+                <div className="grid grid-cols-2 gap-y-6">
+                  <MetricBox label="Customer" val={selectedService.name} />
+                  <MetricBox label="Contact" val={selectedService.phone} />
+                  <MetricBox label="Vehicle" val={`${selectedService.brand} ${selectedService.model}`} />
+                  <MetricBox label="Ref ID" val={selectedService.bookingId} />
+                </div>
+              </div>
+            ) : null
+          ) : (
+            <div className="bg-black p-8 text-white rounded-[2.5rem] shadow-2xl shadow-black/20 animate-slideDown">
+              <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6">Walk-in Overview</h2>
+              <div className="grid grid-cols-2 gap-y-6">
+                <MetricBox label="Customer" val={manualCustomer.name || "NEW"} />
+                <MetricBox label="Contact" val={manualCustomer.phone || "---"} />
+                <MetricBox label="Reg No" val={manualCustomer.regNo || "---"} />
+                <MetricBox label="Brand" val={manualCustomer.brand || "MANUAL"} />
+              </div>
+            </div>
+          )}
+
           <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/5 border border-gray-50 flex flex-col gap-6">
             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center border-b border-gray-50 pb-4">Accounting Summary</h3>
             

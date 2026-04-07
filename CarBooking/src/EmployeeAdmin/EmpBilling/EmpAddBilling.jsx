@@ -13,7 +13,10 @@ import {
   ShieldCheck,
   Package,
   ArrowRight,
-  List
+  List,
+  Plus,
+  Trash,
+  RotateCcw
 } from "lucide-react";
 
 const EmpAddBilling = () => {
@@ -28,8 +31,18 @@ const EmpAddBilling = () => {
   const [loading, setLoading] = useState(true);
   const [selectionMode, setSelectionMode] = useState("online"); // 'online' or 'manual'
 
+  const [manualCustomer, setManualCustomer] = useState({
+    name: "",
+    phone: "",
+    brand: "",
+    model: "",
+    regNo: ""
+  });
+
+  const [newPart, setNewPart] = useState({ partName: "", qty: 1, price: 0 });
+
   const [labour, setLabour] = useState("");
-  const [gstPercent, setGstPercent] = useState(0); // GST forced to 0 per request
+  const [gstPercent, setGstPercent] = useState(0); 
 
   /* =======================
      FETCH ASSIGNED SERVICES ONLY
@@ -41,7 +54,6 @@ const EmpAddBilling = () => {
         const res = await api.get('/all-services');
 
         const mechanicName = userProfile?.displayName || "";
-        // Filter: Only services assigned to me
         const myServices = res.data.filter(s => {
           const assignedMatch = (s.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase();
           const status = (s.serviceStatus || s.status || "").toString().trim();
@@ -66,7 +78,6 @@ const EmpAddBilling = () => {
     try {
       setSelectedService(s);
 
-      // Fetch parts from backend for this service
       const res = await api.get(`/all-services/${s.id}`);
       const data = res.data;
 
@@ -106,16 +117,37 @@ const EmpAddBilling = () => {
   const grandTotal = subTotal + gstAmount;
 
   /* =======================
+     MANUAL HANDLING
+  ======================= */
+  const addManualPart = () => {
+    if (!newPart.partName || newPart.price <= 0) {
+      toast.error("Please enter valid part name and price");
+      return;
+    }
+    setParts([...parts, { ...newPart, total: newPart.qty * newPart.price }]);
+    setNewPart({ partName: "", qty: 1, price: 0 });
+  };
+
+  const removePart = (index) => {
+    setParts(parts.filter((_, i) => i !== index));
+  };
+
+  /* =======================
      SAVE BILL
   ======================= */
   const handleGenerateBill = async () => {
-    if (!selectedService) {
+    if (selectionMode === "online" && !selectedService) {
       toast.error("Please select a vehicle to bill");
       return;
     }
 
+    if (selectionMode === "manual" && (!manualCustomer.name || !manualCustomer.phone)) {
+      toast.error("Please enter walk-in customer details");
+      return;
+    }
+
     if (parts.length === 0 && labourAmount === 0) {
-      toast.error("Please add parts or labour charges");
+      toast.error("No billing items recorded");
       return;
     }
 
@@ -124,12 +156,14 @@ const EmpAddBilling = () => {
 
       const payload = {
         invoiceNo,
-        serviceId: selectedService.id,
-        bookingId: selectedService.bookingId,
-        uid: selectedService.uid,
-        customerName: selectedService.name,
-        mobileNumber: selectedService.phone,
-        car: `${selectedService.brand || ""} ${selectedService.model || ""}`.trim(),
+        serviceId: selectionMode === "online" ? selectedService.id : null,
+        bookingId: selectionMode === "online" ? selectedService.bookingId : `WALKIN-${Date.now()}`,
+        uid: selectionMode === "online" ? selectedService.uid : null,
+        customerName: selectionMode === "online" ? selectedService.name : manualCustomer.name,
+        mobileNumber: selectionMode === "online" ? selectedService.phone : manualCustomer.phone,
+        car: selectionMode === "online" 
+          ? `${selectedService.brand || ""} ${selectedService.model || ""}`.trim()
+          : `${manualCustomer.brand || ""} ${manualCustomer.model || ""}`.trim(),
         parts,
         issues,
         partsTotal,
@@ -141,15 +175,16 @@ const EmpAddBilling = () => {
         grandTotal,
         paymentStatus: "Pending",
         paymentMode: "",
-        status: "Generated"
+        status: "Generated",
+        billingType: selectionMode
       };
 
       await api.post('/billings', payload);
 
-      toast.success("Job invoice generated for " + selectedService.name);
+      toast.success("Job invoice successfully pushed");
       navigate("/employee/billing");
     } catch (error) {
-      toast.error("Failed to generate invoice");
+      toast.error("Failed to push invoice to system");
     }
   };
 
@@ -157,339 +192,339 @@ const EmpAddBilling = () => {
     return (
       <div className="flex flex-col items-center justify-center py-20 animate-pulse">
         <Calculator className="w-12 h-12 text-blue-500 animate-spin mb-4" />
-        <p className="text-gray-500 font-medium">Preparing billing engine...</p>
+        <p className="text-gray-500 font-black uppercase tracking-widest text-[10px]">Synchronizing billing stack...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
+    <div className="max-w-6xl mx-auto space-y-8 p-4 sm:p-6 lg:p-8 animate-fadeIn">
 
-      {/* HEADER */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      {/* 🚀 PREMIUM HEADER */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="flex items-center gap-6">
           <button
             onClick={() => navigate(-1)}
-            className="p-3 bg-white rounded-2xl border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
+            className="group p-4 bg-white rounded-2xl border border-gray-100 shadow-xl shadow-black/5 hover:bg-black hover:text-white transition-all active:scale-95"
           >
-            <ChevronLeft className="w-6 h-6 text-gray-600" />
+            <ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
           </button>
           <div className="space-y-1">
             <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none">Generate Billing Invoice</h1>
-            <div className="flex items-center gap-2 pt-1">
-              <span className="bg-black text-white text-[10px] font-black px-2 py-1 rounded-md tracking-tighter uppercase whitespace-nowrap">Invoice No</span>
+            <div className="flex items-center gap-3 pt-1">
+              <span className="bg-black text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg tracking-widest uppercase shadow-lg shadow-black/20">Invoice No</span>
               <span className="text-blue-600 font-black text-sm uppercase tracking-wider underline underline-offset-4 decoration-2">INV-{Math.floor(100 + Math.random() * 900)}</span>
             </div>
           </div>
         </div>
 
-        <div className="hidden sm:flex gap-1 p-1 bg-gray-100/80 rounded-2xl border border-gray-200/50">
+        {/* 🎚️ MODE TOGGLE */}
+        <div className="flex items-center p-1.5 bg-gray-100 rounded-[1.25rem] border border-gray-200/50 shadow-inner max-w-fit self-start md:self-center">
           <button
-            onClick={() => setSelectionMode('online')}
-            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${selectionMode === 'online' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            onClick={() => { setSelectionMode('online'); setSelectedService(null); setParts([]); setIssues([]); }}
+            className={`px-8 py-3 rounded-[1rem] text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${selectionMode === 'online' ? 'bg-white text-black shadow-xl shadow-black/5' : 'text-gray-400 hover:text-gray-600'}`}
           >
             Online Booking
           </button>
           <button
-            onClick={() => setSelectionMode('manual')}
-            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${selectionMode === 'manual' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            onClick={() => { setSelectionMode('manual'); setSelectedService(null); setParts([]); setIssues([]); }}
+            className={`px-8 py-3 rounded-[1rem] text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${selectionMode === 'manual' ? 'bg-white text-black shadow-xl shadow-black/5' : 'text-gray-400 hover:text-gray-600'}`}
           >
             Manual Entry
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-        {/* LEFT TOOLBOX */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* 🛠️ LEFT WORKSPACE */}
+        <div className="lg:col-span-2 space-y-8">
 
-          {/* ONLINE & MANUAL SELECTION */}
-          <div className="bg-white p-6 rounded-[2.5rem] shadow-2xl shadow-black/5 border border-gray-100 space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Vehicle Verification</h2>
-              <div className="sm:hidden flex gap-1 p-1 bg-gray-50 rounded-2xl">
-                <button
-                  onClick={() => setSelectionMode('online')}
-                  className={`px-3 py-2 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all ${selectionMode === 'online' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400'}`}
-                >
-                  Online
-                </button>
-                <button
-                  onClick={() => setSelectionMode('manual')}
-                  className={`px-3 py-2 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all ${selectionMode === 'manual' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400'}`}
-                >
-                  Manual
-                </button>
+          {/* VEHICLE VERIFICATION CARD */}
+          <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-black/5 border border-gray-50 overflow-hidden">
+            <div className="p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Vehicle Verification</h2>
               </div>
+
+              {selectionMode === 'online' ? (
+                <div className="space-y-4">
+                  <div className="relative group">
+                    <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-colors w-5 h-5" />
+                    <input
+                      placeholder="Search assigned cars by ID, name or plate..."
+                      className="w-full pl-14 pr-6 py-4.5 rounded-2xl border border-gray-100 bg-gray-50 font-bold text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                  </div>
+
+                  {search && (
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-2xl overflow-hidden animate-slideUp">
+                      {services
+                        .filter(s => `${s.bookingId} ${s.name} ${s.phone}`.toLowerCase().includes(search.toLowerCase()))
+                        .map(s => (
+                          <div
+                            key={s.id}
+                            onClick={() => { selectService(s); setSearch(""); }}
+                            className="p-5 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 transition-all group flex items-center justify-between"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-blue-500 border border-gray-100 shadow-sm group-hover:border-blue-200">
+                                <Car size={24} />
+                              </div>
+                              <div>
+                                <p className="font-black text-gray-900 leading-none mb-1 group-hover:text-blue-600 transition-colors uppercase">{s.bookingId}</p>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{s.name} | {s.brand} {s.model}</p>
+                              </div>
+                            </div>
+                            <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-slideUp">
+                  <InputField label="Customer Name" value={manualCustomer.name} onChange={v => setManualCustomer({ ...manualCustomer, name: v })} placeholder="Enter Customer Full Name" />
+                  <InputField label="Contact Number" value={manualCustomer.phone} onChange={v => setManualCustomer({ ...manualCustomer, phone: v })} placeholder="Ex: +91 98765 43210" />
+                  <InputField label="Vehicle Brand" value={manualCustomer.brand} onChange={v => setManualCustomer({ ...manualCustomer, brand: v })} placeholder="Ex: Honda Motors" />
+                  <InputField label="Vehicle Model" value={manualCustomer.model} onChange={v => setManualCustomer({ ...manualCustomer, model: v })} placeholder="Ex: Unicorn 160 BS6" />
+                  <InputField label="Plate Number" value={manualCustomer.regNo} onChange={v => setManualCustomer({ ...manualCustomer, regNo: v })} placeholder="Ex: MH-12-XX-1234" Icon={ShieldCheck} />
+                </div>
+              )}
             </div>
 
-            {selectionMode === 'online' ? (
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  placeholder="Search your assigned cars by name, plate or ID..."
-                  className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold text-gray-700"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-            ) : (
-              <div className="relative">
-                <Car className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <select
-                  className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold text-gray-700 appearance-none cursor-pointer"
-                  onChange={(e) => {
-                    const selected = services.find(s => s.id.toString() === e.target.value);
-                    if (selected) selectService(selected);
-                  }}
-                  value={selectedService?.id || ""}
-                >
-                  <option value="" disabled>Choose a vehicle from list...</option>
-                  {services.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.bookingId} - {s.name} ({s.brand} {s.model})
-                    </option>
-                  ))}
-                </select>
-                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
-                  <ArrowRight className="w-4 h-4 text-gray-400 rotate-90" />
-                </div>
-              </div>
-            )}
-
-            {search && (
-              <div className="mt-2 bg-white rounded-2xl border border-gray-100 shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
-                {services
-                  .filter((s) =>
-                    `${s.bookingId} ${s.name} ${s.phone}`
-                      .toLowerCase()
-                      .includes(search.toLowerCase())
-                  )
-                  .map((s) => (
-                    <div
-                      key={s.id}
-                      onClick={() => {
-                        selectService(s);
-                        setSearch("");
-                      }}
-                      className="p-4 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0 transition-colors group flex items-center justify-between"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-500 border border-gray-100 shadow-sm group-hover:border-blue-200">
-                          <Car size={20} />
-                        </div>
-                        <div>
-                          <p className="font-black text-gray-900 leading-none mb-1 group-hover:text-blue-600 transition-colors">{s.bookingId}</p>
-                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{s.name} | {s.brand} {s.model}</p>
-                        </div>
-                      </div>
-                      <ArrowRight className="w-5 h-5 text-gray-300 group-hover:text-blue-400" />
-                    </div>
-                  ))}
-                {services.filter(s => `${s.bookingId} ${s.name} ${s.phone}`.toLowerCase().includes(search.toLowerCase())).length === 0 && (
-                  <div className="p-8 text-center text-gray-400 text-sm font-medium">No assigned vehicles found matching your search</div>
-                )}
+            {/* QUICK PREVIEW STRIP */}
+            {selectedService && selectionMode === "online" && (
+              <div className="bg-black p-8 text-white grid grid-cols-2 lg:grid-cols-4 gap-8 border-t border-white/5 animate-slideDown">
+                <MetricBox label="Technician" val={userProfile?.displayName} />
+                <MetricBox label="Reference" val={selectedService.bookingId} />
+                <MetricBox label="Job Status" val="Awaiting Sync" />
+                <MetricBox label="Plate" val={selectedService.vehicleNumber || "N/A"} />
               </div>
             )}
           </div>
 
-          {/* PARTS OVERVIEW */}
-          {selectedService && (
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Logged Spare Parts</h2>
-                <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black tracking-wider uppercase">
-                  {parts.length} Items Added
-                </span>
+          {/* 📦 INVENTORY MANAGEMENT CARD */}
+          <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-black/5 border border-gray-50 overflow-hidden">
+            <div className="p-8 border-b border-gray-50 flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Spare Parts Inventory</h3>
+                <p className="text-[10px] text-gray-400 mt-1 font-bold">List of components used in this service cycle</p>
               </div>
-
-              {parts.length > 0 ? (
-                <div className="overflow-hidden rounded-2xl border border-gray-50 bg-gray-50/50">
-                  <table className="min-w-full text-left text-[11px] font-bold">
-                    <thead>
-                      <tr className="text-gray-400 uppercase tracking-widest ">
-                        <th className="px-4 py-3">Description</th>
-                        <th className="px-4 py-3 text-center">Qty</th>
-                        <th className="px-4 py-3 text-right">Price</th>
-                        <th className="px-4 py-3 text-right pr-6">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {parts.map((p, i) => (
-                        <tr key={i} className="text-gray-700">
-                          <td className="px-4 py-4">{p.partName}</td>
-                          <td className="px-4 py-4 text-center">{p.qty}</td>
-                          <td className="px-4 py-4 text-right">₹{p.price}</td>
-                          <td className="px-4 py-4 text-right pr-6 text-blue-600 font-black">₹{p.total}</td>
-                        </tr>
-                      ))}
-                      <tr className="bg-gray-100 font-black text-gray-900">
-                        <td className="px-4 py-3" colSpan="3">
-                          Total
-                        </td>
-                        <td className="px-4 py-3 text-right pr-6 text-blue-700">
-                          ₹{partsTotal.toLocaleString()}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="p-8 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
-                  <Package className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm font-bold text-gray-400">No spare parts recorded for this vehicle.</p>
+              {selectionMode === 'manual' && (
+                <div className="hidden sm:flex items-center gap-4 p-2 bg-gray-50 rounded-2xl border border-gray-100">
+                  <input
+                    type="text" placeholder="Component Name..."
+                    className="bg-transparent text-[11px] font-black outline-none px-3 w-48 placeholder:text-gray-300"
+                    value={newPart.partName}
+                    onChange={e => setNewPart({ ...newPart, partName: e.target.value })}
+                  />
+                  <div className="h-6 w-px bg-gray-200" />
+                  <input
+                    type="number" placeholder="Qty"
+                    className="bg-transparent text-[11px] font-black outline-none w-12 text-center placeholder:text-gray-300"
+                    value={newPart.qty}
+                    onChange={e => setNewPart({ ...newPart, qty: Number(e.target.value) })}
+                  />
+                  <div className="h-6 w-px bg-gray-200" />
+                  <input
+                    type="number" placeholder="Unit Price (₹)"
+                    className="bg-transparent text-[11px] font-black outline-none w-28 text-right pr-2 placeholder:text-gray-300"
+                    value={newPart.price}
+                    onChange={e => setNewPart({ ...newPart, price: Number(e.target.value) })}
+                  />
+                  <button
+                    onClick={addManualPart}
+                    className="bg-black text-white p-2.5 rounded-xl hover:scale-110 active:scale-95 transition-all shadow-lg shadow-black/20"
+                  >
+                    <Plus size={14} />
+                  </button>
                 </div>
               )}
+            </div>
 
-              {issues.length > 0 ? (
-                <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Approved Issues</h2>
-                    <span className="text-xs font-bold text-blue-600">{issues.length} items</span>
+            <div className="overflow-hidden">
+              <table className="min-w-full text-[11px] font-bold">
+                <thead className="bg-black text-white uppercase tracking-widest">
+                  <tr>
+                    <th className="px-8 py-5 text-left font-black">S.No</th>
+                    <th className="px-8 py-5 text-left font-black">Description</th>
+                    <th className="px-8 py-5 text-center font-black">Quantity</th>
+                    <th className="px-8 py-5 text-center font-black">Unit Price</th>
+                    <th className="px-8 py-5 text-right font-black">Subtotal</th>
+                    {selectionMode === "manual" && <th className="px-8 py-5 text-right font-black">Action</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {parts.length === 0 ? (
+                    <tr>
+                      <td colSpan={selectionMode === "manual" ? 6 : 5} className="px-8 py-16 text-center">
+                        <div className="flex flex-col items-center gap-3 text-gray-400 grayscale opacity-40">
+                          <RotateCcw className="text-2xl animate-spin-slow" />
+                          <p className="uppercase tracking-[0.2em] font-black italic">Awaiting Inventory Log...</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    parts.map((p, i) => (
+                      <tr key={i} className="hover:bg-gray-50/80 transition-colors">
+                        <td className="px-8 py-5 text-gray-400">#{(i + 1).toString().padStart(2, '0')}</td>
+                        <td className="px-8 py-5 font-black uppercase text-gray-900">{p.partName}</td>
+                        <td className="px-8 py-5 text-center">{p.qty}</td>
+                        <td className="px-8 py-5 text-center text-gray-600">₹{p.price.toLocaleString()}</td>
+                        <td className="px-8 py-5 text-right font-black text-blue-600 tracking-tight">₹{p.total.toLocaleString()}</td>
+                        {selectionMode === "manual" && (
+                          <td className="px-8 py-5 text-right">
+                            <button onClick={() => removePart(i)} className="p-2 text-red-400 hover:text-white hover:bg-red-500 rounded-lg transition-all shadow-sm">
+                              <Trash size={14} />
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* 💳 ACCOUNTING SIDEBAR */}
+        <div className="space-y-8 h-fit">
+
+          {/* VEHICLE DETAIL BOX */}
+          {selectionMode === "online" ? (
+            selectedService ? (
+              <div className="bg-gray-900 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-black/20 animate-slideInRight border border-white/5">
+                <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6">Service Overview</h2>
+                <div className="flex items-center gap-5 mb-8">
+                  <div className="w-14 h-14 bg-gray-800 rounded-2xl flex items-center justify-center border border-gray-700 shadow-xl">
+                    <User className="w-7 h-7 text-blue-400" />
                   </div>
-                  <div className="overflow-hidden rounded-2xl border border-gray-50 bg-gray-50/50">
-                    <table className="min-w-full text-left text-[11px] font-bold">
-                      <thead>
-                        <tr className="text-gray-400 uppercase tracking-widest ">
-                          <th className="px-4 py-3">Issue</th>
-                          <th className="px-4 py-3 text-right">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {issues.map((issue, i) => (
-                          <tr key={i} className="text-gray-700">
-                            <td className="px-4 py-4">{issue.issueName}</td>
-                            <td className="px-4 py-4 text-right text-blue-600 font-black">₹{issue.amount.toFixed(2)}</td>
-                          </tr>
-                        ))}
-                        <tr className="bg-gray-100 font-black text-gray-900">
-                          <td className="px-4 py-3">
-                            Total
-                          </td>
-                          <td className="px-4 py-3 text-right text-blue-700">
-                            ₹{issueTotal.toLocaleString("en-IN", {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+                  <div>
+                    <p className="font-black text-xl leading-tight uppercase tracking-tight">{selectedService.name}</p>
+                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{selectedService.brand} {selectedService.model}</p>
                   </div>
                 </div>
-              ) : (
-                <div className="p-4 text-center text-gray-500 text-sm">No approved issue entries available.</div>
-              )}
+
+                <div className="space-y-4 pt-6 border-t border-white/10">
+                  <SummaryItem label="Plate No" val={selectedService.vehicleNumber || 'PENDING'} />
+                  <SummaryItem label="Booking ID" val={selectedService.bookingId} />
+                  <SummaryItem label="Workforce" val={userProfile?.displayName} />
+                </div>
+              </div>
+            ) : null
+          ) : (
+            <div className="bg-gray-900 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-black/20 animate-slideInRight border border-white/5">
+                <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6">Walk-in Overview</h2>
+                <div className="flex items-center gap-5 mb-8">
+                  <div className="w-14 h-14 bg-gray-800 rounded-2xl flex items-center justify-center border border-gray-700 shadow-xl">
+                    <User className="w-7 h-7 text-emerald-400" />
+                  </div>
+                  <div>
+                    <p className="font-black text-xl leading-tight uppercase tracking-tight">{manualCustomer.name || 'NEW CUSTOMER'}</p>
+                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{manualCustomer.brand} {manualCustomer.model || 'MANUAL ENTRY'}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-6 border-t border-white/10">
+                  <SummaryItem label="Reg No" val={manualCustomer.regNo || 'N/A'} />
+                  <SummaryItem label="Phone" val={manualCustomer.phone || 'N/A'} />
+                  <SummaryItem label="Type" val="WALK-IN" />
+                </div>
             </div>
           )}
 
-          {/* LABOUR & TAX */}
-          {selectedService && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1 block mb-2">Service Labour Charges (₹)</label>
+          {/* FINANCIAL SUMMARY CARD */}
+          <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/5 border border-gray-50 flex flex-col gap-8">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center border-b border-gray-50 pb-5">Financial Reconciliation</h3>
+
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2 block italic">Service Workforce (₹)</label>
                 <input
                   type="number"
-                  placeholder="Enter labour amount..."
-                  className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-black text-gray-700 text-lg"
+                  placeholder="₹ 0.00"
+                  className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 font-black text-lg text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 transition-all text-right shadow-inner"
                   value={labour}
                   onChange={(e) => setLabour(e.target.value)}
                 />
               </div>
 
-              <div className="bg-white p-4 rounded-3xl shadow-sm border border-gray-100">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1 block mb-2">GST Percentage (%)</label>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2 block italic">Tax Variable (%)</label>
                 <input
                   type="number"
-                  placeholder="18"
-                  className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-black text-gray-700 text-lg"
+                  placeholder="0"
+                  className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 font-black text-lg text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 transition-all text-right shadow-inner"
                   value={gstPercent}
                   onChange={(e) => setGstPercent(e.target.value)}
                 />
               </div>
             </div>
-          )}
-        </div>
 
-        {/* RIGHT SIDEBAR - SUMMARY */}
-        <div className="space-y-6">
-
-          {/* VEHICLE PREVIEW */}
-          {selectedService ? (
-            <div className="bg-gray-900 rounded-[2rem] p-6 text-white shadow-xl shadow-gray-200">
-              <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-4">Job Detail</h2>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-gray-800 rounded-2xl flex items-center justify-center border border-gray-700">
-                  <User className="w-6 h-6 text-blue-400" />
-                </div>
-                <div>
-                  <p className="font-black text-lg leading-tight">{selectedService.name}</p>
-                  <p className="text-xs text-gray-500 font-bold uppercase tracking-wider">{selectedService.brand} {selectedService.model}</p>
-                </div>
+            <div className="p-8 bg-black rounded-[2.5rem] text-white shadow-2xl shadow-black/20 space-y-4">
+              <div className="flex justify-between text-[11px] font-black opacity-30 uppercase tracking-widest">
+                <span>Inventory Sum</span>
+                <span>₹{subTotal.toLocaleString()}</span>
               </div>
-
-              <div className="space-y-3 pt-6 border-t border-gray-800">
-                <div className="flex justify-between items-center text-xs font-bold">
-                  <span className="text-gray-500">Plate No:</span>
-                  <span>{selectedService.vehicleNumber || 'N/A'}</span>
-                </div>
-                <div className="flex justify-between items-center text-xs font-bold">
-                  <span className="text-gray-500">Booking ID:</span>
-                  <span>{selectedService.bookingId}</span>
-                </div>
-                <div className="flex justify-between items-center text-xs font-bold">
-                  <span className="text-gray-500">Assignment:</span>
-                  <span className="flex items-center gap-1"><ShieldCheck className="w-3 h-3 text-blue-400" /> {userProfile?.displayName}</span>
-                </div>
+              <div className="flex justify-between text-[11px] font-black opacity-30 uppercase tracking-widest">
+                <span>Tax Allocation</span>
+                <span>₹{gstAmount.toFixed(2)}</span>
+              </div>
+              <div className="h-px bg-white/10 my-4" />
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] opacity-30">Grand Reconciled Total</span>
+                <span className="text-4xl font-black text-emerald-400 tracking-tighter">₹{grandTotal.toLocaleString()}</span>
               </div>
             </div>
-          ) : (
-            <div className="bg-white rounded-[2rem] p-10 text-center border-2 border-dashed border-gray-100">
-              <Car className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Select a car to begin billing</p>
-            </div>
-          )}
 
-          {/* FINAL TOTALS */}
-          {selectedService && (
-            <div className="bg-white rounded-[2rem] border border-gray-100 p-8 space-y-6 shadow-sm">
-              <div className="space-y-3">
-                <div className="flex justify-between font-bold text-sm">
-                  <span className="text-gray-400">Parts Total</span>
-                  <span className="text-gray-900 font-black">₹{partsTotal.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between font-bold text-sm">
-                  <span className="text-gray-400">Issues Total</span>
-                  <span className="text-gray-900 font-black">₹{issueTotal.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between font-bold text-sm">
-                  <span className="text-gray-400">Labour</span>
-                  <span className="text-gray-900 font-black">₹{labourAmount.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between font-bold text-sm">
-                  <span className="text-gray-400">GST ({gst}%)</span>
-                  <span className="text-gray-900 font-black">₹{gstAmount.toFixed(2)}</span>
-                </div>
-              </div>
-
-              <div className="pt-6 border-t border-gray-100">
-                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Grand Estimated Total</p>
-                <p className="text-4xl font-black text-emerald-600">₹{grandTotal.toLocaleString()}</p>
-              </div>
-
-              <button
-                onClick={handleGenerateBill}
-                className="w-full py-4 bg-gray-900 text-white rounded-2xl font-black text-sm hover:bg-black transition-all shadow-xl shadow-blue-500/10 flex items-center justify-center gap-2"
-              >
-                <FileText size={18} /> Generate Final Invoice
-              </button>
-            </div>
-          )}
+            <button
+              onClick={handleGenerateBill}
+              disabled={parts.length === 0 && labourAmount === 0}
+              className="group w-full py-6 rounded-2xl bg-black text-white font-black uppercase tracking-widest text-xs shadow-2xl shadow-black/30 hover:bg-gray-800 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FileText className="group-hover:scale-110 transition-transform" />
+              Commit Job Invoice
+            </button>
+          </div>
         </div>
       </div>
     </div>
   );
 };
+
+/* ----- 🛰️ HIGH-FIDELITY COMPONENTS ----- */
+const InputField = ({ label, value, onChange, placeholder, Icon }) => (
+  <div className="space-y-2">
+    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">{label}</label>
+    <div className="relative group">
+      {Icon && <Icon className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-colors w-4 h-4" />}
+      <input
+        type="text"
+        placeholder={placeholder}
+        className={`w-full ${Icon ? 'pl-14' : 'px-6'} pr-6 py-4.5 rounded-2xl border border-gray-100 bg-white font-black text-sm text-gray-800 outline-none focus:border-black focus:ring-4 focus:ring-black/5 transition-all shadow-sm`}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+      />
+    </div>
+  </div>
+);
+
+const MetricBox = ({ label, val }) => (
+  <div className="space-y-1 group">
+    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] group-hover:text-blue-400 transition-colors">{label}</p>
+    <p className="font-black text-sm uppercase tracking-tight">{val || "---"}</p>
+  </div>
+);
+
+const SummaryItem = ({ label, val }) => (
+  <div className="flex justify-between items-center text-[11px] font-black">
+    <span className="text-gray-500 uppercase tracking-widest">{label}:</span>
+    <span className="text-white tracking-widest uppercase">{val}</span>
+  </div>
+);
 
 export default EmpAddBilling;

@@ -343,7 +343,15 @@ const AllOrders = () => {
                         ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status)) === -1
                           ? 0
                           : ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status))
-                      ).map((s) => (
+                      )
+                      .filter(s => {
+                        const current = normalizeKey(o.status);
+                        if (current === "outfordelivery" || current === "delivered") {
+                          return s.id !== "cancelled";
+                        }
+                        return true;
+                      })
+                      .map((s) => (
                         <option key={s.id} value={s.id}>
                           {s.label}
                         </option>
@@ -454,7 +462,15 @@ const AllOrders = () => {
                       ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status)) === -1
                         ? 0
                         : ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status))
-                    ).map((s) => (
+                    )
+                    .filter(s => {
+                      const current = normalizeKey(o.status);
+                      if (current === "outfordelivery" || current === "delivered") {
+                        return s.id !== "cancelled";
+                      }
+                      return true;
+                    })
+                    .map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.label}
                       </option>
