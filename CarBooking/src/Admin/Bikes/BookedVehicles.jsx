@@ -32,7 +32,7 @@ const BookedVehicles = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState(null);
-  const [dateFilter, setDateFilter] = useState("all"); // "all", "today"
+  const [dateFilter, setDateFilter] = useState("today"); // "all", "today"
   const [deliveryFilter, setDeliveryFilter] = useState(false); // only confirmed/booked
 
   /* PAGINATION */
@@ -188,7 +188,7 @@ const BookedVehicles = () => {
       {/* TABLE */}
       <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden overflow-x-auto">
         <table className="w-full text-left border-collapse whitespace-nowrap">
-          <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
+          <thead className="bg-black text-white">
             <tr>
               <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-left">S No</th>
               <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-left">Booking Info</th>
