@@ -183,12 +183,27 @@ async function initializeDatabase() {
         paymentId VARCHAR(100),
         status VARCHAR(50) DEFAULT 'Booked',
         advanceAmount DECIMAL(10,2) DEFAULT 0,
+        totalPrice DECIMAL(15,2) DEFAULT 0,
+        negotiation DECIMAL(15,2) DEFAULT 0,
+        paidAmount DECIMAL(15,2) DEFAULT 0,
+        remainingAmount DECIMAL(15,2) DEFAULT 0,
         pickupAddress TEXT,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
     console.log('✓ vehicle_bookings table checked/created');
+
+    // Sync vehicle_bookings columns
+    try {
+      await db.query("ALTER TABLE vehicle_bookings ADD COLUMN IF NOT EXISTS totalPrice DECIMAL(15,2) DEFAULT 0 AFTER advanceAmount");
+      await db.query("ALTER TABLE vehicle_bookings ADD COLUMN IF NOT EXISTS negotiation DECIMAL(15,2) DEFAULT 0 AFTER totalPrice");
+      await db.query("ALTER TABLE vehicle_bookings ADD COLUMN IF NOT EXISTS paidAmount DECIMAL(15,2) DEFAULT 0 AFTER negotiation");
+      await db.query("ALTER TABLE vehicle_bookings ADD COLUMN IF NOT EXISTS remainingAmount DECIMAL(15,2) DEFAULT 0 AFTER paidAmount");
+      console.log('✓ vehicle_bookings table schema synchronized');
+    } catch (err) {
+      console.log('Sync vehicle_bookings error:', err.message);
+    }
   } catch (error) {
     console.error('✗ Error initializing database:', error.message);
   }

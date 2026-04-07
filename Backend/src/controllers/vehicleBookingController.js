@@ -79,9 +79,46 @@ const cancelBooking = async (req, res) => {
   }
 };
 
+const updateBookingStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status, totalPrice, negotiation, paidAmount, remainingAmount } = req.body;
+  const connection = await db.getConnection();
+  
+  try {
+    await connection.beginTransaction();
+
+    // Update booking report
+    const updateData = { status };
+    if (totalPrice !== undefined) updateData.totalPrice = totalPrice;
+    if (negotiation !== undefined) updateData.negotiation = negotiation;
+    if (paidAmount !== undefined) updateData.paidAmount = paidAmount;
+    if (remainingAmount !== undefined) updateData.remainingAmount = remainingAmount;
+
+    await connection.query('UPDATE vehicle_bookings SET ? WHERE id = ?', [updateData, id]);
+
+    // If marked as Sold, sync with bikes table
+    if (status.toLowerCase() === 'sold') {
+      const [booking] = await connection.query('SELECT vehicleId FROM vehicle_bookings WHERE id = ?', [id]);
+      if (booking.length > 0 && booking[0].vehicleId) {
+        await connection.query('UPDATE bikes SET status = "sold" WHERE id = ?', [booking[0].vehicleId]);
+      }
+    }
+
+    await connection.commit();
+    res.json({ message: "Booking status updated successfully" });
+  } catch (err) {
+    if (connection) await connection.rollback();
+    console.error("Error updating booking status:", err);
+    res.status(500).json({ message: "Error updating status", error: err.message });
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 module.exports = {
   addBooking,
   getBookingsByUser,
   getAllBookings,
-  cancelBooking
+  cancelBooking,
+  updateBookingStatus
 };

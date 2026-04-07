@@ -33,6 +33,7 @@ const BookedVehicles = () => {
   const [loading, setLoading] = useState(true);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [dateFilter, setDateFilter] = useState("today"); // "all", "today"
+  const [statusFilter, setStatusFilter] = useState("booked"); // "all", "booked", "confirmed", "sold", "cancelled"
   const [deliveryFilter, setDeliveryFilter] = useState(false); // only confirmed/booked
 
   /* PAGINATION */
@@ -72,10 +73,13 @@ const BookedVehicles = () => {
     }
   };
 
-  const updateStatus = async (id, newStatus) => {
+  const updateStatus = async (id, newStatus, extraData = {}) => {
     try {
       toast.loading("Updating status...", { id: "status-update" });
-      await api.put(`/vehicle-bookings/${id}/status`, { status: newStatus });
+      await api.put(`/vehicle-bookings/${id}/status`, { 
+        status: newStatus,
+        ...extraData
+      });
       toast.success("Status updated successfully", { id: "status-update" });
       fetchBookings();
     } catch {
@@ -110,16 +114,22 @@ const BookedVehicles = () => {
         matchDate = today === bDate;
       }
 
-      // 3. Delivery Filter (Confirmed/Booked statuses)
+      // 3. Status Filter
+      let matchStatus = true;
+      if (statusFilter !== "all") {
+        matchStatus = (b.status || "").toLowerCase() === statusFilter.toLowerCase();
+      }
+
+      // 4. Delivery Filter (Confirmed/Booked statuses)
       let matchDelivery = true;
       if (deliveryFilter) {
         const status = (b.status || "").toLowerCase();
         matchDelivery = status === "confirmed" || status === "booked";
       }
 
-      return matchSearch && matchDate && matchDelivery;
+      return matchSearch && matchDate && matchStatus && matchDelivery;
     });
-  }, [bookings, search, dateFilter, deliveryFilter]);
+  }, [bookings, search, dateFilter, statusFilter, deliveryFilter]);
 
   const totalPages = Math.ceil(filteredBookings.length / bookingsPerPage);
   const paginatedBookings = useMemo(() => {
@@ -146,8 +156,8 @@ const BookedVehicles = () => {
       </div>
 
       {/* SEARCH & FILTERS */}
-      <div className="flex flex-col md:flex-row items-center gap-4">
-        <div className="relative flex-1">
+      <div className="flex flex-col lg:flex-row items-center gap-6">
+        <div className="relative flex-1 w-full">
           <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             placeholder="Search by ID, Vehicle or Customer..."
@@ -157,32 +167,44 @@ const BookedVehicles = () => {
           />
         </div>
         
-        <div className="flex items-center gap-2 p-1.5 bg-gray-100 rounded-2xl border border-gray-200">
-           <button 
-             onClick={() => setDateFilter("all")}
-             className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dateFilter === 'all' ? 'bg-white text-black shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
-           >
-             All Time
-           </button>
-           <button 
-             onClick={() => setDateFilter("today")}
-             className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dateFilter === 'today' ? 'bg-black text-white shadow-lg shadow-black/20' : 'text-gray-400 hover:text-gray-600'}`}
-           >
-             Today
-           </button>
-        </div>
+        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+          {/* Status Filters */}
+          <div className="flex items-center gap-1.5 p-1.5 bg-gray-100 rounded-2xl border border-gray-200">
+            {[
+              { id: "all", label: "All" },
+              { id: "booked", label: "Booked" },
+              { id: "confirmed", label: "Confirmed" },
+              { id: "sold", label: "Sold" },
+              { id: "cancelled", label: "Cancelled" }
+            ].map(s => (
+              <button 
+                key={s.id}
+                onClick={() => setStatusFilter(s.id)}
+                className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  statusFilter === s.id ? 'bg-black text-white shadow-lg shadow-black/20' : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
 
-        <button 
-          onClick={() => setDeliveryFilter(!deliveryFilter)}
-          className={`flex items-center gap-3 px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all border-2 ${
-            deliveryFilter 
-            ? 'bg-emerald-600 border-emerald-600 text-white shadow-lg shadow-emerald-200' 
-            : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300'
-          }`}
-        >
-          <FaCheckCircle className={deliveryFilter ? 'text-white' : 'text-gray-300'} />
-          Delivery Ready
-        </button>
+          {/* Time Filters */}
+          <div className="flex items-center gap-1.5 p-1.5 bg-gray-100 rounded-2xl border border-gray-200">
+             <button 
+               onClick={() => setDateFilter("all")}
+               className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dateFilter === 'all' ? 'bg-white text-black shadow-md' : 'text-gray-400 hover:text-gray-600'}`}
+             >
+               All Time
+             </button>
+             <button 
+               onClick={() => setDateFilter("today")}
+               className={`px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${dateFilter === 'today' ? 'bg-black text-white shadow-lg shadow-black/20' : 'text-gray-400 hover:text-gray-600'}`}
+             >
+               Today
+             </button>
+          </div>
+        </div>
       </div>
 
       {/* TABLE */}
@@ -274,15 +296,71 @@ const BookedVehicles = () => {
         />
       )}
 
-      {selectedBooking && <BookingModal booking={selectedBooking} onClose={() => setSelectedBooking(null)} onCancel={handleCancelAndRepublish} />}
+      {selectedBooking && (
+        <BookingModal 
+          booking={selectedBooking} 
+          onClose={() => setSelectedBooking(null)} 
+          onCancel={handleCancelAndRepublish} 
+          onUpdateStatus={updateStatus}
+        />
+      )}
     </div>
   );
 };
 
-const BookingModal = ({ booking, onClose, onCancel }) => {
+const BookingModal = ({ booking, onClose, onCancel, onUpdateStatus }) => {
+  const [totalPrice, setTotalPrice] = useState(booking.expected_price || booking.totalPrice || 0);
+  const [negotiation, setNegotiation] = useState(0);
+  const [advanceOverride, setAdvanceOverride] = useState(booking.advanceAmount || 0);
+  const [paidAmount, setPaidAmount] = useState(0);
+
+  useEffect(() => {
+    const fetchFullDetails = async () => {
+      if (totalPrice > 0) return;
+      
+      const vId = booking.vehicleId || booking.bikeId || booking.id;
+      if (!vId) return;
+
+      try {
+        const res = await api.get(`/bikes/${vId}`);
+        if (res.data?.expected_price) {
+          setTotalPrice(Number(res.data.expected_price));
+        }
+      } catch (err) {
+        console.error("Failed to fetch bike price:", err);
+      }
+    };
+    fetchFullDetails();
+  }, [booking, totalPrice]);
+
+  const totalPayable = Number(totalPrice || 0) - Number(negotiation || 0);
+
+  useEffect(() => {
+    // Auto-calculate paidAmount when pricing, negotiation, or advance changes
+    const autoPay = Math.max(0, totalPayable - Number(advanceOverride || 0));
+    setPaidAmount(autoPay);
+  }, [totalPrice, negotiation, advanceOverride]);
+
+  const remaining = totalPayable - Number(advanceOverride || 0) - Number(paidAmount || 0);
+
+  const handleSettle = () => {
+    if (totalPrice <= 0) {
+      toast.error("Please enter a valid vehicle price");
+      return;
+    }
+    onUpdateStatus(booking.id, "Sold", { 
+      totalPrice, 
+      negotiation,
+      advanceAmount: advanceOverride,
+      paidAmount, 
+      remainingAmount: remaining 
+    });
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
-      <div className="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-zoomIn border border-white/20">
+      <div className="bg-white w-full max-w-5xl rounded-[2.5rem] shadow-2xl overflow-hidden animate-zoomIn border border-white/20">
         <div className="bg-gradient-to-r from-black to-slate-800 px-8 py-6 flex justify-between items-center text-white">
           <div className="flex items-center gap-4">
              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
@@ -301,7 +379,14 @@ const BookingModal = ({ booking, onClose, onCancel }) => {
             <div className="p-5 bg-gray-50 rounded-2xl border border-gray-100">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-2">Vehicle Information</label>
               <p className="text-xl font-black text-gray-900 uppercase tracking-tight">{booking.vehicleName}</p>
-              <p className="text-xs font-black text-blue-500 uppercase mt-1 tracking-widest">{booking.vehicleType}</p>
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-xs font-black text-blue-500 uppercase tracking-widest">{booking.vehicleType}</p>
+                {booking.expected_price && (
+                  <p className="text-[10px] font-black text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md border border-gray-200">
+                    Expected: ₹ {Number(booking.expected_price).toLocaleString()}
+                  </p>
+                )}
+              </div>
             </div>
             <div className="p-5 bg-emerald-50 rounded-2xl border border-emerald-100 flex flex-col justify-center">
               <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest block mb-1">Advance Payment</label>
@@ -330,32 +415,79 @@ const BookingModal = ({ booking, onClose, onCancel }) => {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pickup Information</h4>
-            <div className="p-5 bg-blue-50 rounded-2xl border border-blue-100">
-              <p className="text-sm font-bold text-gray-700 leading-relaxed">{booking.pickupAddress || "Not specified"}</p>
+          <div className="space-y-4 border-t border-gray-100 pt-8">
+            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Financial Settlement</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+               <div className="p-4 bg-gray-900 rounded-2xl border border-white/10 text-white">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Expected Bike Price</p>
+                  <input 
+                    type="number" 
+                    placeholder="₹ 0.00"
+                    value={totalPrice}
+                    onChange={(e) => setTotalPrice(Number(e.target.value))}
+                    className="bg-transparent font-black text-lg outline-none w-full border-b border-white/10 focus:border-blue-500 transition-all font-black"
+                  />
+               </div>
+               <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100">
+                  <p className="text-[10px] font-bold text-emerald-500 uppercase mb-1">Advance Amount</p>
+                  <input 
+                    type="number" 
+                    placeholder="₹ 0.00"
+                    value={advanceOverride}
+                    onChange={(e) => setAdvanceOverride(Number(e.target.value))}
+                    className="bg-transparent font-black text-lg text-emerald-600 outline-none w-full border-b border-emerald-200 focus:border-emerald-500 transition-all"
+                  />
+               </div>
+               <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100">
+                  <p className="text-[10px] font-bold text-amber-500 uppercase mb-1">Negotiation / Off</p>
+                  <input 
+                    type="number" 
+                    placeholder="₹ 0.00"
+                    value={negotiation}
+                    onChange={(e) => setNegotiation(Number(e.target.value))}
+                    className="bg-transparent font-black text-lg text-amber-600 outline-none w-full border-b border-amber-200 focus:border-amber-500 transition-all"
+                  />
+               </div>
+               <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                  <p className="text-[10px] font-bold text-blue-400 uppercase mb-1">Pay Final Amount</p>
+                  <input 
+                    type="number" 
+                    placeholder="₹ 0.00"
+                    value={paidAmount}
+                    onChange={(e) => setPaidAmount(Number(e.target.value))}
+                    className="bg-transparent font-black text-lg text-blue-600 outline-none w-full border-b border-blue-200 focus:border-blue-500 transition-all"
+                  />
+               </div>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 border-t border-gray-50 pt-6">
             <div>
-              <p className="text-[10px] font-black text-gray-400 uppercase">Booking Date</p>
+              <p className="text-[10px] font-black text-gray-400 uppercase font-black">Booking Date</p>
               <p className="font-black text-gray-900 text-sm">{new Date(booking.createdAt).toLocaleString("en-IN")}</p>
             </div>
             <div className="text-right">
-              <p className="text-[10px] font-black text-gray-400 uppercase">Transaction ID</p>
+              <p className="text-[10px] font-black text-gray-400 uppercase font-black">Transaction ID</p>
               <p className="font-black text-gray-900 text-[10px] break-all">{booking.paymentId || "N/A"}</p>
             </div>
           </div>
         </div>
         
         <div className="p-8 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row gap-3">
-          {(booking.status || "").toLowerCase() !== "cancelled" && (
+          {(booking.status || "").toLowerCase() !== "sold" && (booking.status || "").toLowerCase() !== "cancelled" && (
+            <button 
+              onClick={handleSettle}
+              className="flex-[2] px-8 py-5 bg-black text-white rounded-2xl font-black uppercase tracking-widest hover:bg-gray-900 transition-all shadow-xl shadow-black/20 flex items-center justify-center gap-3"
+            >
+              <FaCheckCircle size={18} /> Commit Sale & Close
+            </button>
+          )}
+          {(booking.status || "").toLowerCase() !== "cancelled" && (booking.status || "").toLowerCase() !== "sold" && (
             <button 
               onClick={() => onCancel(booking.id)}
-              className="flex-1 px-8 py-5 bg-red-500 text-white rounded-2xl font-black uppercase tracking-widest hover:bg-red-600 transition-all shadow-xl shadow-red-200 flex items-center justify-center gap-3"
+              className="flex-1 px-8 py-5 bg-white text-rose-500 rounded-2xl font-black uppercase tracking-widest border border-rose-100 hover:bg-rose-50 transition-all"
             >
-              <FaUndo /> Cancel & Republish
+              <FaUndo className="inline mr-2" /> Cancel
             </button>
           )}
           <button 
