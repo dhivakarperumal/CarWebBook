@@ -208,6 +208,23 @@ export default function Services() {
     }
   };
 
+  const handleOpenIssueModal = (item) => {
+    setEditingIssueId(item.id);
+    let initialIssues = [...(item.issues || [])];
+    if (initialIssues.length === 0) {
+      const mainIssueText = item.issue || item.otherIssue || item.carIssue || "Routine Checkup";
+      initialIssues = [{
+        issue: mainIssueText,
+        issueAmount: item.issueAmount || 0,
+        issueStatus: item.issueStatus || 'pending'
+      }];
+    }
+    setIssueEntries(initialIssues);
+    setEditingParts([...(item.parts || [])]);
+    setActiveModalTab("issues");
+    setIssueModalVisible(true);
+  };
+
   if (loading) return <div className="flex h-64 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div></div>;
 
   return (
@@ -261,6 +278,7 @@ export default function Services() {
         </div>
       </div>
 
+      <>
       {viewMode === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
           {paginatedData.map((item) => (
@@ -295,7 +313,7 @@ export default function Services() {
                   </div>
                 </div>
                 <div className="rounded-2xl bg-blue-50/50 border border-blue-100 p-4 overflow-hidden">
-                   <div className="flex justify-between items-center mb-3"><span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Diagnostic Log & Parts</span><button onClick={() => { setEditingIssueId(item.id); setIssueEntries([...(item.issues || [])]); setEditingParts([...(item.parts || [])]); setActiveModalTab("issues"); setIssueModalVisible(true); }} className="text-[9px] font-black text-blue-600 uppercase hover:underline">Edit</button></div>
+                   <div className="flex justify-between items-center mb-3"><span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Diagnostic Log & Parts</span><button onClick={() => handleOpenIssueModal(item)} className="text-[9px] font-black text-blue-600 uppercase hover:underline">Edit</button></div>
                    <div className="space-y-2">{item.issues?.slice(0, 2).map((iss, i) => <p key={i} className="text-xs font-bold text-gray-600 line-clamp-1 flex items-center gap-2"><span className="w-1 h-1 bg-blue-400 rounded-full" />{iss.issue}</p>) || <p className="text-xs italic text-gray-400">No log entries</p>}</div>
                 </div>
               </div>
@@ -304,7 +322,7 @@ export default function Services() {
                  {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
                    <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all" title="Add Parts"><FaPlus /></button>
                  )}
-                 <button onClick={() => { setEditingIssueId(item.id); setIssueEntries([...(item.issues || [])]); setEditingParts([...(item.parts || [])]); setActiveModalTab("issues"); setIssueModalVisible(true); }} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all" title="Edit Log & Parts"><FaEdit /></button>
+                                   <button onClick={() => handleOpenIssueModal(item)} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all" title="Edit Log & Parts"><FaEdit /></button>
                  <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all" title="View Details"><FaEye /></button>
                  <button onClick={() => handleDelete(item.id)} className="h-12 w-12 flex justify-center items-center rounded-2xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all" title="Delete"><FaTrash /></button>
               </div>
@@ -313,8 +331,9 @@ export default function Services() {
           {paginatedData.length === 0 && <div className="col-span-full py-20 text-center text-gray-400 font-black uppercase tracking-widest text-xs">No service protocols found for designated metrics</div>}
         </div>
       ) : (
-        <div className="overflow-hidden bg-white rounded-lg shadow-2xl shadow-blue-900/5 border border-gray-100 animate-fadeIn">
-          <table className="w-full text-left text-sm whitespace-nowrap">
+        <div className="bg-white rounded-lg shadow-2xl shadow-blue-900/5 border border-gray-100 animate-fadeIn overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
             <thead className="bg-[#0e5f76] text-white">
               <tr>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">S No</th>
@@ -375,7 +394,7 @@ export default function Services() {
                         {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
                           <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-emerald-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Add Parts"><FaPlus /></button>
                         )}
-                        <button onClick={() => { setEditingIssueId(item.id); setIssueEntries([...(item.issues || [])]); setEditingParts([...(item.parts || [])]); setActiveModalTab("issues"); setIssueModalVisible(true); }} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-amber-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
+                        <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-amber-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
                         <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="View Details"><FaEye /></button>
                         <button onClick={() => handleDelete(item.id)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-red-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Delete"><FaTrash /></button>
                       </div>
@@ -385,6 +404,7 @@ export default function Services() {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       )}
 
@@ -483,6 +503,14 @@ export default function Services() {
                        await api.post(`/all-services/${editingIssueId}/parts`, { parts: partsToSave.map(p => ({ ...p, status: p.status || 'pending'})) });
                     }
 
+                    // Update main issue amounts if necessary based on first entry
+                    if (issuesToSave.length > 0) {
+                       await api.put(`/all-services/${editingIssueId}/issue`, { 
+                         issue: issuesToSave[0].issue, 
+                         issueAmount: Number(issuesToSave[0].issueAmount || 0) 
+                       });
+                    }
+
                     toast.success('Manifest synchronized successfully'); 
                     setIssueModalVisible(false); 
                     setEditingIssueId(null); 
@@ -494,6 +522,7 @@ export default function Services() {
           </div>
         </div>
       )}
+      </>
     </div>
   );
 }

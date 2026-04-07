@@ -379,40 +379,43 @@ const AdminAppointments = () => {
                   <div className="space-y-6 bg-white border border-gray-200 rounded-3xl p-6 shadow-sm">
                     {/* Status Update */}
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-600 ml-1">Current Status</label>
-                      <div className="flex flex-wrap gap-2">
-                        {STATUS_OPTIONS.map(opt => (
-                          <button
-                            key={opt}
-                            onClick={() => {
-                              setSelectedAppointment(prev => {
-                                const updated = { ...prev, status: opt };
-                                if (opt === 'Cancelled') {
-                                  updated.assignedEmployeeId = null;
-                                  updated.assignedEmployeeName = null;
-                                }
-                                return updated;
-                              });
-                              setPendingChanges(prev => {
-                                const updated = { ...prev, status: opt };
-                                if (opt === 'Cancelled') {
-                                  updated.assignedEmployeeId = null;
-                                  updated.assignedEmployeeName = null;
-                                }
-                                return updated;
-                              });
-                            }}
-                            className={`px-3 py-2 rounded-xl text-[10px] font-black tracking-tight border transition-all duration-300 ${
-                              (pendingChanges.status ?? selectedAppointment.status) === opt
-                                ? 'bg-black text-white border-black shadow-lg shadow-black/20'
-                                : 'bg-white text-gray-400 border-gray-100 hover:border-gray-300'
-                            }`}
-                          >
-                            {opt}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+  <label className="text-xs font-bold text-gray-600 ml-1">
+    Current Status
+  </label>
+
+  <select
+    value={pendingChanges.status ?? selectedAppointment.status}
+    onChange={(e) => {
+      const value = e.target.value;
+
+      setSelectedAppointment((prev) => {
+        const updated = { ...prev, status: value };
+        if (value === "Cancelled") {
+          updated.assignedEmployeeId = null;
+          updated.assignedEmployeeName = null;
+        }
+        return updated;
+      });
+
+      setPendingChanges((prev) => {
+        const updated = { ...prev, status: value };
+        if (value === "Cancelled") {
+          updated.assignedEmployeeId = null;
+          updated.assignedEmployeeName = null;
+        }
+        return updated;
+      });
+    }}
+    className="w-full px-4 py-2 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-black transition-all"
+  >
+    {STATUS_OPTIONS.map((opt) => (
+      <option key={opt} value={opt}>
+        {opt}
+      </option>
+    ))}
+  </select>
+</div>
+                    
 
                     {/* Mechanic Assignment */}
                     <div className="space-y-2">

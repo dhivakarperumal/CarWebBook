@@ -138,6 +138,9 @@ exports.addServiceParts = async (req, res) => {
   }
 
   try {
+    // Syncing logic: Clear and re-insert or Update (Clear and re-insert is simpler for a complete sync of an array)
+    await db.query('DELETE FROM service_parts WHERE all_service_id = ?', [id]);
+    
     // Ensure schema has required columns
     await ensureServicePartsSchema();
 
