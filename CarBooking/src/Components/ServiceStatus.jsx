@@ -47,7 +47,6 @@ const ServiceStatus = () => {
   const [showSpareModal, setShowSpareModal] = useState(false);
   const [approvingPartId, setApprovingPartId] = useState(null);
 
-useEffect(() => {
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -90,13 +89,11 @@ useEffect(() => {
       // Fetch all services to get spare parts and issue entries
       console.log("🔍 [ServiceStatus] Fetching all services to enrich details...");
       const servicesRes = await api.get("/all-services");
-      const allServices = servicesRes.data || [];
-      
-      const filteredServicesByEmail = allServices.filter((s) => s.email?.toLowerCase() === user.email.toLowerCase());
+      const allServices = (servicesRes.data || []).filter((s) => s.email?.toLowerCase() === user.email.toLowerCase());
 
       // Enrich combined data with parts and issues
       const enrichedServices = [];
-      for (let service of filteredServicesByEmail) {
+      for (let service of allServices) {
         try {
           const detailRes = await api.get(`/all-services/${service.id}`);
           enrichedServices.push({
@@ -112,7 +109,7 @@ useEffect(() => {
 
       const finalBookings = combinedData.map((b) => {
         const matchedService = enrichedServices.find(
-          (s) => s.bookingId === b.bookingId || s.bookingDocId === b.id
+          (s) => s.bookingId === b.bookingId || s.id === b.id || s.bookingDocId === b.id
         );
         const liveStatus = matchedService?.serviceStatus || b.status;
         return {
@@ -135,10 +132,10 @@ useEffect(() => {
       for (let service of enrichedServices) {
          if (service.parts.length > 0) {
             allSpareParts.push({
-              serviceName: service.bookingId,
-              serviceId: service.id,
-              customerName: service.name,
-              parts: service.parts,
+               serviceName: service.bookingId,
+               serviceId: service.id,
+               customerName: service.name,
+               parts: service.parts,
             });
          }
       }
@@ -151,8 +148,9 @@ useEffect(() => {
     }
   };
 
-  fetchData();
-}, [user]);
+  useEffect(() => {
+    fetchData();
+  }, [user]);
 
   const handleApproveSpare = async (serviceId, itemId, status, type = 'part') => {
     try {
@@ -180,78 +178,27 @@ useEffect(() => {
       }
 
       toast.success(`${type === 'issue' ? 'Issue' : 'Spare part'} ${status} successfully`);
-      // Refresh data
-      setLoading(true);
-      const servicesRes = await api.get("/all-services");
-      const filteredServices = (servicesRes.data || []).filter(
-        (s) => s.email?.toLowerCase() === user.email.toLowerCase()
-      );
-      setServices(filteredServices);
+      
+      // Complete Refresh
+      await fetchData();
 
-      // Fetch spare parts again
-      const allSpareParts = [];
-      for (let service of filteredServices) {
-        try {
-          const partsRes = await api.get(`/all-services/${service.id}`);
-          if (partsRes.data?.parts) {
-            allSpareParts.push({
-              serviceName: service.bookingId,
-              serviceId: service.id,
-              customerName: service.name,
-              parts: partsRes.data.parts,
-            });
-          }
-        } catch (err) {
-          console.error(`Failed to fetch parts for service ${service.id}`, err);
-        }
-      }
-      setSpareParts(allSpareParts);
-
+      // Update selectedBooking for immediate modal change
       if (type === 'issue') {
-        // update local booking issue status for immediate reflection
-        const linkedService =
-          filteredServices.find((s) => s.id === serviceId) ||
-          services.find((s) => s.id === serviceId);
-
-        const bookingDocId = linkedService?.bookingDocId;
-
-        if (bookingDocId) {
-          setBookings((prev) =>
-            prev.map((b) => {
-              if (b.id !== bookingDocId) return b;
-              return {
-                ...b,
-                issueStatus: status,
-                issues: b.issues
-                  ? b.issues.map((issue) =>
-                      issue.id === itemId
-                        ? { ...issue, issueStatus: status }
-                        : issue
-                    )
-                  : b.issues,
-              };
-            })
-          );
-
-          // Also update selectedBooking if it is currently open
-          setSelectedBooking((prev) => {
-            if (!prev || prev.id !== bookingDocId) return prev;
-            return {
-              ...prev,
-              issueStatus: status,
-              issues: prev.issues
-                ? prev.issues.map((issue) =>
-                    issue.id === itemId
-                      ? { ...issue, issueStatus: status }
-                      : issue
-                  )
-                : prev.issues,
-            };
-          });
-        }
+        setSelectedBooking((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            issueStatus: status,
+            issues: prev.issues
+              ? prev.issues.map((issue) =>
+                  issue.id === itemId
+                    ? { ...issue, issueStatus: status }
+                    : issue
+                )
+              : prev.issues,
+          };
+        });
       }
-
-      setLoading(false);
     } catch (err) {
       toast.error("Failed to update spare part status");
       console.error(err);

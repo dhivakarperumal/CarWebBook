@@ -248,7 +248,7 @@ const EmpAssingCars = () => {
               <div className="flex items-center justify-between pt-6 border-t border-gray-50">
                 <div className="flex items-center gap-2 text-gray-400">
                   <Calendar className="w-4 h-4" />
-                  <span className="text-[11px] font-bold">Assigned {new Date(item.created_at).toLocaleDateString()}</span>
+                  <span className="text-[11px] font-bold text-gray-800">Assigned {new Date(item.created_at || item.createdAt).toLocaleDateString()}</span>
                 </div>
                 <button className="text-[11px] font-black text-blue-600 uppercase tracking-widest hover:underline">
                   View history
@@ -281,7 +281,7 @@ const EmpAssingCars = () => {
                   </td>
                   <td className="px-6 py-4">
                     <p className="font-black text-gray-900">{item.brand} {item.model}</p>
-                    <p className="text-xs font-bold text-blue-500">{item.vehicle_number || "N/A"}</p>
+                    <p className="text-xs font-bold text-blue-500 uppercase tracking-widest">{item.vehicle_number || item.vehicleNumber || "N/A"}</p>
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusColor(item.status)}`}>
@@ -289,7 +289,15 @@ const EmpAssingCars = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-xs font-bold text-gray-500">{new Date(item.created_at).toLocaleDateString()}</p>
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{new Date(item.created_at || item.createdAt).toLocaleDateString()}</p>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button 
+                      onClick={() => window.location.href = "/employee/cars"}
+                      className="bg-black text-white text-[10px] font-black px-4 py-2 rounded-xl hover:bg-gray-800 transition-all uppercase tracking-widest shadow-lg shadow-black/10"
+                    >
+                      Update
+                    </button>
                   </td>
                 </tr>
               ))}
