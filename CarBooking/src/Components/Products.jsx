@@ -12,6 +12,10 @@ import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 export default function Products() {
   const [products, setProducts] = useState([]);
   const brands = [...new Set(products.map(p => p.brand).filter(Boolean))];
+  const prices = products.map(p => Number(p.offerPrice || 0)).filter(p => p > 0);
+
+  const minPrice = prices.length ? Math.min(...prices) : 0;
+  const maxPrice = prices.length ? Math.max(...prices) : 1000;
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,6 +49,18 @@ export default function Products() {
 
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    if (products.length > 0) {
+      const prices = products.map(p => Number(p.offerPrice || 0)).filter(p => p > 0);
+      const max = Math.max(...prices);
+
+      setFilters(prev => ({
+        ...prev,
+        maxPrice: max
+      }));
+    }
+  }, [products]);
 
   const filteredProducts = products
     .filter((p) => {
@@ -203,9 +219,9 @@ export default function Products() {
 
                 <input
                   type="range"
-                  min="0"
-                  max="1000"
-                  value={filters.maxPrice || 1000}
+                  min={minPrice}
+                  max={maxPrice}
+                  value={filters.maxPrice || maxPrice}
                   onChange={(e) =>
                     setFilters({ ...filters, maxPrice: e.target.value })
                   }
@@ -213,7 +229,7 @@ export default function Products() {
                 />
 
                 <p className="text-xs text-gray-400 mt-1">
-                  ₹0 - ₹{filters.maxPrice || 1000}
+                  ₹{minPrice} - ₹{filters.maxPrice || maxPrice}
                 </p>
               </div>
 
