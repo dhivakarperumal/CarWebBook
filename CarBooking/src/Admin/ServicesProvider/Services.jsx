@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
-import { FaEdit, FaTrash, FaEye, FaThLarge, FaList, FaPlus,FaCalendarAlt } from "react-icons/fa";
+import { FaEdit, FaTrash, FaEye, FaThLarge, FaList, FaPlus, FaCalendarAlt, FaClock, FaCheckCircle, FaSearch, FaWrench } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import Pagination from "../../Components/Pagination";
@@ -30,6 +30,20 @@ const STATUS_STEPS = [
   "Service Completed",
 ];
 
+const StatCard = ({ title, value, icon, gradient }) => (
+  <div className="bg-white border border-gray-300 rounded-md p-6 shadow-sm hover:shadow-md transition">
+    <div className="flex justify-between items-center">
+      <div>
+        <p className="text-xs text-slate-500 uppercase font-black tracking-widest">{title}</p>
+        <h2 className="text-2xl font-black text-slate-900 mt-1">{value}</h2>
+      </div>
+      <div className={`p-4 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-lg shadow-black/10`}>
+        {icon}
+      </div>
+    </div>
+  </div>
+);
+
 export default function Services() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -38,10 +52,10 @@ export default function Services() {
   const isMechanic = userRole === "mechanic" || userRole === "staff";
   const pathPrefix = location.pathname.startsWith("/employee") ? "/employee" : "/admin";
 
-  const [viewMode, setViewMode] = useState("table"); // "card" | "table"
+  const [viewMode, setViewMode] = useState("table"); 
 
-  const [mainTab, setMainTab] = useState("booked"); // booked | addVehicle
-  const [subTab, setSubTab] = useState("assigned"); // assigned
+  const [mainTab, setMainTab] = useState("booked"); 
+  const [subTab, setSubTab] = useState("assigned"); 
 
   const [services, setServices] = useState([]);
   const [employees, setEmployees] = useState([]);
@@ -91,7 +105,6 @@ export default function Services() {
               issues: details.issues || [],
             });
           } catch (err) {
-            console.error(`Failed to load service details for ${service.id}`, err);
             partsMap[service.id] = [];
             servicesWithDetails.push({
               ...service,
@@ -106,7 +119,6 @@ export default function Services() {
       setServices(servicesWithDetails);
       setEmployees(empRes.data);
     } catch (error) {
-      console.error(error);
       toast.error("Failed to fetch data");
     } finally {
       setLoading(false);
@@ -119,7 +131,6 @@ export default function Services() {
 
   const searchedServices = useMemo(() => {
     return services.filter((s) => {
-      // 1) Text search
       const text = `
         ${s.bookingId || ""}
         ${s.name || ""}
@@ -130,7 +141,6 @@ export default function Services() {
       `.toLowerCase();
       if (!text.includes(search.toLowerCase())) return false;
 
-      // 2) Date filter
       const bDateStr = s.created_at || s.createdAt;
       if (!bDateStr) return false;
 
@@ -154,10 +164,18 @@ export default function Services() {
         lastMonth.setHours(0, 0, 0, 0);
         return bookingDate >= lastMonth;
       }
-
       return true;
     });
   }, [services, search, dateFilter]);
+
+  const stats = useMemo(() => {
+    return {
+      total: services.length,
+      assigned: services.filter(s => !!s.assignedEmployeeId).length,
+      unassigned: services.filter(s => !s.assignedEmployeeId).length,
+      completed: services.filter(s => (s.serviceStatus || "").toLowerCase().includes("completed")).length
+    };
+  }, [services]);
 
   const bookedServices = searchedServices.filter((s) => !s.addVehicle);
   const addVehicleServices = searchedServices.filter((s) => s.addVehicle);
@@ -168,8 +186,6 @@ export default function Services() {
   const assignedServices = currentMainList.filter((s) => {
     const isAssigned = !!s.assignedEmployeeId;
     if (!isAssigned) return false;
-
-    // If mechanic, only see their own assigned tasks
     if (isMechanic) {
       return (s.assignedEmployeeName || "").toLowerCase() === (userProfile?.displayName || "").toLowerCase();
     }
@@ -177,7 +193,7 @@ export default function Services() {
   });
 
   const unassignedServices = isMechanic
-    ? [] // Mechanics don't see unassigned tasks (usually)
+    ? [] 
     : currentMainList.filter((s) => !s.assignedEmployeeId);
 
   const listData =
@@ -190,9 +206,6 @@ export default function Services() {
   );
 
   const availableEmployees = employees;
-
-  const assignedCount = assignedServices.length;
-  const unassignedCount = unassignedServices.length;
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -216,10 +229,6 @@ export default function Services() {
     }
   };
 
-  const getServiceParts = (id) => {
-    return serviceParts[id] || [];
-  };
-
   const formatPartStatus = (status) => {
     const normalized = (status || "pending").toLowerCase();
     if (normalized === "approved") return "Approved";
@@ -234,12 +243,15 @@ export default function Services() {
     return "bg-yellow-100 text-yellow-700";
   };
 
+  const getServiceParts = (id) => {
+    return serviceParts[id] || [];
+  };
+
   const handleStatusChange = async (service, newStatus) => {
     if (!service.assignedEmployeeId) {
       toast.error("Assign mechanic first");
       return;
     }
-
     try {
       await api.put(`/all-services/${service.id}/status`, {
         serviceStatus: newStatus,
@@ -262,45 +274,14 @@ export default function Services() {
     }
   };
 
-  const handleIssueEdit = (item) => {
-    setEditingIssueId(item.id);
-    setIssueText(item.issue || "");
-    setIssueAmount(item.issueAmount != null ? String(item.issueAmount) : "");
-  };
-
-  const handleIssueSave = async (id) => {
-    try {
-      await api.put(`/all-services/${id}/issue`, {
-        issue: issueText,
-        issueAmount: Number(issueAmount || 0),
-      });
-      toast.success("Issue updated successfully");
-      setEditingIssueId(null);
-      setIssueText("");
-      setIssueAmount("");
-      loadData();
-    } catch (error) {
-      toast.error("Failed to update issue");
-    }
-  };
-
-  const handleIssueCancel = () => {
-    setEditingIssueId(null);
-    setIssueText("");
-    setIssueAmount("");
-  };
-
   const assignEmployee = async () => {
     if (!selectedBooking || !selectedEmployeeId || assigning) return;
-
     if (selectedBooking.assignedEmployeeId) {
       toast.error("This service already has a mechanic assigned.");
       return;
     }
-
     try {
       setAssigning(true);
-
       const emp = employees.find(
         (e) => e.id.toString() === selectedEmployeeId.toString()
       );
@@ -308,13 +289,11 @@ export default function Services() {
         toast.error("Mechanic not found");
         return;
       }
-
       await api.put(`/all-services/${selectedBooking.id}/assign`, {
         assignedEmployeeId: emp.id,
         assignedEmployeeName: emp.name,
         serviceStatus: "Processing",
       });
-
       toast.success(`Mechanic ${emp.name} assigned!`);
       setModalVisible(false);
       setSelectedBooking(null);
@@ -336,808 +315,333 @@ export default function Services() {
   }
 
   return (
-    <div className="p-4 text-gray-800 font-sans sm:p-6 lg:p-8">
-      <div className="mx-auto max-w-7xl">
-        {/* 🔝 MAIN TABS & TOGGLES */}
-        <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-          <div className="flex w-full space-x-2 md:w-auto flex-1 max-w-lg bg-gray-100 p-1 rounded-xl">
-            <button
-              onClick={() => {
-                setMainTab("booked");
-                setCurrentPage(1);
-              }}
-              className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${mainTab === "booked"
-                ? "bg-white text-blue-600 shadow"
-                : "text-gray-500 hover:text-gray-700"
-                }`}
-            >
-              Booked
-            </button>
-            <button
-              onClick={() => {
-                setMainTab("addVehicle");
-                setCurrentPage(1);
-              }}
-              className={`flex-1 rounded-lg p-2.5 text-center font-bold tracking-wide transition-all ${mainTab === "addVehicle"
-                ? "bg-white text-blue-600 shadow"
-                : "text-gray-500 hover:text-gray-700"
-                }`}
-            >
-              Add Service Vehicle
-            </button>
-          </div>
-
-          <div className="flex items-center space-x-1 bg-gray-100 p-1 rounded-lg">
-            <button
-              onClick={() => setViewMode("table")}
-              className={`flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${viewMode === "table"
-                ? "bg-white text-blue-600 shadow"
-                : "text-gray-500 hover:text-gray-700"
-                }`}
-            >
-              <FaList />
-              <span className="hidden sm:inline">Table</span>
-            </button>
-            <button
-              onClick={() => setViewMode("card")}
-              className={`flex items-center space-x-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${viewMode === "card"
-                ? "bg-white text-blue-600 shadow"
-                : "text-gray-500 hover:text-gray-700"
-                }`}
-            >
-              <FaThLarge />
-              <span className="hidden sm:inline">Card</span>
-            </button>
-          </div>
+    <div className="p-4 max-w-7xl mx-auto space-y-10 animate-fadeIn bg-gray-50/50 min-h-screen">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Service Operations</h1>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Monitor technical workflows & spare parts fulfillment</p>
         </div>
 
-        {/* 🔍 SEARCH AND ADD PARTS */}
-        <div className="mb-6 flex flex-col md:flex-row flex-wrap gap-4 items-center justify-between">
-          <input
-            type="text"
-            placeholder="Search booking, name, phone, car..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full md:w-80 rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none transition-all shadow-sm"
-          />
-          <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
-            <select
-              value={dateFilter}
-              onChange={(e) => {
-                setDateFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-600 shadow-sm flex-1 md:flex-none"
-            >
-              <option value="All Time">All Time</option>
-              <option value="Today">Today</option>
-              <option value="Yesterday">Yesterday</option>
-              <option value="This Week">This Week</option>
-              <option value="This Month">This Month</option>
-            </select>
-            <button
-              onClick={() => navigate(`${pathPrefix}/addserviceparts`)}
-              className="flex-1 md:flex-none rounded-xl bg-black px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-gray-800 shadow-md whitespace-nowrap"
-            >
-              + Add Service Parts
-            </button>
-          </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate(`${pathPrefix}/addserviceparts`)}
+            className="h-[56px] px-8 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-3 active:scale-95"
+          >
+            <FaPlus /> Registry Service Parts
+          </button>
         </div>
+      </div>
 
-
-
-        {/* 📋 DYNAMIC VIEW (CARD OR TABLE) */}
-        {viewMode === "card" ? (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 pb-24">
-            {paginatedData.map((item) => {
-              const currentStepIndex = STATUS_STEPS.indexOf(
-                item.serviceStatus || "Booked"
-              );
-
-              return (
-                <div
-                  key={item.id}
-                  className="relative rounded-2xl bg-white p-6 shadow-sm border border-gray-200 transition-all hover:shadow-lg flex flex-col"
-                >
-                  <div className="flex-1">
-                    {/* 🔹 STATUS BADGE */}
-                    <div
-                      className={`absolute right-4 top-4 rounded-full px-3 py-1 text-xs font-bold ${getStatusColor(
-                        item.serviceStatus
-                      )}`}
-                    >
-                      {item.serviceStatus || "Booked"}
-                    </div>
-
-                    {/* 🔹 CONTENT */}
-                    <div className="mt-2 flex flex-col space-y-3">
-                      <h3 className="text-xl font-black text-gray-900">
-                        {item.bookingId || `SER-${item.id}`}
-                      </h3>
-                      <div>
-                        <p className="text-md font-bold text-gray-800">
-                          {item.name || "Unknown Customer"}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {item.phone || "No Phone"}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-md font-bold text-blue-600">
-                          {item.vehicleNumber || "No Plate Info"}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {item.brand || ""} {item.model || ""}
-                        </p>
-                      </div>
-
-                      {/* 🔹 ISSUE SECTION */}
-                      <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-xs font-black uppercase tracking-wider text-blue-700">
-                            Service Issues
-                          </p>
-                          {item.assignedEmployeeName && (
-                            <button
-                              onClick={() => {
-                                setEditingIssueId(item.id);
-                                const initialIssues = (item.issues || []).map((issue) => ({ ...issue }));
-                                if (!initialIssues.length && item.issue) {
-                                  initialIssues.push({
-                                    issue: item.issue,
-                                    issueAmount: item.issueAmount != null ? Number(item.issueAmount) : 0,
-                                    issueStatus: item.issueStatus || 'pending',
-                                  });
-                                }
-                                setIssueEntries(initialIssues);
-                                setIssueModalVisible(true);
-                              }}
-                              className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
-                              title="Edit Issue"
-                            >
-                              <FaEdit size={12} />
-                            </button>
-                          )}
-                        </div>
-
-                        {(item.issues && item.issues.length > 0) || item.issue ? (
-                          <div className="space-y-2">
-                            {((item.issues && item.issues.length > 0) ? item.issues : [{
-                              id: null,
-                              issue: item.issue,
-                              issueAmount: item.issueAmount,
-                              issueStatus: item.issueStatus || 'pending',
-                            }]).map((issueEntry, index) => (
-                              <div key={issueEntry.id || `issue-${index}`} className="bg-white rounded-lg p-2 border border-gray-200">
-                                <p className="text-xs text-gray-700 font-semibold">{issueEntry.issue || 'No issue text'}</p>
-                                {issueEntry.issueAmount != null && Number(issueEntry.issueAmount) > 0 && (
-                                  <p className="text-xs text-gray-500">Amount: ₹{Number(issueEntry.issueAmount).toFixed(2)}</p>
-                                )}
-                                <p className="text-xs text-gray-500">Status: <span className="capitalize">{(issueEntry.issueStatus || 'pending')}</span></p>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-xs text-gray-400 italic">No issues added yet.</p>
-                        )}
-                      </div>
-
-                      {/* 🔹 ASSIGNED MECHANIC */}
-                      {item.assignedEmployeeName && (
-                        <p className="mt-2 text-sm font-bold text-blue-600">
-                          Mechanic: <span className="text-gray-700">{item.assignedEmployeeName}</span>
-                        </p>
-                      )}
-
-                      {/* 🔧 SPARE PARTS SUMMARY */}
-                      <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-3">
-                        <p className="text-xs font-black uppercase tracking-wider text-gray-500 mb-2">
-                          Spare Parts
-                        </p>
-                        {getServiceParts(item.id).length === 0 ? (
-                          <p className="text-sm text-gray-500">No spare parts added (pending).</p>
-                        ) : (
-                          <div className="space-y-2">
-                            {getServiceParts(item.id).map((part, pindex) => (
-                              <div key={part.id || `${part.partName}-${pindex}`} className="flex justify-between items-center bg-white p-2 rounded-lg border border-gray-100">
-                                <div>
-                                  <p className="text-sm font-semibold text-gray-800">{part.partName}</p>
-                                  <p className="text-xs text-gray-500">Qty: {part.qty} | ₹{Number(part.total).toFixed(2)}</p>
-                                </div>
-                                <span className={`text-xs font-bold px-2 py-1 rounded-full ${partStatusClass(part.status)}`}>
-                                  {formatPartStatus(part.status)}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* 🔹 TIMELINE */}
-                    <div className="mt-6 border-t border-gray-100 pt-5 overflow-hidden">
-                      <div className="flex items-center justify-between pb-2">
-                        {STATUS_STEPS.map((step, index) => {
-                          const active = index <= currentStepIndex;
-                          const isLast = index === STATUS_STEPS.length - 1;
-
-                          return (
-                            <div key={step} className="flex flex-1 items-center">
-                              <div
-                                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-black z-10 ${active
-                                  ? "border-blue-600 bg-blue-600 text-white"
-                                  : "border-gray-200 bg-gray-100 text-gray-400"
-                                  }`}
-                                title={step}
-                              >
-                                {index + 1}
-                              </div>
-                              {!isLast && (
-                                <div
-                                  className={`h-1 flex-1 mx-1 rounded-full ${index < currentStepIndex
-                                    ? "bg-blue-600"
-                                    : "bg-gray-100"
-                                    }`}
-                                />
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                      <p className="mt-2 text-center text-xs font-bold text-gray-500">
-                        Current: <span className="text-blue-600">{item.serviceStatus || "Booked"}</span>
-                      </p>
-                    </div>
-
-                    {/* 🔹 STATUS PICKER */}
-                    {item.assignedEmployeeId && (
-                      <div className="mt-5 overflow-hidden rounded-xl border border-gray-200">
-                        <select
-                          value={item.serviceStatus || "Booked"}
-                          onChange={(e) => handleStatusChange(item, e.target.value)}
-                          className="w-full bg-gray-50 p-2 text-sm font-semibold text-gray-800 outline-none focus:ring-1 focus:ring-blue-600"
-                        >
-                          {BOOKING_STATUS.slice(BOOKING_STATUS.indexOf(item.serviceStatus || "Booked") === -1 ? 0 : BOOKING_STATUS.indexOf(item.serviceStatus || "Booked")).map((s) => (
-                            <option key={s} value={s}>
-                              {s}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    {/* 🔹 ADD SPARE BUTTON - Full Width below dropdown */}
-                    {item.serviceStatus === "Processing" && item.assignedEmployeeId && (
-                      <button
-                        onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })}
-                        className="mt-3 w-full rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold py-2.5 px-4 transition-all shadow-md"
-                        title="Add Spare Parts"
-                      >
-                        + Add Spare Parts
-                      </button>
-                    )}
-                  </div>
-
-                  {/* 🔹 ACTIONS (Card View) */}
-                  <div className="mt-6 border-t border-gray-100 pt-4 flex flex-wrap gap-2">
-                    {/* 🔹 ASSIGN BUTTON */}
-                    {!item.assignedEmployeeId && (
-                      <button
-                        onClick={() => {
-                          setSelectedBooking(item);
-                          setModalVisible(true);
-                        }}
-                        className="flex-1 rounded-xl bg-black p-2.5 text-sm font-bold text-white hover:bg-gray-800 transition-all border border-black"
-                      >
-                        Assign
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => navigate(`${pathPrefix}/services/${item.id}`)}
-                      className="flex-1 flex justify-center items-center rounded-xl bg-gray-50 p-2.5 text-gray-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200 hover:text-blue-600 transition-all"
-                      title="View"
-                    >
-                      <FaEye />
-                    </button>
-                    <button
-                      onClick={() => navigate(`${pathPrefix}/addservices/${item.id}`)}
-                      className="flex-1 flex justify-center items-center rounded-xl bg-gray-50 p-2.5 text-gray-600 hover:bg-green-50 border border-gray-200 hover:border-green-200 hover:text-green-600 transition-all"
-                      title="Edit"
-                    >
-                      <FaEdit />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(item.id)}
-                      className="flex-1 flex justify-center items-center rounded-xl bg-gray-50 p-2.5 text-gray-600 hover:bg-red-50 border border-gray-200 hover:border-red-200 hover:text-red-500 transition-all"
-                      title="Delete"
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-            {paginatedData.length === 0 && (
-              <div className="col-span-full py-20 text-center text-gray-500">
-                <FaThLarge className="mx-auto text-4xl mb-4 text-gray-300" />
-                <p className="text-lg">No services found.</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          /* TABLE VIEW */
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm text-gray-600 whitespace-nowrap">
-              <thead className="border-b border-gray-200 bg-black text-white">
-                <tr>
-                  <th className="px-6 py-4 font-bold">S No</th>
-                  <th className="px-6 py-4 font-bold">ID</th>
-                  <th className="px-6 py-4 font-bold">Customer</th>
-                  <th className="px-6 py-4 font-bold">Vehicle</th>
-                  <th className="px-6 py-4 font-bold">Issue</th>
-                  <th className="px-6 py-4 font-bold">Spare Parts</th>
-                  <th className="px-6 py-4 font-bold">Status</th>
-                  <th className="px-6 py-4 font-bold">Mechanic</th>
-                  <th className="px-6 py-4 font-bold text-right">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {paginatedData.map((item, index) => (
-                  <tr key={item.id} className="transition-all hover:bg-gray-50">
-                    <td className="px-6 py-4 font-semibold text-gray-900 whitespace-nowrap">
-                      {(currentPage - 1) * itemsPerPage + index + 1}
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-gray-900 whitespace-nowrap">
-                      {item.bookingId || `SER-${item.id}`}
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-gray-800">{item.name}</p>
-                      <p className="text-xs text-gray-500">{item.phone}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-blue-600">{item.vehicleNumber || 'N/A'}</p>
-                      <p className="text-xs text-gray-500">{item.brand} {item.model}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="space-y-2">
-                        {(() => {
-                          const issuesList =
-                            (item.issues && item.issues.length > 0)
-                              ? item.issues
-                              : (item.issue
-                                ? [{
-                                  id: null,
-                                  issue: item.issue,
-                                  issueAmount: item.issueAmount,
-                                  issueStatus: item.issueStatus || 'pending',
-                                }]
-                                : []);
-
-                          return (
-                            <>
-                              {/* ✅ SHOW ONLY 1 */}
-                              {issuesList.slice(0, 1).map((issueEntry, idx) => (
-                                <div key={issueEntry.id || `issue-${idx}`} className="bg-gray-50 p-2 rounded-lg border border-gray-200">
-                                  <p className="text-xs text-gray-700 font-semibold">
-                                    {issueEntry.issue || 'No issue text'}
-                                  </p>
-
-                                  {issueEntry.issueAmount != null && Number(issueEntry.issueAmount) > 0 && (
-                                    <p className="text-xs text-gray-500">
-                                      Amount: ₹{Number(issueEntry.issueAmount).toFixed(2)}
-                                    </p>
-                                  )}
-
-                                  <p className="text-xs text-gray-500">
-                                    Status: <span className="capitalize">{issueEntry.issueStatus || 'pending'}</span>
-                                  </p>
-                                </div>
-                              ))}
-
-                              {/* ✅ VIEW ALL BUTTON */}
-                              {issuesList.length > 1 && (
-                                <button
-                                  onClick={() => {
-                                    setIssueEntries(issuesList);
-                                    setIssueModalVisible(true);
-                                  }}
-                                  className="text-blue-600 font-bold text-xs hover:underline"
-                                >
-                                  View All ({issuesList.length})
-                                </button>
-                              )}
-                            </>
-                          );
-                        })()}
-
-                        {!item.issues?.length && !item.issue && (
-                          <p className="text-xs text-gray-400 italic">No issue entries yet.</p>
-                        )}
-
-                        {item.assignedEmployeeName && (
-                          <button
-                            onClick={() => {
-                              setEditingIssueId(item.id);
-                              const initialIssues = (item.issues || []).map((issue) => ({ ...issue }));
-                              if (!initialIssues.length && item.issue) {
-                                initialIssues.push({
-                                  issue: item.issue,
-                                  issueAmount: item.issueAmount != null ? Number(item.issueAmount) : 0,
-                                  issueStatus: item.issueStatus || 'pending',
-                                });
-                              }
-                              setIssueEntries(initialIssues);
-                              setIssueModalVisible(true);
-                            }}
-                            className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm font-black text-[10px] uppercase tracking-widest w-fit"
-                          >
-                            <FaEdit size={10} /> Edit Issue
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {getServiceParts(item.id).length === 0 ? (
-                        <p className="text-xs text-gray-500">No parts added</p>
-                      ) : (
-                        <div className="space-y-1">
-
-                          {/* ✅ show only 2 */}
-                          {getServiceParts(item.id).slice(0, 2).map((part, pindex) => (
-                            <p key={`${item.id}-part-${pindex}`} className="text-xs text-gray-700">
-                              {part.partName} • ₹{Number(part.total).toFixed(2)} •
-                              <span className="font-bold">{formatPartStatus(part.status)}</span>
-                            </p>
-                          ))}
-
-                          {/* ✅ show popup button */}
-                          {getServiceParts(item.id).length > 2 && (
-                            <button
-                              onClick={() => {
-                                setSelectedParts(getServiceParts(item.id));
-                                setPartsModalVisible(true);
-                              }}
-                              className="text-blue-600 font-bold text-xs hover:underline"
-                            >
-                              View All ({getServiceParts(item.id).length})
-                            </button>
-                          )}
-
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {item.assignedEmployeeId ? (
-                        <select
-                          value={item.serviceStatus || "Booked"}
-                          onChange={(e) => handleStatusChange(item, e.target.value)}
-                          className="rounded-lg border border-gray-200 bg-white p-1.5 text-xs text-gray-800 shadow-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                        >
-                          {BOOKING_STATUS.slice(BOOKING_STATUS.indexOf(item.serviceStatus || "Booked") === -1 ? 0 : BOOKING_STATUS.indexOf(item.serviceStatus || "Booked")).map((s) => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                        </select>
-                      ) : (
-                        <span
-                          className={`inline-flex rounded-full px-2 py-1 text-xs font-bold ${getStatusColor(item.serviceStatus)}`}
-                        >
-                          {item.serviceStatus || "Booked"}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 font-semibold text-gray-800">
-                      {item.assignedEmployeeName ? (
-                        item.assignedEmployeeName
-                      ) : (
-                        <button
-                          onClick={() => {
-                            setSelectedBooking(item);
-                            setModalVisible(true);
-                          }}
-                          className="rounded-lg bg-black px-3 py-1.5 text-xs font-bold text-white hover:bg-gray-800 transition-all border border-black shadow-sm"
-                        >
-                          Assign Mode
-                        </button>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end space-x-2">
-                        {/* Add Spare Button - Show only when Processing */}
-                        {item.serviceStatus === "Processing" && (
-                          <button
-                            onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })}
-                            className="rounded-lg p-2 text-orange-400 hover:bg-orange-50 hover:text-orange-600 transition-all border border-transparent hover:border-orange-100"
-                            title="Add Spare Parts"
-                          >
-                            <FaPlus />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => navigate(`${pathPrefix}/services/${item.id}`)}
-                          className="rounded-lg p-2 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100"
-                          title="View"
-                        >
-                          <FaEye />
-                        </button>
-                        <button
-                          onClick={() => navigate(`${pathPrefix}/addservices/${item.id}`)}
-                          className="rounded-lg p-2 text-gray-400 hover:bg-green-50 hover:text-green-600 transition-all border border-transparent hover:border-green-100"
-                          title="Edit"
-                        >
-                          <FaEdit />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item.id)}
-                          className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-all border border-transparent hover:border-red-100"
-                          title="Delete"
-                        >
-                          <FaTrash />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {paginatedData.length === 0 && (
-                  <tr>
-                    <td colSpan="8" className="py-12 text-center text-gray-500 text-base">
-                      No services found in this category.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-          // </div>
-        )}
-
-        {/* 📚 PAGINATION */}
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
+      {/* STATS ANALYTICS GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard 
+          title="Total Service Volume" 
+          value={stats.total} 
+          icon={<FaCalendarAlt />} 
+          gradient="from-blue-600 to-blue-400" 
+        />
+        <StatCard 
+          title="Technician Assigned" 
+          value={stats.assigned} 
+          icon={<FaClock />} 
+          gradient="from-indigo-600 to-indigo-400" 
+        />
+        <StatCard 
+          title="Open Queue" 
+          value={stats.unassigned} 
+          icon={<FaWrench />} 
+          gradient="from-amber-600 to-amber-400" 
+        />
+        <StatCard 
+          title="Successfully Closed" 
+          value={stats.completed} 
+          icon={<FaCheckCircle />} 
+          gradient="from-emerald-600 to-emerald-400" 
         />
       </div>
 
-      {/* 🪟 ASSIGN MODAL */}
+      {/* VIEW & CHANNEL TABS */}
+      <div className="flex flex-col lg:flex-row gap-4 justify-between items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-xl shadow-slate-200/50">
+        <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200 shadow-inner">
+          <button
+            onClick={() => { setMainTab("booked"); setCurrentPage(1); }}
+            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mainTab === "booked" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}
+          >
+            Portal Bookings
+          </button>
+          <button
+            onClick={() => { setMainTab("addVehicle"); setCurrentPage(1); }}
+            className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${mainTab === "addVehicle" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}
+          >
+            Direct Walk-ins
+          </button>
+        </div>
+
+        <div className="flex h-[56px] bg-gray-100 p-1 rounded-2xl border border-gray-200 shadow-inner">
+          <button
+            onClick={() => setViewMode("table")}
+            className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}
+          >
+            <FaList className="mr-2"/> Table
+          </button>
+          <button
+            onClick={() => setViewMode("card")}
+            className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "card" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}
+          >
+            <FaThLarge className="mr-2"/> Cards
+          </button>
+        </div>
+      </div>
+
+      {/* SEARCH AND FILTERS */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+        <div className="lg:col-span-4 relative group">
+          <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors" />
+          <input
+            type="text"
+            placeholder="Track booking, customer, vehicle ID..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+            className="w-full pl-14 pr-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-sm"
+          />
+        </div>
+
+        <div className="lg:col-span-8 flex flex-wrap items-center justify-end gap-3">
+          <select
+            value={dateFilter}
+            onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }}
+            className="h-[56px] px-8 bg-white border border-gray-200 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm"
+          >
+            <option value="All Time">Full History</option>
+            <option value="Today">Today Only</option>
+            <option value="Yesterday">Yesterday</option>
+            <option value="This Week">Last 7 Days</option>
+            <option value="This Month">Last 30 Days</option>
+          </select>
+
+          <div className="flex bg-gray-100 p-1 rounded-2xl border border-gray-200 shadow-inner">
+            <button
+              onClick={() => setSubTab("assigned")}
+              className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${subTab === "assigned" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-600"}`}
+            >
+              Assigned ({stats.assigned})
+            </button>
+            <button
+              onClick={() => setSubTab("unassigned")}
+              className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${subTab === "unassigned" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-600"}`}
+            >
+              Pending ({stats.unassigned})
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {viewMode === "card" ? (
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 pb-24">
+          {paginatedData.map((item) => {
+            const currentStepIndex = STATUS_STEPS.indexOf(item.serviceStatus || "Booked");
+            return (
+              <div key={item.id} className="relative rounded-2xl bg-white p-6 shadow-sm border border-gray-200 transition-all hover:shadow-lg flex flex-col">
+                <div className="flex-1">
+                  <div className={`absolute right-4 top-4 rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${getStatusColor(item.serviceStatus)}`}>
+                    {item.serviceStatus || "Booked"}
+                  </div>
+                  <div className="mt-2 flex flex-col space-y-3">
+                    <h3 className="text-xl font-black text-gray-900">{item.bookingId || `SER-${item.id}`}</h3>
+                    <div>
+                      <p className="text-md font-bold text-gray-800">{item.name || "Unknown Customer"}</p>
+                      <p className="text-sm text-gray-500">{item.phone || "No Phone"}</p>
+                    </div>
+                    <div>
+                      <p className="text-md font-bold text-blue-600">{item.vehicleNumber || "No Plate Info"}</p>
+                      <p className="text-sm text-gray-500">{item.brand || ""} {item.model || ""}</p>
+                    </div>
+                    <div className="rounded-lg bg-blue-50 border border-blue-200 p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-[10px] font-black uppercase tracking-wider text-blue-700">Service Issues</p>
+                        {item.assignedEmployeeName && (
+                          <button onClick={() => {
+                            setEditingIssueId(item.id);
+                            const initialIssues = (item.issues || []).map((issue) => ({ ...issue }));
+                            setIssueEntries(initialIssues);
+                            setIssueModalVisible(true);
+                          }} className="p-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                            <FaEdit size={10} />
+                          </button>
+                        )}
+                      </div>
+                      {(item.issues && item.issues.length > 0) ? (
+                        <div className="space-y-2">
+                          {item.issues.map((issueEntry, index) => (
+                            <div key={issueEntry.id || index} className="bg-white rounded-lg p-2 border border-gray-200">
+                              <p className="text-xs text-gray-700 font-semibold">{issueEntry.issue}</p>
+                              {Number(issueEntry.issueAmount) > 0 && <p className="text-[10px] text-gray-500">₹{Number(issueEntry.issueAmount).toFixed(2)}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      ) : <p className="text-[10px] text-gray-400 italic">No issues added yet.</p>}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-6 border-t border-gray-100 pt-4 flex flex-wrap gap-2">
+                  {!item.assignedEmployeeId && (
+                    <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="flex-1 rounded-xl bg-black px-4 py-2.5 text-[10px] font-black text-white hover:bg-gray-800 transition-all uppercase tracking-widest shadow-lg shadow-black/10">
+                      Assign Mechanic
+                    </button>
+                  )}
+                  <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-10 w-10 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 border border-transparent hover:border-blue-100 transition-all">
+                    <FaEye />
+                  </button>
+                  <button onClick={() => handleDelete(item.id)} className="h-10 w-10 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 border border-transparent hover:border-red-100 transition-all">
+                    <FaTrash />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+          {paginatedData.length === 0 && <div className="col-span-full py-20 text-center text-gray-500">No services found.</div>}
+        </div>
+      ) : (
+        <div className="overflow-hidden bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100">
+          <table className="min-w-full text-left text-sm text-gray-600">
+            <thead className="bg-black text-white">
+              <tr>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">S No</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">ID</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Customer</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Vehicle</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest">Technician</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-center">Workflow</th>
+                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {paginatedData.map((item, index) => (
+                <tr key={item.id} className="hover:bg-gray-50/50 transition duration-200">
+                  <td className="px-6 py-4 font-black text-xs text-gray-400">{(currentPage - 1) * itemsPerPage + index + 1}</td>
+                  <td className="px-6 py-4 font-black text-xs text-blue-600">{item.bookingId || `SER-${item.id}`}</td>
+                  <td className="px-6 py-4">
+                    <p className="text-sm font-bold text-gray-900">{item.name}</p>
+                    <p className="text-[10px] text-gray-500 uppercase font-black">{item.phone}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    <p className="text-xs font-black text-blue-900">{item.vehicleNumber || 'N/A'}</p>
+                    <p className="text-[10px] text-gray-400 uppercase font-bold">{item.brand} {item.model}</p>
+                  </td>
+                  <td className="px-6 py-4">
+                    {item.assignedEmployeeName ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center text-[10px] font-black text-blue-600 border border-blue-100 uppercase">
+                          {item.assignedEmployeeName.charAt(0)}
+                        </div>
+                        <span className="text-xs font-bold text-gray-700">{item.assignedEmployeeName}</span>
+                      </div>
+                    ) : (
+                      <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="text-[10px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-3 py-1 rounded-lg border border-amber-100">Pending Assignment</button>
+                    )}
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={`px-2.5 py-1 rounded-full text-[9px] font-black border tracking-wider uppercase ${getStatusColor(item.serviceStatus)}`}>
+                      {item.serviceStatus || "Booked"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-8 w-8 flex items-center justify-center bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-all border border-transparent hover:border-blue-100">
+                        <FaEye size={12} />
+                      </button>
+                      <button onClick={() => handleDelete(item.id)} className="h-8 w-8 flex items-center justify-center bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-600 rounded-lg transition-all border border-transparent hover:border-red-100">
+                        <FaTrash size={12} />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+
+      {/* ASSIGN MODAL */}
       {modalVisible && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-            <div className="mb-6 border-b border-gray-100 pb-4">
-              <h2 className="text-center text-xl font-bold text-gray-900">
-                Assign Mechanic
-              </h2>
-              <p className="text-center text-sm text-gray-500 mt-1">
-                Select an available mechanic for this service.
-              </p>
+          <div className="w-full max-w-md rounded-[2.5rem] bg-white p-8 shadow-2xl border border-white">
+            <div className="mb-6 text-center">
+                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-100 shadow-lg shadow-blue-500/10">
+                    <FaUserCheck size={24}/>
+                </div>
+              <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Assign Mechanic</h2>
+              <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">Select personnel for deployment</p>
             </div>
-
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select Staff</label>
-              <select
-                value={selectedEmployeeId}
-                onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                className="w-full rounded-xl border border-gray-300 bg-white p-3 text-gray-800 shadow-sm outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600"
-              >
-                <option value="" className="text-gray-400">
-                  -- Select Mechanic --
-                </option>
-                {availableEmployees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.name} {emp.employee_id ? `(${emp.employee_id})` : ""}
-                  </option>
-                ))}
+              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-1">Technician Database</label>
+              <select value={selectedEmployeeId} onChange={(e) => setSelectedEmployeeId(e.target.value)} className="w-full rounded-2xl border border-gray-100 bg-gray-50 px-5 py-4 text-xs font-black text-gray-800 focus:bg-white focus:ring-4 focus:ring-black/5 outline-none transition-all shadow-inner">
+                <option value="">-- Select Personnel --</option>
+                {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
               </select>
             </div>
-
-            <div className="flex space-x-4">
-              <button
-                onClick={() => {
-                  setModalVisible(false);
-                  setSelectedEmployeeId("");
-                }}
-                className="flex-1 rounded-xl border border-gray-300 bg-white py-2.5 text-center font-bold text-gray-700 shadow-sm transition-all hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={assignEmployee}
-                disabled={assigning}
-                className="flex-1 rounded-xl bg-blue-600 py-2.5 text-center font-bold text-white shadow-md transition-all hover:bg-blue-700 disabled:opacity-50"
-              >
-                {assigning ? "Assigning..." : "Assign"}
-              </button>
+            <div className="flex gap-3">
+              <button onClick={() => { setModalVisible(false); setSelectedEmployeeId(""); }} className="flex-1 rounded-2xl bg-gray-100 py-4 text-[10px] font-black text-gray-500 uppercase tracking-widest hover:bg-gray-200 transition-all">Cancel</button>
+              <button onClick={assignEmployee} disabled={assigning || !selectedEmployeeId} className="flex-1 rounded-2xl bg-black py-4 text-[10px] font-black text-white uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-black/10 disabled:opacity-20">Assign</button>
             </div>
           </div>
         </div>
       )}
 
-      {partsModalVisible && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-
-            <h2 className="text-xl font-bold mb-4">
-              Spare Parts List
-            </h2>
-
-            <div className="max-h-80 overflow-y-auto space-y-3">
-              {selectedParts.map((part, index) => (
-                <div key={index} className="flex justify-between border p-3 rounded-lg">
-
-                  <div>
-                    <p className="font-semibold">{part.partName}</p>
-                    <p className="text-xs text-gray-500">Qty: {part.qty}</p>
-                  </div>
-
-                  <div className="text-right">
-                    <p className="font-bold">₹{Number(part.total).toFixed(2)}</p>
-                    <span className={`text-xs px-2 py-1 rounded ${partStatusClass(part.status)}`}>
-                      {formatPartStatus(part.status)}
-                    </span>
-                  </div>
-
-                </div>
-              ))}
-            </div>
-
-            <button
-              onClick={() => setPartsModalVisible(false)}
-              className="mt-4 w-full bg-blue-600 text-white py-2 rounded-xl"
-            >
-              Close
-            </button>
-
-          </div>
-        </div>
-      )}
-
+      {/* ISSUE MODAL */}
       {issueModalVisible && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl bg-white shadow-2xl">
-            <div className="p-4 border-b">
-              <h2 className="text-xl font-bold">All Issue Entries</h2>
-            </div>
-
-            {issueEntries.length === 0 && (
-              <div className="rounded-lg border border-dashed border-blue-300 bg-blue-50 text-blue-700 p-3 mb-4 text-sm">
-                No issue entries yet. Use + add button to create one.
-              </div>
-            )}
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {issueEntries.map((entry, idx) => (
-                <div key={entry.id ?? `new-${idx}`} className="p-3 border border-gray-200 rounded-lg bg-gray-50">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-bold text-gray-700">Issue #{idx + 1}</p>
-                    <button
-                      onClick={() => {
-                        const copy = [...issueEntries];
-                        copy.splice(idx, 1);
-                        setIssueEntries(copy);
-                      }}
-                      className="text-red-600 text-xs hover:underline"
-                    >
-                      Remove
-                    </button>
+          <div className="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-[2.5rem] bg-white shadow-2xl border border-white p-8">
+            <div className="mb-6 flex justify-between items-center bg-gray-50/50 p-6 rounded-3xl border border-gray-100">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <FaWrench size={20}/>
                   </div>
-
-                  <textarea
-                    value={entry.issue || ""}
-                    onChange={(e) => {
-                      const copy = [...issueEntries];
-                      copy[idx] = { ...copy[idx], issue: e.target.value };
-                      setIssueEntries(copy);
-                    }}
-                    className="w-full border border-gray-300 rounded-lg p-2 text-sm"
-                    rows={3}
-                    placeholder="Describe the issue"
-                  />
-
-                  <div className="mt-2 flex gap-2">
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={entry.issueAmount != null ? entry.issueAmount : ""}
-                      onChange={(e) => {
-                        const copy = [...issueEntries];
-                        copy[idx] = { ...copy[idx], issueAmount: e.target.value };
-                        setIssueEntries(copy);
-                      }}
-                      placeholder="Amount"
-                      className="w-full border border-gray-300 rounded-lg p-2 text-sm"
-                    />
-                    <p className="text-xs mt-1">
-                      Status:
-                      <span className={`ml-1 font-bold capitalize
-        ${entry.issueStatus === "approved" ? "text-green-600" :
-                          entry.issueStatus === "rejected" ? "text-red-600" :
-                            "text-yellow-600"}`}>
-                        {entry.issueStatus || "pending"}
-                      </span>
-                    </p>
+                  <div>
+                    <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Service Log</h2>
+                    <p className="text-[10px] text-blue-600 font-black uppercase tracking-widest">Manage diagnostic entries</p>
+                  </div>
+                </div>
+                <button onClick={() => { setIssueModalVisible(false); setEditingIssueId(null); }} className="h-10 w-10 flex items-center justify-center rounded-xl bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all">
+                  <FaTimes />
+                </button>
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-4 no-scrollbar pr-2">
+              {issueEntries.map((entry, idx) => (
+                <div key={idx} className="p-6 border border-gray-100 rounded-3xl bg-gray-50/30 hover:bg-white hover:shadow-xl transition-all duration-300">
+                   <div className="flex items-center justify-between mb-4">
+                     <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Entry #{idx + 1}</span>
+                     <button onClick={() => { const copy = [...issueEntries]; copy.splice(idx, 1); setIssueEntries(copy); }} className="text-red-500 text-[9px] font-black uppercase tracking-widest hover:underline">Revoke</button>
+                   </div>
+                  <textarea value={entry.issue || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issue: e.target.value }; setIssueEntries(copy); }} className="w-full bg-white border border-gray-100 rounded-2xl p-4 text-xs font-bold text-gray-700 focus:ring-4 focus:ring-black/5 outline-none transition-all shadow-inner" rows={3} placeholder="Technical description..."/>
+                  <div className="mt-4 flex gap-3">
+                    <div className="flex-1 relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₹</span>
+                        <input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Valuation" className="w-full pl-8 pr-4 py-3 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-700 outline-none focus:ring-4 focus:ring-black/5 shadow-inner" />
+                    </div>
+                    <div className="flex items-center px-4 bg-white border border-gray-100 rounded-xl">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-400 mr-2">Status:</span>
+                        <span className={`text-[9px] font-black uppercase tracking-widest ${entry.issueStatus === "approved" ? "text-emerald-600" : "text-amber-600"}`}>{entry.issueStatus || "pending"}</span>
+                    </div>
                   </div>
                 </div>
               ))}
             </div>
-
-            <button
-              onClick={() => {
-                setIssueEntries((prev) => [
-                  ...prev,
-                  { issue: '', issueAmount: '', issueStatus: 'pending' },
-                ]);
-              }}
-              className="mb-4 inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-blue-300 text-blue-600 font-bold hover:bg-blue-50"
-            >
-              + Add Issue Entry
-            </button>
-
-            <div className="p-4 border-t flex gap-3">
-              <button
-                onClick={() => {
-                  setIssueModalVisible(false);
-                  setEditingIssueId(null);
-                  setIssueEntries([]);
-                }}
-                className="flex-1 bg-gray-400 text-white py-2 rounded-lg"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={async () => {
-                  if (!editingIssueId) {
-                    toast.error('No service selected');
-                    return;
-                  }
-
+            <div className="mt-6 pt-6 border-t border-gray-100 flex gap-3">
+               <button onClick={() => setIssueEntries([...issueEntries, { issue: '', issueAmount: '', issueStatus: 'pending' }])} className="px-6 py-3 rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Append Work Entry</button>
+               <button onClick={async () => {
                   try {
-                    const toSave = issueEntries.filter((entry) => entry.issue && entry.issue.trim());
+                    const toSave = issueEntries.filter(e => e.issue?.trim());
                     for (const entry of toSave) {
-                      if (entry.id) {
-                        await api.put(`/all-services/${editingIssueId}/issues/${entry.id}`, {
-                          issue: entry.issue.trim(),
-                          issueAmount: Number(entry.issueAmount || 0),
-                        });
-                        if (entry.issueStatus && entry.issueStatus !== 'pending') {
-                          await api.put(`/all-services/${editingIssueId}/issues/${entry.id}/status`, {
-                            issueStatus: entry.issueStatus,
-                          });
-                        }
-                      } else {
-                        const newIssue = await api.post(`/all-services/${editingIssueId}/issues`, {
-                          issue: entry.issue.trim(),
-                          issueAmount: Number(entry.issueAmount || 0),
-                        });
-                        if (entry.issueStatus && entry.issueStatus !== 'pending') {
-                          const issueId = newIssue.data.issue.id;
-                          await api.put(`/all-services/${editingIssueId}/issues/${issueId}/status`, {
-                            issueStatus: entry.issueStatus,
-                          });
-                        }
-                      }
+                      if (entry.id) await api.put(`/all-services/${editingIssueId}/issues/${entry.id}`, { issue: entry.issue.trim(), issueAmount: Number(entry.issueAmount || 0) });
+                      else await api.post(`/all-services/${editingIssueId}/issues`, { issue: entry.issue.trim(), issueAmount: Number(entry.issueAmount || 0) });
                     }
-
-                    toast.success('Issue entries saved');
-                    setIssueModalVisible(false);
-                    setEditingIssueId(null);
-                    setIssueEntries([]);
-                    loadData();
-                  } catch (error) {
-                    console.error(error);
-                    toast.error('Failed to save issue entries');
-                  }
-                }}
-                className="flex-1 bg-green-600 text-white py-2 rounded-lg"
-              >
-                Save Issues
-              </button>
+                    toast.success('Service log synchronized'); setIssueModalVisible(false); setEditingIssueId(null); loadData();
+                  } catch (error) { toast.error('Sync failed'); }
+               }} className="flex-1 rounded-2xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Synchronize Log</button>
             </div>
           </div>
         </div>
@@ -1145,3 +649,5 @@ export default function Services() {
     </div>
   );
 }
+
+import { FaUserCheck, FaTimes } from "react-icons/fa";
