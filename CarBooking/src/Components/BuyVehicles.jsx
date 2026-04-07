@@ -81,13 +81,16 @@ const BuyVehicles = () => {
       document.body.appendChild(s);
     });
 
-  const handleBookNow = async (vehicle) => {
+  const handleBuyNow = async (vehicle) => {
     if (!user) {
-      toast.error("Please login to book a vehicle");
+      toast.error("Please login to buy a vehicle");
       navigate("/login");
       return;
     }
 
+    // Reset any previous loading state first
+    setBookingInProgress(null);
+    
     setBookingInProgress(vehicle.id);
     try {
       const advanceAmount = Number(vehicle.advance_amount_paid) || 5000;
@@ -153,10 +156,21 @@ const BuyVehicles = () => {
       };
 
       const rzp = new window.Razorpay(options);
+      
+      // Handle payment failure
       rzp.on("payment.failed", function (response) {
         toast.error("Payment cancelled or failed.");
         setBookingInProgress(null);
       });
+      
+      // Handle when user closes Razorpay modal without completing payment
+      const checkModalClosed = setInterval(() => {
+        if (!document.querySelector('[data-razorpay-checkout]')) {
+          clearInterval(checkModalClosed);
+          setBookingInProgress(null);
+        }
+      }, 500);
+      
       rzp.open();
     } catch (err) {
       toast.error(err.message || "Failed to initiate payment");
@@ -251,7 +265,7 @@ const BuyVehicles = () => {
                   key={vehicle.id}
                   vehicle={vehicle}
                   handleViewDetails={handleViewDetails}
-                  handleBookNow={handleBookNow}
+                  handleBookNow={handleBuyNow}
                   bookingInProgress={bookingInProgress}
                 />
               ))}
@@ -675,13 +689,13 @@ const BuyVehicles = () => {
                     Close
                   </button>
                   <button
-                    onClick={() => handleBookNow(selectedVehicle)}
+                    onClick={() => handleBuyNow(selectedVehicle)}
                     disabled={bookingInProgress === selectedVehicle.id}
                     className="flex-1 py-3 rounded-lg bg-gradient-to-r from-sky-500 to-cyan-500 text-white hover:scale-105 transition font-semibold text-lg shadow-lg shadow-sky-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {bookingInProgress === selectedVehicle.id
                       ? "Processing..."
-                      : "Book Now"}
+                      : "Buy Now"}
                   </button>
                 </>
               )}
