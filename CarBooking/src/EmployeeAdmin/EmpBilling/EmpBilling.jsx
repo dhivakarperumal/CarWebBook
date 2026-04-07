@@ -40,8 +40,10 @@ const EmpBilling = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [viewMode, setViewMode] = useState("table"); // 'card' or 'table'
+  const [viewMode, setViewMode] = useState("table"); 
   const [page, setPage] = useState(1);
+  const [selectedBillDetail, setSelectedBillDetail] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -55,17 +57,25 @@ const EmpBilling = () => {
         api.get('/bookings')
       ]);
 
+      const userRole = (userProfile?.role || "").toLowerCase();
+      const isAdmin = userRole === "admin";
       const mechanicName = userProfile?.displayName || "";
-      const assignedBookings = bookRes.data.filter(b => 
-        (b.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase()
-      );
-      
-      const assignedBookingIds = new Set(assignedBookings.map(b => b.bookingId));
-      
-      // Filter bills that belong to this technician's assigned bookings
-      const myBills = billRes.data.filter(bill => 
-        assignedBookingIds.has(bill.bookingId)
-      );
+
+      let myBills = [];
+      let assignedBookings = [];
+
+      if (isAdmin) {
+        myBills = billRes.data || [];
+        assignedBookings = bookRes.data || [];
+      } else {
+        assignedBookings = (bookRes.data || []).filter(b => 
+          (b.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase()
+        );
+        const assignedBookingIds = new Set(assignedBookings.map(b => b.bookingId));
+        myBills = (billRes.data || []).filter(bill => 
+          assignedBookingIds.has(bill.bookingId)
+        );
+      }
 
       setBills(myBills);
       setMyBookings(assignedBookings);
@@ -95,6 +105,18 @@ const EmpBilling = () => {
       printInvoice(res.data);
     } catch {
       toast.error("Failed to load invoice for printing");
+    }
+  };
+
+  const showDetails = async (id) => {
+    try {
+      setDetailLoading(true);
+      const res = await api.get(`/billings/${id}`);
+      setSelectedBillDetail(res.data);
+    } catch {
+      toast.error("Failed to load bill details");
+    } finally {
+      setDetailLoading(false);
     }
   };
 
@@ -241,7 +263,10 @@ const EmpBilling = () => {
           </div>
           <h3 className="text-xl font-black text-gray-800">No Billings Found</h3>
           <p className="text-gray-400 font-medium max-w-sm mx-auto mt-2">
-            Once bills are generated for your assigned services, they will appear here.
+            {(userProfile?.role || "").toLowerCase() === "admin" 
+              ? "All generated invoices across the system will be displayed here."
+              : "Once bills are generated for your assigned services, they will appear here."
+            }
           </p>
         </div>
       ) : viewMode === "card" ? (
@@ -324,6 +349,13 @@ const EmpBilling = () => {
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
                        <button 
+                        onClick={() => showDetails(bill.id)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="View Details"
+                       >
+                          <History size={16} />
+                       </button>
+                       <button 
                         onClick={() => fetchAndPrint(bill.id)}
                         className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                         title="Print"
@@ -344,6 +376,81 @@ const EmpBilling = () => {
         totalPages={totalPages}
         onPageChange={setPage}
       />
+
+      {/* DETAIL MODAL */}
+      {selectedBillDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="w-full max-w-2xl bg-white rounded-[3rem] shadow-2xl border border-white overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-10 py-8 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center">
+               <div className="flex items-center gap-5">
+                  <div className="w-14 h-14 bg-black text-white rounded-2xl flex items-center justify-center shadow-xl shadow-black/20"><FileText size={24}/></div>
+                  <div>
+                    <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Invoice Insight</h2>
+                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">#INV-{selectedBillDetail.invoiceNo} • {new Date(selectedBillDetail.createdAt).toLocaleDateString()}</p>
+                  </div>
+               </div>
+               <button onClick={() => setSelectedBillDetail(null)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-100 text-gray-400 hover:text-red-500 transition-all shadow-sm"><AlertCircle size={20} /></button>
+            </div>
+
+            <div className="p-10 max-h-[60vh] overflow-y-auto no-scrollbar space-y-8">
+               <div className="grid grid-cols-2 gap-8 bg-black p-8 rounded-[2rem] text-white">
+                  <div>
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] mb-2">Customer Recipient</p>
+                    <p className="font-black text-xl uppercase tracking-tight">{selectedBillDetail.customerName}</p>
+                    <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">{selectedBillDetail.mobileNumber || "Personal Entry"}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] mb-2">Vehicle Specification</p>
+                    <p className="font-black text-xl uppercase tracking-tight">{selectedBillDetail.car || "General Service"}</p>
+                    <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mt-1">{selectedBillDetail.carNumber || "MH-XX-XXXX"}</p>
+                  </div>
+               </div>
+
+               <div className="space-y-4">
+                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Inventory & Service Log</h3>
+                  <div className="border border-gray-100 rounded-3xl overflow-hidden">
+                    <table className="w-full text-left text-xs font-bold">
+                      <thead className="bg-gray-50 text-[9px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                        <tr>
+                          <th className="px-6 py-4">Item</th>
+                          <th className="px-6 py-4 text-center">Qty</th>
+                          <th className="px-6 py-4 text-right">Price</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {(selectedBillDetail.parts || []).map((p, i) => (
+                          <tr key={i} className="text-gray-700">
+                            <td className="px-6 py-4">{p.partName}</td>
+                            <td className="px-6 py-4 text-center">{p.qty}</td>
+                            <td className="px-6 py-4 text-right">₹{p.total.toLocaleString()}</td>
+                          </tr>
+                        ))}
+                        {selectedBillDetail.labour > 0 && (
+                          <tr className="text-gray-700">
+                            <td className="px-6 py-4 italic">Labour & Service Fees</td>
+                            <td className="px-6 py-4 text-center">1</td>
+                            <td className="px-6 py-4 text-right">₹{Number(selectedBillDetail.labour).toLocaleString()}</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+               </div>
+            </div>
+
+            <div className="px-10 py-8 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
+               <div className="flex items-center gap-4">
+                  <StatusBadge status={selectedBillDetail.paymentStatus} />
+                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Payment Strategy: {selectedBillDetail.paymentMode || "Unspecified"}</p>
+               </div>
+               <div className="text-right">
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest opacity-50">Reconciled Grand Total</p>
+                  <p className="text-3xl font-black text-gray-900 tracking-tighter">₹{Number(selectedBillDetail.grandTotal).toLocaleString()}</p>
+               </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
