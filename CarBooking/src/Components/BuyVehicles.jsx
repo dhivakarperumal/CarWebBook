@@ -1104,9 +1104,9 @@ const BuyVehicles = () => {
       {/* Premium Vehicle Details Modal */}
       {selectedVehicle && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl border border-sky-400/40 w-full max-w-5xl shadow-2xl shadow-sky-500/30 my-8">
+          <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-3xl border border-sky-400/40 w-full max-w-5xl shadow-2xl shadow-sky-500/30 my-4 sm:my-8">
             {/* Header */}
-            <div className="sticky top-0 bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-xl flex items-center justify-between p-8 border-b border-sky-400/20 z-10 rounded-t-3xl">
+            <div className="sticky top-0 bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-xl flex items-center justify-between p-4 sm:p-8 border-b border-sky-400/20 z-10 rounded-t-3xl">
               <div>
                 <h2 className="text-3xl font-bold text-white mb-1">
                   {selectedVehicle.brand} {selectedVehicle.model}
@@ -1123,7 +1123,7 @@ const BuyVehicles = () => {
 
             {/* Content */}
             <div className="overflow-y-auto max-h-[calc(90vh-180px)] custom-scrollbar">
-              <div className="p-8 space-y-8">
+              <div className="p-4 sm:p-8 space-y-8">
                 {/* Image Gallery Section - Premium */}
                 {(() => {
                   const images = selectedVehicle.images
@@ -1145,7 +1145,7 @@ const BuyVehicles = () => {
                         <img
                           src={selectedImage || imageList[0]}
                           alt="Main Vehicle"
-                          className="w-full h-96 object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-[240px] sm:h-[320px] md:h-96 object-cover group-hover:scale-105 transition-transform duration-300"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                           <div className="text-white text-center">
@@ -1189,12 +1189,12 @@ const BuyVehicles = () => {
 
                 {/* Price Section - Premium Gradient */}
                 <div className="bg-gradient-to-r from-sky-500/15 via-cyan-500/10 to-sky-500/15 border border-sky-400/40 rounded-2xl p-8">
-                  <div className="flex items-end justify-between gap-6">
+                  <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
                     <div className="flex-1">
                       <p className="text-gray-300 text-sm mb-3 uppercase tracking-wider">
                         Expected Price
                       </p>
-                      <p className="text-5xl font-bold text-sky-300">
+                      <p className="text-3xl sm:text-4xl md:text-5xl font-bold text-sky-300">
                         ₹
                         {Number(selectedVehicle.expected_price).toLocaleString(
                           "en-IN",
@@ -1269,7 +1269,7 @@ const BuyVehicles = () => {
 
                 {/* Technical Specifications */}
                 <div className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700/50">
-                  <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                  <h3 className="text-lg sm:text-xl font-bold text-white mb-6 flex items-center gap-2">
                     <FaCog className="text-sky-400" /> Technical Specifications
                   </h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -1277,7 +1277,7 @@ const BuyVehicles = () => {
                       <p className="text-gray-400 text-xs uppercase mb-2">
                         Engine CC
                       </p>
-                      <p className="text-white font-semibold text-xl">
+                      <p className="text-base sm:text-lg md:text-xl font-semibold text-white">
                         {selectedVehicle.engine_cc || "N/A"}
                       </p>
                     </div>
@@ -1484,7 +1484,7 @@ const BuyVehicles = () => {
             </div>
 
             {/* Premium Footer */}
-            <div className="sticky bottom-0 p-6 border-t border-sky-400/20 bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-xl flex gap-3 rounded-b-3xl">
+            <div className="sticky bottom-0 p-4 sm:p-6 border-t border-sky-400/20 bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-xl flex flex-col sm:flex-row gap-3 rounded-b-3xl">
               {selectedVehicle.status === "booked" ? (
                 <button
                   disabled
