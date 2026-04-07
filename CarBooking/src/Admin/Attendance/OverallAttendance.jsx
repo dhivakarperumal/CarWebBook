@@ -1,8 +1,32 @@
 import { useEffect, useState, useMemo } from "react";
 import api from "../../api";
-import { Search, Download, Calendar, Users } from "lucide-react";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
+import { 
+  FaUsers, 
+  FaUserCheck, 
+  FaUserTimes, 
+  FaUserClock, 
+  FaSkiing,
+  FaDownload,
+  FaSearch,
+  FaCalendarAlt
+} from "react-icons/fa";
+import Pagination from "../../Components/Pagination";
+
+const StatCard = ({ title, value, icon, gradient }) => (
+  <div className="bg-white border border-gray-300 rounded-md p-6 shadow-sm hover:shadow-md transition">
+    <div className="flex justify-between items-center">
+      <div>
+        <p className="text-xs text-slate-500 uppercase font-black tracking-widest">{title}</p>
+        <h2 className="text-2xl font-black text-slate-900 mt-1">{value}</h2>
+      </div>
+      <div className={`p-4 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-lg shadow-black/10`}>
+        {icon}
+      </div>
+    </div>
+  </div>
+);
 
 /* STATUS BADGE */
 const StatusBadge = ({ status }) => {
@@ -14,7 +38,7 @@ const StatusBadge = ({ status }) => {
   };
 
   return (
-    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[status] || "bg-gray-100 text-gray-700"}`}>
+    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${statusColors[status] || "bg-gray-100 text-gray-700"}`}>
       {status}
     </span>
   );
@@ -57,7 +81,6 @@ const OverallAttendance = () => {
     }
   };
 
-
   /* 🔹 FILTER LOGIC */
   const filtered = useMemo(() => {
     return attendanceData.filter((item) => {
@@ -89,13 +112,11 @@ const OverallAttendance = () => {
 
   const downloadAttendance = () => {
     try {
-      // Create CSV content with loginTime and logoutTime
       let csv = "Name,Role,Status,Date,Login Time,Logout Time,Duration\n";
       attendanceData.forEach((item) => {
         let loginTimeStr = "N/A";
         let logoutTimeStr = "N/A";
         
-        // Handle loginTime
         if (item.loginTime) {
           try {
             const loginDate = item.loginTime.toDate?.()
@@ -107,7 +128,6 @@ const OverallAttendance = () => {
           }
         }
 
-        // Handle logoutTime
         if (item.logoutTime) {
           try {
             const logoutDate = item.logoutTime.toDate?.()
@@ -122,7 +142,6 @@ const OverallAttendance = () => {
         csv += `"${item.name || "N/A"}","${item.role || "N/A"}","${item.status || "Present"}","${item.date || selectedDate}","${loginTimeStr}","${logoutTimeStr}","${item.duration || "N/A"}"\n`;
       });
 
-      // Download
       const element = document.createElement("a");
       element.setAttribute(
         "href",
@@ -144,246 +163,172 @@ const OverallAttendance = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 space-y-8 animate-fadeIn">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-2">
-            <Users className="w-8 h-8 text-sky-600" />
-            Overall Attendance
+          <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">
+            Workforce Attendance
           </h1>
-          <p className="text-slate-600 mt-1">Track staff attendance across all departments</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
+            Real-time personnel monitoring & analytics
+          </p>
         </div>
 
         <button
           onClick={downloadAttendance}
           disabled={attendanceData.length === 0}
-          className="flex items-center gap-2 bg-sky-600 text-white px-4 py-2 rounded-lg hover:bg-sky-700 transition disabled:opacity-50"
+          className="h-[52px] px-8 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-sky-600 transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-3 active:scale-95"
         >
-          <Download className="w-4 h-4" />
-          Download CSV
+          <FaDownload /> Global Export (CSV)
         </button>
       </div>
 
-      {/* Date Picker */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4">
-        <label className="block text-sm font-medium text-slate-700 mb-2">
-          Select Date
-        </label>
-        <input
-          type="date"
-          value={selectedDate}
-          onChange={(e) => {
-            setSelectedDate(e.target.value);
-            setCurrentPage(1);
-          }}
-          className="w-full max-w-xs px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+      {/* STATS GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+        <StatCard 
+          title="Headcount" 
+          value={stats.total} 
+          icon={<FaUsers />} 
+          gradient="from-blue-600 to-blue-400" 
+        />
+        <StatCard 
+          title="Present" 
+          value={stats.present} 
+          icon={<FaUserCheck />} 
+          gradient="from-emerald-600 to-emerald-400" 
+        />
+        <StatCard 
+          title="Absent" 
+          value={stats.absent} 
+          icon={<FaUserTimes />} 
+          gradient="from-rose-600 to-rose-400" 
+        />
+        <StatCard 
+          title="Late Entry" 
+          value={stats.late} 
+          icon={<FaUserClock />} 
+          gradient="from-amber-600 to-amber-400" 
+        />
+        <StatCard 
+          title="On Leave" 
+          value={stats.onLeave} 
+          icon={<FaSkiing />} 
+          gradient="from-indigo-600 to-indigo-400" 
         />
       </div>
 
-      {/* Statistics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-sm text-slate-600 mb-2">Total Staff</p>
-          <p className="text-3xl font-bold text-slate-900">{stats.total}</p>
+      {/* FILTER BAR */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div className="lg:col-span-4 relative group">
+          <FaCalendarAlt className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors" />
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => {
+              setSelectedDate(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="w-full pl-14 pr-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-sm"
+          />
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-sm text-green-600 mb-2">Present</p>
-          <p className="text-3xl font-bold text-green-700">{stats.present}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-sm text-red-600 mb-2">Absent</p>
-          <p className="text-3xl font-bold text-red-700">{stats.absent}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-sm text-yellow-600 mb-2">Late</p>
-          <p className="text-3xl font-bold text-yellow-700">{stats.late}</p>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <p className="text-sm text-blue-600 mb-2">On Leave</p>
-          <p className="text-3xl font-bold text-blue-700">{stats.onLeave}</p>
-        </div>
-      </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-4">
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
+        <div className="lg:col-span-5 relative group">
+          <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors" />
           <input
             type="text"
-            placeholder="Search by name or role..."
+            placeholder="Search personnel by name or role..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
               setCurrentPage(1);
             }}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-400"
+            className="w-full pl-14 pr-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-sm"
           />
         </div>
 
-        {/* Status Filter */}
-        <div className="flex gap-2 flex-wrap">
-          <button
-            onClick={() => {
-              setStatusFilter("all");
-              setCurrentPage(1);
-            }}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              statusFilter === "all"
-                ? "bg-sky-600 text-white"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-            }`}
-          >
-            All
-          </button>
-          <button
-            onClick={() => {
-              setStatusFilter("Present");
-              setCurrentPage(1);
-            }}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              statusFilter === "Present"
-                ? "bg-green-600 text-white"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-            }`}
-          >
-            Present
-          </button>
-          <button
-            onClick={() => {
-              setStatusFilter("Absent");
-              setCurrentPage(1);
-            }}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              statusFilter === "Absent"
-                ? "bg-red-600 text-white"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-            }`}
-          >
-            Absent
-          </button>
-          <button
-            onClick={() => {
-              setStatusFilter("Late");
-              setCurrentPage(1);
-            }}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              statusFilter === "Late"
-                ? "bg-yellow-600 text-white"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-            }`}
-          >
-            Late
-          </button>
-          <button
-            onClick={() => {
-              setStatusFilter("On Leave");
-              setCurrentPage(1);
-            }}
-            className={`px-4 py-2 rounded-lg font-medium transition ${
-              statusFilter === "On Leave"
-                ? "bg-blue-600 text-white"
-                : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-            }`}
-          >
-            On Leave
-          </button>
+        <div className="lg:col-span-3 flex justify-end">
+          <div className="flex bg-gray-50 p-1 rounded-2xl border border-gray-100 shadow-inner w-full overflow-hidden">
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full bg-transparent px-4 py-2 text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer"
+            >
+              <option value="all">All Status</option>
+              <option value="Present">Present</option>
+              <option value="Absent">Absent</option>
+              <option value="Late">Late Entry</option>
+              <option value="On Leave">On Leave</option>
+            </select>
+          </div>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-2xl shadow-slate-200/50">
         {loading ? (
-          <div className="p-12 text-center text-slate-600">Loading...</div>
+          <div className="p-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Synchronizing Data...</div>
         ) : paginatedData.length === 0 ? (
-          <div className="text-center py-12">
-            <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500 text-lg font-medium">
-              No attendance records found
-            </p>
-            <p className="text-slate-400 text-sm mt-1">
-              Check the date or update attendance records
-            </p>
+          <div className="text-center py-32">
+            <FaCalendarAlt className="w-16 h-16 text-slate-100 mx-auto mb-6" />
+            <p className="text-slate-900 text-xl font-black uppercase tracking-tight">No records discovered</p>
+            <p className="text-slate-400 text-xs font-bold mt-2 uppercase tracking-widest">Adjust filters or select a different date</p>
           </div>
         ) : (
-          <>
-            <table className="w-full">
-              <thead className="bg-slate-50 border-b border-slate-200">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left whitespace-nowrap">
+              <thead className="bg-slate-50 border-b border-slate-100">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">
-                    Name
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">
-                    Role
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">
-                    Login Time
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">
-                    Logout Time
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">
-                    Duration
-                  </th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Personnel</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Department/Role</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Clock In</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Clock Out</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Productivity</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200">
+              <tbody className="divide-y divide-slate-50">
                 {paginatedData.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50 transition">
-                    <td className="px-4 py-3 text-sm font-medium text-slate-900">
-                      {item.name || "N/A"}
+                  <tr key={item.id} className="hover:bg-slate-50/50 transition">
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-black text-slate-900">{item.name || "N/A"}</p>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600 capitalize">
-                      {item.role || "N/A"}
+                    <td className="px-8 py-6">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">{item.role || "Technician"}</p>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-8 py-6">
                       <StatusBadge status={item.status} />
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
-                      {item.loginTime ? dayjs(item.loginTime).format("HH:mm") : "N/A"}
+                    <td className="px-8 py-6">
+                      <p className="text-xs font-black text-slate-700">{item.loginTime ? dayjs(item.loginTime).format("hh:mm A") : "-- : --"}</p>
                     </td>
-                    <td className="px-4 py-3 text-sm text-slate-600">
-                      {item.logoutTime ? dayjs(item.logoutTime).format("HH:mm") : "Active"}
+                    <td className="px-8 py-6">
+                      <p className="text-xs font-black text-slate-700">{item.logoutTime ? dayjs(item.logoutTime).format("hh:mm A") : (item.loginTime ? "Active" : "-- : --")}</p>
                     </td>
-                    <td className="px-4 py-3 text-sm font-medium text-slate-700">
-                      {item.duration || "N/A"}
+                    <td className="px-8 py-6">
+                      <p className="text-xs font-black text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full inline-block">{item.duration || "N/A"}</p>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 p-4 border-t border-slate-200">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1 rounded-lg border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                <span className="text-sm text-slate-600">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1 rounded-lg border border-slate-300 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </>
+          </div>
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center pb-10">
+          <Pagination 
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
+      )}
     </div>
   );
 };
