@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import api from "../../api";
@@ -14,7 +14,26 @@ import {
   FaPhone,
   FaMapMarkerAlt,
   FaClock,
+  FaCalendarCheck,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaPlus,
+  FaSearch
 } from "react-icons/fa";
+
+const StatCard = ({ title, value, icon, gradient }) => (
+  <div className="bg-white border border-gray-300 rounded-md p-6 shadow-sm hover:shadow-md transition">
+    <div className="flex justify-between items-center">
+      <div>
+        <p className="text-xs text-slate-500 uppercase font-black tracking-widest">{title}</p>
+        <h2 className="text-2xl font-black text-slate-900 mt-1">{value}</h2>
+      </div>
+      <div className={`p-4 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-lg shadow-black/10`}>
+        {icon}
+      </div>
+    </div>
+  </div>
+);
 
 /* 🔹 STATUS LIST */
 const BOOKING_STATUS = [
@@ -117,6 +136,15 @@ const ShowAllBookings = () => {
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
   const paginatedData = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
+  const stats = useMemo(() => {
+    return {
+      total: bookings.length,
+      new: bookings.filter(b => b.status === "Booked").length,
+      approved: bookings.filter(b => b.status === "Approved").length,
+      cancelled: bookings.filter(b => b.status === "Cancelled").length
+    };
+  }, [bookings]);
+
   /* 🎨 STATUS COLOR */
   const statusColor = (status) => {
     switch (status) {
@@ -199,80 +227,98 @@ const ShowAllBookings = () => {
   };
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      {/* 🔝 TOP BAR */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-  
-  {/* LEFT → SEARCH */}
-  <div className="flex-1 min-w-0">
-    <input
-      type="text"
-      placeholder="Search booking, name, phone..."
-      value={search}
-      onChange={(e) => setSearch(e.target.value)}
-      className="w-1/2 border border-gray-300 bg-white px-4 py-2.5 rounded-lg text-sm shadow-sm focus:border-black focus:ring-2 focus:ring-black/20 outline-none"
-    />
-  </div>
+    <div className="p-4 max-w-7xl mx-auto space-y-10 animate-fadeIn">
+      <div className="flex items-end justify-end">
+          <button
+            onClick={() => navigate("/admin/addbooking")}
+            className="h-[56px] px-10 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 flex items-center gap-3"
+          >
+            <FaPlus /> New Booking
+          </button>
+      </div>
+      {/* STATS GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard 
+          title="Total Requests" 
+          value={stats.total} 
+          icon={<FaCalendarCheck />} 
+          gradient="from-blue-600 to-blue-400" 
+        />
+        <StatCard 
+          title="New Bookings" 
+          value={stats.new} 
+          icon={<FaClock />} 
+          gradient="from-amber-600 to-amber-400" 
+        />
+        <StatCard 
+          title="Approved" 
+          value={stats.approved} 
+          icon={<FaCheckCircle />} 
+          gradient="from-emerald-600 to-emerald-400" 
+        />
+        <StatCard 
+          title="Cancelled" 
+          value={stats.cancelled} 
+          icon={<FaTimesCircle />} 
+          gradient="from-rose-600 to-rose-400" 
+        />
+      </div>
 
-  {/* RIGHT → FILTERS + BUTTONS */}
-  <div className="flex items-center gap-3 flex-wrap justify-end">
-    <select
-      value={dateFilter}
-      onChange={(e) => setDateFilter(e.target.value)}
-      className="h-[42px] min-w-[140px] border border-gray-300 bg-white px-4 rounded-md text-sm shadow-sm focus:ring-2 focus:ring-black outline-none"
-    >
-      <option value="Today">Today</option>
-      <option value="Yesterday">Yesterday</option>
-      <option value="This Week">Last 7 Days</option>
-      <option value="This Month">Last 30 Days</option>
-      <option value="All">All Time</option>
-    </select>
+      {/* HEADER ENHANCED */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+        <div className="lg:col-span-5 relative group">
+          <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors" />
+          <input
+            type="text"
+            placeholder="Search booking ID, customer name, mobile..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-14 pr-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-sm"
+          />
+        </div>
 
-    <select
-      value={statusFilter}
-      onChange={(e) => setStatusFilter(e.target.value)}
-      className="h-[42px] min-w-[140px] border border-gray-300 bg-white px-4 rounded-md text-sm shadow-sm focus:ring-2 focus:ring-black outline-none"
-    >
-      <option>All</option>
-      {BOOKING_STATUS.map((s) => (
-        <option key={s}>{s}</option>
-      ))}
-    </select>
+        <div className="lg:col-span-7 flex flex-wrap items-center justify-end gap-3">
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="h-[56px] px-8 bg-white border border-gray-200 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm"
+          >
+            <option value="Today">Today Only</option>
+            <option value="Yesterday">Yesterday</option>
+            <option value="This Week">Last 7 Days</option>
+            <option value="This Month">Last 30 Days</option>
+            <option value="All">Complete History</option>
+          </select>
 
-  <button
-  onClick={() => setView("card")}
-  className={`h-[42px] px-4 rounded flex items-center gap-2 text-sm font-medium transition
-    ${view === "card"
-      ? "bg-black text-white"
-      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-    }`}
->
-  <FaThLarge className="text-base" />
-  Card
-</button>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-[56px] px-8 bg-white border border-gray-200 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm"
+          >
+            <option value="All">Global Status</option>
+            {BOOKING_STATUS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
 
-<button
-  onClick={() => setView("table")}
-  className={`h-[42px] px-4 rounded flex items-center gap-2 text-sm font-medium transition
-    ${view === "table"
-      ? "bg-black text-white"
-      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-    }`}
->
-  <FaTable className="text-base" />
-  Table
-</button>
+          <div className="flex h-[56px] bg-gray-50 p-1 rounded-2xl border border-gray-100 shadow-inner">
+            <button
+              onClick={() => setView("table")}
+              className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}
+            >
+              <FaTable /> Table
+            </button>
+            <button
+              onClick={() => setView("card")}
+              className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${view === "card" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}
+            >
+              <FaThLarge /> Cards
+            </button>
+          </div>
 
-
-    <button
-      onClick={() => navigate("/admin/addbooking")}
-      className="bg-black text-white px-5 py-2 rounded-md"
-    >
-      + Add Booking
-    </button>
-  </div>
-</div>
-
+        
+        </div>
+      </div>
 
       {/* 🟦 CARD VIEW */}
       {view === "card" && (

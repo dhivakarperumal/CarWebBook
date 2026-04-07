@@ -46,6 +46,7 @@ const pageTitles = {
   "/admin/addcar": "Add Car Details",
   "/admin/addbillings": "Add Billing",
   "/admin/additemsinventory": "Add Inventory",
+  "/admin/appointments": "Appoinments",
 };
 
 
