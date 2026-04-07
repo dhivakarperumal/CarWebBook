@@ -26,7 +26,7 @@ const EmpAddBilling = () => {
   const [parts, setParts] = useState([]);
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectionMode, setSelectionMode] = useState("search"); // 'search' or 'select'
+  const [selectionMode, setSelectionMode] = useState("online"); // 'online' or 'manual'
 
   const [labour, setLabour] = useState("");
   const [gstPercent, setGstPercent] = useState(0); // GST forced to 0 per request
@@ -166,16 +166,36 @@ const EmpAddBilling = () => {
     <div className="max-w-6xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
 
       {/* HEADER */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-3 bg-white rounded-2xl border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
-        >
-          <ChevronLeft className="w-6 h-6 text-gray-600" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-black text-gray-900 tracking-tight">Create Job Invoice</h1>
-          <p className="text-sm text-gray-500 font-medium">Generate billing for your assigned tasks</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-3 bg-white rounded-2xl border border-gray-100 shadow-sm hover:bg-gray-50 transition-colors"
+          >
+            <ChevronLeft className="w-6 h-6 text-gray-600" />
+          </button>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none">Generate Billing Invoice</h1>
+            <div className="flex items-center gap-2 pt-1">
+              <span className="bg-black text-white text-[10px] font-black px-2 py-1 rounded-md tracking-tighter uppercase whitespace-nowrap">Invoice No</span>
+              <span className="text-blue-600 font-black text-sm uppercase tracking-wider underline underline-offset-4 decoration-2">INV-{Math.floor(100 + Math.random() * 900)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="hidden sm:flex gap-1 p-1 bg-gray-100/80 rounded-2xl border border-gray-200/50">
+          <button
+            onClick={() => setSelectionMode('online')}
+            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${selectionMode === 'online' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            Online Booking
+          </button>
+          <button
+            onClick={() => setSelectionMode('manual')}
+            className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${selectionMode === 'manual' ? 'bg-white text-black shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            Manual Entry
+          </button>
         </div>
       </div>
 
@@ -184,25 +204,27 @@ const EmpAddBilling = () => {
         {/* LEFT TOOLBOX */}
         <div className="lg:col-span-2 space-y-6">
 
-          {/* SEARCH & SELECT */}
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
-            <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Vehicle Selection</h2>
-            <div className="flex gap-2 p-1 bg-gray-50 rounded-2xl w-fit">
-              <button
-                onClick={() => setSelectionMode('search')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${selectionMode === 'search' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                <Search size={14} /> Search
-              </button>
-              <button
-                onClick={() => setSelectionMode('select')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black transition-all ${selectionMode === 'select' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                <List size={14} /> Select
-              </button>
+          {/* ONLINE & MANUAL SELECTION */}
+          <div className="bg-white p-6 rounded-[2.5rem] shadow-2xl shadow-black/5 border border-gray-100 space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Vehicle Verification</h2>
+              <div className="sm:hidden flex gap-1 p-1 bg-gray-50 rounded-2xl">
+                <button
+                  onClick={() => setSelectionMode('online')}
+                  className={`px-3 py-2 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all ${selectionMode === 'online' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400'}`}
+                >
+                  Online
+                </button>
+                <button
+                  onClick={() => setSelectionMode('manual')}
+                  className={`px-3 py-2 rounded-xl text-[8px] font-black uppercase tracking-[0.2em] transition-all ${selectionMode === 'manual' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400'}`}
+                >
+                  Manual
+                </button>
+              </div>
             </div>
 
-            {selectionMode === 'search' ? (
+            {selectionMode === 'online' ? (
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input

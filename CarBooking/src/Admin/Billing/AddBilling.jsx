@@ -2,6 +2,15 @@ import { useEffect, useState } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { 
+  FaArrowLeft, 
+  FaSearch, 
+  FaPlus, 
+  FaTrash, 
+  FaSave, 
+  FaUser, 
+  FaSync 
+} from "react-icons/fa";
 
 const AddBillings = () => {
   const navigate = useNavigate();
@@ -138,7 +147,7 @@ const AddBillings = () => {
 
       await api.post('/billings', payload);
 
-      toast.success("Invoice generated successfully 🚗💰");
+      toast.success("Invoice generated successfully");
       navigate("/admin/billing");
     } catch (error) {
       toast.error("Failed to generate invoice");
@@ -158,523 +167,291 @@ const AddBillings = () => {
     setParts(parts.filter((_, i) => i !== index));
   };
 
-  /* =======================
-     UI
-  ======================= */
   return (
-    <div className="p-6 max-w-6xl bg-white shadow-2xl rounded-3xl mx-auto space-y-8 border border-gray-100">
-      <div className="flex justify-between items-center bg-gray-50 -m-6 p-8 rounded-t-3xl border-b border-gray-100 mb-2">
-        <div>
-          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Generate Billing Invoice</h2>
-          <div className="flex items-center gap-2 mt-2">
-            <span className="bg-black text-white px-2 py-0.5 rounded text-[10px] font-black uppercase">Invoice No</span>
-            <input 
-                type="text" 
-                value={invoiceNo}
-                onChange={(e) => setInvoiceNo(e.target.value)}
-                className="bg-transparent border-b border-gray-300 focus:border-black outline-none font-black text-sm text-sky-600 transition-all px-1"
-            />
+    <div className="max-w-7xl mx-auto space-y-8 animate-fadeIn pb-10">
+      
+      {/* 🚀 TOP NAVIGATION & HEADER */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="flex items-center gap-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="group p-4 bg-white rounded-2xl border border-gray-100 shadow-xl shadow-black/5 hover:bg-black hover:text-white transition-all active:scale-95"
+          >
+            <FaArrowLeft className="group-hover:-translate-x-1 transition-transform" />
+          </button>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Generate Billing Invoice</h1>
+            <div className="flex items-center gap-3">
+              <span className="bg-black text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg tracking-widest uppercase shadow-lg shadow-black/20">Invoice No</span>
+              <div className="relative group">
+                <input 
+                  type="text" 
+                  value={invoiceNo}
+                  onChange={(e) => setInvoiceNo(e.target.value)}
+                  className="bg-transparent border-b-2 border-gray-100 group-focus-within:border-blue-500 outline-none font-black text-lg text-blue-600 transition-all px-1 min-w-[120px]"
+                />
+              </div>
+            </div>
           </div>
         </div>
-        <div className="flex items-center p-1 bg-gray-200 rounded-xl">
+
+        {/* 🎚️ MODE TOGGLE */}
+        <div className="flex items-center p-1.5 bg-gray-100 rounded-[1.25rem] border border-gray-200/50 shadow-inner max-w-fit self-start lg:self-center">
           <button 
             onClick={() => { setActiveTab("online"); setSelectedService(null); setParts([]); }}
-            className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'online' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`px-8 py-3 rounded-[1rem] text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === 'online' ? 'bg-white text-black shadow-xl shadow-black/5' : 'text-gray-400 hover:text-gray-600'}`}
           >
             Online Booking
           </button>
           <button 
             onClick={() => { setActiveTab("manual"); setSelectedService(null); setParts([]); }}
-            className={`px-6 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'manual' ? 'bg-white text-black shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`px-8 py-3 rounded-[1rem] text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${activeTab === 'manual' ? 'bg-white text-black shadow-xl shadow-black/5' : 'text-gray-400 hover:text-gray-600'}`}
           >
             Manual Entry
           </button>
         </div>
       </div>
 
-      {activeTab === "online" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-2xl border border-gray-100">
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Search Booking</label>
-            <input
-              placeholder="Search Booking ID / Name / Phone..."
-              className="w-full border border-gray-200 px-4 py-3 rounded-xl outline-none focus:ring-2 focus:ring-black transition bg-white font-bold text-sm shadow-sm"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        
+        {/* 🛠️ WORKSPACE AREA */}
+        <div className="xl:col-span-2 space-y-8">
+          
+          {/* SELECTION WORKFLOW */}
+          <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-black/5 border border-gray-50 overflow-hidden transition-all duration-500">
+            <div className="p-8">
+              {activeTab === "online" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-slideUp">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Quick Search</label>
+                    <div className="relative group">
+                      <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-colors" />
+                      <input
+                        placeholder="Search Booking ID / Phone / Customer..."
+                        className="w-full pl-14 pr-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 font-bold text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                      />
+                    </div>
+                  </div>
 
-          <div>
-            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Select Booking</label>
-            <select
-              className="w-full border border-gray-200 bg-white px-4 py-3 rounded-xl cursor-pointer shadow-sm focus:ring-2 focus:ring-black outline-none transition font-bold text-sm"
-              value={selectedService?.id || ""}
-              onChange={(e) => {
-                const s = services.find(
-                  (srv) => String(srv.id) === String(e.target.value)
-                );
-                if (s) {
-                  selectService(s);
-                } else {
-                  setSelectedService(null);
-                  setParts([]);
-                }
-              }}
-            >
-              <option value="">-- Choose a Booking --</option>
-              {services
-                .filter((s) =>
-                  `${s.bookingId} ${s.name} ${s.phone} ${s.brand} ${s.model}`
-                    .toLowerCase()
-                    .includes(search.toLowerCase())
-                )
-                .map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.bookingId} — {s.name} ({s.brand} {s.model})
-                  </option>
-                ))}
-            </select>
-          </div>
-        </div>
-      ) : (
-        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 space-y-6">
-          <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Customer & Vehicle Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="space-y-1">
-               <label className="text-[9px] font-bold text-gray-500 ml-1">Name</label>
-               <input 
-                type="text" placeholder="Customer Name"
-                className="w-full border border-gray-200 px-4 py-3 rounded-xl outline-none bg-white font-bold text-sm"
-                value={manualCustomer.name}
-                onChange={e => setManualCustomer({...manualCustomer, name: e.target.value})}
-               />
-            </div>
-            <div className="space-y-1">
-               <label className="text-[9px] font-bold text-gray-500 ml-1">Phone</label>
-               <input 
-                type="text" placeholder="Phone Number"
-                className="w-full border border-gray-200 px-4 py-3 rounded-xl outline-none bg-white font-bold text-sm"
-                value={manualCustomer.phone}
-                onChange={e => setManualCustomer({...manualCustomer, phone: e.target.value})}
-               />
-            </div>
-            <div className="space-y-1">
-               <label className="text-[9px] font-bold text-gray-500 ml-1">Brand</label>
-               <input 
-                type="text" placeholder="Car Brand"
-                className="w-full border border-gray-200 px-4 py-3 rounded-xl outline-none bg-white font-bold text-sm"
-                value={manualCustomer.brand}
-                onChange={e => setManualCustomer({...manualCustomer, brand: e.target.value})}
-               />
-            </div>
-            <div className="space-y-1">
-               <label className="text-[9px] font-bold text-gray-500 ml-1">Model</label>
-               <input 
-                type="text" placeholder="Car Model"
-                className="w-full border border-gray-200 px-4 py-3 rounded-xl outline-none bg-white font-bold text-sm"
-                value={manualCustomer.model}
-                onChange={e => setManualCustomer({...manualCustomer, model: e.target.value})}
-               />
-            </div>
-            <div className="space-y-1">
-               <label className="text-[9px] font-bold text-gray-500 ml-1">Reg. No</label>
-               <input 
-                type="text" placeholder="Vehicle Reg Number"
-                className="w-full border border-gray-200 px-4 py-3 rounded-xl outline-none bg-white font-bold text-sm"
-                value={manualCustomer.regNo}
-                onChange={e => setManualCustomer({...manualCustomer, regNo: e.target.value})}
-               />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* SERVICE DETAILS PREVIEW (Only for Online) */}
-      {selectedService && activeTab === "online" && (
-        <div className="bg-sky-50 p-6 rounded-2xl border border-sky-100 grid grid-cols-2 lg:grid-cols-4 gap-6 text-sm">
-          <div><p className="text-[9px] font-black text-sky-400 uppercase mb-1">Customer</p><p className="font-bold text-gray-900">{selectedService.name}</p></div>
-          <div><p className="text-[9px] font-black text-sky-400 uppercase mb-1">Mobile</p><p className="font-bold text-gray-900">{selectedService.phone}</p></div>
-          <div><p className="text-[9px] font-black text-sky-400 uppercase mb-1">Car</p><p className="font-bold text-gray-900">{selectedService.brand} {selectedService.model}</p></div>
-          <div><p className="text-[9px] font-black text-sky-400 uppercase mb-1">Booking ID</p><p className="font-bold text-gray-900">{selectedService.bookingId}</p></div>
-        </div>
-      )}
-
-      {/* PARTS MANAGEMENT */}
-      <div className="space-y-6">
-        <div className="flex flex-col gap-4">
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Spare Parts & Inventory</h3>
-            {activeTab === "manual" && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
-                    <div className="flex flex-col gap-1.5">
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Part Name</label>
-                        <input 
-                            type="text" placeholder="e.g. Brake Pads" 
-                            className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm font-bold bg-gray-50 outline-none focus:ring-2 focus:ring-black transition"
-                            value={newPart.partName}
-                            onChange={e => setNewPart({...newPart, partName: e.target.value})}
-                        />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Quantity</label>
-                        <input 
-                            type="number" placeholder="1" 
-                            className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm font-bold bg-gray-50 outline-none focus:ring-2 focus:ring-black transition"
-                            value={newPart.qty}
-                            onChange={e => setNewPart({...newPart, qty: Number(e.target.value)})}
-                        />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                        <label className="block text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Price (₹)</label>
-                        <input 
-                            type="number" placeholder="₹ 0" 
-                            className="w-full border border-gray-200 px-4 py-3 rounded-xl text-sm font-bold bg-gray-50 outline-none focus:ring-2 focus:ring-black transition"
-                            value={newPart.price}
-                            onChange={e => setNewPart({...newPart, price: Number(e.target.value)})}
-                        />
-                    </div>
-                    <div className="flex flex-col gap-1.5 justify-end">
-                        <button 
-                            onClick={addManualPart}
-                            className="h-[46px] w-full bg-black text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg shadow-black/10 active:scale-95"
-                        >
-                            Add to List
-                        </button>
-                    </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Verification Queue</label>
+                    <select
+                      className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 font-black text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all cursor-pointer appearance-none shadow-sm"
+                      value={selectedService?.id || ""}
+                      onChange={(e) => {
+                        const s = services.find(srv => String(srv.id) === String(e.target.value));
+                        if (s) selectService(s);
+                        else { setSelectedService(null); setParts([]); }
+                      }}
+                    >
+                      <option value="" className="text-gray-400 italic">-- Select Assigned Job --</option>
+                      {services
+                        .filter(s => `${s.bookingId} ${s.name} ${s.phone} ${s.brand} ${s.model}`.toLowerCase().includes(search.toLowerCase()))
+                        .map(s => (
+                          <option key={s.id} value={s.id}>
+                            {s.bookingId} | {s.name.toUpperCase()}
+                          </option>
+                        ))
+                      }
+                    </select>
+                  </div>
                 </div>
+              ) : (
+                <div className="space-y-6 animate-slideUp">
+                  <div className="flex items-center gap-3 mb-2">
+                    <FaUser className="text-gray-400" />
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Walk-in Information</h3>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <InputField label="Customer Name" value={manualCustomer.name} onChange={v => setManualCustomer({...manualCustomer, name: v})} placeholder="Full Name" />
+                    <InputField label="Contact Number" value={manualCustomer.phone} onChange={v => setManualCustomer({...manualCustomer, phone: v})} placeholder="Mobile No" />
+                    <InputField label="Vehicle Brand" value={manualCustomer.brand} onChange={v => setManualCustomer({...manualCustomer, brand: v})} placeholder="e.g. Honda" />
+                    <InputField label="Vehicle Model" value={manualCustomer.model} onChange={v => setManualCustomer({...manualCustomer, model: v})} placeholder="e.g. Shine" />
+                    <InputField label="Plate Number" value={manualCustomer.regNo} onChange={v => setManualCustomer({...manualCustomer, regNo: v})} placeholder="MH-12-XX-XXXX" />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* PREVIEW STRIP */}
+            {selectedService && activeTab === "online" && (
+              <div className="bg-black p-8 text-white grid grid-cols-2 lg:grid-cols-4 gap-8 border-t border-white/5 animate-slideDown">
+                <MetricBox label="Customer" val={selectedService.name} />
+                <MetricBox label="Contact" val={selectedService.phone} />
+                <MetricBox label="Vehicle" val={`${selectedService.brand} ${selectedService.model}`} />
+                <MetricBox label="Ref ID" val={selectedService.bookingId} />
+              </div>
             )}
+          </div>
+
+          {/* 📦 INVENTORY MANAGEMENT */}
+          <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-black/5 border border-gray-50 overflow-hidden">
+            <div className="p-8 border-b border-gray-50 flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">Spare Parts Inventory</h3>
+                <p className="text-[10px] text-gray-400 mt-1 font-bold">List of components used in this service cycle</p>
+              </div>
+              {activeTab === "manual" && (
+                <div className="flex gap-4 p-2 bg-gray-50 rounded-2xl border border-gray-100">
+                  <input 
+                    type="text" placeholder="Part Name" 
+                    className="bg-transparent text-xs font-black outline-none px-3 w-40"
+                    value={newPart.partName}
+                    onChange={e => setNewPart({...newPart, partName: e.target.value})}
+                  />
+                  <input 
+                    type="number" placeholder="Qty" 
+                    className="bg-transparent text-xs font-black outline-none w-16 text-center"
+                    value={newPart.qty}
+                    onChange={e => setNewPart({...newPart, qty: Number(e.target.value)})}
+                  />
+                  <input 
+                    type="number" placeholder="Price" 
+                    className="bg-transparent text-xs font-black outline-none w-24 text-right"
+                    value={newPart.price}
+                    onChange={e => setNewPart({...newPart, price: Number(e.target.value)})}
+                  />
+                  <button 
+                    onClick={addManualPart}
+                    className="bg-black text-white p-2 rounded-xl hover:scale-105 transition-transform"
+                  >
+                    <FaPlus size={10} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="overflow-hidden">
+              <table className="min-w-full text-[11px] font-bold">
+                <thead className="bg-black text-white uppercase tracking-widest">
+                  <tr>
+                    <th className="px-8 py-5 text-left font-black">S.No</th>
+                    <th className="px-8 py-5 text-left font-black">Description</th>
+                    <th className="px-8 py-5 text-center font-black">Quantity</th>
+                    <th className="px-8 py-5 text-center font-black">Unit Price</th>
+                    <th className="px-8 py-5 text-right font-black">Subtotal</th>
+                    {activeTab === "manual" && <th className="px-8 py-5 text-right font-black">Action</th>}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {parts.length === 0 ? (
+                    <tr>
+                      <td colSpan={activeTab === "manual" ? 6 : 5} className="px-8 py-16 text-center">
+                        <div className="flex flex-col items-center gap-2 text-gray-400 grayscale">
+                          <FaSync className="text-2xl animate-spin-slow opacity-20" />
+                          <p className="uppercase tracking-[0.2em] font-black italic">Awaiting Inventory Log...</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    parts.map((p, i) => (
+                      <tr key={i} className="hover:bg-gray-50/80 transition-colors">
+                        <td className="px-8 py-5 text-gray-400">#{(i+1).toString().padStart(2, '0')}</td>
+                        <td className="px-8 py-5 font-black uppercase text-gray-900">{p.partName}</td>
+                        <td className="px-8 py-5 text-center">{p.qty}</td>
+                        <td className="px-8 py-5 text-center text-gray-600">₹{p.price.toLocaleString()}</td>
+                        <td className="px-8 py-5 text-right font-black text-blue-600 tracking-tight">₹{p.total.toLocaleString()}</td>
+                        {activeTab === "manual" && (
+                          <td className="px-8 py-5 text-right">
+                            <button onClick={() => removePart(i)} className="p-2 text-red-400 hover:text-white hover:bg-red-500 rounded-lg transition-all">
+                              <FaTrash size={12} />
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
-        <div className="overflow-hidden border border-gray-100 rounded-2xl shadow-sm">
-          <table className="min-w-full text-sm">
-            <thead className="bg-[#87a5b3] text-white">
-              <tr>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-left">S No</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-left">Part Name</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-center">Qty</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-center">Price (₹)</th>
-                <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right">Total (₹)</th>
-                {activeTab === "manual" && <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-right">Action</th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50 bg-white">
-              {parts.length === 0 ? (
-                <tr>
-                    <td colSpan={activeTab === "manual" ? 6 : 5} className="px-6 py-10 text-center text-gray-400 italic font-medium">
-                        No spare parts added yet. {activeTab === "online" ? "Select a booking to load parts." : "Use the form above to add parts manually."}
-                    </td>
-                </tr>
-              ) : parts.map((p, i) => (
-                <tr key={i} className="hover:bg-gray-50/50 transition">
-                  <td className="px-6 py-4 font-bold text-gray-600">{i + 1}</td>
-                  <td className="px-6 py-4 font-black text-gray-900">{p.partName}</td>
-                  <td className="px-6 py-4 text-center font-bold text-gray-600">{p.qty}</td>
-                  <td className="px-6 py-4 text-center font-bold text-gray-600">₹{p.price}</td>
-                  <td className="px-6 py-4 text-right font-black text-gray-900">₹{p.total}</td>
-                  {activeTab === "manual" && (
-                    <td className="px-6 py-4 text-right">
-                        <button onClick={() => removePart(i)} className="text-red-500 hover:text-red-700 font-bold text-xs uppercase tracking-tighter">Remove</button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* 💳 SUMMARY SIDEBAR */}
+        <div className="space-y-8 h-fit">
+          <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/5 border border-gray-50 flex flex-col gap-6">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center border-b border-gray-50 pb-4">Accounting Summary</h3>
+            
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Workforce Charges (₹)</label>
+              <input
+                type="number"
+                placeholder="₹ 0.00"
+                className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 font-black text-lg text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 transition-all text-right shadow-inner"
+                value={labour}
+                onChange={(e) => setLabour(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-4">
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Taxation Layer (%)</label>
+              <input
+                type="number"
+                placeholder="18%"
+                className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 font-black text-lg text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 transition-all text-right shadow-inner"
+                value={gstPercent}
+                onChange={(e) => setGstPercent(e.target.value)}
+              />
+            </div>
+
+            <div className="mt-4 p-8 bg-black rounded-[2rem] text-white shadow-2xl shadow-black/20 space-y-4">
+              <div className="flex justify-between text-[11px] font-black opacity-50 uppercase tracking-widest">
+                <span>Subtotal</span>
+                <span>₹{subTotal.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-[11px] font-black opacity-50 uppercase tracking-widest">
+                <span>Tax Allocation</span>
+                <span>₹{gstAmount.toFixed(2)}</span>
+              </div>
+              <div className="h-px bg-white/10 my-4" />
+              <div className="flex flex-col gap-1">
+                <span className="text-[9px] font-black uppercase tracking-[0.3em] opacity-40">Grand Payable Total</span>
+                <span className="text-3xl font-black text-emerald-400 tracking-tighter">₹{grandTotal.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <button
+              onClick={handleGenerateBill}
+              disabled={parts.length === 0}
+              className="group w-full py-6 rounded-2xl bg-black text-white font-black uppercase tracking-widest text-xs shadow-2xl shadow-black/30 hover:bg-gray-800 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+            >
+              <FaSave className="group-hover:scale-110 transition-transform" />
+              Commit Invoice
+            </button>
+            <button
+              onClick={() => navigate(-1)}
+              className="w-full py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-black transition-colors"
+            >
+              Cancel Operation
+            </button>
+          </div>
         </div>
       </div>
-
-      {/* LABOUR, GST & SUMMARY */}
-      {(selectedService || activeTab === "manual") && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-end bg-gray-50 p-8 rounded-3xl border border-gray-100 shadow-inner">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-4">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Labour Charges</label>
-                <input
-                    type="number"
-                    placeholder="₹ 0.00"
-                    className="w-full border border-gray-200 px-4 py-3 rounded-xl outline-none bg-white font-bold text-sm shadow-sm"
-                    value={labour}
-                    onChange={(e) => setLabour(e.target.value)}
-                />
-            </div>
-            <div className="space-y-4">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">GST Percentage</label>
-                <input
-                    type="number"
-                    placeholder="18%"
-                    className="w-full border border-gray-200 px-4 py-3 rounded-xl outline-none bg-white font-bold text-sm shadow-sm"
-                    value={gstPercent}
-                    onChange={(e) => setGstPercent(e.target.value)}
-                />
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-3 font-bold text-sm">
-            <div className="flex justify-between text-gray-500">
-                <span>Parts Total</span>
-                <span>₹{partsTotal}</span>
-            </div>
-            <div className="flex justify-between text-gray-500">
-                <span>Labour Charges</span>
-                <span>₹{labourAmount}</span>
-            </div>
-            <div className="flex justify-between text-gray-500">
-                <span>GST ({gst}%)</span>
-                <span>₹{gstAmount.toFixed(2)}</span>
-            </div>
-            <div className="h-px bg-gray-100 my-2"></div>
-            <div className="flex justify-between text-xl font-black text-gray-900">
-                <span>Grand Total</span>
-                <span className="text-emerald-600">₹{grandTotal.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ACTION */}
-      {(selectedService || activeTab === "manual") && (
-        <div className="flex justify-end gap-3 pt-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="px-8 py-3 rounded-xl border border-gray-200 text-sm font-black text-gray-500 uppercase tracking-widest hover:bg-gray-50 transition"
-          >
-            Cancel
-          </button>
-
-          <button
-            disabled={parts.length === 0}
-            onClick={handleGenerateBill}
-            className="px-8 py-3 rounded-xl bg-black text-white text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition shadow-lg shadow-black/20 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Generate Invoice
-          </button>
-        </div>
-      )}
     </div>
   );
 };
 
+/* ----- 🛰️ COMPONENTS ----- */
+const InputField = ({ label, value, onChange, placeholder }) => (
+  <div className="space-y-2">
+    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2">{label}</label>
+    <input 
+      type="text" 
+      placeholder={placeholder}
+      className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-white font-bold text-sm text-gray-800 outline-none focus:border-black focus:ring-4 focus:ring-black/5 transition-all shadow-sm"
+      value={value}
+      onChange={e => onChange(e.target.value)}
+    />
+  </div>
+);
+
+const MetricBox = ({ label, val }) => (
+  <div className="space-y-1 group">
+    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em] group-hover:text-blue-400 transition-colors">{label}</p>
+    <p className="font-black text-sm uppercase tracking-tight">{val || "---"}</p>
+  </div>
+);
+
 export default AddBillings;
-
-// import { useEffect, useState } from "react";
-// import {
-//   doc,
-//   getDoc,
-//   collection,
-//   getDocs,
-//   addDoc,
-//   serverTimestamp,
-// } from "firebase/firestore";
-// import { db } from "../../firebase";
-// import { useNavigate, useParams } from "react-router-dom";
-// import toast from "react-hot-toast";
-
-// const AddBillings = () => {
-//   const { serviceId } = useParams();
-//   const navigate = useNavigate();
-
-//   const [service, setService] = useState(null);
-//   const [parts, setParts] = useState([]);
-//   const [paymentStatus, setPaymentStatus] = useState("pending");
-//   const [loading, setLoading] = useState(true);
-//   const [saving, setSaving] = useState(false);
-
-//   /* =========================
-//      LOAD SERVICE + PARTS
-//   ========================= */
-//   useEffect(() => {
-//     if (!serviceId) return;
-
-//     const loadData = async () => {
-//       try {
-//         /* 🔹 SERVICE */
-//         const serviceRef = doc(db, "allServices", serviceId);
-//         const serviceSnap = await getDoc(serviceRef);
-
-//         if (!serviceSnap.exists()) {
-//           toast.error("Service not found");
-//           navigate("/admin/services");
-//           return;
-//         }
-
-//         setService({ id: serviceSnap.id, ...serviceSnap.data() });
-
-//         /* 🔹 PARTS */
-//         const partsRef = collection(
-//           db,
-//           "allServices",
-//           serviceId,
-//           "parts"
-//         );
-//         const partsSnap = await getDocs(partsRef);
-
-//         const safeParts = partsSnap.docs.map((d) => {
-//           const data = d.data();
-//           return {
-//             id: d.id,
-//             partName: data.partName,
-//             qty: Number(data.qty || 0),
-//             price: Number(data.price || 0),
-//             total:
-//               Number(data.qty || 0) * Number(data.price || 0),
-//           };
-//         });
-
-//         setParts(safeParts);
-//       } catch (err) {
-//         console.error(err);
-//         toast.error("Failed to load invoice data");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     loadData();
-//   }, [serviceId, navigate]);
-
-//   if (loading) {
-//     return <div className="p-10 text-center">Loading invoice...</div>;
-//   }
-
-//   if (!service) return null;
-
-//   /* =========================
-//      TOTALS
-//   ========================= */
-//   const subTotal = parts.reduce((sum, p) => sum + p.total, 0);
-//   const gstAmount = Math.round(subTotal * 0.18);
-//   const grandTotal = subTotal + gstAmount;
-
-//   /* =========================
-//      SAVE INVOICE
-//   ========================= */
-//   const saveInvoice = async () => {
-//     try {
-//       setSaving(true);
-
-//       await addDoc(collection(db, "billings"), {
-//         serviceId: service.id,
-//         bookingId: service.bookingId,
-
-//         customerName: service.name,
-//         mobileNumber: service.phone,
-//         car: `${service.brand || ""} ${service.model || ""}`,
-
-//         parts,
-//         subTotal,
-//         gstAmount,
-//         grandTotal,
-
-//         paymentStatus,
-//         createdAt: serverTimestamp(),
-//       });
-
-//       toast.success("Invoice created successfully");
-//       navigate("/admin/billings");
-//     } catch (err) {
-//       console.error(err);
-//       toast.error("Failed to save invoice");
-//     } finally {
-//       setSaving(false);
-//     }
-//   };
-
-//   /* =========================
-//      UI
-//   ========================= */
-//   return (
-//     <div className="max-w-5xl mx-auto bg-white p-6 rounded-xl shadow space-y-6">
-//       <h2 className="text-2xl font-semibold text-blue-700">
-//         Create Invoice
-//       </h2>
-
-//       {/* CUSTOMER INFO */}
-//       <div className="grid md:grid-cols-2 gap-4 text-sm">
-//         <Info label="Customer" value={service.name} />
-//         <Info label="Mobile" value={service.phone} />
-//         <Info
-//           label="Car"
-//           value={`${service.brand || ""} ${service.model || ""}`}
-//         />
-//         <Info label="Booking ID" value={service.bookingId} />
-//       </div>
-
-//       {/* PAYMENT STATUS */}
-//       <div className="max-w-xs">
-//         <label className="block text-sm text-gray-600 mb-1">
-//           Payment Status
-//         </label>
-//         <select
-//           value={paymentStatus}
-//           onChange={(e) => setPaymentStatus(e.target.value)}
-//           className="w-full border rounded-lg px-4 py-2"
-//         >
-//           <option value="pending">Pending</option>
-//           <option value="partial">Partial</option>
-//           <option value="paid">Paid</option>
-//         </select>
-//       </div>
-
-//       {/* PARTS TABLE */}
-//       <div className="overflow-hidden border rounded-xl">
-//         <table className="min-w-full text-sm">
-//           <thead className="bg-black text-white">
-//             <tr>
-//               <th className="px-4 py-3">Part</th>
-//               <th className="px-4 py-3">Qty</th>
-//               <th className="px-4 py-3">Price</th>
-//               <th className="px-4 py-3">Total</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {parts.map((p) => (
-//               <tr key={p.id} className="border-t">
-//                 <td className="px-4 py-3">{p.partName}</td>
-//                 <td className="px-4 py-3 text-center">{p.qty}</td>
-//                 <td className="px-4 py-3 text-center">₹{p.price}</td>
-//                 <td className="px-4 py-3 text-center font-medium">
-//                   ₹{p.total}
-//                 </td>
-//               </tr>
-//             ))}
-//           </tbody>
-//         </table>
-//       </div>
-
-//       {/* TOTALS */}
-//       <div className="text-right space-y-1">
-//         <p>Sub Total: ₹{subTotal}</p>
-//         <p>GST (18%): ₹{gstAmount}</p>
-//         <p className="text-xl font-semibold">
-//           Grand Total: ₹{grandTotal}
-//         </p>
-//       </div>
-
-//       {/* ACTIONS */}
-//       <div className="flex justify-end gap-3">
-//         <button
-//           onClick={() => navigate(-1)}
-//           className="border px-5 py-2 rounded"
-//         >
-//           Back
-//         </button>
-
-//         <button
-//           onClick={saveInvoice}
-//           disabled={saving}
-//           className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded"
-//         >
-//           {saving ? "Saving..." : "Save Invoice"}
-//         </button>
-//       </div>
-//     </div>
-//   );
-// };
-
-// const Info = ({ label, value }) => (
-//   <div>
-//     <p className="text-gray-500">{label}</p>
-//     <p className="font-medium">{value || "-"}</p>
-//   </div>
-// );
-
-// export default AddBillings;
