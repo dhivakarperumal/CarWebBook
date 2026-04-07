@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllAppointments, updateAppointment } from "../../api";
 import api from "../../api";
@@ -15,7 +15,8 @@ import {
   FaMapMarkerAlt,
   FaCarSide,
   FaPhoneAlt,
-  FaPlus
+  FaPlus,
+  FaSearch
 } from "react-icons/fa";
 import Pagination from "../../Components/Pagination";
 
@@ -26,6 +27,20 @@ const STATUS_OPTIONS = [
   "Completed",
   "Cancelled"
 ];
+
+const StatCard = ({ title, value, icon, gradient }) => (
+  <div className="bg-white border border-gray-300 rounded-md p-6 shadow-sm hover:shadow-md transition">
+    <div className="flex justify-between items-center">
+      <div>
+        <p className="text-xs text-slate-500 uppercase font-black tracking-widest">{title}</p>
+        <h2 className="text-2xl font-black text-slate-900 mt-1">{value}</h2>
+      </div>
+      <div className={`p-4 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-lg shadow-black/10`}>
+        {icon}
+      </div>
+    </div>
+  </div>
+);
 
 const AdminAppointments = () => {
   const [appointments, setAppointments] = useState([]);
@@ -133,6 +148,15 @@ const AdminAppointments = () => {
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const stats = useMemo(() => {
+    return {
+      total: appointments.length,
+      pending: appointments.filter(a => a.status === "Appointment Booked").length,
+      inProgress: appointments.filter(a => a.status === "In Progress" || a.status === "Confirmed").length,
+      completed: appointments.filter(a => a.status === "Completed").length
+    };
+  }, [appointments]);
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Appointment Booked': return 'bg-blue-100 text-blue-700 border-blue-200';
@@ -145,43 +169,67 @@ const AdminAppointments = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
-      <div className="flex justify-between items-center mb-8">
+    <div className="p-4 max-w-7xl mx-auto space-y-10 animate-fadeIn bg-gray-50/50 min-h-screen">
+      {/* HEADER SECTION */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Service Appointments</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage scheduling, technicians, and service status.</p>
+         
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate("/admin/book-appointment")}
-            className="flex items-center gap-2 px-6 py-2.5 bg-black text-white rounded-xl text-sm font-black uppercase tracking-widest hover:bg-gray-800 transition-all shadow-lg shadow-black/10"
-          >
-            <FaPlus /> Add Appointment
-          </button>
-          <div className="bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-200 flex items-center gap-2 text-sm font-semibold">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
-            Total: {appointments.length}
-          </div>
-        </div>
+
+        <button
+          onClick={() => navigate("/admin/book-appointment")}
+          className="h-[56px] px-10 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-3 active:scale-95"
+        >
+          <FaPlus /> Registry New Appointment
+        </button>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search ID, Name..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-4 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:ring-2 focus:ring-black outline-none transition"
-            />
-          </div>
+      {/* STATS ANALYTICS GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard 
+          title="Total Service Requests" 
+          value={stats.total} 
+          icon={<FaCalendarAlt />} 
+          gradient="from-blue-600 to-blue-400" 
+        />
+        <StatCard 
+          title="Pending Review" 
+          value={stats.pending} 
+          icon={<FaClock />} 
+          gradient="from-amber-600 to-amber-400" 
+        />
+        <StatCard 
+          title="Active Jobs" 
+          value={stats.inProgress} 
+          icon={<FaWrench />} 
+          gradient="from-indigo-600 to-indigo-400" 
+        />
+        <StatCard 
+          title="Successfully Closed" 
+          value={stats.completed} 
+          icon={<FaCheckCircle />} 
+          gradient="from-emerald-600 to-emerald-400" 
+        />
+      </div>
 
+      {/* FILTERS WORKFLOW */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-center">
+        <div className="lg:col-span-3 relative group">
+          <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors" />
+          <input
+            type="text"
+            placeholder="Search ID, Customer, Phone..."
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            className="w-full pl-14 pr-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-sm"
+          />
+        </div>
+
+        <div className="lg:col-span-9 flex flex-wrap items-center justify-end gap-3">
           <select
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
-            className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 text-[11px] font-black uppercase tracking-widest focus:ring-4 focus:ring-black/5 focus:border-black outline-none bg-gray-50 transition-all cursor-pointer shadow-sm shadow-black/5"
+            className="h-[56px] px-8 bg-white border border-gray-200 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm"
           >
             <option value="all">Any Status</option>
             {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -190,9 +238,9 @@ const AdminAppointments = () => {
           <select
             value={dateFilter}
             onChange={e => { setDateFilter(e.target.value); setCurrentPage(1); }}
-            className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 text-[11px] font-black uppercase tracking-widest focus:ring-4 focus:ring-black/5 focus:border-black outline-none bg-gray-50 transition-all cursor-pointer shadow-sm shadow-black/5"
+            className="h-[56px] px-8 bg-white border border-gray-200 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm"
           >
-            <option value="Today">Today's Work</option>
+            <option value="Today">Today's Schedule</option>
             <option value="Yesterday">Yesterday</option>
             <option value="This Week">This Week</option>
             <option value="This Month">This Month</option>
@@ -202,14 +250,12 @@ const AdminAppointments = () => {
           <select
             value={assignmentFilter}
             onChange={e => { setAssignmentFilter(e.target.value); setCurrentPage(1); }}
-            className="w-full px-5 py-3.5 rounded-2xl border border-gray-100 text-[11px] font-black uppercase tracking-widest focus:ring-4 focus:ring-black/5 focus:border-black outline-none bg-gray-50 transition-all cursor-pointer shadow-sm shadow-black/5"
+            className="h-[56px] px-8 bg-white border border-gray-200 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm"
           >
             <option value="all">All Assignments</option>
-            <option value="assigned">Assigned</option>
-            <option value="unassigned">Unassigned</option>
+            <option value="assigned">Assigned Staff</option>
+            <option value="unassigned">Open Orders</option>
           </select>
-
-
         </div>
       </div>
 
