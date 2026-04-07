@@ -90,6 +90,7 @@ const BookService = () => {
     address: "",
     location: "",
   });
+  const [serviceType, setServiceType] = useState("home"); // home | shop
 
   const refs = {
     name: useRef(),
@@ -262,13 +263,15 @@ const BookService = () => {
     if (!formData.brand) newErrors.brand = "Brand is required";
     if (!formData.model) newErrors.model = "Model is required";
     if (!formData.issue) newErrors.issue = "Issue is required";
-    if (!formData.location) newErrors.location = "Location is required";
-    if (!formData.address) newErrors.address = "Service address is required";
+    if (serviceType === "home") {
+      if (!formData.location) newErrors.location = "Location is required";
+      if (!formData.address) newErrors.address = "Service address is required";
 
-    if (!coords.lat || !coords.lng) {
-      newErrors.location = "Please select location or use current location";
-    } else if (!isChennai) {
-      newErrors.location = "Service available only in Chennai & Tirupattur";
+      if (!coords.lat || !coords.lng) {
+        newErrors.location = "Please select location or use current location";
+      } else if (!isChennai) {
+        newErrors.location = "Service available only in Chennai & Tirupattur";
+      }
     }
 
     setErrors(newErrors);
@@ -299,6 +302,7 @@ const BookService = () => {
         bookingId,
         uid: currentUser.uid,
         vehicleType: vehicleType,
+        place: serviceType,
 
         // User details
         name: formData.name,
@@ -311,7 +315,7 @@ const BookService = () => {
         model: formData.model,
         issue: formData.issue,
         otherIssue: formData.otherIssue || "",
-         vehicleNumber: formData.vehicleNumber,
+        vehicleNumber: formData.vehicleNumber,
         address: formData.address,
         location: formData.location,
         latitude: coords.lat,
@@ -399,33 +403,13 @@ const BookService = () => {
           </div>
 
           {/* Vehicle Type */}
-          <div className="flex gap-6 mb-4">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                value="car"
-                checked={vehicleType === "car"}
-                onChange={() => setVehicleType("car")}
-              />
-              <span className="text-gray-700 font-medium">Car</span>
-            </label>
 
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                value="bike"
-                checked={vehicleType === "bike"}
-                onChange={() => setVehicleType("bike")}
-              />
-              <span className="text-gray-700 font-medium">Bike</span>
-            </label>
-          </div>
 
           {/* Brand & Model */}
           <div className="grid md:grid-cols-2 gap-6">
             <Select
               ref={refs.brand}
-              label={vehicleType === "car" ? "Car Brand" : "Bike Brand"}
+              label={vehicleType === "car" ? "Brand" : "Bike Brand"}
               name="brand"
               required
               error={errors.brand}
@@ -453,7 +437,7 @@ const BookService = () => {
 
             <Input
               ref={refs.model}
-              label={vehicleType === "car" ? "Car Model" : "Bike Model"}
+              label={vehicleType === "car" ? "Model" : "Bike Model"}
               name="model"
               required
               error={errors.model}
@@ -494,70 +478,98 @@ const BookService = () => {
             />
           )}
 
-          <div>
-            <div>
-              <label className="block mb-2 text-sm text-gray-400">
-                Location <span className="text-red-400">*</span>
-              </label>
-
-              {/* SEARCH INPUT */}
+          <div className="flex gap-6 py-4 border-y border-gray-300">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input
-                ref={refs.location}
-                type="text"
-                value={locationQuery}
-                placeholder="Search your area..."
-                onChange={(e) => {
-                  setLocationQuery(e.target.value);
-                  setCoords({ lat: null, lng: null });
-                  searchLocation(e.target.value);
-                }}
-                className="w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm  focus:ring-2 focus:ring-black outline-none transition"
+                type="radio"
+                value="home"
+                checked={serviceType === "home"}
+                onChange={() => setServiceType("home")}
+                className="w-5 h-5"
               />
+              <span className="font-semibold text-black">Home Service</span>
+            </label>
 
-              {/* SEARCH RESULTS */}
-              {locationResults.length > 0 && (
-                <div className="mt-2 rounded-xl border border-white/10 bg-black max-h-56 overflow-y-auto relative z-50">
-                  {locationResults.map((place) => (
-                    <div
-                      key={place.place_id}
-                      onClick={() => handleSelectLocation(place)}
-                      className="px-4 py-3 cursor-pointer text-sm hover:bg-white/10"
-                    >
-                      {place.display_name}
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* CURRENT LOCATION BUTTON (UNCHANGED) */}
-              <button
-                type="button"
-                onClick={handleUseCurrentLocation}
-                disabled={locationLoading}
-                className="mt-4 px-6 py-3 rounded-xl font-semibold text-white
-    bg-gradient-to-r from-black to-cyan-400"
-              >
-                {locationLoading ? "Fetching..." : "Use Current Location"}
-              </button>
-
-              <p className="mt-1 h-4 text-xs text-red-400">
-                {errors.location || ""}
-              </p>
-            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                value="shop"
+                checked={serviceType === "shop"}
+                onChange={() => setServiceType("shop")}
+                className="w-5 h-5"
+              />
+              <span className="font-semibold text-black">Shop Service</span>
+            </label>
           </div>
 
-          {/* Address */}
-          <Textarea
-            ref={refs.address}
-            label="Service Address"
-            name="address"
-            required
-            error={errors.address}
-            onChange={handleChange}
-          />
-          {submitError && (
-            <p className="text-red-400 text-sm text-center">{submitError}</p>
-          )}
+          {serviceType === "home" && (
+            <>
+              <div>
+                <div>
+                  <label className="block mb-2 text-sm text-gray-400">
+                    Location <span className="text-red-400">*</span>
+                  </label>
+
+                  {/* SEARCH INPUT */}
+                  <input
+                    ref={refs.location}
+                    type="text"
+                    value={locationQuery}
+                    placeholder="Search your area..."
+                    onChange={(e) => {
+                      setLocationQuery(e.target.value);
+                      setCoords({ lat: null, lng: null });
+                      searchLocation(e.target.value);
+                    }}
+                    className="w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm  focus:ring-2 focus:ring-black outline-none transition"
+                  />
+
+                  {/* SEARCH RESULTS */}
+                  {locationResults.length > 0 && (
+                    <div className="mt-2 rounded-xl border border-white/10 bg-black max-h-56 overflow-y-auto relative z-50">
+                      {locationResults.map((place) => (
+                        <div
+                          key={place.place_id}
+                          onClick={() => handleSelectLocation(place)}
+                          className="px-4 py-3 cursor-pointer text-sm hover:bg-white/10"
+                        >
+                          {place.display_name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* CURRENT LOCATION BUTTON (UNCHANGED) */}
+                  <button
+                    type="button"
+                    onClick={handleUseCurrentLocation}
+                    disabled={locationLoading}
+                    className="mt-4 px-6 py-3 rounded-xl font-semibold text-white
+    bg-gradient-to-r from-black to-cyan-400"
+                  >
+                    {locationLoading ? "Fetching..." : "Use Current Location"}
+                  </button>
+
+                  <p className="mt-1 h-4 text-xs text-red-400">
+                    {errors.location || ""}
+                  </p>
+                </div>
+              </div>
+
+              {/* Address */}
+              <Textarea
+                ref={refs.address}
+                label="Service Address"
+                name="address"
+                required
+                error={errors.address}
+                onChange={handleChange}
+              />
+              {submitError && (
+                <p className="text-red-400 text-sm text-center">{submitError}</p>
+              )}
+
+            </>)}
 
           {/* submit button */}
           <div className="flex justify-end">
