@@ -518,7 +518,7 @@ const Header = ({ onMenuClick }) => {
 
                   {/* Menu */}
                   <Link
-                    to="/admin/settings/profile"
+                    to="/employee/profile"
                     onClick={() => setShowDropdown(false)}
                     className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 text-sm text-slate-700 transition"
                   >
@@ -526,14 +526,7 @@ const Header = ({ onMenuClick }) => {
                     Profile
                   </Link>
 
-                  <Link
-                    to="/admin/settings"
-                    onClick={() => setShowDropdown(false)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-100 text-sm text-slate-700 transition"
-                  >
-                    <Settings className="w-4 h-4" />
-                    Settings
-                  </Link>
+                 
 
                   <hr className="my-1 border-slate-100" />
 
