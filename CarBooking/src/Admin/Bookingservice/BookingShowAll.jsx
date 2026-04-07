@@ -57,7 +57,9 @@ const ShowAllBookings = () => {
     const fetchBookings = async () => {
       try {
         const response = await api.get("/bookings");
-        const sorted = response.data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const sorted = response.data.sort((a, b) => 
+          new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0)
+        );
         setBookings(sorted);
       } catch (err) {
         toast.error("Failed to load bookings");
@@ -74,12 +76,13 @@ const ShowAllBookings = () => {
       b.phone?.includes(search);
     const matchStatus = statusFilter === "All" || b.status === statusFilter;
 
-    const bookingDate = new Date(b.created_at);
+    const bDateStr = b.created_at || b.createdAt;
+    const bookingDate = bDateStr ? new Date(bDateStr) : null;
     const today = new Date();
     let matchDate = true;
 
     if (dateFilter === "Today") {
-      matchDate = bookingDate.toDateString() === today.toDateString();
+      matchDate = bookingDate && bookingDate.toDateString() === today.toDateString();
     } else if (dateFilter === "Yesterday") {
       const yesterday = new Date();
       yesterday.setDate(today.getDate() - 1);
@@ -291,8 +294,8 @@ const ShowAllBookings = () => {
               <p className="text-sm flex gap-2 mt-2">
                 <FaPhone /> {b.phone}
               </p>
-              <p className="text-xs mt-2 flex gap-2 text-gray-500">
-                <FaClock /> {formatDate(b.created_at)}
+                <p className="text-xs mt-2 flex gap-2 text-gray-500">
+                <FaClock /> {formatDate(b.created_at || b.createdAt)}
               </p>
 
               {/* 🔥 FIXED SELECT */}
@@ -351,7 +354,7 @@ const ShowAllBookings = () => {
                     </select>
                   </td>
                   <td className="px-4 py-3">
-                    {formatDate(b.created_at)}
+                    {formatDate(b.created_at || b.createdAt)}
                   </td>
                 </tr>
               ))}

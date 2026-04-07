@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
-import { FaEdit, FaTrash, FaEye, FaThLarge, FaList, FaPlus } from "react-icons/fa";
+import { FaEdit, FaTrash, FaEye, FaThLarge, FaList, FaPlus,FaCalendarAlt } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import Pagination from "../../Components/Pagination";
@@ -50,7 +50,7 @@ export default function Services() {
   const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState("");
-  const [dateFilter, setDateFilter] = useState("All Time");
+  const [dateFilter, setDateFilter] = useState("Today");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -131,10 +131,10 @@ export default function Services() {
       if (!text.includes(search.toLowerCase())) return false;
 
       // 2) Date filter
-      if (dateFilter === "All Time") return true;
-      if (!s.created_at) return false;
+      const bDateStr = s.created_at || s.createdAt;
+      if (!bDateStr) return false;
 
-      const bookingDate = new Date(s.created_at);
+      const bookingDate = new Date(bDateStr);
       const today = new Date();
 
       if (dateFilter === "Today") {
@@ -682,7 +682,6 @@ export default function Services() {
           </div>
         ) : (
           /* TABLE VIEW */
-          // <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="min-w-full text-left text-sm text-gray-600 whitespace-nowrap">
               <thead className="border-b border-gray-200 bg-gray-50 text-gray-900">

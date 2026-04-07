@@ -96,7 +96,8 @@ const AdminAppointments = () => {
     // Named date filter based on preferredDate
     let matchesDate = true;
     if (dateFilter !== 'All Time') {
-      const apptDate = a.preferredDate ? new Date(a.preferredDate) : null;
+      const apptDateStr = a.preferredDate || a.preferred_date;
+      const apptDate = apptDateStr ? new Date(apptDateStr) : null;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -255,7 +256,7 @@ const AdminAppointments = () => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                      <FaCalendarAlt className="text-sky-500" /> {new Date(apt.preferredDate).toLocaleDateString()}
+                      <FaCalendarAlt className="text-sky-500" /> {new Date(apt.preferredDate || apt.preferred_date).toLocaleDateString()}
                     </div>
                     <div className="flex items-center gap-1.5 text-[10px] text-gray-400 mt-1">
                       <FaClock /> {apt.preferredTimeSlot}

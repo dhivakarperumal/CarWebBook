@@ -41,7 +41,9 @@ const EmpBookings = () => {
           (b.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase()
         );
 
-        const sorted = filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const sorted = filtered.sort((a, b) => 
+          new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0)
+        );
         setBookings(sorted);
       } catch (err) {
         toast.error("Failed to load your bookings");
@@ -163,7 +165,7 @@ const EmpBookings = () => {
                       <Phone size={14} className="text-gray-300" /> {b.phone}
                    </div>
                    <div className="flex items-center gap-2 text-xs font-bold text-gray-500">
-                      <Clock size={14} className="text-gray-300" /> {new Date(b.created_at).toLocaleDateString()}
+                      <Clock size={14} className="text-gray-300" /> {new Date(b.created_at || b.createdAt).toLocaleDateString()}
                    </div>
                 </div>
               </div>

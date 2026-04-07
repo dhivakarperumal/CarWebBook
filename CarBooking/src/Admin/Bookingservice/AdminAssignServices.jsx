@@ -29,15 +29,17 @@ export default function AdminAssignServices() {
 
   const formatBookingDate = (b) => {
     if (b.createdDate) return b.createdDate;
-    if (!b.created_at) return "N/A";
-    const date = new Date(b.created_at);
+    const dateStr = b.created_at || b.createdAt;
+    if (!dateStr) return "N/A";
+    const date = new Date(dateStr);
     return date.toLocaleDateString("en-GB");
   };
 
   const formatBookingTime = (b) => {
     if (b.createdTime) return b.createdTime;
-    if (!b.created_at) return "N/A";
-    const date = new Date(b.created_at);
+    const dateStr = b.created_at || b.createdAt;
+    if (!dateStr) return "N/A";
+    const date = new Date(dateStr);
     return date.toLocaleTimeString("en-GB", {
       hour: "2-digit",
       minute: "2-digit",
@@ -109,12 +111,13 @@ export default function AdminAssignServices() {
       if (!matches) return false;
 
       // Date Filter
-      const bookingDate = new Date(b.created_at);
+      const bDateStr = b.created_at || b.createdAt;
+      const bookingDate = bDateStr ? new Date(bDateStr) : null;
       const today = new Date();
       let matchDate = true;
 
       if (dateFilter === "Today") {
-        matchDate = bookingDate.toDateString() === today.toDateString();
+        matchDate = bookingDate && bookingDate.toDateString() === today.toDateString();
       } else if (dateFilter === "Yesterday") {
         const yesterday = new Date();
         yesterday.setDate(today.getDate() - 1);
