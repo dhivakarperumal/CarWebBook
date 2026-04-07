@@ -20,6 +20,32 @@ import { useNavigate } from "react-router-dom";
 import api from "../../api";
 import toast from "react-hot-toast";
 import Pagination from "../../Components/Pagination";
+import {
+  FaMotorcycle,
+  FaCheckCircle,
+  FaEdit,
+  FaShoppingCart,
+  FaSearch,
+  FaPlus,
+  FaTrashAlt,
+  FaEye,
+  FaArrowUp,
+  FaFilter
+} from "react-icons/fa";
+
+const StatCard = ({ title, value, icon, gradient }) => (
+  <div className="bg-white border border-gray-300 rounded-md p-6 shadow-sm hover:shadow-md transition">
+    <div className="flex justify-between items-center">
+      <div>
+        <p className="text-xs text-slate-500 uppercase font-black tracking-widest">{title}</p>
+        <h2 className="text-2xl font-black text-slate-900 mt-1">{value}</h2>
+      </div>
+      <div className={`p-4 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-lg shadow-black/10`}>
+        {icon}
+      </div>
+    </div>
+  </div>
+);
 
 const ITEMS_PER_PAGE = 5;
 
@@ -107,32 +133,46 @@ const AllBikes = ({ defaultType = "all" }) => {
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fadeIn">
-      
-      {/* HEADER */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 ">
-        <div className="flex items-center gap-5">
-         
-         
-        </div>
-
-        <div className="flex flex-wrap items-center gap-4">
-           <div className="flex items-center gap-3 bg-blue-50 px-6 py-4 rounded-2xl border border-blue-100">
-              <span className="text-3xl font-black text-blue-600">{filteredBikes.length}</span>
-              <div className="flex flex-col leading-none">
-                 <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Total</span>
-                 <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Units</span>
-              </div>
-           </div>
-           
-           <button 
-             onClick={() => navigate("/admin/add-vehicle")}
-             className="flex items-center gap-2 bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl shadow-gray-200 group"
-           >
-              <Plus className="group-hover:rotate-90 transition-transform" />
-              Add New {defaultType === 'all' ? 'Vehicle' : defaultType}
-           </button>
-        </div>
+        <div className="flex justify-between items-center">
+        <h2 className="text-xl font-black text-gray-900 uppercase"></h2>
+        <button 
+          onClick={() => navigate("/admin/add-vehicle")}
+          className="flex items-center gap-2 bg-black text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-gray-200 group"
+        >
+          <FaPlus size={14} className="group-hover:rotate-90 transition-transform" />
+          Add New {defaultType === 'all' ? 'Vehicle' : defaultType}
+        </button>
       </div>
+      {/* HEADER */}
+      {/* STATS GRID */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard 
+          title="Total Units" 
+          value={bikes.length} 
+          icon={<FaMotorcycle />} 
+          gradient="from-blue-600 to-blue-400" 
+        />
+        <StatCard 
+          title="Published" 
+          value={bikes.filter(b => b.status === 'published').length} 
+          icon={<FaCheckCircle />} 
+          gradient="from-emerald-600 to-emerald-400" 
+        />
+        <StatCard 
+          title="Drafts" 
+          value={bikes.filter(b => b.status === 'draft').length} 
+          icon={<FaEdit />} 
+          gradient="from-amber-600 to-amber-400" 
+        />
+        <StatCard 
+          title="Sold" 
+          value={bikes.filter(b => b.status === 'sold').length} 
+          icon={<FaShoppingCart />} 
+          gradient="from-indigo-600 to-indigo-400" 
+        />
+      </div>
+
+    
 
       {/* FILTERS */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
