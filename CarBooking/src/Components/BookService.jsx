@@ -269,7 +269,7 @@ const BookService = () => {
               <Input label="Alternative Phone" name="altPhone" placeholder="Optional" onChange={handleChange} />
             </div>
 
-            <div className="flex gap-6 py-4 border-y border-white/10">
+            {/* <div className="flex gap-6 py-4 border-y border-white/10">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="radio" value="car" checked={vehicleType === "car"} onChange={() => setVehicleType("car")} className="accent-sky-400 w-5 h-5" />
                 <span className="font-bold">Car</span>
@@ -278,7 +278,7 @@ const BookService = () => {
                 <input type="radio" value="bike" checked={vehicleType === "bike"} onChange={() => setVehicleType("bike")} className="accent-sky-400 w-5 h-5" />
                 <span className="font-bold">Bike</span>
               </label>
-            </div>
+            </div> */}
 
             <div className="grid md:grid-cols-2 gap-6">
               <Select label="Brand" name="brand" required error={errors.brand} onChange={handleChange}>
@@ -312,7 +312,7 @@ const BookService = () => {
             <Textarea label="Service Address" name="address" required error={errors.address} onChange={handleChange} />
 
             <div className="flex justify-end pt-8">
-              <button onClick={handleSubmit} disabled={submitting} className="w-full md:w-auto px-12 py-4 rounded-full font-black text-white bg-gradient-to-r from-blue-600 to-cyan-400 hover:shadow-[0_0_20px_rgba(56,189,248,0.5)] transition-all">
+              <button onClick={handleSubmit} disabled={submitting} className="w-full md:w-auto px-12 py-4 rounded-full font-black text-white bg-gradient-to-r from-blue-600 to-cyan-400 hover:shadow-[0_0_20px_rgba(56,189,248,0.5)] transition-all cursor-pointer">
                 {submitting ? "BOOKING..." : "BOOK SERVICE →"}
               </button>
             </div>

@@ -60,9 +60,9 @@ const ServiceDetails = () => {
           </button>
 
           {/* HERO */}
-          <div className="grid gap-10 lg:grid-cols-2 items-center mb-16">
+          <div className="grid gap-10 lg:grid-cols-2 items-start mb-16">
             {/* IMAGE */}
-            <div className="overflow-hidden rounded-xl border border-white/10">
+            <div className="lg:sticky lg:top-24 overflow-hidden rounded-xl border border-white/10">
               <img
                 src={service.image}
                 alt={service.name}
@@ -95,16 +95,75 @@ const ServiceDetails = () => {
                 </ul>
               )}
 
-              {/* CTA */}
-              <button
-                onClick={() => navigate("/contact")}
-                className="px-6 py-3 text-xs font-bold tracking-[0.25em]
-                         text-black bg-sky-400 rounded-md
-                         transition-all duration-300
-                         hover:shadow-[0_0_25px_rgba(56,189,248,0.6)]"
-              >
-                BOOK THIS SERVICE
-              </button>
+              {/* SERVICE DETAILS */}
+              {service.bigDescription && (
+                <div className="mt-12">
+                  <h2 className="text-sky-400 text-sm font-bold tracking-[0.25em] mb-6">
+                    SERVICE DETAILS
+                  </h2>
+
+                  <p className="text-gray-400 leading-relaxed whitespace-pre-line">
+                    {service.bigDescription}
+                  </p>
+                </div>
+              )}
+
+              {/* SUPPORTED BRANDS */}
+              {service.supportedBrands && (
+                <div className="mt-14">
+                  <h2 className="text-sky-400 text-sm font-bold tracking-[0.25em] mb-8">
+                    SUPPORTED BRANDS
+                  </h2>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {service.supportedBrands.map((brand, index) => (
+                      <div
+                        key={index}
+                        className="
+          group relative
+          bg-gradient-to-br from-[#0b0f14] to-[#06080c]
+          border border-sky-500/30
+          rounded-lg
+          px-4 py-4
+          text-center
+          transition-all duration-300
+          hover:border-sky-400
+          hover:shadow-[0_0_20px_rgba(56,189,248,0.25)]
+          hover:-translate-y-1
+        "
+                      >
+                        <span className="text-sm font-semibold text-gray-300 group-hover:text-white transition">
+                          {brand}
+                        </span>
+
+                        {/* glow line */}
+                        <div className="absolute bottom-0 left-0 w-full h-[2px] bg-sky-400 opacity-0 group-hover:opacity-100 transition"></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* SPARE PARTS INCLUDED */}
+              {service.sparePartsIncluded && (
+                <div className="mt-12">
+                  <h2 className="text-sky-400 text-sm font-bold tracking-[0.25em] mb-6">
+                    SPARE PARTS INCLUDED
+                  </h2>
+
+                  <ul className="space-y-3">
+                    {service.sparePartsIncluded.map((part, index) => (
+                      <li
+                        key={index}
+                        className="flex items-center gap-3 text-gray-300 text-sm"
+                      >
+                        <span className="w-2 h-2 bg-sky-400 rounded-full" />
+                        {part}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
 
