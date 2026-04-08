@@ -31,11 +31,14 @@ const History = () => {
 
       // Fetch all services for this user
       console.log("📋 Fetching all services...");
-      const servicesRes = await getAllServices(user.uid);
+      const servicesRes = await getAllServices();
       const allServices = servicesRes.data || [];
+      const userServices = allServices.filter(
+        (s) => s.email?.toLowerCase() === user?.email?.toLowerCase()
+      );
 
       // Filter for completed services
-      const completed = allServices.filter((s) =>
+      const completed = userServices.filter((s) =>
         ["Service Completed", "Bill Completed"].includes(s.serviceStatus)
       );
 
@@ -211,13 +214,12 @@ const History = () => {
                                 ₹{Number(part.total).toFixed(2)}
                               </p>
                               <span
-                                className={`text-xs font-semibold px-2 py-1 rounded ${
-                                  part.status === "approved"
-                                    ? "bg-green-500/20 text-green-400"
-                                    : part.status === "pending"
+                                className={`text-xs font-semibold px-2 py-1 rounded ${part.status === "approved"
+                                  ? "bg-green-500/20 text-green-400"
+                                  : part.status === "pending"
                                     ? "bg-yellow-500/20 text-yellow-400"
                                     : "bg-red-500/20 text-red-400"
-                                }`}
+                                  }`}
                               >
                                 {(part.status || "completed").toUpperCase()}
                               </span>
