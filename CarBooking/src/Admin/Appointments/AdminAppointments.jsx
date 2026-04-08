@@ -42,7 +42,7 @@ const AdminAppointments = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("All Time");
   const [searchTerm, setSearchTerm] = useState("");
-  const [assignmentFilter, setAssignmentFilter] = useState("unassigned");
+  const [assignmentFilter, setAssignmentFilter] = useState("all");
   const [pendingChanges, setPendingChanges] = useState({});
   const [saving, setSaving] = useState(false);
 

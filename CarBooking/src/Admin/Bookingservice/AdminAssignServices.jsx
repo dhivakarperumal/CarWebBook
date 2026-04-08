@@ -48,15 +48,15 @@ export default function AdminAssignServices() {
   const [loadingEmployees, setLoadingEmployees] = useState(false);
 
   const [mainTab, setMainTab] = useState("all"); 
-  const [tab, setTab] = useState("unassigned");
-  const [dateFilter, setDateFilter] = useState("Today");
+  const [tab, setTab] = useState("all");
+  const [dateFilter, setDateFilter] = useState("All");
   const [searchText, setSearchText] = useState("");
   const [viewMode, setViewMode] = useState("table"); 
   const [currentPage, setCurrentPage] = useState(1);
 
   const formatBookingDate = (b) => {
     if (b.createdDate) return b.createdDate;
-    const dateStr = b.created_at || b.createdAt;
+    const dateStr = b.created_at || b.createdAt || b.preferredDate;
     if (!dateStr) return "N/A";
     const date = new Date(dateStr);
     return date.toLocaleDateString("en-GB");
@@ -64,7 +64,7 @@ export default function AdminAssignServices() {
 
   const formatBookingTime = (b) => {
     if (b.createdTime) return b.createdTime;
-    const dateStr = b.created_at || b.createdAt;
+    const dateStr = b.created_at || b.createdAt || b.preferredDate;
     if (!dateStr) return "N/A";
     const date = new Date(dateStr);
     return date.toLocaleTimeString("en-GB", {
@@ -76,10 +76,24 @@ export default function AdminAssignServices() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/bookings");
-      setBookings(res.data);
+      const [bookingsRes, appointmentsRes] = await Promise.all([
+        api.get("/bookings"),
+        api.get("/appointments/all")
+      ]);
+      
+      const normalizedBookings = (bookingsRes.data || []).map(b => ({ ...b, source: 'booking' }));
+      const normalizedAppointments = (appointmentsRes.data || []).map(a => ({
+        ...a,
+        source: 'appointment',
+        bookingId: a.appointmentId || ("APT-" + a.id),
+        vehicleNumber: a.registrationNumber || a.vehicleNumber,
+        issue: a.serviceType ? `${a.serviceType}${a.otherIssue ? ': ' + a.otherIssue : ''}` : a.issue,
+        createdAt: a.preferredDate || a.created_at || a.createdAt,
+      }));
+
+      setBookings([...normalizedBookings, ...normalizedAppointments]);
     } catch (error) {
-      toast.error("Failed to fetch bookings");
+      toast.error("Failed to fetch data");
     } finally {
       setLoading(false);
     }
@@ -104,7 +118,7 @@ export default function AdminAssignServices() {
 
   const currentMainList = useMemo(() => {
     return bookings.filter(b => {
-      if ((b.status || "").toLowerCase() === "booked") return false;
+      // Removed filter that blocked "booked" status
       if (mainTab === "all") return true;
       const isAddVehicle = b.uid === 'admin-created';
       return mainTab === "booked" ? !isAddVehicle : isAddVehicle;
@@ -125,7 +139,7 @@ export default function AdminAssignServices() {
 
       if (!matchSearch) return false;
 
-      const bDateStr = b.created_at || b.createdAt;
+      const bDateStr = b.created_at || b.createdAt || b.preferredDate;
       const bookingDate = bDateStr ? new Date(bDateStr) : null;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -160,16 +174,17 @@ export default function AdminAssignServices() {
 
   const assignedCount = dateFilteredList.filter((b) => b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed").length;
   const unassignedCount = dateFilteredList.filter((b) => !b.assignedEmployeeId).length;
-  const approvedCount = dateFilteredList.filter((b) => (b.status || "").toLowerCase() === "approved").length;
-  const completedCount = dateFilteredList.filter((b) => (b.status || "").toLowerCase() === "service completed").length;
+  const approvedCount = dateFilteredList.filter((b) => (b.status || "").toLowerCase() === "approved" || (b.status || "").toLowerCase() === "confirmed").length;
+  const completedCount = dateFilteredList.filter((b) => (b.status || "").toLowerCase() === "service completed" || (b.status || "").toLowerCase() === "completed").length;
   const allCount = dateFilteredList.length;
 
   const filteredBookings = useMemo(() => {
     return dateFilteredList.filter((b) => {
+      const s = (b.status || "").toLowerCase();
       if (tab === "unassigned") return !b.assignedEmployeeId;
-      if (tab === "assigned") return !!b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed";
-      if (tab === "approved") return (b.status || "").toLowerCase() === "approved";
-      if (tab === "completed") return (b.status || "").toLowerCase() === "service completed";
+      if (tab === "assigned") return !!b.assignedEmployeeId && s !== "service completed" && s !== "completed";
+      if (tab === "approved") return s === "approved" || s === "confirmed";
+      if (tab === "completed") return s === "service completed" || s === "completed";
       return true;
     });
   }, [dateFilteredList, tab]);
@@ -190,7 +205,8 @@ export default function AdminAssignServices() {
     if (!selectedBooking || !selectedEmployeeId || assigning) return;
     try {
       setAssigning(true);
-      const bookingId = selectedBooking.id;
+      const isApt = selectedBooking.source === 'appointment';
+      const id = selectedBooking.id;
       const selectedEmployee = employees.find(
         (emp) => emp.id.toString() === selectedEmployeeId.toString()
       );
@@ -198,11 +214,21 @@ export default function AdminAssignServices() {
         toast.error("Mechanic not found");
         return;
       }
-      await api.put(`/bookings/assign/${bookingId}`, {
-        assignedEmployeeId: selectedEmployee.id,
-        assignedEmployeeName: selectedEmployee.name,
-        status: "Assigned"
-      });
+
+      if (isApt) {
+        await api.put(`/appointments/${id}`, {
+          assignedEmployeeId: selectedEmployee.id,
+          assignedEmployeeName: selectedEmployee.name,
+          status: "Confirmed"
+        });
+      } else {
+        await api.put(`/bookings/assign/${id}`, {
+          assignedEmployeeId: selectedEmployee.id,
+          assignedEmployeeName: selectedEmployee.name,
+          status: "Assigned"
+        });
+      }
+
       toast.success(`Mechanic ${selectedEmployee.name} assigned successfully`);
       setModalVisible(false);
       setGlobalModalVisible(false);
@@ -415,6 +441,9 @@ export default function AdminAssignServices() {
                       <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
                         {item.vehicleType || 'Car'}
                       </span>
+                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.source === 'appointment' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                        {item.source === 'appointment' ? 'Appointment' : 'Booking'}
+                      </span>
                       <h3 className="text-xl font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
                         {item.brand} {item.model}
                       </h3>
@@ -552,6 +581,9 @@ export default function AdminAssignServices() {
                       <div className="flex items-center gap-2">
                         <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
                           {item.vehicleType || 'Car'}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.source === 'appointment' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                          {item.source === 'appointment' ? 'APT' : 'BKG'}
                         </span>
                         <p className="text-sm font-black text-gray-900 font-inter">{item.brand} {item.model}</p>
                         {item.uid === 'admin-created' && <span className="bg-cyan-100 text-cyan-600 text-[9px] px-2 py-0.5 rounded font-black uppercase">Walk-in</span>}

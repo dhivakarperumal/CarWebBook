@@ -50,7 +50,7 @@ const ShowAllBookings = () => {
   const [view, setView] = useState("table");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [dateFilter, setDateFilter] = useState("Today");
+  const [dateFilter, setDateFilter] = useState("All");
   const [page, setPage] = useState(1);
 
   const [popup, setPopup] = useState(null);
