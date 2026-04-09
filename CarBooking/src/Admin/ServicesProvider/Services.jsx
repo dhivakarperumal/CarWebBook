@@ -279,8 +279,7 @@ export default function Services() {
     <div className="p-4 max-w-7xl mx-auto space-y-10 animate-fadeIn bg-gray-50/50 min-h-screen">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Appointments And Booking</h1>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Monitor technical workflows & spare parts fulfillment</p>
+         
         </div>
         <button onClick={() => navigate(`${pathPrefix}/addserviceparts`)} className="h-[56px] px-8 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all flex items-center justify-center gap-3"><FaPlus /> Registry Service Parts</button>
       </div>
@@ -392,9 +391,11 @@ export default function Services() {
                 <thead className="bg-[#0e5f76] text-white">
                   <tr>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">S No</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Identifier</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Customer Profile</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Booking ID</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Customer</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Vehicle Spec</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Issues</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Mechanic</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Spare Status</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-center">Workflow</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Actions</th>
@@ -419,6 +420,10 @@ export default function Services() {
                         <td className="px-8 py-6"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none mb-1">#ID {item.id}</span><span className="text-xs font-black text-blue-900">{item.bookingId || "SER-NEW"}</span></td>
                         <td className="px-8 py-6"><p className="text-sm font-black text-gray-900">{item.name}</p><p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">{item.phone}</p></td>
                         <td className="px-8 py-6">
+                          <div className="flex items-center gap-2 mb-1"><p className="text-sm font-black text-gray-800 uppercase tracking-tight">{item.brand} {item.model}</p></div>
+                          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{item.vehicleNumber || "UNSPECIFIED"}</p>
+                        </td>
+                        <td className="px-8 py-6">
                           <div className="flex items-center gap-3 group/issue">
                             <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]" title={item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}>
                               {item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}
@@ -431,6 +436,13 @@ export default function Services() {
                               <FaEdit size={10} />
                             </button>
                           </div>
+                        </td>
+                        <td className="px-8 py-6">
+                          {item.assignedEmployeeName ? (
+                            <div className="flex items-center gap-3"><div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-black border border-blue-100 uppercase">{item.assignedEmployeeName.charAt(0)}</div><span className="text-xs font-black text-gray-700">{item.assignedEmployeeName}</span></div>
+                          ) : (
+                            <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-3 py-2 rounded-xl border border-amber-100">Pending Assignment</button>
+                          )}
                         </td>
                         <td className="px-8 py-6">
                            {(() => {

@@ -82,7 +82,7 @@ const navItems = [
 
   { path: "/admin/orders", label: "Orders", icon: ShoppingCart },
 
-  { path: "/admin/booked-vehicles", label: "Booked Vehicles", icon: ListChecks },
+  { path: "/admin/booked-vehicles", label: "Booked Vehicles", icon: CarFront },
 
   { path: "/admin/billing", label: "Billing", icon: Receipt },
 
