@@ -25,6 +25,7 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 const navItems = [
   { path: "/employee", label: "Dashboard", icon: Gauge, exact: true },
   { path: "/employee/assignservices", label: "Assigned History", icon: ClipboardCheck },
+  { path: "/employee/completed-history", label: "Service Completed History", icon: CalendarCheck },
   { path: "/employee/services", label: "Service Center", icon: Wrench },
   { path: "/employee/billing", label: "Billing", icon: Receipt },
   { path: "/employee/profile", label: "Profile Settings", icon: UserCog },
