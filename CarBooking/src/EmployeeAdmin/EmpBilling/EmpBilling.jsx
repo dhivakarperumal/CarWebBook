@@ -235,10 +235,16 @@ const EmpBilling = () => {
            
            <button
              onClick={() => navigate("/employee/addbillings")}
-             className="flex flex-col items-center justify-center gap-1 bg-black text-white px-5 py-3 rounded-2.5xl hover:bg-blue-600 transition-all shadow-xl shadow-gray-200 group"
+             className="relative group overflow-hidden bg-black text-white px-8 py-4 rounded-2xl flex items-center gap-4 transition-all hover:translate-y-[-2px] active:scale-95 shadow-2xl shadow-black/20"
            >
-              <Plus className="w-5 h-5 group-hover:scale-125 transition-transform" />
-              <span className="text-[9px] font-black uppercase tracking-widest leading-none">Create<br/>Billing</span>
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center group-hover:bg-white/20 transition-colors shrink-0">
+                <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500" />
+              </div>
+              <div className="text-left relative z-10 hidden sm:block">
+                <span className="block text-[8px] font-black uppercase tracking-[0.25em] text-emerald-500 leading-none mb-1.5 opacity-80">New Entry</span>
+                <span className="block text-xs font-black uppercase tracking-widest leading-none">Create Billing</span>
+              </div>
            </button>
         </div>
       </div>
