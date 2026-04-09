@@ -134,8 +134,8 @@ const EmpCompletedHistory = () => {
 
       {/* SEARCH & TOGGLE */}
       <div className="space-y-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="relative w-full lg:w-80">
             <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300" />
             <input
               type="text"
@@ -146,25 +146,27 @@ const EmpCompletedHistory = () => {
             />
           </div>
 
-          <div className="relative md:w-64">
-             <Filter className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-             <select
-               value={dateFilter}
-               onChange={(e) => { setDateFilter(e.target.value); setPage(1); }}
-               className="w-full pl-12 pr-6 py-4 bg-white border border-gray-100 rounded-2xl font-bold text-gray-700 outline-none appearance-none cursor-pointer focus:ring-4 focus:ring-emerald-500/5 shadow-sm"
-             >
-               <option value="all">All Time History</option>
-               <option value="today">Today's Completed</option>
-               <option value="yesterday">Yesterday's Jobs</option>
-               <option value="week">Past Week</option>
-               <option value="month">Past Month</option>
-               <option value="custom">Custom Archive Range</option>
-             </select>
-          </div>
+          <div className="flex flex-col md:flex-row items-center gap-4 w-full lg:w-auto">
+            <div className="relative w-full md:w-64">
+               <Filter className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+               <select
+                 value={dateFilter}
+                 onChange={(e) => { setDateFilter(e.target.value); setPage(1); }}
+                 className="w-full pl-12 pr-6 py-4 bg-white border border-gray-100 rounded-2xl font-bold text-gray-700 outline-none appearance-none cursor-pointer focus:ring-4 focus:ring-emerald-500/5 shadow-sm"
+               >
+                 <option value="all">All Time History</option>
+                 <option value="today">Today's Completed</option>
+                 <option value="yesterday">Yesterday's Jobs</option>
+                 <option value="week">Past Week</option>
+                 <option value="month">Past Month</option>
+                 <option value="custom">Custom Archive Range</option>
+               </select>
+            </div>
 
-          <div className="flex p-1.5 bg-gray-100 rounded-2xl border border-gray-200 w-fit shrink-0">
-             <button onClick={() => setViewMode("table")} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === "table" ? "bg-white text-emerald-600 shadow-md" : "text-gray-400"}`}><List size={16}/> Table</button>
-             <button onClick={() => setViewMode("card")} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === "card" ? "bg-white text-emerald-600 shadow-md" : "text-gray-400"}`}><LayoutGrid size={16}/> Cards</button>
+            <div className="flex p-1.5 bg-gray-100 rounded-2xl border border-gray-200 w-full md:w-fit shrink-0">
+               <button onClick={() => setViewMode("table")} className={`flex-1 md:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${viewMode === "table" ? "bg-white text-emerald-600 shadow-md" : "text-gray-400"}`}><List size={16}/> Table</button>
+               <button onClick={() => setViewMode("card")} className={`flex-1 md:px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${viewMode === "card" ? "bg-white text-emerald-600 shadow-md" : "text-gray-400"}`}><LayoutGrid size={16}/> Cards</button>
+            </div>
           </div>
         </div>
 
@@ -194,11 +196,11 @@ const EmpCompletedHistory = () => {
 
       {/* DATA */}
       {filteredServices.length === 0 ? (
-        <div className="bg-white rounded-[3rem] p-24 text-center border-2 border-dashed border-gray-100">
+        <div className="bg-white rounded-lg p-24 text-center border-2 border-dashed border-gray-100">
            <p className="text-gray-300 font-black uppercase tracking-widest text-xs">No completed protocols found in archive</p>
         </div>
       ) : viewMode === "table" ? (
-        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-slate-200/50 overflow-hidden">
+        <div className="bg-white rounded-lg border border-gray-100 shadow-xl shadow-slate-200/50 overflow-hidden">
           <table className="w-full text-left whitespace-nowrap">
             <thead className="bg-emerald-600 text-white">
               <tr>

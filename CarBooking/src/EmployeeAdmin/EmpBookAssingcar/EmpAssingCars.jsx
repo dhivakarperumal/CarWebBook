@@ -193,8 +193,8 @@ const EmpAssingCars = () => {
 
       {/* FILTERS SECTION */}
       <div className="flex flex-col gap-6">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-          <div className="md:col-span-12 lg:col-span-5 relative">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="relative w-full lg:w-72">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
@@ -205,38 +205,40 @@ const EmpAssingCars = () => {
             />
           </div>
 
-          <div className="md:col-span-6 lg:col-span-3 relative">
-            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <select
-              value={filterStatus}
-              onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
-              className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none appearance-none transition-all font-bold text-gray-700 cursor-pointer"
-            >
-              <option value="all">Any Status</option>
-              <option value="Assigned">Assigned</option>
-              <option value="Approved">Approved</option>
-              <option value="Processing">Processing</option>
-              <option value="Waiting for Spare">Waiting for Spare</option>
-              <option value="Service Going on">Service Going on</option>
-              <option value="Bill Pending">Bill Pending</option>
-              <option value="Service Completed">Completed</option>
-            </select>
-          </div>
+          <div className="flex flex-col md:flex-row items-center gap-4 w-full lg:w-auto">
+            <div className="relative w-full md:w-64">
+              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <select
+                value={filterStatus}
+                onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
+                className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none appearance-none transition-all font-bold text-gray-700 cursor-pointer"
+              >
+                <option value="all">Any Status</option>
+                <option value="Assigned">Assigned</option>
+                <option value="Approved">Approved</option>
+                <option value="Processing">Processing</option>
+                <option value="Waiting for Spare">Waiting for Spare</option>
+                <option value="Service Going on">Service Going on</option>
+                <option value="Bill Pending">Bill Pending</option>
+                <option value="Service Completed">Completed</option>
+              </select>
+            </div>
 
-          <div className="md:col-span-6 lg:col-span-4 relative">
-            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <select
-              value={dateFilter}
-              onChange={(e) => { setDateFilter(e.target.value); setPage(1); }}
-              className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none appearance-none transition-all font-bold text-gray-700 cursor-pointer"
-            >
-              <option value="all">All Time</option>
-              <option value="today">Today</option>
-              <option value="yesterday">Yesterday</option>
-              <option value="week">This Week</option>
-              <option value="month">This Month</option>
-              <option value="custom">Custom Range</option>
-            </select>
+            <div className="relative w-full md:w-64">
+              <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <select
+                value={dateFilter}
+                onChange={(e) => { setDateFilter(e.target.value); setPage(1); }}
+                className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none appearance-none transition-all font-bold text-gray-700 cursor-pointer"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
           </div>
         </div>
 
