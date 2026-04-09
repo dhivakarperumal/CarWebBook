@@ -71,16 +71,20 @@ const EmpAssingCars = () => {
   const paginatedServices = filteredServices.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   const getStatusColor = (status) => {
+    const s = status || "Assigned";
     const map = {
       "Pending": "bg-yellow-100 text-yellow-700 border-yellow-200",
       "Assigned": "bg-blue-100 text-blue-700 border-blue-200",
-      "Service Going on": "bg-indigo-100 text-indigo-700 border-indigo-200",
-      "Bill Pending": "bg-purple-100 text-purple-700 border-purple-200",
-      "Bill Completed": "bg-sky-100 text-sky-700 border-sky-200",
+      "Approved": "bg-indigo-100 text-indigo-700 border-indigo-200",
+      "Processing": "bg-purple-100 text-purple-700 border-purple-200",
+      "Waiting for Spare": "bg-amber-100 text-amber-700 border-amber-200",
+      "Service Going on": "bg-orange-100 text-orange-700 border-orange-200",
+      "Bill Pending": "bg-pink-100 text-pink-700 border-pink-200",
+      "Bill Completed": "bg-cyan-100 text-cyan-700 border-cyan-200",
       "Service Completed": "bg-emerald-100 text-emerald-700 border-emerald-200",
       "Completed": "bg-emerald-100 text-emerald-700 border-emerald-200",
     };
-    return map[status] || "bg-gray-100 text-gray-700 border-gray-200";
+    return map[s] || "bg-gray-100 text-gray-700 border-gray-200";
   };
 
   if (loading) {
@@ -195,8 +199,8 @@ const EmpAssingCars = () => {
               </div>
 
               <div className="flex justify-between items-start mb-6">
-                <span className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.1em] rounded-full border shadow-sm ${getStatusColor(item.status)}`}>
-                  {item.status || "Assigned"}
+                <span className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-[0.1em] rounded-full border shadow-sm ${getStatusColor(item.serviceStatus || item.status)}`}>
+                  {item.serviceStatus || item.status || "Assigned"}
                 </span>
                 <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">ID: {item.id}</span>
               </div>
@@ -268,7 +272,6 @@ const EmpAssingCars = () => {
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Vehicle</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Status</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Assigned Date</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -286,21 +289,14 @@ const EmpAssingCars = () => {
                     <p className="text-xs font-bold text-blue-500 uppercase tracking-widest">{item.vehicle_number || item.vehicleNumber || "N/A"}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusColor(item.status)}`}>
-                        {item.status || "Assigned"}
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusColor(item.serviceStatus || item.status)}`}>
+                        {item.serviceStatus || item.status || "Assigned"}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">{new Date(item.created_at || item.createdAt).toLocaleDateString()}</p>
                   </td>
-                  <td className="px-6 py-4">
-                    <button 
-                      onClick={() => window.location.href = "/employee/cars"}
-                      className="bg-black text-white text-[10px] font-black px-4 py-2 rounded-xl hover:bg-gray-800 transition-all uppercase tracking-widest shadow-lg shadow-black/10"
-                    >
-                      Update
-                    </button>
-                  </td>
+
                 </tr>
               ))}
             </tbody>

@@ -298,11 +298,12 @@ const EmpDashboard = () => {
                   <tr>
                     <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">S No</th>
                     <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">ID</th>
+                    <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">Customer</th>
                     <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">Vehicle Info</th>
                     <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">Date</th>
                     <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">Status</th>
-                    <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">Customer</th>
-                    <th className="px-6 py-5 text-right text-[10px] font-black uppercase tracking-widest text-white">Actions</th>
+
+                   
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -325,6 +326,10 @@ const EmpDashboard = () => {
                           <p className="text-xs font-black text-gray-400">#{task.bookingId || task.appointmentId || task.id}</p>
                         </td>
                         <td className="px-6 py-5">
+                          <p className="font-medium text-gray-700">{task.name}</p>
+                        </td>
+                       
+                        <td className="px-6 py-5">
                           <p className="font-bold text-gray-800">{task.brand} {task.model}</p>
                           <p className="text-xs text-gray-500">{task.vehicleNumber || "No Plate"}</p>
                         </td>
@@ -336,48 +341,7 @@ const EmpDashboard = () => {
                         <td className="px-6 py-5">
                           <StatusBadge status={task.status} bStatus={task.serviceStatus} />
                         </td>
-                        <td className="px-6 py-5">
-                          <p className="font-medium text-gray-700">{task.name}</p>
-                        </td>
-                        <td className="px-6 py-5 ">
-                          <div className="flex items-center justify-start gap-3 px-2">
-                             {(task.status === "Assigned" || task.status === "Pending" || task.status === "Approved" || task.status === "Processing") && (
-                               <button
-                                 onClick={() => updateServiceStatus(task, "Service Going on")}
-                                 className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-black shadow-lg shadow-blue-200 hover:bg-blue-700 transition active:scale-95 uppercase tracking-wider"
-                               >
-                                 Start
-                               </button>
-                             )}
-                             {(task.status === "Service Going on" || task.status === "Waiting for Spare") && (
-                               <button
-                                 onClick={() => updateServiceStatus(task, "Service Completed")}
-                                 className="px-4 py-2 bg-green-600 text-white rounded-lg text-xs font-black shadow-lg shadow-green-200 hover:bg-green-700 transition active:scale-95 uppercase tracking-wider"
-                               >
-                                 Done
-                               </button>
-                             )}
-                             
-                             {/* Universal Manage Button for all active items */}
-                             {task.status !== "Completed" && task.status !== "Service Completed" && task.status !== "Cancelled" && (
-                               <button 
-                                 onClick={() => navigate("/employee/services")}
-                                 className="px-4 py-2 bg-slate-800 text-white rounded-lg text-xs font-black shadow-lg shadow-slate-200 hover:bg-slate-900 transition active:scale-95 uppercase tracking-wider"
-                                 title="Go to Service Management"
-                               >
-                                 Manage
-                               </button>
-                             )}
-
-                             <button 
-                              onClick={() => navigate("/employee/assignservices")}
-                              className="p-2 text-gray-400 hover:text-blue-600 transition hover:bg-blue-50 rounded-lg"
-                              title="View History"
-                             >
-                               <History size={18} />
-                             </button>
-                          </div>
-                        </td>
+                        
                       </tr>
                     ))
                   )}

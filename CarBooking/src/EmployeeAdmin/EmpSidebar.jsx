@@ -26,7 +26,7 @@ const navItems = [
   { path: "/employee", label: "Dashboard", icon: Gauge, exact: true },
   { path: "/employee/assignservices", label: "Assigned History", icon: ClipboardCheck },
   { path: "/employee/services", label: "Service Center", icon: Wrench },
-  { path: "/employee/billing", label: "Job Billing", icon: Receipt },
+  { path: "/employee/billing", label: "Billing", icon: Receipt },
   { path: "/employee/profile", label: "Profile Settings", icon: UserCog },
   { path: "/", label: "Back Home", icon: Home },
 ];
