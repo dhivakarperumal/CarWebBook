@@ -267,14 +267,9 @@ const EmpAddBilling = () => {
       {/* 🚀 PREMIUM HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="group p-4 bg-white rounded-2xl border border-gray-100 shadow-xl shadow-black/5 hover:bg-black hover:text-white transition-all active:scale-95"
-          >
-            <ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
-          </button>
+         
           <div className="space-y-1">
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none">{isEditMode ? "Update Billing Invoice" : "Generate Billing Invoice"}</h1>
+           
             <div className="flex items-center gap-3 pt-1">
               <span className="bg-black text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg tracking-widest uppercase shadow-lg shadow-black/20">Invoice No</span>
               <span className="text-blue-600 font-black text-sm uppercase tracking-wider underline underline-offset-4 decoration-2">{generatedInv}</span>
@@ -472,13 +467,13 @@ const EmpAddBilling = () => {
                     <th className="px-8 py-5 text-center font-black">Quantity</th>
                     <th className="px-8 py-5 text-center font-black">Unit Price</th>
                     <th className="px-8 py-5 text-right font-black">Subtotal</th>
-                    {selectionMode === "manual" && <th className="px-8 py-5 text-right font-black">Action</th>}
+                    <th className="px-8 py-5 text-right font-black">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {parts.length === 0 ? (
                     <tr>
-                      <td colSpan={selectionMode === "manual" ? 6 : 5} className="px-8 py-16 text-center">
+                      <td colSpan={6} className="px-8 py-16 text-center">
                         <div className="flex flex-col items-center gap-3 text-gray-400 grayscale opacity-40">
                           <RotateCcw className="text-2xl animate-spin-slow" />
                           <p className="uppercase tracking-[0.2em] font-black italic">Awaiting Inventory Log...</p>
@@ -493,13 +488,11 @@ const EmpAddBilling = () => {
                         <td className="px-8 py-5 text-center">{p.qty}</td>
                         <td className="px-8 py-5 text-center text-gray-600">₹{p.price.toLocaleString()}</td>
                         <td className="px-8 py-5 text-right font-black text-blue-600 tracking-tight">₹{p.total.toLocaleString()}</td>
-                        {selectionMode === "manual" && (
-                          <td className="px-8 py-5 text-right">
-                            <button onClick={() => removePart(i)} className="p-2 text-red-400 hover:text-white hover:bg-red-500 rounded-lg transition-all shadow-sm">
-                              <Trash size={14} />
-                            </button>
-                          </td>
-                        )}
+                        <td className="px-8 py-5 text-right">
+                          <button onClick={() => removePart(i)} className="p-2 text-red-400 hover:text-white hover:bg-red-500 rounded-lg transition-all shadow-sm">
+                            <Trash size={14} />
+                          </button>
+                        </td>
                       </tr>
                     ))
                   )}
