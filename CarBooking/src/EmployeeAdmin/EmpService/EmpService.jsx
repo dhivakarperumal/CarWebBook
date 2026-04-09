@@ -142,7 +142,7 @@ export default function EmpService() {
       total: relevantServices.length,
       processing: relevantServices.filter(s => {
         const sStat = (s.serviceStatus || s.status || "").toLowerCase();
-        return sStat === "processing" || sStat === "service going on";
+        return sStat !== "" && !sStat.includes("completed") && !sStat.includes("bill completed") && sStat !== "cancelled";
       }).length,
       completed: relevantServices.filter(s => {
         const sStat = (s.serviceStatus || s.status || "").toLowerCase();

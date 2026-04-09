@@ -172,8 +172,8 @@ const EmpDashboard = () => {
       setStats({
         todayCount: tasksForToday.length,
         totalCount: filtered.length,
-        inProgress: filtered.filter(b => ["processing", "service going on", "waiting for spare", "call verified", "approved"].includes(normalize(b.status || b.serviceStatus))).length,
-        completed: filtered.filter(b => ["service completed", "completed", "bill pending", "bill completed"].includes(normalize(b.status || b.serviceStatus))).length,
+        inProgress: filtered.filter(b => ["processing", "service going on", "waiting for spare", "call verified", "approved", "bill pending"].includes(normalize(b.status || b.serviceStatus))).length,
+        completed: filtered.filter(b => ["service completed", "completed", "bill completed"].includes(normalize(b.status || b.serviceStatus))).length,
       });
     } catch (err) {
       console.error("Error fetching tasks:", err);
