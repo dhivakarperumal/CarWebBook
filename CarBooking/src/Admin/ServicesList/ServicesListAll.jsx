@@ -14,12 +14,15 @@ import {
 import { useNavigate } from "react-router-dom";
 import Pagination from "../../Components/Pagination";
 
+// Global cache for seamless navigation
+let servicesCache = null;
+
 const ServicesListAll = () => {
-  const [services, setServices] = useState([]);
+  const [services, setServices] = useState(servicesCache || []);
   const [view, setView] = useState("table");
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!servicesCache);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
@@ -29,8 +32,9 @@ const ServicesListAll = () => {
   /* ================= FETCH DATA ================= */
   const fetchServices = async () => {
     try {
-      const res = await api.get("/services");
-      setServices(res.data || []);
+      const data = res.data || [];
+      setServices(data);
+      servicesCache = data;
       setLoading(false);
     } catch (err) {
       console.error(err);
@@ -98,13 +102,6 @@ const ServicesListAll = () => {
   }, [filteredServices, currentPage]);
 
   /* ================= LOADING ================= */
-  if (loading) {
-    return (
-      <div className="p-6 text-center text-gray-500">
-        Loading services...
-      </div>
-    );
-  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto pb-5">

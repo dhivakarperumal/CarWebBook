@@ -49,10 +49,13 @@ const StatCard = ({ title, value, icon, gradient }) => (
 
 const ITEMS_PER_PAGE = 5;
 
+// Global cache for seamless navigation
+let bikesCache = null;
+
 const AllBikes = ({ defaultType = "all" }) => {
   const navigate = useNavigate();
-  const [bikes, setBikes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [bikes, setBikes] = useState(bikesCache || []);
+  const [loading, setLoading] = useState(!bikesCache);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -67,6 +70,7 @@ const AllBikes = ({ defaultType = "all" }) => {
       setLoading(true);
       const res = await api.get("/bikes");
       setBikes(res.data);
+      bikesCache = res.data;
     } catch (err) {
       toast.error("Failed to load bikes");
     } finally {
@@ -122,14 +126,6 @@ const AllBikes = ({ defaultType = "all" }) => {
     return map[status] || "bg-gray-100 text-gray-700";
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 animate-pulse">
-        <Bike className="w-12 h-12 text-blue-500 animate-bounce mb-4" />
-        <p className="text-gray-500 font-black uppercase tracking-widest text-xs">Fetching Inventory...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fadeIn">

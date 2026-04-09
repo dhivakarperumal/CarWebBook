@@ -46,16 +46,20 @@ const STATUS_OPTIONS = [
   "Cancelled"
 ];
 
+// Global cache to prevent re-loading flsh on navigation
+let appointmentCache = null;
+let technicianCache = null;
+
 const AdminAppointments = () => {
-  const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [appointments, setAppointments] = useState(appointmentCache || []);
+  const [loading, setLoading] = useState(!appointmentCache);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
 
   const openModal = (apt) => {
     setSelectedAppointment(apt);
     setPendingChanges({});
   };
-  const [technicians, setTechnicians] = useState([]);
+  const [technicians, setTechnicians] = useState(technicianCache || []);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState("all");
@@ -81,8 +85,14 @@ const AdminAppointments = () => {
         getAllAppointments(),
         api.get('/staff')
       ]);
-      setAppointments(appRes.data || []);
-      setTechnicians(techRes.data?.filter(s => s.role === 'mechanic' || s.role === 'technician') || []);
+      const data = appRes.data || [];
+      const techs = techRes.data?.filter(s => s.role === 'mechanic' || s.role === 'technician') || [];
+      
+      setAppointments(data);
+      setTechnicians(techs);
+      
+      appointmentCache = data;
+      technicianCache = techs;
     } catch {
       toast.error("Failed to load appointments");
     } finally {

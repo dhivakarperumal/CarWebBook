@@ -33,9 +33,13 @@ const StatCard = ({ title, value, icon, gradient }) => (
 
 const ITEMS_PER_PAGE = 8;
 
+// Global cache for seamless navigation
+let bookingsCache = null;
+let employeesCache = null;
+
 export default function AdminAssignServices() {
-  const [bookings, setBookings] = useState([]);
-  const [employees, setEmployees] = useState([]);
+  const [bookings, setBookings] = useState(bookingsCache || []);
+  const [employees, setEmployees] = useState(employeesCache || []);
 
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
@@ -43,9 +47,9 @@ export default function AdminAssignServices() {
   const [modalVisible, setModalVisible] = useState(false);
   const [globalModalVisible, setGlobalModalVisible] = useState(false);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!bookingsCache);
   const [assigning, setAssigning] = useState(false);
-  const [loadingEmployees, setLoadingEmployees] = useState(false);
+  const [loadingEmployees, setLoadingEmployees] = useState(!employeesCache);
 
   const [tab, setTab] = useState("unassigned");
   const [dateFilter, setDateFilter] = useState("All");
@@ -90,7 +94,9 @@ export default function AdminAssignServices() {
         createdAt: a.preferredDate || a.created_at || a.createdAt,
       }));
 
-      setBookings([...normalizedBookings, ...normalizedAppointments]);
+      const fullList = [...normalizedBookings, ...normalizedAppointments];
+      setBookings(fullList);
+      bookingsCache = fullList;
     } catch (error) {
       toast.error("Failed to fetch data");
     } finally {
@@ -108,6 +114,7 @@ export default function AdminAssignServices() {
       const res = await api.get("/staff");
       const list = res.data.filter((emp) => emp.status === "active");
       setEmployees(list);
+      employeesCache = list;
     } catch (error) {
       toast.error("Failed to fetch employees");
     } finally {

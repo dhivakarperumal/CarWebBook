@@ -71,10 +71,13 @@ const GradientStatCard = ({
 
 /* -------------------- DASHBOARD -------------------- */
 
+// Global cache for instant dashboard loading
+let dashboardCache = null;
+
 const Dashboard = () => {
   const navigate = useNavigate();
 
-  const [topStats, setTopStats] = useState({
+  const [topStats, setTopStats] = useState(dashboardCache?.topStats || {
     todayBookings: 0,
     todayCustomers: 0,
     totalServices: 0,
@@ -90,20 +93,21 @@ const Dashboard = () => {
     totalVehicleBookings: 0,
   });
 
-  const [appointmentData, setAppointmentData] = useState([]);
-  const [counts, setCounts] = useState({
+  const [appointmentData, setAppointmentData] = useState(dashboardCache?.appointmentData || []);
+  const [counts, setCounts] = useState(dashboardCache?.counts || {
     pending: 0,
     completed: 0,
     cancelled: 0,
   });
 
-  const [revenueData, setRevenueData] = useState([]);
-  const [monthlyTotal, setMonthlyTotal] = useState(0);
+  const [revenueData, setRevenueData] = useState(dashboardCache?.revenueData || []);
+  const [monthlyTotal, setMonthlyTotal] = useState(dashboardCache?.monthlyTotal || 0);
 
-  const [patients, setPatients] = useState([]);
-  const [stats1, setStats1] = useState({});
-  const [total, setTotal] = useState(0);
-  const [rows, setRows] = useState([]);
+  const [patients, setPatients] = useState(dashboardCache?.patients || []);
+  const [stats1, setStats1] = useState(dashboardCache?.stats1 || {});
+  const [total, setTotal] = useState(dashboardCache?.total || 0);
+  const [rows, setRows] = useState(dashboardCache?.rows || []);
+  const [loading, setLoading] = useState(!dashboardCache);
 
   useEffect(() => {
     fetchDashboardData();
@@ -111,6 +115,7 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
+      if (!dashboardCache) setLoading(true);
       // Due to the absence of a unified dashboard backend route,
       // we'll parallel fetch from the MySQL APIs we have available.
       // We will catch individual errors to prevent complete dashboard crash if one API is missing
@@ -188,144 +193,48 @@ const Dashboard = () => {
         }
       });
 
-      setTopStats({
-        todayBookings: todayBookingsCount,
-        todayCustomers: todayCustomers.size,
-        totalServices: servicesData.length,
-        totalCustomers: allCustomers.size > 0 ? allCustomers.size : usersData.length,
-        totalEmployees: staffData.length,
-        totalOrders: ordersData.length,
-        totalDeliveryOrders: ordersData.filter(o => ["delivered", "shipped", "completed"].includes((o.status || "").toLowerCase())).length,
-        totalProducts: productsData.length,
-        totalEarnings: earnings,
-        totalBilling: totalBilling,
-        totalCars: (bikesData || []).filter(b => b.type === "Car").length,
-        totalBikes: (bikesData || []).filter(b => b.type === "Bike").length,
-        totalVehicleBookings: (vehicleBookingsData || []).length, 
-      });
-
-      // 2. APPOINTMENTS CHART
-      
-      const getWeekRange = (offset = 0) => {
-        const today = new Date();
-        const day = today.getDay() || 7;
-        const monday = new Date(today);
-        monday.setDate(today.getDate() - day + 1 - offset * 7);
-        monday.setHours(0, 0, 0, 0);
-
-        const sunday = new Date(monday);
-        sunday.setDate(monday.getDate() + 6);
-        sunday.setHours(23, 59, 59, 999);
-
-        return { start: monday, end: sunday };
+      const newCache = {
+        topStats: {
+          todayBookings: todayBookingsCount,
+          todayCustomers: todayCustomers.size,
+          totalServices: servicesData.length,
+          totalCustomers: allCustomers.size > 0 ? allCustomers.size : usersData.length,
+          totalEmployees: staffData.length,
+          totalOrders: ordersData.length,
+          totalDeliveryOrders: ordersData.filter(o => ["delivered", "shipped", "completed"].includes((o.status || "").toLowerCase())).length,
+          totalProducts: productsData.length,
+          totalEarnings: earnings,
+          totalBilling: totalBilling,
+          totalCars: (bikesData || []).filter(b => b.type === "Car").length,
+          totalBikes: (bikesData || []).filter(b => b.type === "Bike").length,
+          totalVehicleBookings: (vehicleBookingsData || []).length, 
+        },
+        appointmentData: baseData,
+        counts: tempCounts,
+        revenueData: monthly,
+        monthlyTotal: thisMonthTotal,
+        patients: sortedBookings.slice(0, 5),
+        stats1: pieCounts,
+        total: pieSum,
+        rows: sortedInventory.slice(0, 5)
       };
 
-      const thisWeek = getWeekRange(0);
-      const lastWeek = getWeekRange(1);
-      const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      setTopStats(newCache.topStats);
+      setAppointmentData(newCache.appointmentData);
+      setCounts(newCache.counts);
+      setRevenueData(newCache.revenueData);
+      setMonthlyTotal(newCache.monthlyTotal);
+      setPatients(newCache.patients);
+      setStats1(newCache.stats1);
+      setTotal(newCache.total);
+      setRows(newCache.rows);
       
-      const baseData = days.map((d) => ({
-        day: d,
-        thisWeek: 0,
-        lastWeek: 0,
-        pending: 0,
-        completed: 0,
-        cancelled: 0,
-      }));
-
-      const tempCounts = { pending: 0, completed: 0, cancelled: 0 };
-
-      // Process Model/Brand pie chart stats while iterating
-      const pieCounts = {};
-      let pieSum = 0;
-
-      bookingsData.forEach((data) => {
-        if (!data.status) return;
-
-        const rawStatus = String(data.status).toLowerCase().trim();
-        let status = "pending";
-
-        if (rawStatus === "service completed") status = "completed";
-        if (rawStatus === "cancelled") status = "cancelled";
-
-        const baseDateStr = (status === "completed" || status === "cancelled")
-            ? (data.updatedAt || data.updated_at || data.createdAt || data.created_at)
-            : (data.createdAt || data.created_at);
-
-        if (baseDateStr) {
-          const date = new Date(baseDateStr);
-          date.setHours(0, 0, 0, 0);
-
-          const dayIndex = date.getDay() === 0 ? 6 : date.getDay() - 1;
-
-          if (date.getTime() === todayStart.getTime()) {
-            if (status === "pending") tempCounts.pending++;
-            if (status === "completed") tempCounts.completed++;
-            if (status === "cancelled") tempCounts.cancelled++;
-          }
-
-          if (date >= thisWeek.start && date <= thisWeek.end) {
-            baseData[dayIndex].thisWeek++;
-            if (status === "pending") baseData[dayIndex].pending++;
-            if (status === "completed") baseData[dayIndex].completed++;
-            if (status === "cancelled") baseData[dayIndex].cancelled++;
-          }
-
-          if (date >= lastWeek.start && date <= lastWeek.end) {
-            baseData[dayIndex].lastWeek++;
-          }
-        }
-
-        // Pie Chart processing
-        if (rawStatus !== "cancelled") {
-          const brand = data.brand || data.model || "Unknown";
-          pieCounts[brand] = (pieCounts[brand] || 0) + 1;
-          pieSum += 1;
-        }
-      });
-
-      setAppointmentData(baseData);
-      setCounts(tempCounts);
-      
-      setStats1(pieCounts);
-      setTotal(pieSum);
-
-      // 3. REVENUE CHART
-      const now = new Date();
-      const currentMonth = now.getMonth();
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const monthly = months.map((m) => ({ month: m, revenue: 0 }));
-      let thisMonthTotal = 0;
-
-      billingsData.forEach((data) => {
-        if (!data.created_at && !data.createdAt) return;
-        const billedAmount = Number(data.grandTotal || 0);
-
-        if (billedAmount > 0) {
-          const date = new Date(data.created_at || data.createdAt);
-          if (date.getFullYear() === now.getFullYear()) {
-            const monthIndex = date.getMonth();
-            monthly[monthIndex].revenue += billedAmount;
-            if (monthIndex === currentMonth) {
-              thisMonthTotal += billedAmount;
-            }
-          }
-        }
-      });
-
-      setRevenueData(monthly);
-      setMonthlyTotal(thisMonthTotal);
-
-      // 4. LATEST BOOKINGS
-      const sortedBookings = [...bookingsData].sort((a, b) => new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0));
-      setPatients(sortedBookings.slice(0, 5));
-
-      // 5. INVENTORY PREVIEW
-      const sortedInventory = [...inventoryData].sort((a, b) => new Date(b.updatedAt || b.updated_at || 0) - new Date(a.updatedAt || a.updated_at || 0));
-      setRows(sortedInventory.slice(0, 5));
+      dashboardCache = newCache;
 
     } catch (error) {
       console.error("Dashboard fetch error:", error);
+    } finally {
+      setLoading(false);
     }
   };
 

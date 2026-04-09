@@ -11,12 +11,15 @@ import {
 } from "react-icons/fa";
 import Pagination from "../../Components/Pagination";
 
+// Global cache for seamless navigation
+let usersCache = null;
+
 const Users = () => {
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState(usersCache || []);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!usersCache);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
@@ -91,7 +94,9 @@ const Users = () => {
         }
       });
 
-      setUsers(Array.from(customerMap.values()));
+      const finalUsers = Array.from(customerMap.values());
+      setUsers(finalUsers);
+      usersCache = finalUsers;
     } catch (err) {
       toast.error("Failed to load customers data");
       console.error(err);
@@ -178,13 +183,6 @@ const Users = () => {
     setCurrentPage(1);
   }, [search, roleFilter, statusFilter]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-gray-500">Loading users...</p>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6 p-2">

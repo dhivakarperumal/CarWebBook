@@ -63,8 +63,11 @@ const StatCard = ({ title, value, icon, gradient }) => (
 );
 
 /* ================= PAGE ================= */
+// Global cache for seamless navigation
+let ordersCache = null;
+
 const AllOrders = () => {
-  const [orders, setOrders] = useState([]);
+  const [orders, setOrders] = useState(ordersCache || []);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
@@ -84,6 +87,7 @@ const AllOrders = () => {
     try {
       const res = await api.get('/orders');
       setOrders(res.data);
+      ordersCache = res.data;
     } catch {
       toast.error("Failed to load orders");
     }
