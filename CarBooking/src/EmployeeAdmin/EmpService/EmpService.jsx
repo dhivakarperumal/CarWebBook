@@ -60,6 +60,7 @@ export default function EmpService() {
   const [activeModalTab, setActiveModalTab] = useState("issues");
   const [editingParts, setEditingParts] = useState([]);
   const [products, setProducts] = useState(cachedData.products || []);
+  const [statusFilter, setStatusFilter] = useState("All Status");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -177,6 +178,13 @@ export default function EmpService() {
     return filtered.filter((s) => {
       const text = `${s.bookingId || ""} ${s.name || ""} ${s.brand || ""} ${s.model || ""} ${s.vehicleNumber || ""}`.toLowerCase();
       if (!text.includes(search.toLowerCase())) return false;
+      
+      if (statusFilter !== "All Status") {
+        const rawStatus = s.serviceStatus || s.status || "Booked";
+        const found = STATUS_STEPS.find(step => step.toLowerCase() === rawStatus.toLowerCase());
+        const mappedStatus = found || "Booked";
+        if (mappedStatus !== statusFilter) return false;
+      }
 
       const bDateStr = s.created_at || s.createdAt;
       if (dateFilter === "All Time") return true;
@@ -211,7 +219,7 @@ export default function EmpService() {
       }
       return true;
     });
-  }, [services, search, dateFilter, mainTab, userProfile, startDate, endDate]);
+  }, [services, search, dateFilter, mainTab, userProfile, startDate, endDate, statusFilter]);
 
   const listData = currentMainList;
   const totalPages = Math.ceil(listData.length / itemsPerPage);
@@ -308,21 +316,16 @@ export default function EmpService() {
           <input type="text" placeholder="Track service ID, customer, or vehicle plate..." value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} className="w-full pl-15 pr-6 py-4 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:ring-8 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-inner" />
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto xl:justify-end">
-          <div className="flex h-[56px] bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner shrink-0">
-            <button onClick={() => setViewMode("table")} className={`flex items-center px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaList /> </button>
-            <button onClick={() => setViewMode("card")} className={`flex items-center px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "card" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaThLarge /> </button>
-          </div>
+        <div className="flex flex-col sm:flex-row items-center justify-end gap-3 w-full lg:w-auto">
+          <div className="flex gap-2">
+            <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }} className="w-full sm:w-auto h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm shrink-0">
+              <option value="All Status">All Status</option>
+              {STATUS_STEPS.map(status => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
 
-          <div className="flex flex-nowrap items-center gap-3">
-            {dateFilter === "Custom Range" && (
-              <div className="flex items-center gap-2 animate-in slide-in-from-right-4 duration-300">
-                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-[56px] px-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-[10px] outline-none focus:border-black shadow-sm" />
-                <span className="text-gray-400 font-bold">-</span>
-                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-[56px] px-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-[10px] outline-none focus:border-black shadow-sm" />
-              </div>
-            )}
-            <select value={dateFilter} onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }} className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm min-w-[160px]">
+            <select value={dateFilter} onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }} className="w-full sm:w-auto h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm shrink-0">
               <option value="All Time">All Time</option>
               <option value="Today">Today</option>
               <option value="Yesterday">Yesterday</option>
@@ -330,6 +333,19 @@ export default function EmpService() {
               <option value="This Month">This Month</option>
               <option value="Custom Range">Custom Range</option>
             </select>
+            
+            {dateFilter === "Custom Range" && (
+              <div className="flex items-center gap-2 animate-fadeIn bg-gray-50 p-1.5 rounded-[1.5rem] border border-gray-100 font-bold uppercase text-[10px] tracking-widest text-gray-500">
+                <input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }} className="h-10 px-4 bg-white border border-gray-100 rounded-xl outline-none focus:border-black" />
+                <span>To</span>
+                <input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }} className="h-10 px-4 bg-white border border-gray-100 rounded-xl outline-none focus:border-black" />
+              </div>
+            )}
+          </div>
+
+          <div className="flex h-[56px] bg-gray-100 p-1.5 rounded-[1.5rem] border border-gray-200 shadow-inner shrink-0 w-full sm:w-auto">
+            <button onClick={() => setViewMode("table")} className={`flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaList className="hidden sm:block" /> Table</button>
+            <button onClick={() => setViewMode("card")} className={`flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "card" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaThLarge className="hidden sm:block" /> Cards</button>
           </div>
         </div>
       </div>

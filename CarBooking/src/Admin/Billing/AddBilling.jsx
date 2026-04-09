@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { 
   FaArrowLeft, 
   FaSearch, 
@@ -15,6 +15,7 @@ import {
 
 const AddBillings = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { id } = useParams(); // present when editing
   const isEditMode = !!id;
 
@@ -71,6 +72,13 @@ const AddBillings = () => {
     };
     loadInitialData();
   }, []);
+
+  useEffect(() => {
+    if (!isEditMode && location.state?.service) {
+      setActiveTab("online");
+      selectService(location.state.service);
+    }
+  }, [isEditMode, location.state?.service]);
 
   /* =======================
      LOAD BILL FOR EDIT
@@ -626,7 +634,7 @@ const AddBillings = () => {
                 className="group w-full py-5 rounded-2xl text-white font-black uppercase tracking-widest text-xs shadow-xl transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:active:scale-100 disabled:bg-gray-100 disabled:text-gray-400 disabled:shadow-none border border-transparent disabled:border-gray-200 bg-gradient-to-r from-black to-slate-800 hover:from-black hover:to-black shadow-black/20"
               >
                 {isEditMode ? <FaEdit className="group-hover:scale-110 transition-transform" /> : <FaSave className="group-hover:scale-110 transition-transform" />}
-                {isEditMode ? "Update Invoice" : "Commit Invoice"}
+                {isEditMode ? "Update Bill" : "Save Bill"}
               </button>
               
               <button

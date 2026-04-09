@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
-import { FaEdit, FaTrash, FaEye, FaThLarge, FaList, FaPlus, FaCalendarAlt, FaClock, FaCheckCircle, FaSearch, FaWrench, FaUserCheck, FaTimes } from "react-icons/fa";
+import { FaEdit, FaFileInvoice, FaEye, FaThLarge, FaList, FaPlus, FaCalendarAlt, FaClock, FaCheckCircle, FaSearch, FaWrench, FaUserCheck, FaTimes, FaCar, FaCalendarCheck } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import Pagination from "../../Components/Pagination";
@@ -49,6 +49,7 @@ export default function Services() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState("All Time");
+  const [statusFilter, setStatusFilter] = useState("All Status");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -102,6 +103,13 @@ export default function Services() {
       const text = `${s.bookingId || ""} ${s.name || ""} ${s.phone || ""} ${s.brand || ""} ${s.model || ""} ${s.vehicleNumber || ""}`.toLowerCase();
       if (!text.includes(search.toLowerCase())) return false;
       
+      if (statusFilter !== "All Status") {
+        const rawStatus = s.serviceStatus || s.status || "Booked";
+        const found = STATUS_STEPS.find(step => step.toLowerCase() === rawStatus.toLowerCase());
+        const mappedStatus = found || "Booked";
+        if (mappedStatus !== statusFilter) return false;
+      }
+
       const bDateStr = s.created_at || s.createdAt;
       // If filtering by history, don't block records with missing dates
       if (dateFilter === "All Time") return true;
@@ -146,7 +154,7 @@ export default function Services() {
       }
       return true;
     });
-  }, [services, search, dateFilter, customFrom, customTo]);
+  }, [services, search, dateFilter, customFrom, customTo, statusFilter]);
 
   const stats = useMemo(() => {
     const relevantServices = isMechanic
@@ -155,6 +163,8 @@ export default function Services() {
 
     return {
       total: relevantServices.length,
+      appointments: relevantServices.filter(s => !s.addVehicle).length,
+      bookings: relevantServices.filter(s => s.addVehicle).length,
       assigned: relevantServices.filter(s => !!s.assignedEmployeeId).length,
       unassigned: isMechanic ? 0 : relevantServices.filter(s => !s.assignedEmployeeId).length,
       completed: relevantServices.filter(s => {
@@ -177,6 +187,14 @@ export default function Services() {
 
   const totalPages = Math.ceil(listData.length / itemsPerPage);
   const paginatedData = listData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const getSpareStatus = (parts) => {
+    if (!parts || parts.length === 0) return { label: "No Spares", color: "text-gray-400 bg-gray-50 border-gray-100" };
+    const statuses = parts.map(p => (p.status || "Pending").toLowerCase());
+    if (statuses.every(s => s === "approved")) return { label: "Approved", color: "text-emerald-600 bg-emerald-50 border-emerald-100" };
+    if (statuses.some(s => s === "rejected")) return { label: "Issues/Rejected", color: "text-red-600 bg-red-50 border-red-100" };
+    return { label: "Awaiting Appr.", color: "text-amber-600 bg-amber-50 border-amber-100" };
+  };
 
   const getMappedStatus = (status) => {
     if (!status) return "Booked";
@@ -264,9 +282,10 @@ export default function Services() {
         <button onClick={() => navigate(`${pathPrefix}/addserviceparts`)} className="h-[56px] px-8 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all flex items-center justify-center gap-3"><FaPlus /> Registry Service Parts</button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard title="Total Service Volume" value={stats.total} icon={<FaCalendarAlt />} gradient="from-blue-600 to-blue-400" />
-        <StatCard title="Technician Assigned" value={stats.assigned} icon={<FaClock />} gradient="from-indigo-600 to-indigo-400" />
+        <StatCard title="Appointments" value={stats.appointments} icon={<FaCalendarCheck />} gradient="from-purple-600 to-purple-400" />
+        <StatCard title="Bookings" value={stats.bookings} icon={<FaCar />} gradient="from-orange-600 to-orange-400" />
         <StatCard title="Successfully Closed" value={stats.completed} icon={<FaCheckCircle />} gradient="from-emerald-600 to-emerald-400" />
       </div>
 
@@ -279,6 +298,13 @@ export default function Services() {
 
         <div className="flex flex-col sm:flex-row items-center justify-end gap-3 w-full lg:w-auto">
           <div className="flex gap-2">
+            <select value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }} className="w-full sm:w-auto h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm shrink-0">
+              <option value="All Status">All Status</option>
+              {STATUS_STEPS.map(status => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+
             <select value={dateFilter} onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }} className="w-full sm:w-auto h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm shrink-0">
               <option value="All Time">All</option>
               <option value="Today">Today</option>
@@ -306,7 +332,7 @@ export default function Services() {
       </div>
 
       <>
-        {viewMode === "card" ? (
+       {viewMode === "card" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
             {paginatedData.map((item) => (
               <div key={item.id} className="group bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all duration-500 flex flex-col relative overflow-hidden">
@@ -316,33 +342,21 @@ export default function Services() {
                     <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block mb-1">SERVICE ID</span>
                     <p className="text-sm font-black text-blue-900">{item.bookingId || `SER-${item.id}`}</p>
                   </div>
-                  <select
-                    value={getMappedStatus(item.serviceStatus || item.status)}
-                    onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
-                    className={`px-4 py-2 rounded-[1.5rem] text-[10px] font-black tracking-widest border transition-all outline-none cursor-pointer appearance-none text-center ${getStatusColor(item.serviceStatus || item.status)}`}
-                  >
-                    {STATUS_STEPS.slice(STATUS_STEPS.indexOf(getMappedStatus(item.serviceStatus || item.status))).map(s => (
-                      <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>
-                    ))}
-                  </select>
+                  <div className={`px-4 py-2 rounded-[1.5rem] text-[10px] font-black tracking-widest border text-center ${getStatusColor(item.serviceStatus || item.status)}`}>
+                    {getMappedStatus(item.serviceStatus || item.status)}
+                  </div>
                 </div>
                 <div className="space-y-5 flex-1 relative z-10">
-                  <div>
-                    <h3 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors uppercase truncate">
-                      {item.brand || "Unspecified"} {item.model || "Vehicle"}
-                    </h3>
-                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 w-fit px-3 py-1 rounded-xl border border-blue-100 mt-1">
-                      {item.vehicleNumber || "NO PLATE"}
-                    </p>
-                  </div>
                   <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100 space-y-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400 font-bold text-xs uppercase">{item.name?.charAt(0)}</div>
-                      <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Client</p><p className="text-sm font-black text-gray-800">{item.name}</p></div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400 text-xs"><FaClock /></div>
-                      <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Allocation</p><p className="text-sm font-bold text-gray-500">{item.assignedEmployeeName || "Pending Assignment"}</p></div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400 font-bold text-xs uppercase">{item.name?.charAt(0)}</div>
+                        <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Client</p><p className="text-sm font-black text-gray-800">{item.name}</p></div>
+                      </div>
+                      {(() => {
+                        const ss = getSpareStatus(item.parts);
+                        return <span className={`text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border ${ss.color}`}>{ss.label}</span>;
+                      })()}
                     </div>
                   </div>
                   <div className="rounded-2xl bg-blue-50/50 border border-blue-100 p-4 overflow-hidden">
@@ -351,13 +365,18 @@ export default function Services() {
                   </div>
                 </div>
                 <div className="mt-6 pt-6 border-t border-gray-50 flex flex-wrap gap-2">
-                  {!item.assignedEmployeeId && <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="w-full rounded-2xl bg-black py-4 text-[10px] font-black text-white hover:bg-blue-600 transition-all uppercase tracking-widest mb-2">Assign Technician</button>}
                   {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
                     <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all border border-transparent hover:border-emerald-100" title="Add Parts"><FaPlus className="mr-2" /> Parts</button>
                   )}
+                  {getMappedStatus(item.serviceStatus || item.status) === "Processing" && (
+                    <button onClick={() => handleUpdateStatus(item.id, "Service Going on")} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all border border-transparent" title="Start Service">Start</button>
+                  )}
+                  {getMappedStatus(item.serviceStatus || item.status) === "Service Going on" && (
+                    <button onClick={() => handleUpdateStatus(item.id, "Service Completed")} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-all border border-transparent" title="Complete Service">Complete</button>
+                  )}
                   <button onClick={() => handleOpenIssueModal(item)} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all border border-transparent hover:border-amber-100" title="Edit Log & Parts"><FaEdit className="mr-2" /> Log</button>
-                  <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100" title="View Details"><FaEye /></button>
-                  <button onClick={() => handleDelete(item.id)} className="h-11 w-11 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all border border-transparent hover:border-red-100" title="Delete"><FaTrash /></button>
+                  <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-black text-white hover:bg-emerald-600 transition-all border border-transparent" title="Generate Bill"><FaFileInvoice className="mr-2" /> Bill</button>
+                  <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-11 w-11 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100" title="View Details"><FaEye /></button>
                 </div>
               </div>
             ))}
@@ -372,9 +391,8 @@ export default function Services() {
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">S No</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Identifier</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Customer Profile</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Vehicle Spec</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Issues</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Mechanic Allocation</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Spare Status</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-center">Workflow</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Actions</th>
                   </tr>
@@ -398,40 +416,50 @@ export default function Services() {
                         <td className="px-8 py-6"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none mb-1">#ID {item.id}</span><span className="text-xs font-black text-blue-900">{item.bookingId || "SER-NEW"}</span></td>
                         <td className="px-8 py-6"><p className="text-sm font-black text-gray-900">{item.name}</p><p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">{item.phone}</p></td>
                         <td className="px-8 py-6">
-                          <div className="flex items-center gap-2 mb-1"><p className="text-sm font-black text-gray-800 uppercase tracking-tight">{item.brand} {item.model}</p></div>
-                          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{item.vehicleNumber || "UNSPECIFIED"}</p>
+                          <div className="flex items-center gap-3 group/issue">
+                            <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]" title={item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}>
+                              {item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}
+                            </p>
+                            <button 
+                              onClick={() => handleOpenIssueModal(item)}
+                              className="p-1.5 rounded-lg bg-amber-50 text-amber-500 hover:bg-amber-100 transition-all shadow-sm border border-amber-200/50"
+                              title="Edit Diagnostics"
+                            >
+                              <FaEdit size={10} />
+                            </button>
+                          </div>
                         </td>
                         <td className="px-8 py-6">
-                          <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]" title={item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}>
-                            {item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}
-                          </p>
-                        </td>
-                        <td className="px-8 py-6">
-                          {item.assignedEmployeeName ? (
-                            <div className="flex items-center gap-3"><div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-black border border-blue-100 uppercase">{item.assignedEmployeeName.charAt(0)}</div><span className="text-xs font-black text-gray-700">{item.assignedEmployeeName}</span></div>
-                          ) : (
-                            <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-3 py-2 rounded-xl border border-amber-100">Pending Assignment</button>
-                          )}
+                           {(() => {
+                             const ss = getSpareStatus(item.parts);
+                             return <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border ${ss.color}`}>{ss.label}</span>;
+                           })()}
                         </td>
                         <td className="px-8 py-6 text-center">
-                          <select
-                            value={getMappedStatus(item.serviceStatus || item.status)}
-                            onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
-                            className={`px-3 py-1.5 rounded-full text-[9px] font-black border tracking-widest uppercase transition-all outline-none cursor-pointer appearance-none text-center ${getStatusColor(item.serviceStatus || item.status)}`}
-                          >
-                            {STATUS_STEPS.slice(STATUS_STEPS.indexOf(getMappedStatus(item.serviceStatus || item.status))).map(s => (
-                              <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>
-                            ))}
-                          </select>
+                           <select 
+                             value={getMappedStatus(item.serviceStatus || item.status)}
+                             onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
+                             className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[150px] text-center cursor-pointer outline-none focus:ring-4 focus:ring-black/5 ${getStatusColor(item.serviceStatus || item.status)}`}
+                           >
+                             {STATUS_STEPS.map((step, idx) => {
+                               const currentIdx = STATUS_STEPS.findIndex(s => s.toLowerCase() === (item.serviceStatus || item.status || "Booked").toLowerCase()) || 0;
+                               if (idx < currentIdx) return null;
+                               return (
+                                 <option key={step} value={step} className="bg-white text-black font-bold uppercase">{step}</option>
+                               );
+                             })}
+                           </select>
                         </td>
-                        <td className="px-8 py-6 text-right">
+                        <td className="px-8 py-6 text-left">
                           <div className="flex justify-end gap-2">
                             {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
-                              <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-emerald-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Add Parts"><FaPlus /></button>
+                              <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-10 px-4 bg-emerald-500 text-white hover:bg-emerald-900 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Add Parts">Parts</button>
                             )}
-                            <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-amber-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
-                            <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="View Details"><FaEye /></button>
-                            <button onClick={() => handleDelete(item.id)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-red-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Delete"><FaTrash /></button>
+                           
+                           
+                            <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-900 text-gray-400 hover:bg-amber-50 hover:text-amber-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
+                            <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-10 px-4 bg-black text-white hover:bg-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2" title="Generate Bill"><FaFileInvoice /> Bill</button>
+
                           </div>
                         </td>
                       </tr>
@@ -446,23 +474,21 @@ export default function Services() {
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
         {modalVisible && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm shadow-2xl">
-            <div className="w-full max-w-md rounded-[3rem] bg-white p-10 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
-              <div className="mb-8 text-center">
-                <div className="w-16 h-16 bg-black text-white rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-xl shadow-black/20"><FaUserCheck size={28} /></div>
-                <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Mechanic Load</h2>
-                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">Personnel Authorization Protocol</p>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200">
+              <div className="mb-6 text-center">
+                <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Assign Mechanic</h2>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">Select personnel for this service</p>
               </div>
-              <div className="mb-8">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-2">Technician Registry</label>
-                <select value={selectedEmployeeId} onChange={(e) => setSelectedEmployeeId(e.target.value)} className="w-full rounded-[1.5rem] border border-gray-100 bg-gray-50 px-6 py-4.5 text-xs font-black text-gray-800 focus:bg-white focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner uppercase tracking-wider">
-                  <option value="">-- AUTHORIZE PERSONNEL --</option>
+              <div className="mb-6">
+                <select value={selectedEmployeeId} onChange={(e) => setSelectedEmployeeId(e.target.value)} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs font-bold text-gray-800 focus:bg-white focus:border-black outline-none transition-all uppercase tracking-wider">
+                  <option value="">-- SELECT TECHNICIAN --</option>
                   {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name.toUpperCase()}</option>)}
                 </select>
               </div>
-              <div className="flex gap-4">
-                <button onClick={() => { setModalVisible(false); setSelectedEmployeeId(""); }} className="flex-1 rounded-[1.5rem] bg-gray-100 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-200 transition-all">Cancel</button>
-                <button onClick={assignEmployee} disabled={assigning || !selectedEmployeeId} className="flex-1 rounded-[1.5rem] bg-black py-4.5 text-[10px] font-black text-white uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 disabled:opacity-20">Assign</button>
+              <div className="flex gap-3">
+                <button onClick={() => { setModalVisible(false); setSelectedEmployeeId(""); }} className="flex-1 rounded-xl bg-gray-100 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest hover:bg-gray-200 transition-all">Cancel</button>
+                <button onClick={assignEmployee} disabled={assigning || !selectedEmployeeId} className="flex-1 rounded-xl bg-black py-3 text-[10px] font-black text-white uppercase tracking-widest hover:bg-blue-600 transition-all disabled:opacity-20">Assign Now</button>
               </div>
             </div>
           </div>
@@ -470,31 +496,35 @@ export default function Services() {
 
         {issueModalVisible && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-            <div className="w-full max-w-3xl max-h-[85vh] flex flex-col rounded-[3rem] bg-white shadow-2xl border border-white animate-in zoom-in-95 duration-200 overflow-hidden">
-              <div className="px-10 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20"><FaWrench size={24} /></div>
-                  <div><h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Active Log Registry</h2><p className="text-[10px] text-blue-600 font-black uppercase tracking-widest mt-1">Diagnostics & Spare Parts</p></div>
+            <div className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl bg-white shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200 overflow-hidden">
+              <div className="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-white">
+                <div>
+                  <h2 className="text-lg font-black text-gray-900 uppercase tracking-tight">Diagnostic & Parts Log</h2>
+                  <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Update service manifest</p>
                 </div>
-                <button onClick={() => { setIssueModalVisible(false); setEditingIssueId(null); }} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-100 text-gray-400 hover:text-red-500 transition-all shadow-sm"><FaTimes size={18} /></button>
+                <button onClick={() => { setIssueModalVisible(false); setEditingIssueId(null); }} className="p-2 text-gray-400 hover:text-red-500 transition-all"><FaTimes size={16} /></button>
               </div>
 
-              <div className="flex px-10 bg-gray-50/50 border-b border-gray-100">
-                <button onClick={() => setActiveModalTab("issues")} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "issues" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Diagnostic Issues</button>
-                <button onClick={() => setActiveModalTab("parts")} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "parts" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Spare Parts</button>
+              <div className="flex px-8 border-b border-gray-100">
+                <button onClick={() => setActiveModalTab("issues")} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "issues" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Issues</button>
+                <button onClick={() => setActiveModalTab("parts")} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "parts" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Parts</button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-10 space-y-6 no-scrollbar">
+              <div className="flex-1 overflow-y-auto p-8 space-y-4">
                 {activeModalTab === "issues" ? (
                   <>
                     {issueEntries.map((entry, idx) => (
-                      <div key={idx} className="p-8 border border-gray-100 rounded-[2.5rem] bg-gray-50/30 hover:bg-white hover:shadow-2xl transition-all duration-500">
-                        <div className="flex items-center justify-between mb-5"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-4 py-1.5 bg-white rounded-full border border-gray-100">LOG ENTRY #{idx + 1}</span><button onClick={() => { const copy = [...issueEntries]; copy.splice(idx, 1); setIssueEntries(copy); }} className="text-red-500 text-[9px] font-black uppercase tracking-widest hover:underline px-4">Remove Entry</button></div>
-                        <textarea value={entry.issue || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issue: e.target.value }; setIssueEntries(copy); }} className="w-full bg-white border border-gray-100 rounded-[1.5rem] p-5 text-xs font-bold text-gray-700 focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner" rows={3} placeholder="Provide technical diagnostic details..." />
-                        <div className="mt-5 flex gap-4">
-                          <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₹</span><input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Valuation Amount" className="w-full pl-10 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
-                          <select value={entry.issueStatus || "pending"} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueStatus: e.target.value }; setIssueEntries(copy); }} className={`px-6 py-4 bg-white border border-gray-100 rounded-xl text-[9px] font-black uppercase tracking-widest outline-none ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500 font-bold"}`}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+                      <div key={idx} className="flex items-center gap-4 p-3 border border-gray-100 rounded-xl bg-gray-50/50 hover:bg-white transition-all">
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest min-w-[50px]">#{idx + 1}</span>
+                        <input type="text" value={entry.issue || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issue: e.target.value }; setIssueEntries(copy); }} className="flex-1 bg-white border border-gray-100 rounded-lg px-3 py-2 text-xs font-black text-black outline-none focus:border-black transition-all" placeholder="Diagnostic Issue..." />
+                        <div className="relative w-28">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
+                          <input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Amt" className="w-full pl-6 pr-3 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black" />
                         </div>
+                        <div className="w-28 text-center">
+                          <span className={`text-[9px] font-black uppercase tracking-widest ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500"}`}>{entry.issueStatus || "pending"}</span>
+                        </div>
+                        <button onClick={() => { const copy = [...issueEntries]; copy.splice(idx, 1); setIssueEntries(copy); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><FaTimes size={12} /></button>
                       </div>
                     ))}
                     {issueEntries.length === 0 && <div className="py-20 text-center text-gray-300 font-black uppercase tracking-widest text-[10px] border-2 border-dashed border-gray-100 rounded-[3rem]">Initial diagnostic log empty</div>}
@@ -502,14 +532,46 @@ export default function Services() {
                 ) : (
                   <>
                     {editingParts.map((part, idx) => (
-                      <div key={idx} className="p-8 border border-gray-100 rounded-[2.5rem] bg-gray-50/30 hover:bg-white hover:shadow-2xl transition-all duration-500">
-                        <div className="flex items-center justify-between mb-5"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-4 py-1.5 bg-white rounded-full border border-gray-100">PART REQUEST #{idx + 1}</span><button onClick={() => { const copy = [...editingParts]; copy.splice(idx, 1); setEditingParts(copy); }} className="text-red-500 text-[9px] font-black uppercase tracking-widest hover:underline px-4">Remove Part</button></div>
-                        <input type="text" value={part.partName || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], partName: e.target.value }; setEditingParts(copy); }} className="w-full bg-white border border-gray-100 rounded-[1.5rem] px-5 py-4 text-xs font-bold text-gray-700 focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner" placeholder="Part Name" />
-                        <div className="mt-5 flex gap-4">
-                          <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-widest text-gray-400">Qty</span><input type="number" value={part.qty || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], qty: e.target.value }; setEditingParts(copy); }} placeholder="Qty" className="w-full pl-16 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
-                          <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₹</span><input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-10 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
-                          <select value={part.status || "pending"} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], status: e.target.value }; setEditingParts(copy); }} className={`px-6 py-4 bg-white border border-gray-100 rounded-xl text-[9px] font-black uppercase tracking-widest outline-none ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500 font-bold"}`}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+                      <div key={idx} className="flex items-center gap-4 p-3 border border-gray-100 rounded-xl bg-gray-50/50 hover:bg-white transition-all relative">
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest min-w-[50px]">Part #{idx + 1}</span>
+                        <input 
+                          type="text" 
+                          list="spare-parts-list"
+                          value={part.partName || ""} 
+                          onChange={(e) => { 
+                            const val = e.target.value;
+                            const copy = [...editingParts]; 
+                            const matchedProduct = products.find(p => p.name === val);
+                            if (matchedProduct) {
+                              copy[idx] = { 
+                                ...copy[idx], 
+                                partName: val, 
+                                price: matchedProduct.offerPrice || matchedProduct.mrp || 0 
+                              };
+                            } else {
+                              copy[idx] = { ...copy[idx], partName: val }; 
+                            }
+                            setEditingParts(copy); 
+                          }} 
+                          className="flex-1 bg-white border border-gray-100 rounded-lg px-3 py-2 text-xs font-black text-black outline-none focus:border-black transition-all" 
+                          placeholder="Search or Enter Part Name..." 
+                        />
+                        <datalist id="spare-parts-list">
+                          {products.map(p => (
+                            <option key={p.id} value={p.name}>₹{p.offerPrice || p.mrp}</option>
+                          ))}
+                        </datalist>
+                        <div className="flex items-center gap-2">
+                           <input type="number" value={part.qty || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], qty: e.target.value }; setEditingParts(copy); }} placeholder="Qty" className="w-16 px-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black text-center" />
+                           <div className="relative w-24">
+                             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
+                             <input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-5 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black" />
+                           </div>
                         </div>
+                        <div className="w-28 text-center">
+                           <span className={`text-[9px] font-black uppercase tracking-widest ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500"}`}>{part.status || "pending"}</span>
+                        </div>
+                        <button onClick={() => { const copy = [...editingParts]; copy.splice(idx, 1); setEditingParts(copy); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><FaTimes size={12} /></button>
                       </div>
                     ))}
                     {editingParts.length === 0 && <div className="py-20 text-center text-gray-300 font-black uppercase tracking-widest text-[10px] border-2 border-dashed border-gray-100 rounded-[3rem]">No spare parts requested</div>}
@@ -517,11 +579,11 @@ export default function Services() {
                 )}
               </div>
 
-              <div className="px-10 py-6 pb-12 border-t border-gray-100 bg-gray-50/50 flex gap-4">
+              <div className="px-8 py-5 border-t border-gray-100 bg-white flex gap-3">
                 {activeModalTab === "issues" ? (
-                  <button onClick={() => setIssueEntries([...issueEntries, { issue: '', issueAmount: '', issueStatus: 'pending' }])} className="px-8 py-4 rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Append Work Entry</button>
+                  <button onClick={() => setIssueEntries([...issueEntries, { issue: '', issueAmount: '', issueStatus: 'pending' }])} className="px-6 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">Add Issue</button>
                 ) : (
-                  <button onClick={() => setEditingParts([...editingParts, { partName: '', qty: 1, price: 0, status: 'pending' }])} className="px-8 py-4 rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Append Spare Part</button>
+                  <button onClick={() => setEditingParts([...editingParts, { partName: '', qty: 1, price: 0, status: 'pending' }])} className="px-6 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">Add Part</button>
                 )}
                 <button onClick={async () => {
                   try {
@@ -540,19 +602,19 @@ export default function Services() {
 
                     // Update main issue amounts if necessary based on first entry
                     if (issuesToSave.length > 0) {
-                      await api.put(`/all-services/${editingIssueId}/issue`, {
-                        issue: issuesToSave[0].issue,
-                        issueAmount: Number(issuesToSave[0].issueAmount || 0)
-                      });
+                       await api.put(`/all-services/${editingIssueId}/issue`, {
+                         issue: issuesToSave[0].issue,
+                         issueAmount: Number(issuesToSave[0].issueAmount || 0)
+                       });
                     }
 
-                    toast.success('Manifest synchronized successfully');
+                    toast.success('Service items saved successfully');
                     setIssueModalVisible(false);
                     setEditingIssueId(null);
                     setActiveModalTab("issues");
                     loadData();
-                  } catch (error) { toast.error('Synchronization failed'); }
-                }} className="flex-1 rounded-2xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Synchronize Manifest</button>
+                  } catch (error) { toast.error('Failed to save items'); }
+                }} className="flex-1 rounded-xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Save Spares & Issues</button>
               </div>
             </div>
           </div>
