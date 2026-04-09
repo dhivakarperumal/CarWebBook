@@ -69,6 +69,9 @@ const AllOrders = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [deliveryOnly, setDeliveryOnly] = useState(false);
+  const [dateFilter, setDateFilter] = useState("today"); // default → today
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const [view, setView] = useState("table");
   const navigate = useNavigate();
 
@@ -110,6 +113,14 @@ const AllOrders = () => {
     return { total, delivered, cancelled, paid, revenue };
   }, [orders]);
 
+  /* ================= HELPERS: parse order date ================= */
+  const parseOrderDate = (raw) => {
+    if (!raw) return null;
+    if (raw?.toDate) return raw.toDate();
+    if (raw?.seconds) return new Date(raw.seconds * 1000);
+    return new Date(raw);
+  };
+
   /* ================= FILTER ================= */
   const filteredOrders = orders.filter((o) => {
     const customer = getCustomerDetails(o);
@@ -125,11 +136,44 @@ const AllOrders = () => {
     const matchPayment =
       paymentFilter === "all" ||
       normalizeKey(o.paymentStatus) === normalizeKey(paymentFilter);
-    // DELIVERY ONLY → SHOW DELIVERED ORDERS ONLY
-    if (deliveryOnly) {
-      if (!normalizeKey(o.status).includes("delivered")) return false;
-    }
 
+    // DELIVERY ONLY
+    if (deliveryOnly && !normalizeKey(o.status).includes("delivered")) return false;
+
+    // DATE FILTER
+    if (dateFilter !== "all") {
+      const orderDate = parseOrderDate(o.createdAt);
+      if (!orderDate) return false;
+
+      const now = new Date();
+      const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+      if (dateFilter === "today") {
+        if (startOfDay(orderDate).getTime() !== startOfDay(now).getTime()) return false;
+      } else if (dateFilter === "yesterday") {
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        if (startOfDay(orderDate).getTime() !== startOfDay(yesterday).getTime()) return false;
+      } else if (dateFilter === "thisweek") {
+        const dayOfWeek = now.getDay(); // 0=Sun
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - dayOfWeek);
+        if (orderDate < startOfDay(weekStart) || orderDate > now) return false;
+      } else if (dateFilter === "thismonth") {
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        if (orderDate < monthStart || orderDate > now) return false;
+      } else if (dateFilter === "custom") {
+        if (customFrom) {
+          const from = new Date(customFrom);
+          if (startOfDay(orderDate) < from) return false;
+        }
+        if (customTo) {
+          const to = new Date(customTo);
+          to.setHours(23, 59, 59, 999);
+          if (orderDate > to) return false;
+        }
+      }
+    }
 
     return matchSearch && matchStatus && matchPayment;
   });
@@ -144,7 +188,7 @@ const AllOrders = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, statusFilter, paymentFilter, deliveryOnly]);
+  }, [search, statusFilter, paymentFilter, deliveryOnly, dateFilter, customFrom, customTo]);
 
   /* ================= UPDATE STATUS ================= */
   const updateStatus = async (orderId, newStatus) => {
@@ -267,6 +311,39 @@ const AllOrders = () => {
             <option value="paid">Paid</option>
             <option value="pending">Pending</option>
           </select>
+
+          {/* 📅 DATE FILTER DROPDOWN */}
+          <select
+            value={dateFilter}
+            onChange={(e) => { setDateFilter(e.target.value); setCustomFrom(""); setCustomTo(""); }}
+            className="h-[42px] min-w-[160px] rounded-lg bg-white border border-gray-300 px-4 text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition"
+          >
+            <option value="all">All</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="thisweek">This Week</option>
+            <option value="thismonth">This Month</option>
+            <option value="custom">Custom Range</option>
+          </select>
+
+          {/* 📅 CUSTOM RANGE PICKERS */}
+          {dateFilter === "custom" && (
+            <>
+              <input
+                type="date"
+                value={customFrom}
+                onChange={(e) => setCustomFrom(e.target.value)}
+                className="h-[42px] rounded-lg bg-white border border-gray-300 px-3 text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition"
+              />
+              <span className="self-center text-gray-400 text-sm">to</span>
+              <input
+                type="date"
+                value={customTo}
+                onChange={(e) => setCustomTo(e.target.value)}
+                className="h-[42px] rounded-lg bg-white border border-gray-300 px-3 text-sm focus:ring-2 focus:ring-cyan-500 outline-none transition"
+              />
+            </>
+          )}
 
           {/* 🚚 DELIVERY TOGGLE */}
           <button
