@@ -135,6 +135,7 @@ const EmpDashboard = () => {
   const fetchMyTasks = async () => {
     try {
       setLoading(true);
+      const todayStr = new Date().toDateString();
       // 🔥 Fetching from all-services to pick up both bookings and appointments
       const res = await api.get("/all-services");
       const allServices = res.data || [];
@@ -145,13 +146,17 @@ const EmpDashboard = () => {
         b.status !== "Cancelled"
       );
 
-      setMyTasks(filtered.slice(0, 5)); // Latest 5 tasks
+      const tasksForToday = filtered.filter(b => {
+        const dStr = b.created_at || b.createdAt || b.preferredDate;
+        return dStr && new Date(dStr).toDateString() === todayStr;
+      });
+
+      setMyTasks(tasksForToday);
       
       // Fetch total staff count
       const staffRes = await api.get("/staff");
       const totalStaffCount = (staffRes.data || []).length;
 
-      const todayStr = new Date().toDateString();
       const normalize = (s) => (s || "").toLowerCase().trim();
       
       const activeTasks = filtered.filter(b => {
@@ -277,10 +282,10 @@ const EmpDashboard = () => {
           <div className="flex items-center justify-between px-2">
             <h2 className="text-xl font-black text-gray-900 tracking-tight flex items-center gap-2">
               <ClipboardList className="w-5 h-5 text-blue-600" />
-              Assigned Tasks
+              Today's Work
             </h2>
             <button 
-              onClick={() => navigate("/employee/bookings")}
+              onClick={() => navigate("/employee/assignservices")}
               className="px-4 py-1.5 bg-blue-50 text-blue-600 rounded-full text-xs font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all"
             >
               View All
