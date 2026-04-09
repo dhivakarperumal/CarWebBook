@@ -33,18 +33,18 @@ const StatCard = ({ title, value, icon, gradient }) => (
 export default function EmpService() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { profileName: userProfile } = useAuth();
+  const { profileName: userProfile, cachedData, updateCache } = useAuth();
   const userRole = (userProfile?.role || "").toLowerCase();
   const isMechanic = userRole === "mechanic" || userRole === "staff";
   const pathPrefix = location.pathname.startsWith("/employee") ? "/employee" : "/admin";
 
   const [viewMode, setViewMode] = useState("table");
   const [mainTab, setMainTab] = useState("all");
-  const [services, setServices] = useState([]);
-  const [employees, setEmployees] = useState([]);
+  const [services, setServices] = useState(cachedData.globalServices || []);
+  const [employees, setEmployees] = useState(cachedData.employees || []);
   const [issueEntries, setIssueEntries] = useState([]);
-  const [serviceParts, setServiceParts] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [serviceParts, setServiceParts] = useState(cachedData.partsMap || {});
+  const [loading, setLoading] = useState(!cachedData.globalServices);
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState("All Time");
   const [currentPage, setCurrentPage] = useState(1);
@@ -59,12 +59,13 @@ export default function EmpService() {
   const [editingIssueId, setEditingIssueId] = useState(null);
   const [activeModalTab, setActiveModalTab] = useState("issues");
   const [editingParts, setEditingParts] = useState([]);
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(cachedData.products || []);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  const loadData = async () => {
+  const loadData = async (isSilent = false) => {
     try {
+      if (!isSilent) setLoading(true);
       const [servRes, empRes, prodRes] = await Promise.all([
         api.get("/all-services"),
         api.get("/staff"),
@@ -89,14 +90,19 @@ export default function EmpService() {
       setServiceParts(partsMap);
       setServices(servicesWithDetails);
       setEmployees(empRes.data);
+      
+      updateCache("globalServices", servicesWithDetails);
+      updateCache("employees", empRes.data || []);
+      updateCache("products", prodRes.data || []);
+      updateCache("partsMap", partsMap);
     } catch (error) {
-      toast.error("Failed to fetch data");
+      if (!isSilent) toast.error("Failed to fetch data");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(!!cachedData.globalServices); }, []);
 
   const searchedServices = useMemo(() => {
     return services.filter((s) => {

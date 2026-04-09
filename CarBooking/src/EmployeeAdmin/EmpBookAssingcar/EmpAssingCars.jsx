@@ -21,9 +21,9 @@ import Pagination from "../../Components/Pagination";
 const ITEMS_PER_PAGE = 6;
 
 const EmpAssingCars = () => {
-  const { profileName: userProfile } = useAuth();
-  const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { profileName: userProfile, cachedData, updateCache } = useAuth();
+  const [services, setServices] = useState(cachedData.assignedHistory || []);
+  const [loading, setLoading] = useState(!cachedData.assignedHistory);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [viewMode, setViewMode] = useState("table"); // 'card' or 'table'
@@ -32,12 +32,12 @@ const EmpAssingCars = () => {
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
 
   useEffect(() => {
-    fetchAssignedServices();
+    fetchAssignedServices(!!cachedData.assignedHistory);
   }, [userProfile]);
 
-  const fetchAssignedServices = async () => {
+  const fetchAssignedServices = async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       // 🔥 Fetching from all-services to include both bookings and appointments
       const res = await api.get("/all-services");
       
@@ -47,9 +47,10 @@ const EmpAssingCars = () => {
       );
       
       setServices(filtered);
+      updateCache("assignedHistory", filtered);
     } catch (err) {
       console.error("Fetch assigned services failed", err);
-      toast.error("Failed to load your assigned services");
+      if (!isSilent) toast.error("Failed to load your assigned services");
     } finally {
       setLoading(false);
     }

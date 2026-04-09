@@ -37,11 +37,11 @@ const StatusBadge = ({ status }) => {
 };
 
 const EmpBilling = () => {
-  const { profileName: userProfile } = useAuth();
+  const { profileName: userProfile, cachedData, updateCache } = useAuth();
   const navigate = useNavigate();
-  const [bills, setBills] = useState([]);
-  const [myBookings, setMyBookings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [bills, setBills] = useState(cachedData.billingHistory || []);
+  const [myBookings, setMyBookings] = useState(cachedData.assignedBookings || []);
+  const [loading, setLoading] = useState(!cachedData.billingHistory);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [viewMode, setViewMode] = useState("table"); 
@@ -50,12 +50,12 @@ const EmpBilling = () => {
   const [detailLoading, setDetailLoading] = useState(false);
 
   useEffect(() => {
-    loadData();
+    loadData(!!cachedData.billingHistory);
   }, [userProfile]);
 
-  const loadData = async () => {
+  const loadData = async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const [billRes, bookRes] = await Promise.all([
         api.get('/billings'),
         api.get('/bookings')
@@ -83,9 +83,11 @@ const EmpBilling = () => {
 
       setBills(myBills);
       setMyBookings(assignedBookings);
+      updateCache("billingHistory", myBills);
+      updateCache("assignedBookings", assignedBookings);
     } catch (err) {
       console.error(err);
-      toast.error("Failed to load billing history");
+      if (!isSilent) toast.error("Failed to load billing history");
     } finally {
       setLoading(false);
     }

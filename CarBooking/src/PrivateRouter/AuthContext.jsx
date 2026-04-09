@@ -49,12 +49,27 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   };
 
+  const [cachedData, setCachedData] = useState({});
+
+  const updateCache = (key, data) => {
+    setCachedData(prev => ({ ...prev, [key]: data }));
+  };
+
+  const clearCache = () => setCachedData({});
+
   useEffect(() => {
     checkAuth();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, profileName, login, logout: logoutContext }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profileName, 
+      login, 
+      logout: () => { logoutContext(); clearCache(); },
+      cachedData,
+      updateCache
+    }}>
       {!loading && children}
     </AuthContext.Provider>
   );

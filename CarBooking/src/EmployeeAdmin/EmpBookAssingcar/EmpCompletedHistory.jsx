@@ -26,9 +26,9 @@ import Pagination from "../../Components/Pagination";
 const ITEMS_PER_PAGE = 8;
 
 const EmpCompletedHistory = () => {
-  const { profileName: userProfile } = useAuth();
+  const { profileName: userProfile, cachedData, updateCache } = useAuth();
   const [services, setServices] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedData.history);
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("table");
   const [page, setPage] = useState(1);
@@ -41,12 +41,15 @@ const EmpCompletedHistory = () => {
   const [partsEntries, setPartsEntries] = useState([]);
 
   useEffect(() => {
-    fetchCompletedServices();
+    if (cachedData.history) {
+      setServices(cachedData.history);
+    }
+    fetchCompletedServices(!!cachedData.history);
   }, [userProfile]);
 
-  const fetchCompletedServices = async () => {
+  const fetchCompletedServices = async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const [servRes, billRes] = await Promise.all([
         api.get("/all-services"),
         api.get("/billings")
@@ -99,8 +102,9 @@ const EmpCompletedHistory = () => {
       });
       
       setServices(filtered);
+      updateCache("history", filtered);
     } catch (err) {
-      toast.error("Failed to load completed services");
+      if (!isSilent) toast.error("Failed to load completed services");
     } finally {
       setLoading(false);
     }
