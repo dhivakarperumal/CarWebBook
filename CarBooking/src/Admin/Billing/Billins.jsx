@@ -68,6 +68,9 @@ const Billings = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [amountSort, setAmountSort] = useState("none");
+  const [dateFilter, setDateFilter] = useState("today"); // default → today
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
   const itemsPerPage = 10;
@@ -104,16 +107,61 @@ const Billings = () => {
     (b) => b.paymentStatus?.toLowerCase() === "paid"
   ).length;
 
+  /* ================= HELPERS: parse date ================= */
+  const parseBillDate = (raw) => {
+    if (!raw) return null;
+    if (raw?.toDate) return raw.toDate();
+    if (raw?.seconds) return new Date(raw.seconds * 1000);
+    return new Date(raw);
+  };
+
   /* =========================
      FILTER + SORT
   ========================= */
   const filtered = useMemo(() => {
     let data = bills.filter((b) => {
       const text = `${b.invoiceNo} ${b.customerName} ${b.car} ${b.bookingId}`.toLowerCase();
-      return (
-        text.includes(search.toLowerCase()) &&
-        (statusFilter === "all" || b.paymentStatus?.toLowerCase() === statusFilter)
-      );
+      const matchSearch = text.includes(search.toLowerCase());
+      const matchStatus = statusFilter === "all" || b.paymentStatus?.toLowerCase() === statusFilter;
+
+      let matchDate = true;
+      if (dateFilter !== "all") {
+        const billDate = parseBillDate(b.createdAt);
+        if (!billDate) {
+          matchDate = false;
+        } else {
+          const now = new Date();
+          const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+          if (dateFilter === "today") {
+            if (startOfDay(billDate).getTime() !== startOfDay(now).getTime()) matchDate = false;
+          } else if (dateFilter === "yesterday") {
+            const yesterday = new Date(now);
+            yesterday.setDate(now.getDate() - 1);
+            if (startOfDay(billDate).getTime() !== startOfDay(yesterday).getTime()) matchDate = false;
+          } else if (dateFilter === "thisweek") {
+            const dayOfWeek = now.getDay();
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - dayOfWeek);
+            if (billDate < startOfDay(weekStart) || billDate > now) matchDate = false;
+          } else if (dateFilter === "thismonth") {
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            if (billDate < monthStart || billDate > now) matchDate = false;
+          } else if (dateFilter === "custom") {
+            if (customFrom) {
+              const from = new Date(customFrom);
+              if (startOfDay(billDate) < from) matchDate = false;
+            }
+            if (customTo) {
+              const to = new Date(customTo);
+              to.setHours(23, 59, 59, 999);
+              if (billDate > to) matchDate = false;
+            }
+          }
+        }
+      }
+
+      return matchSearch && matchStatus && matchDate;
     });
 
     if (amountSort === "low") {
@@ -134,7 +182,7 @@ const Billings = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, statusFilter, amountSort]);
+  }, [search, statusFilter, amountSort, dateFilter, customFrom, customTo]);
 
   /* =========================
      DELETE & UPDATE
@@ -312,6 +360,39 @@ const Billings = () => {
 
           {/* RIGHT : FILTERS */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+
+            {/* 📅 DATE PRESET */}
+            <select
+              value={dateFilter}
+              onChange={(e) => { setDateFilter(e.target.value); setCustomFrom(""); setCustomTo(""); }}
+              className="rounded-lg border border-gray-200 px-4 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/40 focus:border-gray-500 transition bg-white cursor-pointer"
+            >
+              <option value="all">All Dates</option>
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="thisweek">This Week</option>
+              <option value="thismonth">This Month</option>
+              <option value="custom">Custom Range</option>
+            </select>
+
+            {/* 📅 CUSTOM RANGE PICKERS */}
+            {dateFilter === "custom" && (
+              <>
+                <input
+                  type="date"
+                  value={customFrom}
+                  onChange={(e) => setCustomFrom(e.target.value)}
+                  className="rounded-lg border border-gray-200 px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/40 focus:border-gray-500 transition bg-white"
+                />
+                <span className="text-gray-400 text-sm font-semibold">to</span>
+                <input
+                  type="date"
+                  value={customTo}
+                  onChange={(e) => setCustomTo(e.target.value)}
+                  className="rounded-lg border border-gray-200 px-3 py-3 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-gray-900/40 focus:border-gray-500 transition bg-white"
+                />
+              </>
+            )}
 
             <select
               value={statusFilter}

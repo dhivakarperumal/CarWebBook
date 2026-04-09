@@ -40,8 +40,8 @@ export default function Services() {
   const isMechanic = userRole === "mechanic" || userRole === "staff";
   const pathPrefix = location.pathname.startsWith("/employee") ? "/employee" : "/admin";
 
-  const [viewMode, setViewMode] = useState("table"); 
-  const [mainTab, setMainTab] = useState("all"); 
+  const [viewMode, setViewMode] = useState("table");
+  const [mainTab, setMainTab] = useState("all");
   const [services, setServices] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [issueEntries, setIssueEntries] = useState([]);
@@ -49,6 +49,8 @@ export default function Services() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState("All Time");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -106,31 +108,48 @@ export default function Services() {
       if (!bDateStr) return false;
 
       const bookingDate = new Date(bDateStr);
-      const today = new Date();
-      if (dateFilter === "Today") return bookingDate.toDateString() === today.toDateString();
-      if (dateFilter === "Yesterday") {
-        const yesterday = new Date();
-        yesterday.setDate(today.getDate() - 1);
-        return bookingDate.toDateString() === yesterday.toDateString();
-      }
-      if (dateFilter === "This Week") {
-        const lastWeek = new Date();
-        lastWeek.setDate(today.getDate() - 7);
-        lastWeek.setHours(0, 0, 0, 0);
-        return bookingDate >= lastWeek;
-      }
-      if (dateFilter === "This Month") {
-        const lastMonth = new Date();
-        lastMonth.setDate(today.getDate() - 30);
-        lastMonth.setHours(0, 0, 0, 0);
-        return bookingDate >= lastMonth;
+      const now = new Date();
+      const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+      if (dateFilter === "Today") {
+        if (startOfDay(bookingDate).getTime() !== startOfDay(now).getTime()) return false;
+      } else if (dateFilter === "Yesterday") {
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        if (startOfDay(bookingDate).getTime() !== startOfDay(yesterday).getTime()) return false;
+      } else if (dateFilter === "This Week") {
+        const dayOfWeek = now.getDay();
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - dayOfWeek);
+        if (bookingDate < startOfDay(weekStart) || bookingDate > now) return false;
+      } else if (dateFilter === "Last Week") {
+        const dayOfWeek = now.getDay();
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - dayOfWeek - 7);
+        const weekEnd = new Date(now);
+        weekEnd.setDate(now.getDate() - dayOfWeek - 1);
+        weekEnd.setHours(23, 59, 59, 999);
+        if (bookingDate < startOfDay(weekStart) || bookingDate > weekEnd) return false;
+      } else if (dateFilter === "This Month") {
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        if (bookingDate < monthStart || bookingDate > now) return false;
+      } else if (dateFilter === "Custom Range") {
+        if (customFrom) {
+          const from = new Date(customFrom);
+          if (startOfDay(bookingDate) < from) return false;
+        }
+        if (customTo) {
+          const to = new Date(customTo);
+          to.setHours(23, 59, 59, 999);
+          if (bookingDate > to) return false;
+        }
       }
       return true;
     });
-  }, [services, search, dateFilter]);
+  }, [services, search, dateFilter, customFrom, customTo]);
 
   const stats = useMemo(() => {
-    const relevantServices = isMechanic 
+    const relevantServices = isMechanic
       ? services.filter(s => (s.assignedEmployeeName || "").toLowerCase() === (userProfile?.displayName || "").toLowerCase())
       : services;
 
@@ -145,8 +164,8 @@ export default function Services() {
     };
   }, [services, isMechanic, userProfile]);
 
-  const currentMainList = mainTab === "all" 
-    ? searchedServices 
+  const currentMainList = mainTab === "all"
+    ? searchedServices
     : (mainTab === "booked" ? searchedServices.filter(s => !s.addVehicle) : searchedServices.filter(s => s.addVehicle));
   const assignedServices = currentMainList.filter(s => {
     if (!s.assignedEmployeeId) return false;
@@ -251,254 +270,260 @@ export default function Services() {
         <StatCard title="Successfully Closed" value={stats.completed} icon={<FaCheckCircle />} gradient="from-emerald-600 to-emerald-400" />
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4 justify-between items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-xl shadow-slate-200/50">
-        <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner overflow-x-auto no-scrollbar w-full lg:w-auto">
-          <button onClick={() => { setMainTab("all"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "all" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>All</button>
-          <button onClick={() => { setMainTab("booked"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "booked" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>Appointments</button>
-          <button onClick={() => { setMainTab("addVehicle"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "addVehicle" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>Booking</button>
-        </div>
-
-        <div className="flex h-[56px] bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner shrink-0">
-          <button onClick={() => setViewMode("table")} className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaList /> Table</button>
-          <button onClick={() => setViewMode("card")} className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "card" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaThLarge /> Cards</button>
-        </div>
-      </div>
 
       <div className="flex flex-col lg:flex-row items-center justify-between gap-4 bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-slate-200/50">
-        <div className="relative group w-full lg:max-w-xs xl:max-w-md">
+        <div className="relative group w-full lg:max-w-md xl:max-w-lg">
           <FaSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-all" />
           <input type="text" placeholder="Track booking, customer, vehicle ID..." value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} className="w-full pl-15 pr-6 py-4 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:ring-8 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-inner" />
         </div>
 
-        <div className="flex flex-wrap lg:flex-nowrap items-center justify-end gap-3 w-full lg:w-auto">
-          <select value={dateFilter} onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }} className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm min-w-[160px]">
-            <option value="All Time">All</option>
-            <option value="Today">Today</option>
-          </select>
+        <div className="flex flex-col sm:flex-row items-center justify-end gap-3 w-full lg:w-auto">
+          <div className="flex gap-2">
+            <select value={dateFilter} onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }} className="w-full sm:w-auto h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-[1.5rem] font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm shrink-0">
+              <option value="All Time">All</option>
+              <option value="Today">Today</option>
+              <option value="Yesterday">Yesterday</option>
+              <option value="This Week">This Week</option>
+              <option value="Last Week">Last Week</option>
+              <option value="This Month">This Month</option>
+              <option value="Custom Range">Custom Range</option>
+            </select>
 
+            {dateFilter === "Custom Range" && (
+              <div className="flex items-center gap-2 animate-fadeIn bg-gray-50 p-1.5 rounded-[1.5rem] border border-gray-100 font-bold uppercase text-[10px] tracking-widest text-gray-500">
+                <input type="date" value={customFrom} onChange={(e) => { setCustomFrom(e.target.value); setCurrentPage(1); }} className="h-10 px-4 bg-white border border-gray-100 rounded-xl outline-none focus:border-black" />
+                <span>To</span>
+                <input type="date" value={customTo} onChange={(e) => { setCustomTo(e.target.value); setCurrentPage(1); }} className="h-10 px-4 bg-white border border-gray-100 rounded-xl outline-none focus:border-black" />
+              </div>
+            )}
+          </div>
 
+          <div className="flex h-[56px] bg-gray-100 p-1.5 rounded-[1.5rem] border border-gray-200 shadow-inner shrink-0 w-full sm:w-auto">
+            <button onClick={() => setViewMode("table")} className={`flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaList className="hidden sm:block" /></button>
+            <button onClick={() => setViewMode("card")} className={`flex-1 sm:flex-none flex justify-center items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "card" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaThLarge className="hidden sm:block" /></button>
+          </div>
         </div>
       </div>
 
       <>
-      {viewMode === "card" ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
-          {paginatedData.map((item) => (
-            <div key={item.id} className="group bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all duration-500 flex flex-col relative overflow-hidden">
-               <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity"><FaWrench size={80}/></div>
-               <div className="flex justify-between items-start mb-6 relative z-10">
-                <div>
-                  <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block mb-1">SERVICE ID</span>
-                  <p className="text-sm font-black text-blue-900">{item.bookingId || `SER-${item.id}`}</p>
-                </div>
-                <select 
-                  value={getMappedStatus(item.serviceStatus || item.status)}
-                  onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
-                  className={`px-4 py-2 rounded-[1.5rem] text-[10px] font-black tracking-widest border transition-all outline-none cursor-pointer appearance-none text-center ${getStatusColor(item.serviceStatus || item.status)}`}
-                >
-                  {STATUS_STEPS.slice(STATUS_STEPS.indexOf(getMappedStatus(item.serviceStatus || item.status))).map(s => (
-                    <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-5 flex-1 relative z-10">
-                <div>
-                  <h3 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors uppercase truncate">
-                    {item.brand || "Unspecified"} {item.model || "Vehicle"}
-                  </h3>
-                  <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 w-fit px-3 py-1 rounded-xl border border-blue-100 mt-1">
-                    {item.vehicleNumber || "NO PLATE"}
-                  </p>
-                </div>
-                <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100 space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400 font-bold text-xs uppercase">{item.name?.charAt(0)}</div>
-                    <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Client</p><p className="text-sm font-black text-gray-800">{item.name}</p></div>
+        {viewMode === "card" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
+            {paginatedData.map((item) => (
+              <div key={item.id} className="group bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all duration-500 flex flex-col relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity"><FaWrench size={80} /></div>
+                <div className="flex justify-between items-start mb-6 relative z-10">
+                  <div>
+                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block mb-1">SERVICE ID</span>
+                    <p className="text-sm font-black text-blue-900">{item.bookingId || `SER-${item.id}`}</p>
                   </div>
-                  <div className="flex items-center gap-4">
-                     <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400 text-xs"><FaClock /></div>
-                     <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Allocation</p><p className="text-sm font-bold text-gray-500">{item.assignedEmployeeName || "Pending Assignment"}</p></div>
+                  <select
+                    value={getMappedStatus(item.serviceStatus || item.status)}
+                    onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
+                    className={`px-4 py-2 rounded-[1.5rem] text-[10px] font-black tracking-widest border transition-all outline-none cursor-pointer appearance-none text-center ${getStatusColor(item.serviceStatus || item.status)}`}
+                  >
+                    {STATUS_STEPS.slice(STATUS_STEPS.indexOf(getMappedStatus(item.serviceStatus || item.status))).map(s => (
+                      <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-5 flex-1 relative z-10">
+                  <div>
+                    <h3 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors uppercase truncate">
+                      {item.brand || "Unspecified"} {item.model || "Vehicle"}
+                    </h3>
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 w-fit px-3 py-1 rounded-xl border border-blue-100 mt-1">
+                      {item.vehicleNumber || "NO PLATE"}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100 space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400 font-bold text-xs uppercase">{item.name?.charAt(0)}</div>
+                      <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Client</p><p className="text-sm font-black text-gray-800">{item.name}</p></div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400 text-xs"><FaClock /></div>
+                      <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Allocation</p><p className="text-sm font-bold text-gray-500">{item.assignedEmployeeName || "Pending Assignment"}</p></div>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl bg-blue-50/50 border border-blue-100 p-4 overflow-hidden">
+                    <div className="flex justify-between items-center mb-3"><span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Diagnostic Log & Parts</span><button onClick={() => handleOpenIssueModal(item)} className="text-[9px] font-black text-blue-600 uppercase hover:underline">Edit</button></div>
+                    <div className="space-y-2">{item.issues?.slice(0, 2).map((iss, i) => <p key={i} className="text-xs font-bold text-gray-600 line-clamp-1 flex items-center gap-2"><span className="w-1 h-1 bg-blue-400 rounded-full" />{iss.issue}</p>) || <p className="text-xs italic text-gray-400">No log entries</p>}</div>
                   </div>
                 </div>
-                <div className="rounded-2xl bg-blue-50/50 border border-blue-100 p-4 overflow-hidden">
-                   <div className="flex justify-between items-center mb-3"><span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Diagnostic Log & Parts</span><button onClick={() => handleOpenIssueModal(item)} className="text-[9px] font-black text-blue-600 uppercase hover:underline">Edit</button></div>
-                   <div className="space-y-2">{item.issues?.slice(0, 2).map((iss, i) => <p key={i} className="text-xs font-bold text-gray-600 line-clamp-1 flex items-center gap-2"><span className="w-1 h-1 bg-blue-400 rounded-full" />{iss.issue}</p>) || <p className="text-xs italic text-gray-400">No log entries</p>}</div>
+                <div className="mt-6 pt-6 border-t border-gray-50 flex flex-wrap gap-2">
+                  {!item.assignedEmployeeId && <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="w-full rounded-2xl bg-black py-4 text-[10px] font-black text-white hover:bg-blue-600 transition-all uppercase tracking-widest mb-2">Assign Technician</button>}
+                  {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                    <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all border border-transparent hover:border-emerald-100" title="Add Parts"><FaPlus className="mr-2" /> Parts</button>
+                  )}
+                  <button onClick={() => handleOpenIssueModal(item)} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all border border-transparent hover:border-amber-100" title="Edit Log & Parts"><FaEdit className="mr-2" /> Log</button>
+                  <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100" title="View Details"><FaEye /></button>
+                  <button onClick={() => handleDelete(item.id)} className="h-11 w-11 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all border border-transparent hover:border-red-100" title="Delete"><FaTrash /></button>
                 </div>
               </div>
-              <div className="mt-6 pt-6 border-t border-gray-50 flex flex-wrap gap-2">
-                 {!item.assignedEmployeeId && <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="w-full rounded-2xl bg-black py-4 text-[10px] font-black text-white hover:bg-blue-600 transition-all uppercase tracking-widest mb-2">Assign Technician</button>}
-                 {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
-                   <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all border border-transparent hover:border-emerald-100" title="Add Parts"><FaPlus className="mr-2" /> Parts</button>
-                 )}
-                 <button onClick={() => handleOpenIssueModal(item)} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all border border-transparent hover:border-amber-100" title="Edit Log & Parts"><FaEdit className="mr-2" /> Log</button>
-                 <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100" title="View Details"><FaEye /></button>
-                 <button onClick={() => handleDelete(item.id)} className="h-11 w-11 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all border border-transparent hover:border-red-100" title="Delete"><FaTrash /></button>
-              </div>
-            </div>
-          ))}
-          {paginatedData.length === 0 && <div className="col-span-full py-20 text-center text-gray-400 font-black uppercase tracking-widest text-xs">No service protocols found for designated metrics</div>}
-        </div>
-      ) : (
-        <div className="bg-white rounded-lg shadow-2xl shadow-blue-900/5 border border-gray-100 animate-fadeIn overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
-            <thead className="bg-[#0e5f76] text-white">
-              <tr>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">S No</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Identifier</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Customer Profile</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Vehicle Spec</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Issues</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Mechanic Allocation</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-center">Workflow</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {paginatedData.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="px-8 py-24 text-center">
-                     <div className="flex flex-col items-center justify-center">
-                        <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mb-4 border border-gray-100 text-gray-300">
-                          <FaWrench size={24}/>
-                        </div>
-                        <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">No active service protocols found for criteria</p>
-                     </div>
-                  </td>
-                </tr>
-              ) : (
-                paginatedData.map((item, index) => (
-                  <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
-                    <td className="px-8 py-6"><span className="text-xs font-black text-gray-400">{(currentPage - 1) * itemsPerPage + index + 1}</span></td>
-                    <td className="px-8 py-6"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none mb-1">#ID {item.id}</span><span className="text-xs font-black text-blue-900">{item.bookingId || "SER-NEW"}</span></td>
-                    <td className="px-8 py-6"><p className="text-sm font-black text-gray-900">{item.name}</p><p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">{item.phone}</p></td>
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-2 mb-1"><p className="text-sm font-black text-gray-800 uppercase tracking-tight">{item.brand} {item.model}</p></div>
-                      <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{item.vehicleNumber || "UNSPECIFIED"}</p>
-                    </td>
-                    <td className="px-8 py-6">
-                      <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]" title={item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}>
-                        {item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}
-                      </p>
-                    </td>
-                    <td className="px-8 py-6">
-                      {item.assignedEmployeeName ? (
-                        <div className="flex items-center gap-3"><div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-black border border-blue-100 uppercase">{item.assignedEmployeeName.charAt(0)}</div><span className="text-xs font-black text-gray-700">{item.assignedEmployeeName}</span></div>
-                      ) : (
-                        <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-3 py-2 rounded-xl border border-amber-100">Pending Assignment</button>
-                      )}
-                    </td>
-                    <td className="px-8 py-6 text-center">
-                      <select
-                        value={getMappedStatus(item.serviceStatus || item.status)}
-                        onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
-                        className={`px-3 py-1.5 rounded-full text-[9px] font-black border tracking-widest uppercase transition-all outline-none cursor-pointer appearance-none text-center ${getStatusColor(item.serviceStatus || item.status)}`}
-                      >
-                        {STATUS_STEPS.slice(STATUS_STEPS.indexOf(getMappedStatus(item.serviceStatus || item.status))).map(s => (
-                          <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-8 py-6 text-right">
-                      <div className="flex justify-end gap-2">
-                        {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
-                          <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-emerald-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Add Parts"><FaPlus /></button>
-                        )}
-                        <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-amber-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
-                        <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="View Details"><FaEye /></button>
-                        <button onClick={() => handleDelete(item.id)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-red-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Delete"><FaTrash /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+            ))}
+            {paginatedData.length === 0 && <div className="col-span-full py-20 text-center text-gray-400 font-black uppercase tracking-widest text-xs">No service protocols found for designated metrics</div>}
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="bg-white rounded-lg shadow-2xl shadow-blue-900/5 border border-gray-100 animate-fadeIn overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
+                <thead className="bg-[#0e5f76] text-white">
+                  <tr>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">S No</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Identifier</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Customer Profile</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Vehicle Spec</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Issues</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Mechanic Allocation</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-center">Workflow</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {paginatedData.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" className="px-8 py-24 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mb-4 border border-gray-100 text-gray-300">
+                            <FaWrench size={24} />
+                          </div>
+                          <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">No active service protocols found for criteria</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedData.map((item, index) => (
+                      <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
+                        <td className="px-8 py-6"><span className="text-xs font-black text-gray-400">{(currentPage - 1) * itemsPerPage + index + 1}</span></td>
+                        <td className="px-8 py-6"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none mb-1">#ID {item.id}</span><span className="text-xs font-black text-blue-900">{item.bookingId || "SER-NEW"}</span></td>
+                        <td className="px-8 py-6"><p className="text-sm font-black text-gray-900">{item.name}</p><p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">{item.phone}</p></td>
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-2 mb-1"><p className="text-sm font-black text-gray-800 uppercase tracking-tight">{item.brand} {item.model}</p></div>
+                          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{item.vehicleNumber || "UNSPECIFIED"}</p>
+                        </td>
+                        <td className="px-8 py-6">
+                          <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]" title={item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}>
+                            {item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}
+                          </p>
+                        </td>
+                        <td className="px-8 py-6">
+                          {item.assignedEmployeeName ? (
+                            <div className="flex items-center gap-3"><div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-black border border-blue-100 uppercase">{item.assignedEmployeeName.charAt(0)}</div><span className="text-xs font-black text-gray-700">{item.assignedEmployeeName}</span></div>
+                          ) : (
+                            <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-3 py-2 rounded-xl border border-amber-100">Pending Assignment</button>
+                          )}
+                        </td>
+                        <td className="px-8 py-6 text-center">
+                          <select
+                            value={getMappedStatus(item.serviceStatus || item.status)}
+                            onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
+                            className={`px-3 py-1.5 rounded-full text-[9px] font-black border tracking-widest uppercase transition-all outline-none cursor-pointer appearance-none text-center ${getStatusColor(item.serviceStatus || item.status)}`}
+                          >
+                            {STATUS_STEPS.slice(STATUS_STEPS.indexOf(getMappedStatus(item.serviceStatus || item.status))).map(s => (
+                              <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                          <div className="flex justify-end gap-2">
+                            {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                              <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-emerald-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Add Parts"><FaPlus /></button>
+                            )}
+                            <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-amber-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
+                            <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="View Details"><FaEye /></button>
+                            <button onClick={() => handleDelete(item.id)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-red-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Delete"><FaTrash /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
-      <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
-      {modalVisible && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm shadow-2xl">
-          <div className="w-full max-w-md rounded-[3rem] bg-white p-10 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
-            <div className="mb-8 text-center">
-                <div className="w-16 h-16 bg-black text-white rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-xl shadow-black/20"><FaUserCheck size={28}/></div>
+        {modalVisible && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm shadow-2xl">
+            <div className="w-full max-w-md rounded-[3rem] bg-white p-10 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
+              <div className="mb-8 text-center">
+                <div className="w-16 h-16 bg-black text-white rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-xl shadow-black/20"><FaUserCheck size={28} /></div>
                 <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Mechanic Load</h2>
                 <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">Personnel Authorization Protocol</p>
-            </div>
-            <div className="mb-8">
-              <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-2">Technician Registry</label>
-              <select value={selectedEmployeeId} onChange={(e) => setSelectedEmployeeId(e.target.value)} className="w-full rounded-[1.5rem] border border-gray-100 bg-gray-50 px-6 py-4.5 text-xs font-black text-gray-800 focus:bg-white focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner uppercase tracking-wider">
-                <option value="">-- AUTHORIZE PERSONNEL --</option>
-                {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name.toUpperCase()}</option>)}
-              </select>
-            </div>
-            <div className="flex gap-4">
-              <button onClick={() => { setModalVisible(false); setSelectedEmployeeId(""); }} className="flex-1 rounded-[1.5rem] bg-gray-100 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-200 transition-all">Cancel</button>
-              <button onClick={assignEmployee} disabled={assigning || !selectedEmployeeId} className="flex-1 rounded-[1.5rem] bg-black py-4.5 text-[10px] font-black text-white uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 disabled:opacity-20">Assign</button>
+              </div>
+              <div className="mb-8">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-2">Technician Registry</label>
+                <select value={selectedEmployeeId} onChange={(e) => setSelectedEmployeeId(e.target.value)} className="w-full rounded-[1.5rem] border border-gray-100 bg-gray-50 px-6 py-4.5 text-xs font-black text-gray-800 focus:bg-white focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner uppercase tracking-wider">
+                  <option value="">-- AUTHORIZE PERSONNEL --</option>
+                  {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name.toUpperCase()}</option>)}
+                </select>
+              </div>
+              <div className="flex gap-4">
+                <button onClick={() => { setModalVisible(false); setSelectedEmployeeId(""); }} className="flex-1 rounded-[1.5rem] bg-gray-100 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-200 transition-all">Cancel</button>
+                <button onClick={assignEmployee} disabled={assigning || !selectedEmployeeId} className="flex-1 rounded-[1.5rem] bg-black py-4.5 text-[10px] font-black text-white uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 disabled:opacity-20">Assign</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {issueModalVisible && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-3xl max-h-[85vh] flex flex-col rounded-[3rem] bg-white shadow-2xl border border-white animate-in zoom-in-95 duration-200 overflow-hidden">
-            <div className="px-10 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+        {issueModalVisible && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+            <div className="w-full max-w-3xl max-h-[85vh] flex flex-col rounded-[3rem] bg-white shadow-2xl border border-white animate-in zoom-in-95 duration-200 overflow-hidden">
+              <div className="px-10 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                 <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20"><FaWrench size={24}/></div>
+                  <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20"><FaWrench size={24} /></div>
                   <div><h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Active Log Registry</h2><p className="text-[10px] text-blue-600 font-black uppercase tracking-widest mt-1">Diagnostics & Spare Parts</p></div>
                 </div>
                 <button onClick={() => { setIssueModalVisible(false); setEditingIssueId(null); }} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-100 text-gray-400 hover:text-red-500 transition-all shadow-sm"><FaTimes size={18} /></button>
-            </div>
-            
-            <div className="flex px-10 bg-gray-50/50 border-b border-gray-100">
-               <button onClick={() => setActiveModalTab("issues")} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "issues" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Diagnostic Issues</button>
-               <button onClick={() => setActiveModalTab("parts")} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "parts" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Spare Parts</button>
-            </div>
+              </div>
 
-            <div className="flex-1 overflow-y-auto p-10 space-y-6 no-scrollbar">
-              {activeModalTab === "issues" ? (
-                <>
-                  {issueEntries.map((entry, idx) => (
-                    <div key={idx} className="p-8 border border-gray-100 rounded-[2.5rem] bg-gray-50/30 hover:bg-white hover:shadow-2xl transition-all duration-500">
-                       <div className="flex items-center justify-between mb-5"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-4 py-1.5 bg-white rounded-full border border-gray-100">LOG ENTRY #{idx + 1}</span><button onClick={() => { const copy = [...issueEntries]; copy.splice(idx, 1); setIssueEntries(copy); }} className="text-red-500 text-[9px] font-black uppercase tracking-widest hover:underline px-4">Remove Entry</button></div>
-                      <textarea value={entry.issue || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issue: e.target.value }; setIssueEntries(copy); }} className="w-full bg-white border border-gray-100 rounded-[1.5rem] p-5 text-xs font-bold text-gray-700 focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner" rows={3} placeholder="Provide technical diagnostic details..."/>
-                      <div className="mt-5 flex gap-4">
-                         <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₹</span><input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Valuation Amount" className="w-full pl-10 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
-                         <select value={entry.issueStatus || "pending"} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueStatus: e.target.value }; setIssueEntries(copy); }} className={`px-6 py-4 bg-white border border-gray-100 rounded-xl text-[9px] font-black uppercase tracking-widest outline-none ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500 font-bold"}`}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+              <div className="flex px-10 bg-gray-50/50 border-b border-gray-100">
+                <button onClick={() => setActiveModalTab("issues")} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "issues" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Diagnostic Issues</button>
+                <button onClick={() => setActiveModalTab("parts")} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "parts" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Spare Parts</button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-10 space-y-6 no-scrollbar">
+                {activeModalTab === "issues" ? (
+                  <>
+                    {issueEntries.map((entry, idx) => (
+                      <div key={idx} className="p-8 border border-gray-100 rounded-[2.5rem] bg-gray-50/30 hover:bg-white hover:shadow-2xl transition-all duration-500">
+                        <div className="flex items-center justify-between mb-5"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-4 py-1.5 bg-white rounded-full border border-gray-100">LOG ENTRY #{idx + 1}</span><button onClick={() => { const copy = [...issueEntries]; copy.splice(idx, 1); setIssueEntries(copy); }} className="text-red-500 text-[9px] font-black uppercase tracking-widest hover:underline px-4">Remove Entry</button></div>
+                        <textarea value={entry.issue || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issue: e.target.value }; setIssueEntries(copy); }} className="w-full bg-white border border-gray-100 rounded-[1.5rem] p-5 text-xs font-bold text-gray-700 focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner" rows={3} placeholder="Provide technical diagnostic details..." />
+                        <div className="mt-5 flex gap-4">
+                          <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₹</span><input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Valuation Amount" className="w-full pl-10 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
+                          <select value={entry.issueStatus || "pending"} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueStatus: e.target.value }; setIssueEntries(copy); }} className={`px-6 py-4 bg-white border border-gray-100 rounded-xl text-[9px] font-black uppercase tracking-widest outline-none ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500 font-bold"}`}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                  {issueEntries.length === 0 && <div className="py-20 text-center text-gray-300 font-black uppercase tracking-widest text-[10px] border-2 border-dashed border-gray-100 rounded-[3rem]">Initial diagnostic log empty</div>}
-                </>
-              ) : (
-                <>
-                  {editingParts.map((part, idx) => (
-                    <div key={idx} className="p-8 border border-gray-100 rounded-[2.5rem] bg-gray-50/30 hover:bg-white hover:shadow-2xl transition-all duration-500">
-                       <div className="flex items-center justify-between mb-5"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-4 py-1.5 bg-white rounded-full border border-gray-100">PART REQUEST #{idx + 1}</span><button onClick={() => { const copy = [...editingParts]; copy.splice(idx, 1); setEditingParts(copy); }} className="text-red-500 text-[9px] font-black uppercase tracking-widest hover:underline px-4">Remove Part</button></div>
-                      <input type="text" value={part.partName || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], partName: e.target.value }; setEditingParts(copy); }} className="w-full bg-white border border-gray-100 rounded-[1.5rem] px-5 py-4 text-xs font-bold text-gray-700 focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner" placeholder="Part Name" />
-                      <div className="mt-5 flex gap-4">
-                         <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-widest text-gray-400">Qty</span><input type="number" value={part.qty || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], qty: e.target.value }; setEditingParts(copy); }} placeholder="Qty" className="w-full pl-16 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
-                         <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₹</span><input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-10 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
-                         <select value={part.status || "pending"} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], status: e.target.value }; setEditingParts(copy); }} className={`px-6 py-4 bg-white border border-gray-100 rounded-xl text-[9px] font-black uppercase tracking-widest outline-none ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500 font-bold"}`}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+                    ))}
+                    {issueEntries.length === 0 && <div className="py-20 text-center text-gray-300 font-black uppercase tracking-widest text-[10px] border-2 border-dashed border-gray-100 rounded-[3rem]">Initial diagnostic log empty</div>}
+                  </>
+                ) : (
+                  <>
+                    {editingParts.map((part, idx) => (
+                      <div key={idx} className="p-8 border border-gray-100 rounded-[2.5rem] bg-gray-50/30 hover:bg-white hover:shadow-2xl transition-all duration-500">
+                        <div className="flex items-center justify-between mb-5"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-4 py-1.5 bg-white rounded-full border border-gray-100">PART REQUEST #{idx + 1}</span><button onClick={() => { const copy = [...editingParts]; copy.splice(idx, 1); setEditingParts(copy); }} className="text-red-500 text-[9px] font-black uppercase tracking-widest hover:underline px-4">Remove Part</button></div>
+                        <input type="text" value={part.partName || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], partName: e.target.value }; setEditingParts(copy); }} className="w-full bg-white border border-gray-100 rounded-[1.5rem] px-5 py-4 text-xs font-bold text-gray-700 focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner" placeholder="Part Name" />
+                        <div className="mt-5 flex gap-4">
+                          <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-widest text-gray-400">Qty</span><input type="number" value={part.qty || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], qty: e.target.value }; setEditingParts(copy); }} placeholder="Qty" className="w-full pl-16 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
+                          <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₹</span><input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-10 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
+                          <select value={part.status || "pending"} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], status: e.target.value }; setEditingParts(copy); }} className={`px-6 py-4 bg-white border border-gray-100 rounded-xl text-[9px] font-black uppercase tracking-widest outline-none ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500 font-bold"}`}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                  {editingParts.length === 0 && <div className="py-20 text-center text-gray-300 font-black uppercase tracking-widest text-[10px] border-2 border-dashed border-gray-100 rounded-[3rem]">No spare parts requested</div>}
-                </>
-              )}
-            </div>
-            
-            <div className="px-10 py-6 pb-12 border-t border-gray-100 bg-gray-50/50 flex gap-4">
-               {activeModalTab === "issues" ? (
-                 <button onClick={() => setIssueEntries([...issueEntries, { issue: '', issueAmount: '', issueStatus: 'pending' }])} className="px-8 py-4 rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Append Work Entry</button>
-               ) : (
-                 <button onClick={() => setEditingParts([...editingParts, { partName: '', qty: 1, price: 0, status: 'pending' }])} className="px-8 py-4 rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Append Spare Part</button>
-               )}
-               <button onClick={async () => {
+                    ))}
+                    {editingParts.length === 0 && <div className="py-20 text-center text-gray-300 font-black uppercase tracking-widest text-[10px] border-2 border-dashed border-gray-100 rounded-[3rem]">No spare parts requested</div>}
+                  </>
+                )}
+              </div>
+
+              <div className="px-10 py-6 pb-12 border-t border-gray-100 bg-gray-50/50 flex gap-4">
+                {activeModalTab === "issues" ? (
+                  <button onClick={() => setIssueEntries([...issueEntries, { issue: '', issueAmount: '', issueStatus: 'pending' }])} className="px-8 py-4 rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Append Work Entry</button>
+                ) : (
+                  <button onClick={() => setEditingParts([...editingParts, { partName: '', qty: 1, price: 0, status: 'pending' }])} className="px-8 py-4 rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Append Spare Part</button>
+                )}
+                <button onClick={async () => {
                   try {
                     // Synchronize Issues
                     const issuesToSave = issueEntries.filter(e => e.issue?.trim());
@@ -506,32 +531,32 @@ export default function Services() {
                       if (entry.id) await api.put(`/all-services/${editingIssueId}/issues/${entry.id}`, { issue: entry.issue.trim(), issueAmount: Number(entry.issueAmount || 0), issueStatus: entry.issueStatus || 'pending' });
                       else await api.post(`/all-services/${editingIssueId}/issues`, { issue: entry.issue.trim(), issueAmount: Number(entry.issueAmount || 0), issueStatus: entry.issueStatus || 'pending' });
                     }
-                    
+
                     // Synchronize Parts
                     const partsToSave = editingParts.filter(p => p.partName?.trim());
                     if (partsToSave.length > 0 || editingParts.length === 0) {
-                       await api.post(`/all-services/${editingIssueId}/parts`, { parts: partsToSave.map(p => ({ ...p, status: p.status || 'pending'})) });
+                      await api.post(`/all-services/${editingIssueId}/parts`, { parts: partsToSave.map(p => ({ ...p, status: p.status || 'pending' })) });
                     }
 
                     // Update main issue amounts if necessary based on first entry
                     if (issuesToSave.length > 0) {
-                       await api.put(`/all-services/${editingIssueId}/issue`, { 
-                         issue: issuesToSave[0].issue, 
-                         issueAmount: Number(issuesToSave[0].issueAmount || 0) 
-                       });
+                      await api.put(`/all-services/${editingIssueId}/issue`, {
+                        issue: issuesToSave[0].issue,
+                        issueAmount: Number(issuesToSave[0].issueAmount || 0)
+                      });
                     }
 
-                    toast.success('Manifest synchronized successfully'); 
-                    setIssueModalVisible(false); 
-                    setEditingIssueId(null); 
+                    toast.success('Manifest synchronized successfully');
+                    setIssueModalVisible(false);
+                    setEditingIssueId(null);
                     setActiveModalTab("issues");
                     loadData();
                   } catch (error) { toast.error('Synchronization failed'); }
-               }} className="flex-1 rounded-2xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Synchronize Manifest</button>
+                }} className="flex-1 rounded-2xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Synchronize Manifest</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
       </>
     </div>
   );

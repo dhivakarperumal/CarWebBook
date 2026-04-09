@@ -619,20 +619,23 @@ const AddBillings = () => {
               </div>
             </div>
 
-            <button
-              onClick={handleGenerateBill}
-              disabled={parts.length === 0 && labourAmount === 0}
-              className="group w-full py-6 rounded-2xl bg-black text-white font-black uppercase tracking-widest text-xs shadow-2xl shadow-black/30 hover:bg-gray-800 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-            >
-              {isEditMode ? <FaEdit className="group-hover:scale-110 transition-transform" /> : <FaSave className="group-hover:scale-110 transition-transform" />}
-              {isEditMode ? "Update Invoice" : "Commit Invoice"}
-            </button>
-            <button
-              onClick={() => navigate(-1)}
-              className="w-full py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-black transition-colors"
-            >
-              Cancel Operation
-            </button>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleGenerateBill}
+                disabled={parts.length === 0 && labourAmount === 0}
+                className="group w-full py-5 rounded-2xl text-white font-black uppercase tracking-widest text-xs shadow-xl transition-all flex items-center justify-center gap-3 active:scale-[0.98] disabled:active:scale-100 disabled:bg-gray-100 disabled:text-gray-400 disabled:shadow-none border border-transparent disabled:border-gray-200 bg-gradient-to-r from-black to-slate-800 hover:from-black hover:to-black shadow-black/20"
+              >
+                {isEditMode ? <FaEdit className="group-hover:scale-110 transition-transform" /> : <FaSave className="group-hover:scale-110 transition-transform" />}
+                {isEditMode ? "Update Invoice" : "Commit Invoice"}
+              </button>
+              
+              <button
+                onClick={() => navigate(-1)}
+                className="w-full py-5 rounded-2xl bg-white border-2 border-gray-100 text-gray-400 font-black uppercase tracking-widest text-xs hover:bg-gray-50 hover:text-red-500 hover:border-red-100 transition-all active:scale-[0.98]"
+              >
+                Cancel Operation
+              </button>
+            </div>
           </div>
         </div>
       </div>
