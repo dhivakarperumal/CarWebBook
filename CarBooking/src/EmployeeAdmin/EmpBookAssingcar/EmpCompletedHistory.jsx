@@ -14,7 +14,8 @@ import {
   Wrench,
   Package,
   X,
-  Plus
+  Plus,
+  Printer
 } from "lucide-react";
 import { FaWrench, FaCogs, FaTimes } from "react-icons/fa";
 import api from "../../api";
@@ -103,6 +104,128 @@ const EmpCompletedHistory = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePrint = (item) => {
+    const printWindow = window.open("", "_blank");
+    const issues = item.issues || [];
+    const parts = item.parts || [];
+    
+    const html = `
+      <html>
+        <head>
+          <title>Service Protocol - ${item.bookingId || item.id}</title>
+          <style>
+            body { font-family: 'Inter', sans-serif; padding: 40px; color: #1a1a1a; }
+            .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #000; pb: 20px; mb: 30px; }
+            .logo { font-size: 24px; font-weight: 900; letter-spacing: -1px; }
+            .meta { text-align: right; font-size: 12px; font-weight: bold; color: #666; }
+            
+            .section-title { font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; color: #10b981; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+            
+            .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
+            .info-box p { margin: 2px 0; font-size: 13px; }
+            .info-box strong { font-size: 10px; text-transform: uppercase; color: #999; display: block; margin-bottom: 4px; }
+            
+            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+            th { text-align: left; font-size: 10px; text-transform: uppercase; padding: 12px; background: #f9fafb; border-bottom: 1px solid #eee; }
+            td { padding: 12px; font-size: 13px; border-bottom: 1px solid #f3f4f6; font-weight: 500; }
+            
+            .total-row { display: flex; justify-content: flex-end; gap: 40px; padding-top: 20px; }
+            .total-item { text-align: right; }
+            .total-item strong { display: block; font-size: 10px; color: #999; text-transform: uppercase; }
+            .total-item span { font-size: 18px; font-weight: 900; color: #10b981; }
+
+            @media print {
+              body { padding: 20px; }
+              button { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo">TECHNICAL SERVICE PROTOCOL</div>
+            <div class="meta">
+              <p>Generated: ${new Date().toLocaleDateString()}</p>
+              <p>Record ID: ${item.bookingId || item.id}</p>
+            </div>
+          </div>
+
+          <div class="section-title">Logistics & Intelligence</div>
+          <div class="info-grid">
+            <div class="info-box">
+              <strong>Client Profile</strong>
+              <p>${item.name || "Walk-in Customer"}</p>
+              <p>${item.phone || "N/A"}</p>
+            </div>
+            <div class="info-box">
+              <strong>Vehicle Specification</strong>
+              <p>${item.brand} ${item.model}</p>
+              <p>${item.vehicleNumber || "Registry Missing"}</p>
+            </div>
+            <div class="info-box">
+              <strong>Mechanic Assigned</strong>
+              <p>${item.assignedEmployeeName || "Service Team"}</p>
+              <p>Completed: ${new Date(item.updatedAt || item.created_at).toLocaleDateString()}</p>
+            </div>
+          </div>
+
+          <div class="section-title">Diagnostic Manifest</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Workflow Entry</th>
+                <th style="text-align: right">Operational Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${issues.map(iss => `
+                <tr>
+                  <td>${iss.issue}</td>
+                  <td style="text-align: right">₹${iss.issueAmount || 0}</td>
+                </tr>
+              `).join('')}
+              ${issues.length === 0 ? '<tr><td colspan="2">No individual logs recorded</td></tr>' : ''}
+            </tbody>
+          </table>
+
+          <div class="section-title">Spare Part Inventory Utilized</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Component Identifier</th>
+                <th>Quantity</th>
+                <th style="text-align: right">Unit Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${parts.map(p => `
+                <tr>
+                  <td>${p.partName}</td>
+                  <td>${p.qty}</td>
+                  <td style="text-align: right">₹${p.price || 0}</td>
+                </tr>
+              `).join('')}
+              ${parts.length === 0 ? '<tr><td colspan="3">No spare parts utilized</td></tr>' : ''}
+            </tbody>
+          </table>
+
+          <div class="total-row">
+            <div class="total-item">
+              <strong>Net Service Value</strong>
+              <span>₹${Number(item.grandTotal || 0).toLocaleString()}</span>
+            </div>
+          </div>
+
+          <script>
+            window.onload = function() { window.print(); window.close(); }
+          </script>
+        </body>
+      </html>
+    `;
+    
+    printWindow.document.write(html);
+    printWindow.document.close();
   };
 
   const filteredServices = useMemo(() => {
@@ -302,13 +425,22 @@ const EmpCompletedHistory = () => {
                     <p className="text-sm font-black text-emerald-600">₹{Number(item.grandTotal || item.billAmount || 0).toLocaleString()}</p>
                   </td>
                   <td className="px-8 py-6 text-left">
-                    <button 
-                      onClick={() => handleViewDetails(item)}
-                      className="p-3 bg-gray-50 border border-gray-100 rounded-xl text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center ml-auto"
-                      title="View Full Details"
-                    >
-                      <Eye size={16} />
-                    </button>
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => handleViewDetails(item)}
+                        className="p-3 bg-gray-50 border border-gray-100 rounded-xl text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center"
+                        title="View Full Details"
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handlePrint(item)}
+                        className="p-3 bg-gray-50 border border-gray-100 rounded-xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center justify-center"
+                        title="Print Protocol"
+                      >
+                        <Printer size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -463,7 +595,12 @@ const EmpCompletedHistory = () => {
                    <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-4 px-3 py-1 bg-emerald-50 rounded-lg border border-emerald-100 italic">Financial Value: ₹{Number(selectedServiceDetail.grandTotal || 0).toLocaleString()}</span>
                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest ml-4 px-3 py-1 bg-emerald-100/50 rounded-lg border border-emerald-100">Protocol Archived</span>
                 </div>
-               <button onClick={() => setIssueModalVisible(false)} className="px-8 py-3 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Back to Archive</button>
+                <div className="flex items-center gap-3">
+                   <button onClick={() => handlePrint(selectedServiceDetail)} className="px-6 py-3 bg-white text-black border border-gray-200 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-gray-50 transition-all flex items-center gap-2">
+                     <Printer size={16} /> Print Record
+                   </button>
+                   <button onClick={() => setIssueModalVisible(false)} className="px-8 py-3 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Back to Archive</button>
+                </div>
             </div>
           </div>
         </div>

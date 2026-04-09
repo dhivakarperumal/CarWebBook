@@ -48,6 +48,7 @@ const EmpAddBilling = () => {
   const [generatedInv, setGeneratedInv] = useState("");
   const [labour, setLabour] = useState("");
   const [gstPercent, setGstPercent] = useState(0); 
+  const [discount, setDiscount] = useState(0);
 
   /* =======================
      FETCH ASSIGNED SERVICES ONLY
@@ -171,7 +172,8 @@ const EmpAddBilling = () => {
 
   const subTotal = partsTotal + issueTotal + labourAmount;
   const gstAmount = (subTotal * gst) / 100;
-  const grandTotal = subTotal + gstAmount;
+  const discountAmount = Number(discount || 0);
+  const grandTotal = (subTotal + gstAmount) - discountAmount;
 
   /* =======================
      MANUAL HANDLING
@@ -228,6 +230,7 @@ const EmpAddBilling = () => {
         labour: labourAmount,
         gstPercent: gst,
         gstAmount,
+        discount: discountAmount,
         subTotal,
         grandTotal,
         paymentStatus: "Pending",
@@ -580,6 +583,17 @@ const EmpAddBilling = () => {
                   onChange={(e) => setGstPercent(e.target.value)}
                 />
               </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-rose-400 uppercase tracking-[0.2em] ml-2 block italic">Loyalty Discount (₹)</label>
+                <input
+                  type="number"
+                  placeholder="₹ 0.00"
+                  className="w-full px-6 py-4 rounded-2xl bg-rose-50/30 border border-rose-100 font-black text-lg text-rose-600 outline-none focus:bg-white focus:ring-4 focus:ring-rose-500/5 transition-all text-right shadow-inner"
+                  value={discount}
+                  onChange={(e) => setDiscount(e.target.value)}
+                />
+              </div>
             </div>
 
             <div className="p-8 bg-black rounded-[2.5rem] text-white shadow-2xl shadow-black/20 space-y-4">
@@ -590,6 +604,10 @@ const EmpAddBilling = () => {
               <div className="flex justify-between text-[11px] font-black opacity-30 uppercase tracking-widest">
                 <span>Tax Allocation</span>
                 <span>₹{gstAmount.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-[11px] font-black text-rose-400 uppercase tracking-widest">
+                <span>Applied Discount</span>
+                <span>- ₹{discountAmount.toLocaleString()}</span>
               </div>
               <div className="h-px bg-white/10 my-4" />
               <div className="flex flex-col gap-1">
@@ -604,7 +622,7 @@ const EmpAddBilling = () => {
               className="group w-full py-6 rounded-2xl bg-black text-white font-black uppercase tracking-widest text-xs shadow-2xl shadow-black/30 hover:bg-gray-800 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <FileText className="group-hover:scale-110 transition-transform" />
-              Commit Job Invoice
+              Save Bill
             </button>
           </div>
         </div>
