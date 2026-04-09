@@ -7,8 +7,6 @@ import { useAuth } from "../../PrivateRouter/AuthContext";
 import Pagination from "../../Components/Pagination";
 
 const STATUS_STEPS = [
-  "Booked",
-  "Call Verified",
   "Approved",
   "Processing",
   "Waiting for Spare",
@@ -440,9 +438,13 @@ export default function EmpService() {
                              onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
                              className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[150px] text-center cursor-pointer outline-none focus:ring-4 focus:ring-black/5 ${getStatusColor(item.serviceStatus || item.status)}`}
                            >
-                             {STATUS_STEPS.map(step => (
-                               <option key={step} value={step} className="bg-white text-black font-bold uppercase">{step}</option>
-                             ))}
+                             {STATUS_STEPS.map((step, idx) => {
+                               const currentIdx = STATUS_STEPS.findIndex(s => s.toLowerCase() === (item.serviceStatus || item.status || "Booked").toLowerCase()) || 0;
+                               if (idx < currentIdx) return null;
+                               return (
+                                 <option key={step} value={step} className="bg-white text-black font-bold uppercase">{step}</option>
+                               );
+                             })}
                            </select>
                         </td>
                         <td className="px-8 py-6 text-left">
