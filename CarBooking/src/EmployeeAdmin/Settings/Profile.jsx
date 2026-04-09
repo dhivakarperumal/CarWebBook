@@ -84,7 +84,7 @@ const EmpProfileSettings = () => {
   }
 
   return (
-    <div className="max-w-xl mx-auto space-y-8 animate-fadeIn mt-6">
+    <div className="max-w-4xl mx-auto space-y-8 animate-fadeIn mt-6">
       {/* 🔙 BACK ACTION */}
       <div className="flex items-center">
         <button

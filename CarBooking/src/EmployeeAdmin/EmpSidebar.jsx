@@ -16,6 +16,7 @@ import {
   X, ChevronDown, ChevronLeft,
   Boxes,
   HardHat,
+  LogOut,
 } from "lucide-react";
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -24,17 +25,18 @@ import { useAuth } from "../PrivateRouter/AuthContext";
 
 const navItems = [
   { path: "/employee", label: "Dashboard", icon: Gauge, exact: true },
-  { path: "/employee/assignservices", label: "Assigned History", icon: ClipboardCheck },
-  { path: "/employee/completed-history", label: "Service Completed History", icon: CalendarCheck },
+  { path: "/employee/assignservices", label: "Assigned ", icon: ClipboardCheck },
+  
   { path: "/employee/services", label: "Service Center", icon: Wrench },
   { path: "/employee/billing", label: "Billing", icon: Receipt },
-  { path: "/employee/profile", label: "Profile Settings", icon: UserCog },
-  { path: "/", label: "Back Home", icon: Home },
+  { path: "/employee/completed-history", label: "Completed History", icon: CalendarCheck },
+ 
+
 ];
 
 /* ================= SIDEBAR ================= */
 const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
-  const { profileName: userProfile } = useAuth();
+  const { profileName: userProfile, logout } = useAuth();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
 
@@ -241,6 +243,18 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
             );
           })}
         </nav>
+        
+        {/* ========== LOGOUT SECTION ========== */}
+        <div className="p-4 border-t border-gray-100">
+           <button
+             onClick={logout}
+             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all duration-300
+             text-red-500 hover:bg-red-50 hover:shadow-xl hover:shadow-red-500/10`}
+           >
+             <LogOut className="w-5 h-5 shrink-0" />
+             {!collapsed && <span>LogOut</span>}
+           </button>
+        </div>
 
         {/* ========== COLLAPSE BUTTON ========== */}
         <button

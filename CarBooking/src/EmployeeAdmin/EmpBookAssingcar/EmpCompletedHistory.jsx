@@ -114,12 +114,14 @@ const EmpCompletedHistory = () => {
     <div className="max-w-7xl mx-auto space-y-6 animate-fadeIn p-4 sm:p-6 lg:p-8">
       {/* HEADER */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-        <div>
-          <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mb-4 text-emerald-600">
+        <div className="flex items-center gap-6">
+          <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-50">
             <CheckCircle2 size={32} />
           </div>
-          <h1 className="text-3xl font-black text-gray-900 leading-tight">Service Completed History</h1>
-          <p className="text-sm text-gray-500 font-medium mt-1 uppercase tracking-widest text-[10px]">Registry of finalized технические protocols</p>
+          <div>
+            <h1 className="text-3xl font-black text-gray-900 leading-none uppercase tracking-tight">Completed History</h1>
+            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] mt-2 block">Archive of finalized technical service protocols</p>
+          </div>
         </div>
 
         <div className="flex items-center gap-4 bg-emerald-50 px-6 py-4 rounded-3xl border border-emerald-100">
