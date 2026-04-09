@@ -47,7 +47,7 @@ export default function AdminAssignServices() {
   const [assigning, setAssigning] = useState(false);
   const [loadingEmployees, setLoadingEmployees] = useState(false);
 
-  const [mainTab, setMainTab] = useState("all"); 
+  const [mainTab, setMainTab] = useState("booked"); 
   const [tab, setTab] = useState("unassigned"); 
   const [dateFilter, setDateFilter] = useState("All");
   const [searchText, setSearchText] = useState("");
@@ -302,13 +302,12 @@ export default function AdminAssignServices() {
       <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
         <div className="flex bg-gray-100 p-1.5 rounded-[1.5rem] border border-gray-200 shadow-inner w-full lg:w-fit overflow-x-auto no-scrollbar">
           {[
-            { id: "all", label: "Global Stream" },
-            { id: "booked", label: "Customer Portal" },
-            { id: "addVehicle", label: "Field Walk-ins" }
+            { id: "booked", label: "Appointments" },
+            { id: "addVehicle", label: "Booking" }
           ].map(t => (
             <button
               key={t.id}
-              onClick={() => setMainTab(t.id)}
+              onClick={() => { setMainTab(t.id); setCurrentPage(1); }}
               className={`px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === t.id ? "bg-white text-black shadow-[0_8px_30px_rgb(0,0,0,0.12)] scale-[1.02]" : "text-gray-400 hover:text-gray-600"}`}
             >
               {t.label}
