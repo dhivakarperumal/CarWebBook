@@ -48,7 +48,7 @@ export default function AdminAssignServices() {
   const [loadingEmployees, setLoadingEmployees] = useState(false);
 
   const [mainTab, setMainTab] = useState("all"); 
-  const [tab, setTab] = useState("all");
+  const [tab, setTab] = useState("unassigned"); 
   const [dateFilter, setDateFilter] = useState("All");
   const [searchText, setSearchText] = useState("");
   const [viewMode, setViewMode] = useState("table"); 
@@ -172,19 +172,18 @@ export default function AdminAssignServices() {
     });
   }, [currentMainList, searchText, dateFilter]);
 
-  const assignedCount = dateFilteredList.filter((b) => b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed").length;
-  const unassignedCount = dateFilteredList.filter((b) => !b.assignedEmployeeId).length;
-  const approvedCount = dateFilteredList.filter((b) => (b.status || "").toLowerCase() === "approved" || (b.status || "").toLowerCase() === "confirmed").length;
+  const assignedCount = dateFilteredList.filter((b) => b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed" && (b.status || "").toLowerCase() !== "completed").length;
+  const unassignedCount = dateFilteredList.filter((b) => !b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed" && (b.status || "").toLowerCase() !== "completed").length;
   const completedCount = dateFilteredList.filter((b) => (b.status || "").toLowerCase() === "service completed" || (b.status || "").toLowerCase() === "completed").length;
   const allCount = dateFilteredList.length;
 
   const filteredBookings = useMemo(() => {
     return dateFilteredList.filter((b) => {
       const s = (b.status || "").toLowerCase();
-      if (tab === "unassigned") return !b.assignedEmployeeId;
-      if (tab === "assigned") return !!b.assignedEmployeeId && s !== "service completed" && s !== "completed";
-      if (tab === "approved") return s === "approved" || s === "confirmed";
-      if (tab === "completed") return s === "service completed" || s === "completed";
+      const isCompleted = s === "service completed" || s === "completed";
+
+      if (tab === "unassigned") return !b.assignedEmployeeId && !isCompleted;
+      if (tab === "assigned") return !!b.assignedEmployeeId && !isCompleted;
       return true;
     });
   }, [dateFilteredList, tab]);
@@ -284,9 +283,9 @@ export default function AdminAssignServices() {
       </div>
 
       {/* STATS ANALYTICS GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <StatCard 
-          title="Open Orders" 
+          title="Unassigned Orders" 
           value={unassignedCount} 
           icon={<FaUserSlash />} 
           gradient="from-amber-600 to-amber-400" 
@@ -296,18 +295,6 @@ export default function AdminAssignServices() {
           value={assignedCount} 
           icon={<FaUserCheck />} 
           gradient="from-blue-600 to-blue-400" 
-        />
-        <StatCard 
-          title="Verified Requests" 
-          value={approvedCount} 
-          icon={<FaClipboardCheck />} 
-          gradient="from-indigo-600 to-indigo-400" 
-        />
-        <StatCard 
-          title="Closed Jobs" 
-          value={completedCount} 
-          icon={<FaCheckCircle />} 
-          gradient="from-emerald-600 to-emerald-400" 
         />
       </div>
 
@@ -345,16 +332,13 @@ export default function AdminAssignServices() {
       <div className="flex flex-col lg:flex-row gap-6 justify-between items-center bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-slate-200/50">
         <div className="flex flex-wrap items-center gap-2">
           {[
-            { id: "approved", label: `Approved (${approvedCount})`, color: "text-blue-600" },
-            { id: "unassigned", label: `Open (${unassignedCount})`, color: "text-amber-600" },
-            { id: "assigned", label: `In-Progress (${assignedCount})`, color: "text-indigo-600" },
-            { id: "completed", label: `Closed (${completedCount})`, color: "text-emerald-600" },
-            { id: "all", label: `Registry (${allCount})`, color: "text-slate-600" }
+            { id: "unassigned", label: `Unassigned (${unassignedCount})`, color: "text-amber-600" },
+            { id: "assigned", label: `Assigned (${assignedCount})`, color: "text-indigo-600" }
           ].map(s => (
             <button
               key={s.id}
-              onClick={() => setTab(s.id)}
-              className={`px-6 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === s.id ? "bg-black text-white shadow-xl scale-105" : `bg-gray-50 ${s.color} hover:bg-gray-100`}`}
+              onClick={() => { setTab(s.id); setCurrentPage(1); }}
+              className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === s.id ? "bg-black text-white shadow-xl scale-105" : `bg-gray-50 ${s.color} hover:bg-gray-100`}`}
             >
               {s.label}
             </button>
