@@ -378,6 +378,7 @@ const OverallAttendance = () => {
             <table className="w-full text-left whitespace-nowrap">
               <thead className="bg-[#020617] text-white">
                 <tr>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
                   <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Personnel</th>
                   <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Department/Role</th>
                   <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
@@ -387,8 +388,11 @@ const OverallAttendance = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {paginatedData.map((item) => (
+                {paginatedData.map((item, index) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 transition">
+                    <td className="px-8 py-6">
+                      <p className="text-sm font-black text-slate-400">{(currentPage - 1) * itemsPerPage + index + 1}</p>
+                    </td>
                     <td className="px-8 py-6">
                       <p className="text-sm font-black text-slate-900">{item.name || "N/A"}</p>
                     </td>

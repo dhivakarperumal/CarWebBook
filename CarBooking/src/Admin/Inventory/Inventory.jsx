@@ -263,15 +263,15 @@ const Inventory = () => {
       {/* <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden"> */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm text-gray-700 whitespace-nowrap">
-            <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
+            <thead className="bg-[#020617] text-white">
               <tr>
-                <th className="px-4 py-4 text-left font-semibold">S No</th>
-                <th className="px-4 py-4 text-left font-semibold">Item Name</th>
-                <th className="px-4 py-4 text-left font-semibold">Category</th>
-                <th className="px-4 py-4 text-left font-semibold">Supplier</th>
-                <th className="px-4 py-4 text-left font-semibold">Stock Qty</th>
-                <th className="px-4 py-4 text-left font-semibold">Status</th>
-                <th className="px-4 py-4 text-center font-semibold">Actions</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Item Name</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Category</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Supplier</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Stock Qty</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
+                <th className="px-4 py-4 text-center text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Actions</th>
               </tr>
             </thead>
 

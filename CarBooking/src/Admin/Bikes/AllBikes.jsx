@@ -204,7 +204,8 @@ const AllBikes = ({ defaultType = "all" }) => {
         <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
             <tr className="bg-[#020617] text-white">
-              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 first:pl-10">{defaultType === 'all' ? 'Vehicle Details' : `${defaultType} Details`}</th>
+              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 first:pl-10">S No</th>
+              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">{defaultType === 'all' ? 'Vehicle Details' : `${defaultType} Details`}</th>
               <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Specs</th>
               <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Location</th>
               <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Price</th>
@@ -213,9 +214,12 @@ const AllBikes = ({ defaultType = "all" }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
-            {paginatedBikes.map((bike) => (
+            {paginatedBikes.map((bike, index) => (
               <tr key={bike.id} className="hover:bg-blue-50/30 transition-all group">
-                <td className="px-6 py-6 first:pl-10">
+                <td className="px-8 py-6 font-black text-gray-500 first:pl-10">
+                   {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                </td>
+                <td className="px-6 py-6 font-black text-gray-900">
                   <div className="flex items-center gap-4">
                      <div className="w-16 h-16 rounded-2xl bg-gray-100 border border-gray-200 overflow-hidden shrink-0 shadow-sm transition-transform group-hover:scale-105">
                         {bike.images ? (

@@ -159,12 +159,6 @@ const BookedVehicles = () => {
     return filteredBookings.slice(start, start + bookingsPerPage);
   }, [filteredBookings, currentPage]);
 
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center py-20 animate-pulse">
-      <FaCar className="w-12 h-12 text-blue-500 animate-bounce mb-4" />
-      <p className="text-gray-500 font-black uppercase tracking-widest text-xs">Fetching Bookings...</p>
-    </div>
-  );
 
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8 animate-fadeIn">
@@ -231,15 +225,15 @@ const BookedVehicles = () => {
       {/* TABLE */}
       <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden overflow-x-auto">
         <table className="w-full text-left border-collapse whitespace-nowrap">
-          <thead className="bg-black text-white">
+          <thead className="bg-[#020617] text-white">
             <tr>
-              <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-left">S No</th>
-              <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-left">Booking Info</th>
-              <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-left">Vehicle</th>
-              <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-left">Customer</th>
-              <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-left">Advance</th>
-              <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-left">Status</th>
-              <th className="px-8 py-4 font-black uppercase tracking-widest text-[10px] text-right">Actions</th>
+              <th className="px-8 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+              <th className="px-8 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Booking Info</th>
+              <th className="px-8 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Vehicle</th>
+              <th className="px-8 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
+              <th className="px-8 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Advance</th>
+              <th className="px-8 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
+              <th className="px-8 py-4 text-right text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
