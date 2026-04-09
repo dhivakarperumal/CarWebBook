@@ -1,17 +1,63 @@
 const db = require('../config/db.js');
 
-/* 📋 GET ALL ATTENDANCE FOR A DATE */
+/* 📋 GET ATTENDANCE — supports ?date=, ?from=&to=, or no params (all) */
 exports.getAttendanceByDate = async (req, res) => {
-  const { date } = req.query;
+  const { date, from, to } = req.query;
   try {
-    const sql = `
-      SELECT a.*, s.name, s.role, s.department
-      FROM attendance a
-      JOIN staff s ON a.staff_id = s.id
-      WHERE a.date = ?
-      ORDER BY a.login_time DESC
-    `;
-    const [rows] = await db.query(sql, [date]);
+    let sql, params;
+
+    if (date) {
+      // Single exact date
+      sql = `
+        SELECT a.*, s.name, s.role, s.department
+        FROM attendance a
+        JOIN staff s ON a.staff_id = s.id
+        WHERE a.date = ?
+        ORDER BY a.login_time DESC
+      `;
+      params = [date];
+    } else if (from && to) {
+      // Date range
+      sql = `
+        SELECT a.*, s.name, s.role, s.department
+        FROM attendance a
+        JOIN staff s ON a.staff_id = s.id
+        WHERE a.date BETWEEN ? AND ?
+        ORDER BY a.date DESC, a.login_time DESC
+      `;
+      params = [from, to];
+    } else if (from) {
+      // From date only
+      sql = `
+        SELECT a.*, s.name, s.role, s.department
+        FROM attendance a
+        JOIN staff s ON a.staff_id = s.id
+        WHERE a.date >= ?
+        ORDER BY a.date DESC, a.login_time DESC
+      `;
+      params = [from];
+    } else if (to) {
+      // To date only
+      sql = `
+        SELECT a.*, s.name, s.role, s.department
+        FROM attendance a
+        JOIN staff s ON a.staff_id = s.id
+        WHERE a.date <= ?
+        ORDER BY a.date DESC, a.login_time DESC
+      `;
+      params = [to];
+    } else {
+      // No filter — return all records
+      sql = `
+        SELECT a.*, s.name, s.role, s.department
+        FROM attendance a
+        JOIN staff s ON a.staff_id = s.id
+        ORDER BY a.date DESC, a.login_time DESC
+      `;
+      params = [];
+    }
+
+    const [rows] = await db.query(sql, params);
     res.json(rows);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching attendance', error: err.message });

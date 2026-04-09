@@ -47,30 +47,60 @@ const StatusBadge = ({ status }) => {
 const OverallAttendance = () => {
   const [attendanceData, setAttendanceData] = useState([]);
   const [search, setSearch] = useState("");
-  const [selectedDate, setSelectedDate] = useState(
-    dayjs().format("YYYY-MM-DD")
-  );
+  const [datePreset, setDatePreset] = useState("today"); // default → today
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo]   = useState("");
   const [loading, setLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
+  // Used for CSV filename
+  const selectedDate = dayjs().format("YYYY-MM-DD");
+
+  /* Build the API params based on active preset */
+  const buildApiParams = (preset, cfrom, cto) => {
+    const fmt = (d) => dayjs(d).format("YYYY-MM-DD");
+    const now  = new Date();
+
+    if (preset === "today") {
+      return { date: fmt(now) };
+    }
+    if (preset === "yesterday") {
+      const y = new Date(now); y.setDate(now.getDate() - 1);
+      return { date: fmt(y) };
+    }
+    if (preset === "thisweek") {
+      const ws = new Date(now); ws.setDate(now.getDate() - now.getDay());
+      return { from: fmt(ws), to: fmt(now) };
+    }
+    if (preset === "thismonth") {
+      return { from: fmt(new Date(now.getFullYear(), now.getMonth(), 1)), to: fmt(now) };
+    }
+    if (preset === "custom") {
+      const params = {};
+      if (cfrom) params.from = cfrom;
+      if (cto)   params.to   = cto;
+      return params;
+    }
+    return {}; // "all" — no filter
+  };
+
   useEffect(() => {
     loadAttendanceData();
-  }, [selectedDate]);
+  }, [datePreset, customFrom, customTo]);
 
   const loadAttendanceData = async () => {
     setLoading(true);
     try {
-      const res = await api.get('/attendance', { params: { date: selectedDate } });
-      const data = res.data.map((docData) => {
-        return {
-          ...docData,
-          loginTime: docData.login_time,
-          logoutTime: docData.logout_time,
-          duration: docData.duration || (docData.login_time && !docData.logout_time ? "Active" : "N/A"),
-        };
-      });
+      const params = buildApiParams(datePreset, customFrom, customTo);
+      const res = await api.get('/attendance', { params });
+      const data = res.data.map((docData) => ({
+        ...docData,
+        loginTime:  docData.login_time,
+        logoutTime: docData.logout_time,
+        duration: docData.duration || (docData.login_time && !docData.logout_time ? "Active" : "N/A"),
+      }));
       setAttendanceData(data);
     } catch (err) {
       console.error("Error loading attendance:", err);
@@ -81,23 +111,74 @@ const OverallAttendance = () => {
     }
   };
 
+  /* ── parse an attendance record's date ── */
+  const parseAttendanceDate = (item) => {
+    // prefer loginTime, fall back to item.date string
+    const raw = item.loginTime || item.date;
+    if (!raw) return null;
+    if (raw?.toDate) return raw.toDate();
+    if (raw?.seconds) return new Date(raw.seconds * 1000);
+    return new Date(raw);
+  };
+
+  /* ── date range bounds for preset ── */
+  const getDateBounds = () => {
+    const now   = new Date();
+    const sod   = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const eod   = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+
+    if (datePreset === "today") {
+      return { from: sod(now), to: eod(now) };
+    }
+    if (datePreset === "yesterday") {
+      const y = new Date(now); y.setDate(now.getDate() - 1);
+      return { from: sod(y), to: eod(y) };
+    }
+    if (datePreset === "thisweek") {
+      const ws = new Date(now); ws.setDate(now.getDate() - now.getDay());
+      return { from: sod(ws), to: eod(now) };
+    }
+    if (datePreset === "thismonth") {
+      return { from: new Date(now.getFullYear(), now.getMonth(), 1), to: eod(now) };
+    }
+    if (datePreset === "custom") {
+      return {
+        from: customFrom ? new Date(customFrom) : null,
+        to:   customTo   ? new Date(new Date(customTo).setHours(23,59,59,999)) : null,
+      };
+    }
+    return { from: null, to: null }; // "all"
+  };
+
   /* 🔹 FILTER LOGIC */
   const filtered = useMemo(() => {
+    const { from, to } = getDateBounds();
+
     return attendanceData.filter((item) => {
       const text = `${item.name || ""} ${item.role || ""}`.toLowerCase();
       const matchSearch = text.includes(search.toLowerCase());
-      const matchStatus =
-        statusFilter === "all" || item.status === statusFilter;
+      const matchStatus = statusFilter === "all" || item.status === statusFilter;
+
+      // Date range filter
+      if (datePreset !== "all") {
+        const d = parseAttendanceDate(item);
+        if (!d) return false;
+        if (from && d < from) return false;
+        if (to   && d > to)   return false;
+      }
 
       return matchSearch && matchStatus;
     });
-  }, [attendanceData, search, statusFilter]);
+  }, [attendanceData, search, statusFilter, datePreset, customFrom, customTo]);
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginatedData = filtered.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  // Reset page when any filter changes
+  useEffect(() => { setCurrentPage(1); }, [search, statusFilter, datePreset, customFrom, customTo]);
 
   /* STATISTICS */
   const stats = useMemo(() => {
@@ -219,52 +300,69 @@ const OverallAttendance = () => {
       </div>
 
       {/* FILTER BAR */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-        <div className="lg:col-span-4 relative group">
-          <FaCalendarAlt className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors" />
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => {
-              setSelectedDate(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full pl-14 pr-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-sm"
-          />
-        </div>
+      <div className="flex flex-wrap gap-3 items-center">
 
-        <div className="lg:col-span-5 relative group">
-          <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors" />
+        {/* 🔎 SEARCH */}
+        <div className="relative flex-1 min-w-[220px] group">
+          <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-black transition-colors" />
           <input
             type="text"
             placeholder="Search personnel by name or role..."
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full pl-14 pr-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-sm"
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-1/2 pl-11 pr-4 py-3.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-black/10 focus:border-black outline-none transition-all text-sm text-gray-700 shadow-sm"
           />
         </div>
 
-        <div className="lg:col-span-3 flex justify-end">
-          <div className="flex bg-gray-50 p-1 rounded-2xl border border-gray-100 shadow-inner w-full overflow-hidden">
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="w-full bg-transparent px-4 py-2 text-[10px] font-black uppercase tracking-widest outline-none cursor-pointer"
-            >
-              <option value="all">All Status</option>
-              <option value="Present">Present</option>
-              <option value="Absent">Absent</option>
-              <option value="Late">Late Entry</option>
-              <option value="On Leave">On Leave</option>
-            </select>
-          </div>
+        {/* 📅 DATE PRESET */}
+        <div className="relative group">
+          <FaCalendarAlt className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <select
+            value={datePreset}
+            onChange={(e) => { setDatePreset(e.target.value); setCustomFrom(""); setCustomTo(""); }}
+            className="h-[50px] pl-10 pr-4 min-w-[160px] rounded-xl bg-white border border-gray-200 text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-black/10 focus:border-black outline-none transition shadow-sm cursor-pointer"
+          >
+            <option value="all">All</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="thisweek">This Week</option>
+            <option value="thismonth">This Month</option>
+            <option value="custom">Custom Range</option>
+          </select>
         </div>
+
+        {/* 📅 CUSTOM RANGE PICKERS */}
+        {datePreset === "custom" && (
+          <>
+            <input
+              type="date"
+              value={customFrom}
+              onChange={(e) => setCustomFrom(e.target.value)}
+              className="h-[50px] rounded-xl bg-white border border-gray-200 px-3 text-sm text-gray-700 focus:ring-2 focus:ring-black/10 focus:border-black outline-none transition shadow-sm"
+            />
+            <span className="text-gray-400 text-sm font-semibold">to</span>
+            <input
+              type="date"
+              value={customTo}
+              onChange={(e) => setCustomTo(e.target.value)}
+              className="h-[50px] rounded-xl bg-white border border-gray-200 px-3 text-sm text-gray-700 focus:ring-2 focus:ring-black/10 focus:border-black outline-none transition shadow-sm"
+            />
+          </>
+        )}
+
+        {/* 🔵 STATUS FILTER */}
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-[50px] min-w-[150px] rounded-xl bg-white border border-gray-200 px-4 text-sm font-semibold text-gray-700 focus:ring-2 focus:ring-black/10 focus:border-black outline-none transition shadow-sm cursor-pointer"
+        >
+          <option value="all">All Status</option>
+          <option value="Present">Present</option>
+          <option value="Absent">Absent</option>
+          <option value="Late">Late Entry</option>
+          <option value="On Leave">On Leave</option>
+        </select>
+
       </div>
 
       {/* Table */}
