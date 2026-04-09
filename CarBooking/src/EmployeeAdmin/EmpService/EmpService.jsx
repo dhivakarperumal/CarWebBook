@@ -14,7 +14,9 @@ import {
   ExternalLink,
   LayoutGrid,
   List,
-  PlusCircle
+  PlusCircle,
+  Search,
+  Filter
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -26,6 +28,7 @@ const EmpService = () => {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("table"); // 'card' or 'table'
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
   const navigate = useNavigate();
 
   const fetchActiveServices = async () => {
@@ -90,11 +93,9 @@ const EmpService = () => {
 
   const updateStatus = async (id, newStatus) => {
     try {
-      // Update in all_services table
       await api.put(`/all-services/${id}/status`, {
         serviceStatus: newStatus
       });
-      
       toast.success(`Status updated to ${newStatus}`);
       fetchActiveServices();
     } catch (err) {
@@ -119,8 +120,15 @@ const EmpService = () => {
     return map[status] || "bg-gray-50 text-gray-600 border-gray-100";
   };
 
-  const totalPages = Math.ceil(activeServices.length / ITEMS_PER_PAGE);
-  const paginatedServices = activeServices.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+  const filteredServices = useMemo(() => {
+    return activeServices.filter(s => {
+      const text = `${s.brand} ${s.model} ${s.name} ${s.vehicle_number} ${s.id}`.toLowerCase();
+      return text.includes(search.toLowerCase());
+    });
+  }, [activeServices, search]);
+
+  const totalPages = Math.ceil(filteredServices.length / ITEMS_PER_PAGE);
+  const paginatedServices = filteredServices.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
   if (loading) {
     return (
@@ -176,8 +184,22 @@ const EmpService = () => {
         </div>
       </div>
 
+      {/* SEARCH SECTION */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="relative w-full lg:w-80">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Search active tasks..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-gray-700 shadow-sm"
+          />
+        </div>
+      </div>
+
       {/* LIST SECTION */}
-      {activeServices.length === 0 ? (
+      {filteredServices.length === 0 ? (
         <div className="bg-white rounded-[2.5rem] py-24 text-center border-2 border-dashed border-gray-100">
            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
              <AlertCircle className="w-10 h-10 text-gray-200" />
@@ -339,10 +361,11 @@ const EmpService = () => {
           ))}
         </div>
       ) : (
-        <div className="overflow-hidden bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-[#87a5b3] text-white">
+        <div className="overflow-hidden bg-white rounded-[2.5rem] border border-gray-100 shadow-2xl shadow-blue-900/5 overflow-x-auto">
+          <table className="w-full text-left border-collapse whitespace-nowrap">
+            <thead className="bg-black text-white">
+              <tr>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">S No</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Job ID</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Customer</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Vehicle</th>
@@ -351,8 +374,11 @@ const EmpService = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {paginatedServices.map((service) => (
+              {paginatedServices.map((service, index) => (
                 <tr key={service.id} className="hover:bg-gray-50 transition-colors group">
+                  <td className="px-6 py-4 text-xs font-black text-gray-400">
+                    {(page - 1) * ITEMS_PER_PAGE + index + 1}
+                  </td>
                   <td className="px-6 py-4 text-xs font-bold text-gray-400">#{service.id}</td>
                   <td className="px-6 py-4">
                     <p className="font-black text-gray-800">{service.name}</p>

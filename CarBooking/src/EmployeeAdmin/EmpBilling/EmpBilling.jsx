@@ -11,7 +11,8 @@ import {
   List,
   Plus,
   Trash,
-  History
+  History,
+  Filter
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -255,8 +256,8 @@ const EmpBilling = () => {
       </div>
 
       {/* FILTERS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 relative">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="relative w-full lg:w-80">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
@@ -266,16 +267,19 @@ const EmpBilling = () => {
             className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-gray-700"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-          className="w-full px-6 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none appearance-none transition-all font-bold text-gray-700 cursor-pointer"
-        >
-          <option value="all">All Payment Status</option>
-          <option value="paid">Paid</option>
-          <option value="pending">Pending</option>
-          <option value="partial">Partial</option>
-        </select>
+        <div className="relative w-full md:w-64">
+          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <select
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+            className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none appearance-none transition-all font-bold text-gray-700 cursor-pointer"
+          >
+            <option value="all">All Payment Status</option>
+            <option value="paid">Paid</option>
+            <option value="pending">Pending</option>
+            <option value="partial">Partial</option>
+          </select>
+        </div>
       </div>
 
       {/* LIST */}
@@ -363,19 +367,23 @@ const EmpBilling = () => {
 
         <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden overflow-x-auto">
           <table className="w-full text-left whitespace-nowrap">
-            <thead>
+            <thead className="bg-black text-white">
               <tr>
-                <th className="px-6 py-5">Invoice</th>
-                <th className="px-6 py-5">Customer</th>
-                <th className="px-6 py-5">Vehicle</th>
-                <th className="px-6 py-5 text-right">Amount</th>
-                <th className="px-6 py-5">Status</th>
-                <th className="px-6 py-5 text-right">Actions</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">S No</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Invoice</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Customer</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Vehicle</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white text-right">Amount</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Status</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {paginatedBills.map((bill) => (
+              {paginatedBills.map((bill, index) => (
                 <tr key={bill.id} className="hover:bg-gray-50 transition-colors group">
+                  <td className="px-6 py-4 text-xs font-black text-gray-400">
+                    {(page - 1) * ITEMS_PER_PAGE + index + 1}
+                  </td>
                   <td className="px-6 py-4">
                     <p className="font-black text-gray-900">#{bill.invoiceNo}</p>
                     <p className="text-[10px] font-bold text-gray-400">ID: {bill.bookingId}</p>
