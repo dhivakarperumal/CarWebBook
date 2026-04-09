@@ -9,8 +9,14 @@ import {
   Clock,
   LayoutGrid,
   List,
-  IndianRupee
+  IndianRupee,
+  Eye,
+  Wrench,
+  Package,
+  X,
+  Plus
 } from "lucide-react";
+import { FaWrench, FaCogs, FaTimes } from "react-icons/fa";
 import api from "../../api";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import toast from "react-hot-toast";
@@ -27,6 +33,11 @@ const EmpCompletedHistory = () => {
   const [page, setPage] = useState(1);
   const [dateFilter, setDateFilter] = useState("all");
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
+  const [selectedServiceDetail, setSelectedServiceDetail] = useState(null);
+  const [issueModalVisible, setIssueModalVisible] = useState(false);
+  const [activeModalTab, setActiveModalTab] = useState("issues");
+  const [issueEntries, setIssueEntries] = useState([]);
+  const [partsEntries, setPartsEntries] = useState([]);
 
   useEffect(() => {
     fetchCompletedServices();
@@ -104,6 +115,20 @@ const EmpCompletedHistory = () => {
       return matchesSearch && matchesDate;
     });
   }, [services, search, dateFilter, dateRange]);
+
+  const handleViewDetails = async (item) => {
+    try {
+      const res = await api.get(`/all-services/${item.id}`);
+      const fullData = res.data;
+      setSelectedServiceDetail(fullData);
+      setIssueEntries(fullData.issues || []);
+      setPartsEntries(fullData.parts || []);
+      setActiveModalTab("issues");
+      setIssueModalVisible(true);
+    } catch (err) {
+      toast.error("Failed to load service details");
+    }
+  };
 
   const totalPages = Math.ceil(filteredServices.length / ITEMS_PER_PAGE);
   const paginatedServices = filteredServices.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
@@ -212,6 +237,7 @@ const EmpCompletedHistory = () => {
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Vehicle Spec</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Status</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-center">Completion Date</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -229,6 +255,15 @@ const EmpCompletedHistory = () => {
                   </td>
                   <td className="px-8 py-6 ">
                     <p className="text-xs font-black text-gray-500 flex items-center justify-start gap-2"><Clock size={12}/> {new Date(item.updatedAt || item.created_at).toLocaleDateString()}</p>
+                  </td>
+                  <td className="px-8 py-6 text-right">
+                    <button 
+                      onClick={() => handleViewDetails(item)}
+                      className="p-3 bg-gray-50 border border-gray-100 rounded-xl text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center ml-auto"
+                      title="View Full Details"
+                    >
+                      <Eye size={16} />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -261,6 +296,104 @@ const EmpCompletedHistory = () => {
       )}
 
       <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
+
+      {/* SERVICE DETAIL MODAL */}
+      {issueModalVisible && selectedServiceDetail && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-4xl bg-white rounded-[2.5rem] shadow-2xl overflow-hidden border border-white/20 animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
+            
+            <div className="bg-black p-10 relative overflow-hidden shrink-0">
+              <div className="absolute top-0 right-0 p-8 opacity-10 rotate-12"><FaWrench size={100} className="text-white"/></div>
+              <div className="relative z-10 flex justify-between items-center">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/10">
+                    <FaWrench className="text-emerald-400 text-2xl" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tight">Service Protocol Record</h2>
+                    <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mt-1 opacity-80">Finalized Technical Diagnostic History</p>
+                  </div>
+                </div>
+                <button onClick={() => setIssueModalVisible(false)} className="w-12 h-12 bg-white/10 text-white rounded-xl flex items-center justify-center hover:bg-red-500 transition-all backdrop-blur-sm border border-white/10"><X size={20}/></button>
+              </div>
+            </div>
+
+            <div className="flex border-b border-gray-100 bg-gray-50/50 shrink-0">
+              <button 
+                onClick={() => setActiveModalTab("issues")}
+                className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "issues" ? "bg-white border-b-2 border-black text-black" : "text-gray-400 hover:bg-gray-100"}`}
+              >
+                Diagnostic Issues
+              </button>
+              <button 
+                onClick={() => setActiveModalTab("parts")}
+                className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "parts" ? "bg-white border-b-2 border-black text-black" : "text-gray-400 hover:bg-gray-100"}`}
+              >
+                Archived Spare Parts
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-10 space-y-4">
+              {activeModalTab === "issues" ? (
+                <div className="space-y-4">
+                  {issueEntries.length === 0 ? (
+                    <div className="text-center py-20 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-100">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No diagnostic issues logged for this protocol</p>
+                    </div>
+                  ) : (
+                    issueEntries.map((entry, idx) => (
+                      <div key={idx} className="flex items-center gap-4 p-5 border border-gray-100 rounded-2xl bg-gray-50/50">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[60px]">Issue #{idx + 1}</span>
+                        <div className="flex-1">
+                          <p className="text-sm font-black text-gray-800 uppercase">{entry.issue}</p>
+                        </div>
+                        <div className="w-32 text-right">
+                          <p className="text-sm font-black text-emerald-600">₹{entry.issueAmount || 0}</p>
+                        </div>
+                        <div className="w-28 text-center">
+                          <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest border border-emerald-100">Approved</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {partsEntries.length === 0 ? (
+                    <div className="text-center py-20 bg-gray-50 rounded-[2rem] border-2 border-dashed border-gray-100">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No spare parts utilized in this service</p>
+                    </div>
+                  ) : (
+                    partsEntries.map((part, idx) => (
+                      <div key={idx} className="flex items-center gap-4 p-5 border border-gray-100 rounded-2xl bg-gray-50/50">
+                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest min-w-[60px]">Part #{idx + 1}</span>
+                        <div className="flex-1">
+                          <p className="text-sm font-black text-gray-800 uppercase">{part.partName}</p>
+                        </div>
+                        <div className="flex items-center gap-6">
+                           <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Qty: <span className="text-black">{part.qty}</span></p>
+                           <p className="text-sm font-black text-emerald-600 w-24 text-right">₹{part.price || 0}</p>
+                        </div>
+                        <div className="w-28 text-center">
+                          <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest border border-emerald-100">Approved</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="p-8 bg-gray-50/50 border-t border-gray-100 shrink-0 flex items-center justify-between">
+               <div className="flex items-center gap-4">
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Job ID: {selectedServiceDetail.bookingId || selectedServiceDetail.id}</span>
+                  <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest ml-4 px-3 py-1 bg-emerald-100/50 rounded-lg border border-emerald-100">Protocol Archived</span>
+               </div>
+               <button onClick={() => setIssueModalVisible(false)} className="px-8 py-3 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Back to Archive</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

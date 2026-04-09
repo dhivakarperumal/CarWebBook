@@ -134,16 +134,7 @@ const EmpBilling = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Delete this invoice permanently?")) return;
-    try {
-      await api.delete(`/billings/${id}`);
-      toast.success("Invoice deleted");
-      loadData();
-    } catch {
-      toast.error("Failed to delete invoice");
-    }
-  };
+
 
   const printInvoice = (bill) => {
     const win = window.open("", "", "width=900,height=650");
@@ -206,12 +197,15 @@ const EmpBilling = () => {
       
       {/* HEADER */}
       <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-        <div>
-          <h1 className="text-3xl font-black text-gray-900 flex items-center gap-3">
-             <FileText className="w-8 h-8 text-blue-600" />
-             Job Billing
-          </h1>
-          <p className="text-sm text-gray-500 font-medium mt-1">Status of payments for your assigned services</p>
+        <div className="flex items-center gap-3">
+          <div className="bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100 min-w-[140px]">
+              <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">Total Billings</p>
+              <p className="text-2xl font-black text-emerald-600">₹{bills.reduce((sum, b) => sum + Number(b.grandTotal), 0).toLocaleString()}</p>
+           </div>
+           <div className="bg-amber-50 px-6 py-3 rounded-2xl border border-amber-100 min-w-[120px]">
+              <p className="text-[10px] text-amber-400 font-black uppercase tracking-widest">Pending</p>
+              <p className="text-2xl font-black text-amber-600">{bills.filter(b => b.paymentStatus !== 'Paid').length}</p>
+           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
@@ -237,14 +231,7 @@ const EmpBilling = () => {
               </button>
            </div>
            
-           <div className="bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100 min-w-[140px]">
-              <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">Total Billings</p>
-              <p className="text-2xl font-black text-emerald-600">₹{bills.reduce((sum, b) => sum + Number(b.grandTotal), 0).toLocaleString()}</p>
-           </div>
-           <div className="bg-amber-50 px-6 py-3 rounded-2xl border border-amber-100 min-w-[120px]">
-              <p className="text-[10px] text-amber-400 font-black uppercase tracking-widest">Pending</p>
-              <p className="text-2xl font-black text-amber-600">{bills.filter(b => b.paymentStatus !== 'Paid').length}</p>
-           </div>
+           
            
            <button
              onClick={() => navigate("/employee/addbillings")}
@@ -339,7 +326,7 @@ const EmpBilling = () => {
                  </div>
               </div>
 
-              <div className="mt-auto flex items-center gap-3">
+              <div className="mt-auto flex items-start gap-3">
                  <button 
                   onClick={() => fetchAndPrint(bill.id)}
                   className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 text-white rounded-xl text-[10px] font-black hover:bg-black transition-all shadow-lg"
@@ -376,7 +363,7 @@ const EmpBilling = () => {
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Vehicle</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white text-right">Amount</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Status</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white text-right">Actions</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -395,7 +382,7 @@ const EmpBilling = () => {
                   <td className="px-6 py-4">
                     <p className="font-bold text-blue-600">{bill.carNumber || "SERVICE"}</p>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-left">
                     <p className="font-black text-emerald-600">₹{Number(bill.grandTotal).toLocaleString()}</p>
                   </td>
                   <td className="px-6 py-4">
@@ -413,8 +400,8 @@ const EmpBilling = () => {
                       <option value="paid" className="bg-white text-black">Paid</option>
                     </select>
                   </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="px-6 py-4 text-left">
+                    <div className="flex items-center justify-start gap-2">
                        <button 
                         onClick={() => showDetails(bill.id)}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"

@@ -263,7 +263,21 @@ const EmpAddBilling = () => {
 
       {/* 🚀 PREMIUM HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-       
+        <div className="flex items-center gap-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="group p-4 bg-white rounded-2xl border border-gray-100 shadow-xl shadow-black/5 hover:bg-black hover:text-white transition-all active:scale-95"
+          >
+            <ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
+          </button>
+          <div className="space-y-1">
+            <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none">{isEditMode ? "Update Billing Invoice" : "Generate Billing Invoice"}</h1>
+            <div className="flex items-center gap-3 pt-1">
+              <span className="bg-black text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg tracking-widest uppercase shadow-lg shadow-black/20">Invoice No</span>
+              <span className="text-blue-600 font-black text-sm uppercase tracking-wider underline underline-offset-4 decoration-2">{generatedInv}</span>
+            </div>
+          </div>
+        </div>
 
         {/* 🎚️ MODE TOGGLE */}
         <div className={`flex items-center p-1.5 bg-gray-100 rounded-[1.25rem] border border-gray-200/50 shadow-inner max-w-fit self-start md:self-center ${isEditMode ? "opacity-50 pointer-events-none" : ""}`}>
