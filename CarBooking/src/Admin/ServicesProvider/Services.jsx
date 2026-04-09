@@ -238,7 +238,7 @@ export default function Services() {
     <div className="p-4 max-w-7xl mx-auto space-y-10 animate-fadeIn bg-gray-50/50 min-h-screen">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Service Operations</h1>
+          <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Appointments And Booking</h1>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Monitor technical workflows & spare parts fulfillment</p>
         </div>
         <button onClick={() => navigate(`${pathPrefix}/addserviceparts`)} className="h-[56px] px-8 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all flex items-center justify-center gap-3"><FaPlus /> Registry Service Parts</button>
@@ -253,8 +253,8 @@ export default function Services() {
 
       <div className="flex flex-col lg:flex-row gap-4 justify-between items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-xl shadow-slate-200/50">
         <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner overflow-x-auto no-scrollbar w-full lg:w-auto">
-          <button onClick={() => { setMainTab("booked"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "booked" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>Portal Bookings</button>
-          <button onClick={() => { setMainTab("addVehicle"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "addVehicle" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>Direct Walk-ins</button>
+          <button onClick={() => { setMainTab("booked"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "booked" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>Appointments</button>
+          <button onClick={() => { setMainTab("addVehicle"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "addVehicle" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>Booking</button>
         </div>
 
         <div className="flex h-[56px] bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner shrink-0">
@@ -271,11 +271,8 @@ export default function Services() {
 
         <div className="flex flex-wrap lg:flex-nowrap items-center justify-end gap-3 w-full lg:w-auto">
           <select value={dateFilter} onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }} className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm min-w-[160px]">
-            <option value="All Time">Full History</option>
-            <option value="Today">Today Only</option>
-            <option value="Yesterday">Yesterday</option>
-            <option value="This Week">Last 7 Days</option>
-            <option value="This Month">Last 30 Days</option>
+            <option value="All Time">All</option>
+            <option value="Today">Today</option>
           </select>
 
           <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner shrink-0">
