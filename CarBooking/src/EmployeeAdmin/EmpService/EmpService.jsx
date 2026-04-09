@@ -61,13 +61,16 @@ export default function EmpService() {
   const [editingIssueId, setEditingIssueId] = useState(null);
   const [activeModalTab, setActiveModalTab] = useState("issues");
   const [editingParts, setEditingParts] = useState([]);
+  const [products, setProducts] = useState([]);
 
   const loadData = async () => {
     try {
-      const [servRes, empRes] = await Promise.all([
+      const [servRes, empRes, prodRes] = await Promise.all([
         api.get("/all-services"),
         api.get("/staff"),
+        api.get("/products"),
       ]);
+      setProducts(prodRes.data || []);
       const partsMap = {};
       const servicesWithDetails = [];
       await Promise.all(
@@ -505,9 +508,35 @@ export default function EmpService() {
                 ) : (
                   <>
                     {editingParts.map((part, idx) => (
-                      <div key={idx} className="flex items-center gap-4 p-3 border border-gray-100 rounded-xl bg-gray-50/50 hover:bg-white transition-all">
+                      <div key={idx} className="flex items-center gap-4 p-3 border border-gray-100 rounded-xl bg-gray-50/50 hover:bg-white transition-all relative">
                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest min-w-[50px]">Part #{idx + 1}</span>
-                        <input type="text" value={part.partName || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], partName: e.target.value }; setEditingParts(copy); }} className="flex-1 bg-white border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold text-gray-700 outline-none focus:border-black transition-all" placeholder="Part Name" />
+                        <input 
+                          type="text" 
+                          list="spare-parts-list"
+                          value={part.partName || ""} 
+                          onChange={(e) => { 
+                            const val = e.target.value;
+                            const copy = [...editingParts]; 
+                            const matchedProduct = products.find(p => p.name === val);
+                            if (matchedProduct) {
+                              copy[idx] = { 
+                                ...copy[idx], 
+                                partName: val, 
+                                price: matchedProduct.offerPrice || matchedProduct.mrp || 0 
+                              };
+                            } else {
+                              copy[idx] = { ...copy[idx], partName: val }; 
+                            }
+                            setEditingParts(copy); 
+                          }} 
+                          className="flex-1 bg-white border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold text-gray-700 outline-none focus:border-black transition-all" 
+                          placeholder="Search or Enter Part Name..." 
+                        />
+                        <datalist id="spare-parts-list">
+                          {products.map(p => (
+                            <option key={p.id} value={p.name}>₹{p.offerPrice || p.mrp}</option>
+                          ))}
+                        </datalist>
                         <div className="flex items-center gap-2">
                            <input type="number" value={part.qty || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], qty: e.target.value }; setEditingParts(copy); }} placeholder="Qty" className="w-16 px-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-gray-800 outline-none focus:border-black text-center" />
                            <div className="relative w-24">
