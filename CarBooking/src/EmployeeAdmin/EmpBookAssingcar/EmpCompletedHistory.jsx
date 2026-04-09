@@ -46,14 +46,55 @@ const EmpCompletedHistory = () => {
   const fetchCompletedServices = async () => {
     try {
       setLoading(true);
-      const res = await api.get("/all-services");
+      const [servRes, billRes] = await Promise.all([
+        api.get("/all-services"),
+        api.get("/billings")
+      ]);
       
-      const mechanicName = userProfile?.displayName || "";
-      const filtered = (res.data || []).filter(s => {
-          const isMine = (s.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase();
+      const mechanicName = (userProfile?.displayName || "").toLowerCase();
+      const billings = billRes.data || [];
+      const billMap = {};
+
+      billings.forEach(b => {
+        // Create multiple entries for a single bill to increase hit rate
+        const keys = [
+          b.bookingId, 
+          b.appointmentId, 
+          b.serviceId, 
+          b.jobId,
+          b.id
+        ].filter(Boolean).map(k => k.toString());
+        
+        const amount = b.grandTotal || b.totalAmount || b.total_amount || 0;
+        keys.forEach(k => { billMap[k] = amount; });
+      });
+
+      const filtered = (servRes.data || []).filter(s => {
+          const isMine = (s.assignedEmployeeName || "").toLowerCase() === mechanicName;
           const sStat = (s.serviceStatus || s.status || "").toLowerCase();
           const isDone = sStat.includes("completed") || sStat === "bill completed";
           return isMine && isDone;
+      }).map(s => {
+        // Try to find the bill amount using all available IDs
+        const possibleIds = [
+          s.id, 
+          s.bookingId, 
+          s.appointmentId, 
+          s.serviceId
+        ].filter(Boolean).map(id => id.toString());
+        
+        let foundAmount = 0;
+        for (let id of possibleIds) {
+          if (billMap[id] !== undefined) {
+            foundAmount = billMap[id];
+            break;
+          }
+        }
+
+        return {
+          ...s,
+          grandTotal: foundAmount
+        };
       });
       
       setServices(filtered);
@@ -237,6 +278,7 @@ const EmpCompletedHistory = () => {
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Vehicle Spec</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Status</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-center">Completion Date</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-emerald-300">Final Bill</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Action</th>
               </tr>
             </thead>
@@ -251,12 +293,15 @@ const EmpCompletedHistory = () => {
                     <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{item.vehicleNumber || item.vehicle_number || "Registry Missing"}</p>
                   </td>
                   <td className="px-8 py-6">
-                    <span className="px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest border border-emerald-100">Archived</span>
+                    <span className="px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest border border-emerald-100">Completed</span>
                   </td>
                   <td className="px-8 py-6 ">
                     <p className="text-xs font-black text-gray-500 flex items-center justify-start gap-2"><Clock size={12}/> {new Date(item.updatedAt || item.created_at).toLocaleDateString()}</p>
                   </td>
-                  <td className="px-8 py-6 text-right">
+                  <td className="px-8 py-6 text-center">
+                    <p className="text-sm font-black text-emerald-600">₹{Number(item.grandTotal || item.billAmount || 0).toLocaleString()}</p>
+                  </td>
+                  <td className="px-8 py-6 text-left">
                     <button 
                       onClick={() => handleViewDetails(item)}
                       className="p-3 bg-gray-50 border border-gray-100 rounded-xl text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all shadow-sm flex items-center justify-center ml-auto"
@@ -315,6 +360,34 @@ const EmpCompletedHistory = () => {
                   </div>
                 </div>
                 <button onClick={() => setIssueModalVisible(false)} className="w-12 h-12 bg-white/10 text-white rounded-xl flex items-center justify-center hover:bg-red-500 transition-all backdrop-blur-sm border border-white/10"><X size={20}/></button>
+              </div>
+            </div>
+
+            {/* 📋 CUSTOMER & VEHICLE BRIEFING */}
+            <div className="bg-gray-50/50 p-8 grid grid-cols-1 md:grid-cols-3 gap-8 shrink-0 border-b border-gray-100">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 text-gray-400"><User size={24} /></div>
+                <div>
+                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.15em] leading-none mb-1.5">Client Profile</p>
+                  <p className="text-base font-black text-gray-900 uppercase tracking-tight leading-none">{selectedServiceDetail.name || selectedServiceDetail.customer_name || "N/A"}</p>
+                  <p className="text-[10px] font-black text-gray-400 mt-2 uppercase tracking-widest">{selectedServiceDetail.phone || "No Contact"}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 text-gray-400"><Car size={24} /></div>
+                <div>
+                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.15em] leading-none mb-1.5">Vehicle Intelligence</p>
+                  <p className="text-base font-black text-gray-900 uppercase tracking-tight leading-none">{selectedServiceDetail.brand} {selectedServiceDetail.model}</p>
+                  <p className="text-[10px] font-black text-blue-600 mt-2 uppercase tracking-widest">{selectedServiceDetail.vehicleNumber || selectedServiceDetail.vehicle_number || "NO PLATE"}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 text-gray-400"><Clock size={24} /></div>
+                <div>
+                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.15em] leading-none mb-1.5">Timeline Archive</p>
+                  <p className="text-base font-black text-gray-900 uppercase tracking-tight leading-none">{new Date(selectedServiceDetail.updatedAt || selectedServiceDetail.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                  <p className="text-[10px] font-black text-gray-400 mt-2 uppercase tracking-widest leading-none">Record # {selectedServiceDetail.id}</p>
+                </div>
               </div>
             </div>
 
@@ -385,10 +458,11 @@ const EmpCompletedHistory = () => {
             </div>
 
             <div className="p-8 bg-gray-50/50 border-t border-gray-100 shrink-0 flex items-center justify-between">
-               <div className="flex items-center gap-4">
-                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Job ID: {selectedServiceDetail.bookingId || selectedServiceDetail.id}</span>
-                  <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest ml-4 px-3 py-1 bg-emerald-100/50 rounded-lg border border-emerald-100">Protocol Archived</span>
-               </div>
+                <div className="flex items-center gap-4">
+                   <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Job ID: {selectedServiceDetail.bookingId || selectedServiceDetail.id}</span>
+                   <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-4 px-3 py-1 bg-emerald-50 rounded-lg border border-emerald-100 italic">Financial Value: ₹{Number(selectedServiceDetail.grandTotal || 0).toLocaleString()}</span>
+                   <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest ml-4 px-3 py-1 bg-emerald-100/50 rounded-lg border border-emerald-100">Protocol Archived</span>
+                </div>
                <button onClick={() => setIssueModalVisible(false)} className="px-8 py-3 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Back to Archive</button>
             </div>
           </div>
