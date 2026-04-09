@@ -1,454 +1,566 @@
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
+import { FaEdit, FaTrash, FaEye, FaThLarge, FaList, FaPlus, FaCalendarAlt, FaClock, FaCheckCircle, FaSearch, FaWrench, FaUserCheck, FaTimes } from "react-icons/fa";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import Pagination from "../../Components/Pagination";
-import {
-  Wrench,
-  Clock,
-  Play,
-  CheckCircle2,
-  AlertCircle,
-  Car,
-  User,
-  ExternalLink,
-  LayoutGrid,
-  List,
-  PlusCircle,
-  Search,
-  Filter
-} from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
-const ITEMS_PER_PAGE = 5;
+const STATUS_STEPS = [
+  "Booked",
+  "Call Verified",
+  "Approved",
+  "Processing",
+  "Waiting for Spare",
+  "Service Going on",
+  "Bill Pending",
+  "Bill Completed",
+  "Service Completed",
+];
 
-const EmpService = () => {
-  const { profileName: userProfile } = useAuth();
-  const [activeServices, setActiveServices] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState("table"); // 'card' or 'table'
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
+const StatCard = ({ title, value, icon, gradient }) => (
+  <div className="bg-white border border-gray-300 rounded-md p-6 shadow-sm hover:shadow-md transition">
+    <div className="flex justify-between items-center">
+      <div>
+        <p className="text-xs text-slate-500 uppercase font-black tracking-widest">{title}</p>
+        <h2 className="text-2xl font-black text-slate-900 mt-1">{value}</h2>
+      </div>
+      <div className={`p-4 rounded-2xl text-white bg-gradient-to-br ${gradient} shadow-lg shadow-black/10`}>
+        {icon}
+      </div>
+    </div>
+  </div>
+);
+
+export default function EmpService() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { profileName: userProfile } = useAuth();
+  const userRole = (userProfile?.role || "").toLowerCase();
+  const isMechanic = userRole === "mechanic" || userRole === "staff";
+  const pathPrefix = location.pathname.startsWith("/employee") ? "/employee" : "/admin";
 
-  const fetchActiveServices = async () => {
+  const [viewMode, setViewMode] = useState("table");
+  const [mainTab, setMainTab] = useState("all");
+  const [services, setServices] = useState([]);
+  const [employees, setEmployees] = useState([]);
+  const [issueEntries, setIssueEntries] = useState([]);
+  const [serviceParts, setServiceParts] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("All Time");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
+  const [assigning, setAssigning] = useState(false);
+
+  const [issueModalVisible, setIssueModalVisible] = useState(false);
+  const [editingIssueId, setEditingIssueId] = useState(null);
+  const [activeModalTab, setActiveModalTab] = useState("issues");
+  const [editingParts, setEditingParts] = useState([]);
+
+  const loadData = async () => {
     try {
-      setLoading(true);
-      console.log("🔍 Fetching all services from /all-services...");
-      const res = await api.get("/all-services");
-      console.log("✅ All services from API:", res.data);
-      
-      const mechanicName = userProfile?.displayName || "";
-      console.log("🔧 Looking for mechanic:", mechanicName);
-      
-      // Filter for services assigned to this mechanic
-      const filtered = (res.data || []).filter(s => {
-        const assignedName = (s.assignedEmployeeName || "");
-        const isAssigned = assignedName.toLowerCase() === mechanicName.toLowerCase();
-        console.log(`   Service ${s.id}: assignedEmployeeName="${assignedName}", match="${isAssigned}"`);
-        return isAssigned;
-      });
-      
-      console.log(`✅ Filtered to ${filtered.length} assigned services`);
-
-      // Fetch spare parts for each service
-      const servicesWithParts = await Promise.all(
-        filtered.map(async (service) => {
+      const [servRes, empRes] = await Promise.all([
+        api.get("/all-services"),
+        api.get("/staff"),
+      ]);
+      const partsMap = {};
+      const servicesWithDetails = [];
+      await Promise.all(
+        (servRes.data || []).map(async (service) => {
           try {
-            console.log(`📦 Fetching service details for service ID ${service.id}...`);
-            const partsRes = await api.get(`/all-services/${service.id}`);
-            console.log(`✅ Response for service ${service.id}:`, partsRes.data);
-            const parts = partsRes.data?.parts || [];
-            console.log(`✅ Service ${service.id} has ${parts.length} spare parts`);
-            parts.forEach((p, idx) => {
-              console.log(`    Part ${idx + 1}: ${p.partName} x${p.qty} = ₹${p.total} (${p.status})`);
-            });
-            return {
-              ...service,
-              parts: parts,
-              issues: partsRes.data?.issues || []
-            };
+            const detailRes = await api.get(`/all-services/${service.id}`);
+            const details = detailRes.data || {};
+            partsMap[service.id] = details.parts || [];
+            servicesWithDetails.push({ ...service, parts: details.parts || [], issues: details.issues || [] });
           } catch (err) {
-            console.error(`❌ Failed to fetch parts for service ${service.id}:`, err.message);
-            return {
-              ...service,
-              parts: []
-            };
+            partsMap[service.id] = [];
+            servicesWithDetails.push({ ...service, parts: [], issues: [] });
           }
         })
       );
-
-      setActiveServices(servicesWithParts);
-    } catch (err) {
-      console.error("Fetch services error:", err);
-      toast.error("Failed to load your services");
+      setServiceParts(partsMap);
+      setServices(servicesWithDetails);
+      setEmployees(empRes.data);
+    } catch (error) {
+      toast.error("Failed to fetch data");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchActiveServices();
-  }, [userProfile]);
+  useEffect(() => { loadData(); }, []);
 
-  const updateStatus = async (id, newStatus) => {
-    try {
-      await api.put(`/all-services/${id}/status`, {
-        serviceStatus: newStatus
-      });
-      toast.success(`Status updated to ${newStatus}`);
-      fetchActiveServices();
-    } catch (err) {
-      console.error("Update failed:", err);
-      toast.error("Update failed");
-    }
+  const searchedServices = useMemo(() => {
+    return services.filter((s) => {
+      const text = `${s.bookingId || ""} ${s.name || ""} ${s.phone || ""} ${s.brand || ""} ${s.model || ""} ${s.vehicleNumber || ""}`.toLowerCase();
+      if (!text.includes(search.toLowerCase())) return false;
+
+      const bDateStr = s.created_at || s.createdAt;
+      // If filtering by history, don't block records with missing dates
+      if (dateFilter === "All Time") return true;
+      if (!bDateStr) return false;
+
+      const bookingDate = new Date(bDateStr);
+      const today = new Date();
+      if (dateFilter === "Today") return bookingDate.toDateString() === today.toDateString();
+      if (dateFilter === "Yesterday") {
+        const yesterday = new Date();
+        yesterday.setDate(today.getDate() - 1);
+        return bookingDate.toDateString() === yesterday.toDateString();
+      }
+      if (dateFilter === "This Week") {
+        const lastWeek = new Date();
+        lastWeek.setDate(today.getDate() - 7);
+        lastWeek.setHours(0, 0, 0, 0);
+        return bookingDate >= lastWeek;
+      }
+      if (dateFilter === "This Month") {
+        const lastMonth = new Date();
+        lastMonth.setDate(today.getDate() - 30);
+        lastMonth.setHours(0, 0, 0, 0);
+        return bookingDate >= lastMonth;
+      }
+      return true;
+    });
+  }, [services, search, dateFilter]);
+
+  const stats = useMemo(() => {
+    const mechanicName = (userProfile?.displayName || "").toLowerCase();
+    const relevantServices = services.filter(s => 
+      (s.assignedEmployeeName || "").toLowerCase() === mechanicName
+    );
+
+    return {
+      total: relevantServices.length,
+      processing: relevantServices.filter(s => {
+        const sStat = (s.serviceStatus || s.status || "").toLowerCase();
+        return sStat === "processing" || sStat === "service going on";
+      }).length,
+      completed: relevantServices.filter(s => {
+        const sStat = (s.serviceStatus || s.status || "").toLowerCase();
+        return sStat.includes("completed") || sStat.includes("bill completed");
+      }).length
+    };
+  }, [services, userProfile]);
+
+  const currentMainList = useMemo(() => {
+    const mechanicName = (userProfile?.displayName || "").toLowerCase();
+    const filtered = services.filter(s => 
+      (s.assignedEmployeeName || "").toLowerCase() === mechanicName
+    );
+
+    return filtered.filter((s) => {
+      const text = `${s.bookingId || ""} ${s.name || ""} ${s.brand || ""} ${s.model || ""} ${s.vehicleNumber || ""}`.toLowerCase();
+      if (!text.includes(search.toLowerCase())) return false;
+      
+      if (mainTab !== "all") {
+        if (mainTab === "booked" && s.addVehicle) return false;
+        if (mainTab === "addVehicle" && !s.addVehicle) return false;
+      }
+
+      const bDateStr = s.created_at || s.createdAt;
+      if (dateFilter === "All Time") return true;
+      if (!bDateStr) return false;
+
+      const bookingDate = new Date(bDateStr);
+      const today = new Date();
+      if (dateFilter === "Today") return bookingDate.toDateString() === today.toDateString();
+      return true;
+    });
+  }, [services, search, dateFilter, mainTab, userProfile]);
+
+  const listData = currentMainList;
+  const totalPages = Math.ceil(listData.length / itemsPerPage);
+  const paginatedData = listData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const getMappedStatus = (status) => {
+    if (!status) return "Booked";
+    const found = STATUS_STEPS.find(s => s.toLowerCase() === status.toLowerCase());
+    return found || "Booked";
   };
 
   const getStatusColor = (status) => {
-    const map = {
-      "Pending": "bg-yellow-50 text-yellow-600 border-yellow-100",
-      "Approved": "bg-blue-50 text-blue-600 border-blue-100",
-      "Assigned": "bg-blue-50 text-blue-600 border-blue-100",
-      "Processing": "bg-purple-50 text-purple-600 border-purple-100",
-      "Waiting for Spare": "bg-orange-50 text-orange-600 border-orange-100",
-      "Service Going on": "bg-indigo-50 text-indigo-600 border-indigo-100",
-      "Bill Pending": "bg-pink-50 text-pink-600 border-pink-100",
-      "Bill Completed": "bg-cyan-50 text-cyan-600 border-cyan-100",
-      "Service Completed": "bg-green-50 text-green-600 border-green-100",
-      "Completed": "bg-green-50 text-green-600 border-green-100",
-    };
-    return map[status] || "bg-gray-50 text-gray-600 border-gray-100";
+    const mapped = getMappedStatus(status);
+    switch (mapped) {
+      case "Booked": case "Approved": return "bg-indigo-100 text-indigo-700";
+      case "Processing": return "bg-purple-100 text-purple-700";
+      case "Waiting for Spare": return "bg-yellow-100 text-yellow-800";
+      case "Service Going on": return "bg-orange-100 text-orange-700";
+      case "Bill Pending": return "bg-pink-100 text-pink-700";
+      case "Bill Completed": return "bg-cyan-100 text-cyan-700";
+      case "Service Completed": return "bg-green-100 text-green-700";
+      default: return "bg-gray-100 text-gray-700";
+    }
   };
 
-  const filteredServices = useMemo(() => {
-    return activeServices.filter(s => {
-      const text = `${s.brand} ${s.model} ${s.name} ${s.vehicle_number} ${s.id}`.toLowerCase();
-      return text.includes(search.toLowerCase());
-    });
-  }, [activeServices, search]);
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this service?")) return;
+    try {
+      await api.delete(`/all-services/${id}`);
+      toast.success("Service deleted");
+      loadData();
+    } catch {
+      toast.error("Failed to delete service");
+    }
+  };
 
-  const totalPages = Math.ceil(filteredServices.length / ITEMS_PER_PAGE);
-  const paginatedServices = filteredServices.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+  const handleUpdateStatus = async (id, newStatus) => {
+    try {
+      await api.put(`/all-services/${id}/status`, { serviceStatus: newStatus });
+      toast.success(`Status updated to ${newStatus}`);
+      loadData();
+    } catch (error) {
+      toast.error("Failed to update status");
+    }
+  };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh]">
-        <Wrench className="w-12 h-12 text-blue-500 animate-spin mb-4" />
-        <p className="text-gray-500 font-medium">Loading your assignments...</p>
-      </div>
-    );
-  }
+  const assignEmployee = async () => {
+    if (!selectedBooking || !selectedEmployeeId || assigning) return;
+    try {
+      setAssigning(true);
+      const emp = employees.find(e => e.id.toString() === selectedEmployeeId.toString());
+      if (!emp) return toast.error("Mechanic not found");
+      await api.put(`/all-services/${selectedBooking.id}/assign`, { assignedEmployeeId: emp.id, assignedEmployeeName: emp.name, serviceStatus: "Processing" });
+      toast.success(`Mechanic ${emp.name} assigned!`);
+      setModalVisible(false); loadData();
+    } catch {
+      toast.error("Assignment failed");
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  const handleOpenIssueModal = (item) => {
+    setEditingIssueId(item.id);
+    let initialIssues = [...(item.issues || [])];
+    if (initialIssues.length === 0) {
+      const mainIssueText = item.issue || item.otherIssue || item.carIssue || "Routine Checkup";
+      initialIssues = [{
+        issue: mainIssueText,
+        issueAmount: item.issueAmount || 0,
+        issueStatus: item.issueStatus || 'pending'
+      }];
+    }
+    setIssueEntries(initialIssues);
+    setEditingParts([...(item.parts || [])]);
+    setActiveModalTab("issues");
+    setIssueModalVisible(true);
+  };
+
+  if (loading) return <div className="flex h-64 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div></div>;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-8 animate-fadeIn">
-      
-      {/* HEADER */}
-      <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
-            <Wrench className="text-blue-600 w-8 h-8" />
-            Service Management
-          </h1>
-          <p className="text-gray-500 font-medium italic">Track and update your currently assigned vehicle services</p>
+    <div className="p-4 max-w-7xl mx-auto space-y-10 animate-fadeIn bg-gray-50/50 min-h-screen">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+        <div>
+          <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Appointments And Booking</h1>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Monitor technical workflows & spare parts fulfillment</p>
         </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="hidden sm:flex p-1 bg-gray-100 rounded-xl w-fit">
-            <button
-              onClick={() => { setViewMode("card"); setPage(1); }}
-              className={`p-2 rounded-lg transition-all ${
-                viewMode === "card" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
-              }`}
-              title="Card View"
-            >
-              <LayoutGrid size={18} />
-            </button>
-            <button
-              onClick={() => { setViewMode("table"); setPage(1); }}
-              className={`p-2 rounded-lg transition-all ${
-                viewMode === "table" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
-              }`}
-              title="Table View"
-            >
-              <List size={18} />
-            </button>
-          </div>
-          
-          <div className="text-right hidden sm:block">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Total Assigned</p>
-            <p className="text-2xl font-black text-gray-900">{activeServices.length}</p>
-          </div>
-          <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 border border-blue-100">
-            <Car size={28} />
-          </div>
+        <button onClick={() => navigate(`${pathPrefix}/addserviceparts`)} className="h-[56px] px-8 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all flex items-center justify-center gap-3"><FaPlus /> Registry Service Parts</button>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <StatCard title="Total Assigned" value={stats.total} icon={<FaCalendarAlt />} gradient="from-blue-600 to-blue-400" />
+        <StatCard title="In Progress" value={stats.processing} icon={<FaClock />} gradient="from-indigo-600 to-indigo-400" />
+        <StatCard title="Successfully Finished" value={stats.completed} icon={<FaCheckCircle />} gradient="from-emerald-600 to-emerald-400" />
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-4 justify-between items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-xl shadow-slate-200/50">
+        <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner overflow-x-auto no-scrollbar w-full lg:w-auto">
+          <button onClick={() => { setMainTab("all"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "all" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>All</button>
+          <button onClick={() => { setMainTab("booked"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "booked" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>Appointments</button>
+          <button onClick={() => { setMainTab("addVehicle"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "addVehicle" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>Booking</button>
+        </div>
+
+        <div className="flex h-[56px] bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner shrink-0">
+          <button onClick={() => setViewMode("table")} className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaList /> Table</button>
+          <button onClick={() => setViewMode("card")} className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "card" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaThLarge /> Cards</button>
         </div>
       </div>
 
-      {/* SEARCH SECTION */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="relative w-full lg:w-80">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search active tasks..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-gray-700 shadow-sm"
-          />
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-4 bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-slate-200/50">
+        <div className="relative group w-full lg:max-w-xs xl:max-w-md">
+          <FaSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-all" />
+          <input type="text" placeholder="Track booking, customer, vehicle ID..." value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} className="w-full pl-15 pr-6 py-4 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:ring-8 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-inner" />
+        </div>
+
+        <div className="flex flex-wrap lg:flex-nowrap items-center justify-end gap-3 w-full lg:w-auto">
+          <select value={dateFilter} onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }} className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm min-w-[160px]">
+            <option value="All Time">All</option>
+            <option value="Today">Today</option>
+          </select>
+
+
         </div>
       </div>
 
-      {/* LIST SECTION */}
-      {filteredServices.length === 0 ? (
-        <div className="bg-white rounded-[2.5rem] py-24 text-center border-2 border-dashed border-gray-100">
-           <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-             <AlertCircle className="w-10 h-10 text-gray-200" />
-           </div>
-           <h3 className="text-xl font-bold text-gray-800">No Services Assigned</h3>
-           <p className="text-gray-400 mt-1">You're all caught up! Check back later for new tasks.</p>
-        </div>
-      ) : viewMode === "card" ? (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {paginatedServices.map((service) => (
-            <div 
-              key={service.id}
-              className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl transition-all duration-300 group"
-            >
-              <div className="p-8">
-                <div className="flex justify-between items-start mb-6">
-                  <div className="flex items-center gap-4">
-                     <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300">
-                        <Car className="text-gray-400 group-hover:text-white transition-colors" size={24} />
-                     </div>
-                     <div>
-                       <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusColor(service.status)}`}>
-                         {service.status || "Pending"}
-                       </span>
-                       <h3 className="text-xl font-black text-gray-900 mt-1">{service.brand} {service.model}</h3>
-                     </div>
+      <>
+        {viewMode === "card" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
+            {paginatedData.map((item) => (
+              <div key={item.id} className="group bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all duration-500 flex flex-col relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity"><FaWrench size={80} /></div>
+                <div className="flex justify-between items-start mb-6 relative z-10">
+                  <div>
+                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block mb-1">SERVICE ID</span>
+                    <p className="text-sm font-black text-blue-900">{item.bookingId || `SER-${item.id}`}</p>
                   </div>
-                  <button className="p-2 text-gray-300 hover:text-blue-600 transition-colors">
-                    <ExternalLink size={20} />
-                  </button>
+                  <select
+                    value={getMappedStatus(item.serviceStatus || item.status)}
+                    onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
+                    className={`px-4 py-2 rounded-[1.5rem] text-[10px] font-black tracking-widest border transition-all outline-none cursor-pointer appearance-none text-center ${getStatusColor(item.serviceStatus || item.status)}`}
+                  >
+                    {STATUS_STEPS.slice(STATUS_STEPS.indexOf(getMappedStatus(item.serviceStatus || item.status))).map(s => (
+                      <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>
+                    ))}
+                  </select>
                 </div>
-
-                <div className="grid grid-cols-2 gap-4 mb-8">
-                  <div className="p-4 bg-gray-50 rounded-2xl">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Customer</p>
-                    <div className="flex items-center gap-2">
-                       <User size={14} className="text-gray-400" />
-                       <p className="text-sm font-bold text-gray-800 truncate">{service.name}</p>
-                    </div>
-                  </div>
-                  <div className="p-4 bg-gray-50 rounded-2xl">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Vehicle ID</p>
-                    <div className="flex items-center gap-2">
-                       <p className="text-sm font-bold text-gray-800">{service.vehicle_number || "NO PLATE"}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Spare Parts Section */}
-                {service.parts && service.parts.length > 0 && (
-                  <div className="mb-8">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                      🔧 Spare Parts Added
+                <div className="space-y-5 flex-1 relative z-10">
+                  <div>
+                    <h3 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors uppercase truncate">
+                      {item.brand || "Unspecified"} {item.model || "Vehicle"}
+                    </h3>
+                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 w-fit px-3 py-1 rounded-xl border border-blue-100 mt-1">
+                      {item.vehicleNumber || "NO PLATE"}
                     </p>
-                    <div className="space-y-2">
-                      {service.parts.map((part) => (
-                        <div key={part.id} className="flex justify-between items-center bg-gray-50 rounded-lg p-3 border border-gray-100">
-                          <div className="flex-1">
-                            <p className="text-sm font-bold text-gray-800">{part.partName}</p>
-                            <p className="text-xs text-gray-500">Qty: {part.qty}</p>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-bold text-blue-600">₹{Number(part.total).toFixed(2)}</p>
-                            <span className={`inline-block px-2 py-1 text-[10px] font-bold rounded-full mt-1 ${
-                              part.status === 'approved' ? 'bg-green-100 text-green-700' :
-                              part.status === 'rejected' ? 'bg-red-100 text-red-700' :
-                              'bg-yellow-100 text-yellow-700'
-                            }`}>
-                              {part.status || 'pending'}
-                            </span>
-                          </div>
-                        </div>
-                      ))}
-                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-200 flex justify-between items-center mt-3">
-                        <p className="text-sm font-bold text-blue-700">Total Parts Cost</p>
-                        <p className="text-lg font-black text-blue-600">₹{service.parts.reduce((sum, p) => sum + Number(p.total), 0).toFixed(2)}</p>
-                      </div>
+                  </div>
+                  <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100 space-y-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400 font-bold text-xs uppercase">{item.name?.charAt(0)}</div>
+                      <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Client</p><p className="text-sm font-black text-gray-800">{item.name}</p></div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400 text-xs"><FaClock /></div>
+                      <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Allocation</p><p className="text-sm font-bold text-gray-500">{item.assignedEmployeeName || "Pending Assignment"}</p></div>
                     </div>
                   </div>
-                )}
-
-                {service.issues && service.issues.filter(i => (i.issueStatus || '').toLowerCase() === 'approved').length > 0 && (
-                  <div className="mb-8">
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-                      ✅ Approved Issue for Billing
-                    </p>
-                    <div className="overflow-hidden rounded-2xl border border-gray-50 bg-gray-50/50">
-                      <table className="min-w-full text-left text-[11px] font-bold">
-                        <thead>
-                          <tr className="text-gray-400 uppercase tracking-widest ">
-                            <th className="px-4 py-3">Issue</th>
-                            <th className="px-4 py-3 text-right">Amount</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {service.issues.filter(i => (i.issueStatus || '').toLowerCase() === 'approved').map((issue) => (
-                            <tr key={issue.id} className="text-gray-700">
-                              <td className="px-4 py-4">{issue.issue}</td>
-                              <td className="px-4 py-4 text-right text-blue-600 font-black">₹{Number(issue.issueAmount || 0).toFixed(2)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                    <div className="mt-2 flex justify-between text-sm font-black">
-                      <span className="text-gray-500">Issue total</span>
-                      <span className="text-blue-600">₹{service.issues.filter(i => (i.issueStatus || '').toLowerCase() === 'approved').reduce((sum, i) => sum + Number(i.issueAmount || 0), 0).toFixed(2)}</span>
-                    </div>
+                  <div className="rounded-2xl bg-blue-50/50 border border-blue-100 p-4 overflow-hidden">
+                    <div className="flex justify-between items-center mb-3"><span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Diagnostic Log & Parts</span><button onClick={() => handleOpenIssueModal(item)} className="text-[9px] font-black text-blue-600 uppercase hover:underline">Edit</button></div>
+                    <div className="space-y-2">{item.issues?.slice(0, 2).map((iss, i) => <p key={i} className="text-xs font-bold text-gray-600 line-clamp-1 flex items-center gap-2"><span className="w-1 h-1 bg-blue-400 rounded-full" />{iss.issue}</p>) || <p className="text-xs italic text-gray-400">No log entries</p>}</div>
                   </div>
-                )}
-
-                <div className="mb-8">
-                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-2">
-                      <AlertCircle size={12} /> Reported Issue
-                   </p>
-                   <p className="text-sm font-medium text-gray-600 leading-relaxed bg-amber-50/50 p-4 rounded-2xl border border-amber-50">
-                     {service.carIssue || "Routine checkup and general service inspection."}
-                   </p>
                 </div>
-
-                {/* ACTION BUTTONS */}
-                <div className="flex gap-4 pt-2 border-t border-gray-50">
-                  {(service.serviceStatus === "Processing" || service.status === "Assigned" || service.status === "Approved" || service.status === "Pending") && (
-                    <button 
-                      onClick={() => updateStatus(service.id, "Service Going on")}
-                      className="flex-1 flex items-center justify-center gap-2 py-4 bg-blue-600 text-white rounded-2xl font-black text-sm hover:bg-blue-700 shadow-lg shadow-blue-200 transition-all active:scale-95"
-                    >
-                      <Play size={18} fill="currentColor" />
-                      START SERVICE
-                    </button>
+                <div className="mt-6 pt-6 border-t border-gray-50 flex flex-wrap gap-2">
+                  {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                    <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-emerald-50 hover:text-emerald-600 transition-all border border-transparent hover:border-emerald-100" title="Add Parts"><FaPlus className="mr-2" /> Parts</button>
                   )}
-                  {(service.serviceStatus === "Waiting for Spare" || service.status === "Service Going on") && (
-                    <>
-                      <button 
-                        onClick={() => navigate("/employee/addserviceparts", { state: { service } })}
-                        className="flex-1 flex items-center justify-center gap-2 py-4 bg-slate-800 text-white rounded-2xl font-black text-sm hover:bg-slate-900 shadow-lg shadow-slate-200 transition-all active:scale-95"
-                      >
-                        <PlusCircle size={18} />
-                        ADD PARTS
-                      </button>
-                      <button 
-                        onClick={() => updateStatus(service.id, "Service Completed")}
-                        className="flex-1 flex items-center justify-center gap-2 py-4 bg-green-600 text-white rounded-2xl font-black text-sm hover:bg-green-700 shadow-lg shadow-green-200 transition-all active:scale-95"
-                      >
-                        <CheckCircle2 size={18} />
-                        COMPLETE
-                      </button>
-                    </>
+                  {getMappedStatus(item.serviceStatus || item.status) === "Processing" && (
+                    <button onClick={() => handleUpdateStatus(item.id, "Service Going on")} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all border border-transparent" title="Start Service">Start</button>
                   )}
-                  {service.status === "Service Completed" && (
-                    <div className="flex-1 py-4 bg-gray-50 text-gray-400 rounded-2xl font-black text-sm flex items-center justify-center gap-2 border border-gray-100 cursor-default">
-                       <CheckCircle2 size={18} className="text-green-500" />
-                       SERVICE FINISHED
-                    </div>
+                  {getMappedStatus(item.serviceStatus || item.status) === "Service Going on" && (
+                    <button onClick={() => handleUpdateStatus(item.id, "Service Completed")} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-all border border-transparent" title="Complete Service">Complete</button>
                   )}
+                  <button onClick={() => handleOpenIssueModal(item)} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all border border-transparent hover:border-amber-100" title="Edit Log & Parts"><FaEdit className="mr-2" /> Log</button>
+                  <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-11 w-11 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100" title="View Details"><FaEye /></button>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="overflow-hidden bg-white rounded-[2.5rem] border border-gray-100 shadow-2xl shadow-blue-900/5 overflow-x-auto">
-          <table className="w-full text-left border-collapse whitespace-nowrap">
-            <thead className="bg-black text-white">
-              <tr>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">S No</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Job ID</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Customer</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Vehicle</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Status</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {paginatedServices.map((service, index) => (
-                <tr key={service.id} className="hover:bg-gray-50 transition-colors group">
-                  <td className="px-6 py-4 text-xs font-black text-gray-400">
-                    {(page - 1) * ITEMS_PER_PAGE + index + 1}
-                  </td>
-                  <td className="px-6 py-4 text-xs font-bold text-gray-400">#{service.id}</td>
-                  <td className="px-6 py-4">
-                    <p className="font-black text-gray-800">{service.name}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <p className="font-bold text-gray-900">{service.brand} {service.model}</p>
-                    <p className="text-xs font-bold text-blue-500">{service.vehicle_number || "NO PLATE"}</p>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div>
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusColor(service.serviceStatus || service.status)}`}>
-                          {service.serviceStatus || service.status || "Pending"}
-                      </span>
-                      {service.parts && service.parts.length > 0 && (
-                        <div className="text-xs mt-2">
-                          <p className="text-gray-600 font-bold">Spare: ₹{service.parts.reduce((sum, p) => sum + Number(p.total), 0).toFixed(2)}</p>
-                          <p className="text-gray-500 text-[10px]">
-                            {service.parts.filter(p => p.status === 'pending').length} pending | {service.parts.filter(p => p.status === 'approved').length} approved
+            ))}
+            {paginatedData.length === 0 && <div className="col-span-full py-20 text-center text-gray-400 font-black uppercase tracking-widest text-xs">No service protocols found for designated metrics</div>}
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow-2xl shadow-blue-900/5 border border-gray-100 animate-fadeIn overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
+                <thead className="bg-[#0e5f76] text-white">
+                  <tr>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">S No</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Identifier</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Customer Profile</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Vehicle Spec</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Issues</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Mechanic Allocation</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-center">Workflow</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {paginatedData.length === 0 ? (
+                    <tr>
+                      <td colSpan="8" className="px-8 py-24 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mb-4 border border-gray-100 text-gray-300">
+                            <FaWrench size={24} />
+                          </div>
+                          <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">No active service protocols found for criteria</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    paginatedData.map((item, index) => (
+                      <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
+                        <td className="px-8 py-6"><span className="text-xs font-black text-gray-400">{(currentPage - 1) * itemsPerPage + index + 1}</span></td>
+                        <td className="px-8 py-6"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none mb-1">#ID {item.id}</span><span className="text-xs font-black text-blue-900">{item.bookingId || "SER-NEW"}</span></td>
+                        <td className="px-8 py-6"><p className="text-sm font-black text-gray-900">{item.name}</p><p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">{item.phone}</p></td>
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-2 mb-1"><p className="text-sm font-black text-gray-800 uppercase tracking-tight">{item.brand} {item.model}</p></div>
+                          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{item.vehicleNumber || "UNSPECIFIED"}</p>
+                        </td>
+                        <td className="px-8 py-6">
+                          <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]" title={item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}>
+                            {item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}
                           </p>
-                        </div>
-                      )}
-                      {service.issues && service.issues.filter(i => (i.issueStatus || '').toLowerCase() === 'approved').length > 0 && (
-                        <div className="text-xs mt-2">
-                          <p className="text-gray-600 font-bold">Issue: ₹{service.issues.filter(i => (i.issueStatus || '').toLowerCase() === 'approved').reduce((sum, i) => sum + Number(i.issueAmount || 0), 0).toFixed(2)}</p>
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {(service.serviceStatus === "Processing" || service.status === "Assigned" || service.status === "Approved" || service.status === "Pending") && (
-                        <button 
-                          onClick={() => updateStatus(service.id, "Service Going on")}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg text-xs font-black shadow-lg shadow-blue-200"
-                        >
-                          START
-                        </button>
-                      )}
-                      {(service.serviceStatus === "Waiting for Spare" || service.status === "Service Going on") && (
-                        <>
-                          <button 
-                            onClick={() => navigate("/employee/addserviceparts", { state: { service } })}
-                            className="px-3 py-2 bg-slate-800 text-white rounded-lg text-[10px] font-black shadow-lg shadow-slate-200"
+                        </td>
+                        <td className="px-8 py-6">
+                          {item.assignedEmployeeName ? (
+                            <div className="flex items-center gap-3"><div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-black border border-blue-100 uppercase">{item.assignedEmployeeName.charAt(0)}</div><span className="text-xs font-black text-gray-700">{item.assignedEmployeeName}</span></div>
+                          ) : (
+                            <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-3 py-2 rounded-xl border border-amber-100">Pending Assignment</button>
+                          )}
+                        </td>
+                        <td className="px-8 py-6 text-center">
+                          <select
+                            value={getMappedStatus(item.serviceStatus || item.status)}
+                            onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
+                            className={`px-3 py-1.5 rounded-full text-[9px] font-black border tracking-widest uppercase transition-all outline-none cursor-pointer appearance-none text-center ${getStatusColor(item.serviceStatus || item.status)}`}
                           >
-                            PARTS
-                          </button>
-                          <button 
-                            onClick={() => updateStatus(service.id, "Service Completed")}
-                            className="px-3 py-2 bg-green-600 text-white rounded-lg text-[10px] font-black shadow-lg shadow-green-200"
-                          >
-                            COMPLETE
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      
-      <Pagination 
-        currentPage={page}
-        totalPages={totalPages}
-        onPageChange={setPage}
-      />
+                            {STATUS_STEPS.slice(STATUS_STEPS.indexOf(getMappedStatus(item.serviceStatus || item.status))).map(s => (
+                              <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                          <div className="flex justify-end gap-2">
+                            {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                              <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-emerald-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Add Parts">Parts</button>
+                            )}
+                            {getMappedStatus(item.serviceStatus || item.status) === "Processing" && (
+                              <button onClick={() => handleUpdateStatus(item.id, "Service Going on")} className="h-10 px-4 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md" title="Start Service">Start</button>
+                            )}
+                            {getMappedStatus(item.serviceStatus || item.status) === "Service Going on" && (
+                              <button onClick={() => handleUpdateStatus(item.id, "Service Completed")} className="h-10 px-4 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-md" title="Complete Service">Complete</button>
+                            )}
+                            <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
+                            <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="View Details"><FaEye /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+
+        {modalVisible && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm shadow-2xl">
+            <div className="w-full max-w-md rounded-[3rem] bg-white p-10 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
+              <div className="mb-8 text-center">
+                <div className="w-16 h-16 bg-black text-white rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-xl shadow-black/20"><FaUserCheck size={28} /></div>
+                <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Mechanic Load</h2>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">Personnel Authorization Protocol</p>
+              </div>
+              <div className="mb-8">
+                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-2">Technician Registry</label>
+                <select value={selectedEmployeeId} onChange={(e) => setSelectedEmployeeId(e.target.value)} className="w-full rounded-[1.5rem] border border-gray-100 bg-gray-50 px-6 py-4.5 text-xs font-black text-gray-800 focus:bg-white focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner uppercase tracking-wider">
+                  <option value="">-- AUTHORIZE PERSONNEL --</option>
+                  {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name.toUpperCase()}</option>)}
+                </select>
+              </div>
+              <div className="flex gap-4">
+                <button onClick={() => { setModalVisible(false); setSelectedEmployeeId(""); }} className="flex-1 rounded-[1.5rem] bg-gray-100 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-200 transition-all">Cancel</button>
+                <button onClick={assignEmployee} disabled={assigning || !selectedEmployeeId} className="flex-1 rounded-[1.5rem] bg-black py-4.5 text-[10px] font-black text-white uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 disabled:opacity-20">Assign</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {issueModalVisible && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+            <div className="w-full max-w-3xl max-h-[85vh] flex flex-col rounded-[3rem] bg-white shadow-2xl border border-white animate-in zoom-in-95 duration-200 overflow-hidden">
+              <div className="px-10 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <div className="flex items-center gap-5">
+                  <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20"><FaWrench size={24} /></div>
+                  <div><h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Active Log Registry</h2><p className="text-[10px] text-blue-600 font-black uppercase tracking-widest mt-1">Diagnostics & Spare Parts</p></div>
+                </div>
+                <button onClick={() => { setIssueModalVisible(false); setEditingIssueId(null); }} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-100 text-gray-400 hover:text-red-500 transition-all shadow-sm"><FaTimes size={18} /></button>
+              </div>
+
+              <div className="flex px-10 bg-gray-50/50 border-b border-gray-100">
+                <button onClick={() => setActiveModalTab("issues")} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "issues" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Diagnostic Issues</button>
+                <button onClick={() => setActiveModalTab("parts")} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "parts" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Spare Parts</button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-10 space-y-6 no-scrollbar">
+                {activeModalTab === "issues" ? (
+                  <>
+                    {issueEntries.map((entry, idx) => (
+                      <div key={idx} className="p-8 border border-gray-100 rounded-[2.5rem] bg-gray-50/30 hover:bg-white hover:shadow-2xl transition-all duration-500">
+                        <div className="flex items-center justify-between mb-5"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-4 py-1.5 bg-white rounded-full border border-gray-100">LOG ENTRY #{idx + 1}</span><button onClick={() => { const copy = [...issueEntries]; copy.splice(idx, 1); setIssueEntries(copy); }} className="text-red-500 text-[9px] font-black uppercase tracking-widest hover:underline px-4">Remove Entry</button></div>
+                        <textarea value={entry.issue || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issue: e.target.value }; setIssueEntries(copy); }} className="w-full bg-white border border-gray-100 rounded-[1.5rem] p-5 text-xs font-bold text-gray-700 focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner" rows={3} placeholder="Provide technical diagnostic details..." />
+                        <div className="mt-5 flex gap-4">
+                          <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₹</span><input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Valuation Amount" className="w-full pl-10 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
+                          <select value={entry.issueStatus || "pending"} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueStatus: e.target.value }; setIssueEntries(copy); }} className={`px-6 py-4 bg-white border border-gray-100 rounded-xl text-[9px] font-black uppercase tracking-widest outline-none ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500 font-bold"}`}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+                        </div>
+                      </div>
+                    ))}
+                    {issueEntries.length === 0 && <div className="py-20 text-center text-gray-300 font-black uppercase tracking-widest text-[10px] border-2 border-dashed border-gray-100 rounded-[3rem]">Initial diagnostic log empty</div>}
+                  </>
+                ) : (
+                  <>
+                    {editingParts.map((part, idx) => (
+                      <div key={idx} className="p-8 border border-gray-100 rounded-[2.5rem] bg-gray-50/30 hover:bg-white hover:shadow-2xl transition-all duration-500">
+                        <div className="flex items-center justify-between mb-5"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-4 py-1.5 bg-white rounded-full border border-gray-100">PART REQUEST #{idx + 1}</span><button onClick={() => { const copy = [...editingParts]; copy.splice(idx, 1); setEditingParts(copy); }} className="text-red-500 text-[9px] font-black uppercase tracking-widest hover:underline px-4">Remove Part</button></div>
+                        <input type="text" value={part.partName || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], partName: e.target.value }; setEditingParts(copy); }} className="w-full bg-white border border-gray-100 rounded-[1.5rem] px-5 py-4 text-xs font-bold text-gray-700 focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner" placeholder="Part Name" />
+                        <div className="mt-5 flex gap-4">
+                          <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-widest text-gray-400">Qty</span><input type="number" value={part.qty || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], qty: e.target.value }; setEditingParts(copy); }} placeholder="Qty" className="w-full pl-16 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
+                          <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₹</span><input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-10 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
+                          <select value={part.status || "pending"} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], status: e.target.value }; setEditingParts(copy); }} className={`px-6 py-4 bg-white border border-gray-100 rounded-xl text-[9px] font-black uppercase tracking-widest outline-none ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500 font-bold"}`}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+                        </div>
+                      </div>
+                    ))}
+                    {editingParts.length === 0 && <div className="py-20 text-center text-gray-300 font-black uppercase tracking-widest text-[10px] border-2 border-dashed border-gray-100 rounded-[3rem]">No spare parts requested</div>}
+                  </>
+                )}
+              </div>
+
+              <div className="px-10 py-6 pb-12 border-t border-gray-100 bg-gray-50/50 flex gap-4">
+                {activeModalTab === "issues" ? (
+                  <button onClick={() => setIssueEntries([...issueEntries, { issue: '', issueAmount: '', issueStatus: 'pending' }])} className="px-8 py-4 rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Append Work Entry</button>
+                ) : (
+                  <button onClick={() => setEditingParts([...editingParts, { partName: '', qty: 1, price: 0, status: 'pending' }])} className="px-8 py-4 rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Append Spare Part</button>
+                )}
+                <button onClick={async () => {
+                  try {
+                    // Synchronize Issues
+                    const issuesToSave = issueEntries.filter(e => e.issue?.trim());
+                    for (const entry of issuesToSave) {
+                      if (entry.id) await api.put(`/all-services/${editingIssueId}/issues/${entry.id}`, { issue: entry.issue.trim(), issueAmount: Number(entry.issueAmount || 0), issueStatus: entry.issueStatus || 'pending' });
+                      else await api.post(`/all-services/${editingIssueId}/issues`, { issue: entry.issue.trim(), issueAmount: Number(entry.issueAmount || 0), issueStatus: entry.issueStatus || 'pending' });
+                    }
+
+                    // Synchronize Parts
+                    const partsToSave = editingParts.filter(p => p.partName?.trim());
+                    if (partsToSave.length > 0 || editingParts.length === 0) {
+                      await api.post(`/all-services/${editingIssueId}/parts`, { parts: partsToSave.map(p => ({ ...p, status: p.status || 'pending' })) });
+                    }
+
+                    // Update main issue amounts if necessary based on first entry
+                    if (issuesToSave.length > 0) {
+                      await api.put(`/all-services/${editingIssueId}/issue`, {
+                        issue: issuesToSave[0].issue,
+                        issueAmount: Number(issuesToSave[0].issueAmount || 0)
+                      });
+                    }
+
+                    toast.success('Manifest synchronized successfully');
+                    setIssueModalVisible(false);
+                    setEditingIssueId(null);
+                    setActiveModalTab("issues");
+                    loadData();
+                  } catch (error) { toast.error('Synchronization failed'); }
+                }} className="flex-1 rounded-2xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Synchronize Manifest</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     </div>
   );
-};
-
-export default EmpService;
+}

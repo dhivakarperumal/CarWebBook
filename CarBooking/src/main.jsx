@@ -83,6 +83,7 @@ import EmpAddBilling from "./EmployeeAdmin/EmpBilling/EmpAddBilling.jsx";
 import EmpBookings from "./EmployeeAdmin/EmpBookings/EmpBookings.jsx";
 import EmpProfileSettings from "./EmployeeAdmin/Settings/Profile.jsx";
 import EmpCompletedHistory from "./EmployeeAdmin/EmpBookAssingcar/EmpCompletedHistory.jsx";
+import EmpService from "./EmployeeAdmin/EmpService/EmpService.jsx";
 
 
 const router = createBrowserRouter([
@@ -119,7 +120,7 @@ const router = createBrowserRouter([
       { path: "cars", element: <EmpCars /> },
       { path: "assignservices", element: <EmpAssingCars /> },
       { path: "bookings", element: <EmpBookings /> },
-      { path: "services", element: <Servicestype /> },
+      { path: "services", element: <EmpService /> },
       { path: "billing", element: <EmpBilling /> },
       { path: "addbillings", element: <EmpAddBilling /> },
       { path: "addserviceparts", element: <AddServiceParts /> },
