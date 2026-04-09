@@ -418,25 +418,18 @@ export default function EmpService() {
                            })()}
                         </td>
                         <td className="px-8 py-6 text-center">
-                          <select
-                            value={getMappedStatus(item.serviceStatus || item.status)}
-                            onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
-                            className={`px-3 py-1.5 rounded-full text-[9px] font-black border tracking-widest uppercase transition-all outline-none cursor-pointer appearance-none text-center ${getStatusColor(item.serviceStatus || item.status)}`}
-                          >
-                            {STATUS_STEPS.slice(STATUS_STEPS.indexOf(getMappedStatus(item.serviceStatus || item.status))).map(s => (
-                              <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>
-                            ))}
-                          </select>
+                           {(() => {
+                             const status = getMappedStatus(item.serviceStatus || item.status);
+                             return <span className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[120px] text-center ${getStatusColor(item.serviceStatus || item.status)}`}>{status}</span>;
+                           })()}
                         </td>
                         <td className="px-8 py-6 text-left">
                           <div className="flex justify-end gap-2">
                             {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
-                              <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-emerald-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Add Parts">Parts</button>
+                              <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-10 px-4 bg-emerald-500 text-white hover:bg-emerald-900 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Add Parts">Parts</button>
                             )}
                            
-                            {getMappedStatus(item.serviceStatus || item.status) === "Service Going on" && (
-                              <button onClick={() => handleUpdateStatus(item.id, "Service Completed")} className="h-10 px-4 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-md" title="Complete Service">Complete</button>
-                            )}
+                           
                             <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-900 text-gray-400 hover:bg-amber-50 hover:text-amber-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
                             <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-10 px-4 bg-black text-white hover:bg-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2" title="Generate Bill"><FaFileInvoice /> Bill</button>
 
@@ -454,23 +447,21 @@ export default function EmpService() {
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
 
         {modalVisible && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm shadow-2xl">
-            <div className="w-full max-w-md rounded-[3rem] bg-white p-10 shadow-2xl border border-white animate-in zoom-in-95 duration-200">
-              <div className="mb-8 text-center">
-                <div className="w-16 h-16 bg-black text-white rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-xl shadow-black/20"><FaUserCheck size={28} /></div>
-                <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Mechanic Load</h2>
-                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">Personnel Authorization Protocol</p>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200">
+              <div className="mb-6 text-center">
+                <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Assign Mechanic</h2>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">Select personnel for this service</p>
               </div>
-              <div className="mb-8">
-                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 ml-2">Technician Registry</label>
-                <select value={selectedEmployeeId} onChange={(e) => setSelectedEmployeeId(e.target.value)} className="w-full rounded-[1.5rem] border border-gray-100 bg-gray-50 px-6 py-4.5 text-xs font-black text-gray-800 focus:bg-white focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner uppercase tracking-wider">
-                  <option value="">-- AUTHORIZE PERSONNEL --</option>
+              <div className="mb-6">
+                <select value={selectedEmployeeId} onChange={(e) => setSelectedEmployeeId(e.target.value)} className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs font-bold text-gray-800 focus:bg-white focus:border-black outline-none transition-all uppercase tracking-wider">
+                  <option value="">-- SELECT TECHNICIAN --</option>
                   {employees.map((emp) => <option key={emp.id} value={emp.id}>{emp.name.toUpperCase()}</option>)}
                 </select>
               </div>
-              <div className="flex gap-4">
-                <button onClick={() => { setModalVisible(false); setSelectedEmployeeId(""); }} className="flex-1 rounded-[1.5rem] bg-gray-100 py-4.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-200 transition-all">Cancel</button>
-                <button onClick={assignEmployee} disabled={assigning || !selectedEmployeeId} className="flex-1 rounded-[1.5rem] bg-black py-4.5 text-[10px] font-black text-white uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10 disabled:opacity-20">Assign</button>
+              <div className="flex gap-3">
+                <button onClick={() => { setModalVisible(false); setSelectedEmployeeId(""); }} className="flex-1 rounded-xl bg-gray-100 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest hover:bg-gray-200 transition-all">Cancel</button>
+                <button onClick={assignEmployee} disabled={assigning || !selectedEmployeeId} className="flex-1 rounded-xl bg-black py-3 text-[10px] font-black text-white uppercase tracking-widest hover:bg-blue-600 transition-all disabled:opacity-20">Assign Now</button>
               </div>
             </div>
           </div>
@@ -478,31 +469,35 @@ export default function EmpService() {
 
         {issueModalVisible && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-            <div className="w-full max-w-3xl max-h-[85vh] flex flex-col rounded-[3rem] bg-white shadow-2xl border border-white animate-in zoom-in-95 duration-200 overflow-hidden">
-              <div className="px-10 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center shadow-xl shadow-blue-500/20"><FaWrench size={24} /></div>
-                  <div><h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Active Log Registry</h2><p className="text-[10px] text-blue-600 font-black uppercase tracking-widest mt-1">Diagnostics & Spare Parts</p></div>
+            <div className="w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl bg-white shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200 overflow-hidden">
+              <div className="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-white">
+                <div>
+                  <h2 className="text-lg font-black text-gray-900 uppercase tracking-tight">Diagnostic & Parts Log</h2>
+                  <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Update service manifest</p>
                 </div>
-                <button onClick={() => { setIssueModalVisible(false); setEditingIssueId(null); }} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-100 text-gray-400 hover:text-red-500 transition-all shadow-sm"><FaTimes size={18} /></button>
+                <button onClick={() => { setIssueModalVisible(false); setEditingIssueId(null); }} className="p-2 text-gray-400 hover:text-red-500 transition-all"><FaTimes size={16} /></button>
               </div>
 
-              <div className="flex px-10 bg-gray-50/50 border-b border-gray-100">
-                <button onClick={() => setActiveModalTab("issues")} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "issues" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Diagnostic Issues</button>
-                <button onClick={() => setActiveModalTab("parts")} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "parts" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Spare Parts</button>
+              <div className="flex px-8 border-b border-gray-100">
+                <button onClick={() => setActiveModalTab("issues")} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "issues" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Issues</button>
+                <button onClick={() => setActiveModalTab("parts")} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "parts" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Parts</button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-10 space-y-6 no-scrollbar">
+              <div className="flex-1 overflow-y-auto p-8 space-y-4 no-scrollbar">
                 {activeModalTab === "issues" ? (
                   <>
                     {issueEntries.map((entry, idx) => (
-                      <div key={idx} className="p-8 border border-gray-100 rounded-[2.5rem] bg-gray-50/30 hover:bg-white hover:shadow-2xl transition-all duration-500">
-                        <div className="flex items-center justify-between mb-5"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-4 py-1.5 bg-white rounded-full border border-gray-100">LOG ENTRY #{idx + 1}</span><button onClick={() => { const copy = [...issueEntries]; copy.splice(idx, 1); setIssueEntries(copy); }} className="text-red-500 text-[9px] font-black uppercase tracking-widest hover:underline px-4">Remove Entry</button></div>
-                        <textarea value={entry.issue || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issue: e.target.value }; setIssueEntries(copy); }} className="w-full bg-white border border-gray-100 rounded-[1.5rem] p-5 text-xs font-bold text-gray-700 focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner" rows={3} placeholder="Provide technical diagnostic details..." />
-                        <div className="mt-5 flex gap-4">
-                          <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₹</span><input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Valuation Amount" className="w-full pl-10 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
-                          <select value={entry.issueStatus || "pending"} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueStatus: e.target.value }; setIssueEntries(copy); }} className={`px-6 py-4 bg-white border border-gray-100 rounded-xl text-[9px] font-black uppercase tracking-widest outline-none ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500 font-bold"}`}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+                      <div key={idx} className="flex items-center gap-4 p-3 border border-gray-100 rounded-xl bg-gray-50/50 hover:bg-white transition-all">
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest min-w-[50px]">#{idx + 1}</span>
+                        <input type="text" value={entry.issue || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issue: e.target.value }; setIssueEntries(copy); }} className="flex-1 bg-white border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold text-gray-700 outline-none focus:border-black transition-all" placeholder="Diagnostic Issue..." />
+                        <div className="relative w-28">
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
+                          <input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Amt" className="w-full pl-6 pr-3 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-gray-800 outline-none focus:border-black" />
                         </div>
+                        <div className="w-28 text-center">
+                          <span className={`text-[9px] font-black uppercase tracking-widest ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500"}`}>{entry.issueStatus || "pending"}</span>
+                        </div>
+                        <button onClick={() => { const copy = [...issueEntries]; copy.splice(idx, 1); setIssueEntries(copy); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><FaTimes size={12} /></button>
                       </div>
                     ))}
                     {issueEntries.length === 0 && <div className="py-20 text-center text-gray-300 font-black uppercase tracking-widest text-[10px] border-2 border-dashed border-gray-100 rounded-[3rem]">Initial diagnostic log empty</div>}
@@ -510,14 +505,20 @@ export default function EmpService() {
                 ) : (
                   <>
                     {editingParts.map((part, idx) => (
-                      <div key={idx} className="p-8 border border-gray-100 rounded-[2.5rem] bg-gray-50/30 hover:bg-white hover:shadow-2xl transition-all duration-500">
-                        <div className="flex items-center justify-between mb-5"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest px-4 py-1.5 bg-white rounded-full border border-gray-100">PART REQUEST #{idx + 1}</span><button onClick={() => { const copy = [...editingParts]; copy.splice(idx, 1); setEditingParts(copy); }} className="text-red-500 text-[9px] font-black uppercase tracking-widest hover:underline px-4">Remove Part</button></div>
-                        <input type="text" value={part.partName || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], partName: e.target.value }; setEditingParts(copy); }} className="w-full bg-white border border-gray-100 rounded-[1.5rem] px-5 py-4 text-xs font-bold text-gray-700 focus:ring-8 focus:ring-black/5 outline-none transition-all shadow-inner" placeholder="Part Name" />
-                        <div className="mt-5 flex gap-4">
-                          <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-widest text-gray-400">Qty</span><input type="number" value={part.qty || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], qty: e.target.value }; setEditingParts(copy); }} placeholder="Qty" className="w-full pl-16 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
-                          <div className="flex-1 relative"><span className="absolute left-6 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">₹</span><input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-10 pr-6 py-4 bg-white border border-gray-100 rounded-xl text-xs font-black text-gray-800 outline-none focus:ring-8 focus:ring-black/5 shadow-inner" /></div>
-                          <select value={part.status || "pending"} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], status: e.target.value }; setEditingParts(copy); }} className={`px-6 py-4 bg-white border border-gray-100 rounded-xl text-[9px] font-black uppercase tracking-widest outline-none ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500 font-bold"}`}><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+                      <div key={idx} className="flex items-center gap-4 p-3 border border-gray-100 rounded-xl bg-gray-50/50 hover:bg-white transition-all">
+                        <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest min-w-[50px]">Part #{idx + 1}</span>
+                        <input type="text" value={part.partName || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], partName: e.target.value }; setEditingParts(copy); }} className="flex-1 bg-white border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold text-gray-700 outline-none focus:border-black transition-all" placeholder="Part Name" />
+                        <div className="flex items-center gap-2">
+                           <input type="number" value={part.qty || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], qty: e.target.value }; setEditingParts(copy); }} placeholder="Qty" className="w-16 px-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-gray-800 outline-none focus:border-black text-center" />
+                           <div className="relative w-24">
+                             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
+                             <input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-5 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-gray-800 outline-none focus:border-black" />
+                           </div>
                         </div>
+                        <div className="w-28 text-center">
+                           <span className={`text-[9px] font-black uppercase tracking-widest ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500"}`}>{part.status || "pending"}</span>
+                        </div>
+                        <button onClick={() => { const copy = [...editingParts]; copy.splice(idx, 1); setEditingParts(copy); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><FaTimes size={12} /></button>
                       </div>
                     ))}
                     {editingParts.length === 0 && <div className="py-20 text-center text-gray-300 font-black uppercase tracking-widest text-[10px] border-2 border-dashed border-gray-100 rounded-[3rem]">No spare parts requested</div>}
@@ -525,7 +526,7 @@ export default function EmpService() {
                 )}
               </div>
 
-              <div className="px-10 py-6 pb-12 border-t border-gray-100 bg-gray-50/50 flex gap-4">
+              <div className="px-8 py-5 border-t border-gray-100 bg-white flex gap-3">
                 {activeModalTab === "issues" ? (
                   <button onClick={() => setIssueEntries([...issueEntries, { issue: '', issueAmount: '', issueStatus: 'pending' }])} className="px-8 py-4 rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Append Work Entry</button>
                 ) : (
