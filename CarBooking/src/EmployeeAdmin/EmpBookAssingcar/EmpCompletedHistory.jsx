@@ -25,6 +25,8 @@ const EmpCompletedHistory = () => {
   const [search, setSearch] = useState("");
   const [viewMode, setViewMode] = useState("table");
   const [page, setPage] = useState(1);
+  const [dateFilter, setDateFilter] = useState("all");
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
 
   useEffect(() => {
     fetchCompletedServices();
@@ -53,15 +55,55 @@ const EmpCompletedHistory = () => {
 
   const filteredServices = useMemo(() => {
     return services.filter(item => {
+      // Search Filter
       const text = search.toLowerCase();
-      return (
+      const matchesSearch = 
         (item.brand + " " + item.model).toLowerCase().includes(text) ||
         (item.vehicleNumber || item.vehicle_number || "").toLowerCase().includes(text) ||
         (item.name || item.customer_name || "").toLowerCase().includes(text) ||
-        (item.bookingId || item.id + "").includes(text)
-      );
+        (item.bookingId || item.id + "").includes(text);
+
+      // Date Filter
+      let matchesDate = true;
+      const bDateStr = item.created_at || item.createdAt;
+      if (dateFilter !== "all" && bDateStr) {
+        const bDate = new Date(bDateStr);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        if (dateFilter === "today") {
+          matchesDate = bDate.toDateString() === today.toDateString();
+        } else if (dateFilter === "yesterday") {
+          const yesterday = new Date(today);
+          yesterday.setDate(today.getDate() - 1);
+          matchesDate = bDate.toDateString() === yesterday.toDateString();
+        } else if (dateFilter === "week") {
+          const lastWeek = new Date(today);
+          lastWeek.setDate(today.getDate() - 7);
+          matchesDate = bDate >= lastWeek;
+        } else if (dateFilter === "month") {
+          const lastMonth = new Date(today);
+          lastMonth.setMonth(today.getMonth() - 1);
+          matchesDate = bDate >= lastMonth;
+        } else if (dateFilter === "custom") {
+          const start = dateRange.start ? new Date(dateRange.start) : null;
+          const end = dateRange.end ? new Date(dateRange.end) : null;
+          if (end) end.setHours(23, 59, 59, 999);
+          if (start && end) {
+            matchesDate = bDate >= start && bDate <= end;
+          } else if (start) {
+            matchesDate = bDate >= start;
+          } else if (end) {
+            matchesDate = bDate <= end;
+          }
+        }
+      } else if (dateFilter !== "all" && !bDateStr) {
+        matchesDate = false;
+      }
+      
+      return matchesSearch && matchesDate;
     });
-  }, [services, search]);
+  }, [services, search, dateFilter, dateRange]);
 
   const totalPages = Math.ceil(filteredServices.length / ITEMS_PER_PAGE);
   const paginatedServices = filteredServices.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
@@ -91,21 +133,63 @@ const EmpCompletedHistory = () => {
       </div>
 
       {/* SEARCH & TOGGLE */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300" />
-          <input
-            type="text"
-            placeholder="Search finalized orders..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-15 pr-6 py-4 bg-white border border-gray-100 rounded-2xl font-bold text-gray-700 outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all shadow-sm"
-          />
+      <div className="space-y-4">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1 relative">
+            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300" />
+            <input
+              type="text"
+              placeholder="Search finalized orders..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="w-full pl-15 pr-6 py-4 bg-white border border-gray-100 rounded-2xl font-bold text-gray-700 outline-none focus:ring-4 focus:ring-emerald-500/5 transition-all shadow-sm"
+            />
+          </div>
+
+          <div className="relative md:w-64">
+             <Filter className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+             <select
+               value={dateFilter}
+               onChange={(e) => { setDateFilter(e.target.value); setPage(1); }}
+               className="w-full pl-12 pr-6 py-4 bg-white border border-gray-100 rounded-2xl font-bold text-gray-700 outline-none appearance-none cursor-pointer focus:ring-4 focus:ring-emerald-500/5 shadow-sm"
+             >
+               <option value="all">All Time History</option>
+               <option value="today">Today's Completed</option>
+               <option value="yesterday">Yesterday's Jobs</option>
+               <option value="week">Past Week</option>
+               <option value="month">Past Month</option>
+               <option value="custom">Custom Archive Range</option>
+             </select>
+          </div>
+
+          <div className="flex p-1.5 bg-gray-100 rounded-2xl border border-gray-200 w-fit shrink-0">
+             <button onClick={() => setViewMode("table")} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === "table" ? "bg-white text-emerald-600 shadow-md" : "text-gray-400"}`}><List size={16}/> Table</button>
+             <button onClick={() => setViewMode("card")} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === "card" ? "bg-white text-emerald-600 shadow-md" : "text-gray-400"}`}><LayoutGrid size={16}/> Cards</button>
+          </div>
         </div>
-        <div className="flex p-1.5 bg-gray-100 rounded-2xl border border-gray-200 w-fit">
-           <button onClick={() => setViewMode("table")} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === "table" ? "bg-white text-emerald-600 shadow-md" : "text-gray-400"}`}><List size={16}/> Table</button>
-           <button onClick={() => setViewMode("card")} className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${viewMode === "card" ? "bg-white text-emerald-600 shadow-md" : "text-gray-400"}`}><LayoutGrid size={16}/> Cards</button>
-        </div>
+
+        {dateFilter === "custom" && (
+          <div className="flex flex-wrap items-center gap-4 bg-emerald-50/50 p-6 rounded-3xl border border-emerald-100 animate-fadeIn">
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+              <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest ml-1">Archive Start</label>
+              <input 
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                className="w-full px-4 py-3 bg-white border border-emerald-100 rounded-xl font-bold text-gray-700 outline-none focus:ring-4 focus:ring-emerald-500/10"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+              <label className="text-[10px] font-black text-emerald-400 uppercase tracking-widest ml-1">Archive End</label>
+              <input 
+                type="date"
+                value={dateRange.end}
+                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                className="w-full px-4 py-3 bg-white border border-emerald-100 rounded-xl font-bold text-gray-700 outline-none focus:ring-4 focus:ring-emerald-500/10"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* DATA */}
@@ -123,7 +207,7 @@ const EmpCompletedHistory = () => {
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Client</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Vehicle Spec</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Status</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Completion Date</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-center">Completion Date</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -139,8 +223,8 @@ const EmpCompletedHistory = () => {
                   <td className="px-8 py-6">
                     <span className="px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest border border-emerald-100">Archived</span>
                   </td>
-                  <td className="px-8 py-6 text-right">
-                    <p className="text-xs font-black text-gray-500 flex items-center justify-end gap-2"><Clock size={12}/> {new Date(item.updatedAt || item.created_at).toLocaleDateString()}</p>
+                  <td className="px-8 py-6 ">
+                    <p className="text-xs font-black text-gray-500 flex items-center justify-start gap-2"><Clock size={12}/> {new Date(item.updatedAt || item.created_at).toLocaleDateString()}</p>
                   </td>
                 </tr>
               ))}

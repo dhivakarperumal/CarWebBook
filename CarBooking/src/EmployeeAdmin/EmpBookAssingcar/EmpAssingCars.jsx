@@ -25,9 +25,10 @@ const EmpAssingCars = () => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
   const [viewMode, setViewMode] = useState("table"); // 'card' or 'table'
   const [page, setPage] = useState(1);
+  const [dateFilter, setDateFilter] = useState("all");
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
 
   useEffect(() => {
     fetchAssignedServices();
@@ -55,17 +56,60 @@ const EmpAssingCars = () => {
 
   const filteredServices = useMemo(() => {
     return services.filter(item => {
+      // Status Filter
       const matchesStatus = filterStatus === "all" || item.status === filterStatus;
+      
+      // Search Filter
       const text = search.toLowerCase();
       const matchesSearch = 
         (item.brand + " " + item.model).toLowerCase().includes(text) ||
         (item.vehicle_number || "").toLowerCase().includes(text) ||
         (item.customer_name || "").toLowerCase().includes(text) ||
         (item.id + "").includes(text);
+
+      // Date Filter
+      let matchesDate = true;
+      const bDateStr = item.created_at || item.createdAt;
+      if (dateFilter !== "all") {
+        if (!bDateStr) {
+          matchesDate = false;
+        } else {
+          const bDate = new Date(bDateStr);
+          const today = new Date();
+          today.setHours(0,0,0,0);
+
+          if (dateFilter === "today") {
+            matchesDate = bDate.toDateString() === today.toDateString();
+          } else if (dateFilter === "yesterday") {
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            matchesDate = bDate.toDateString() === yesterday.toDateString();
+          } else if (dateFilter === "week") {
+            const lastWeek = new Date(today);
+            lastWeek.setDate(today.getDate() - 7);
+            matchesDate = bDate >= lastWeek;
+          } else if (dateFilter === "month") {
+            const lastMonth = new Date(today);
+            lastMonth.setMonth(today.getMonth() - 1);
+            matchesDate = bDate >= lastMonth;
+          } else if (dateFilter === "custom") {
+            const start = dateRange.start ? new Date(dateRange.start) : null;
+            const end = dateRange.end ? new Date(dateRange.end) : null;
+            if (end) end.setHours(23, 59, 59, 999);
+            if (start && end) {
+              matchesDate = bDate >= start && bDate <= end;
+            } else if (start) {
+              matchesDate = bDate >= start;
+            } else if (end) {
+              matchesDate = bDate <= end;
+            }
+          }
+        }
+      }
       
-      return matchesStatus && matchesSearch;
+      return matchesStatus && matchesSearch && matchesDate;
     });
-  }, [services, search, filterStatus]);
+  }, [services, search, filterStatus, dateFilter, dateRange]);
 
   const totalPages = Math.ceil(filteredServices.length / ITEMS_PER_PAGE);
   const paginatedServices = filteredServices.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
@@ -148,32 +192,76 @@ const EmpAssingCars = () => {
       </div>
 
       {/* FILTERS SECTION */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search by vehicle, ID, or customer name..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold text-gray-700"
-          />
+      <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+          <div className="md:col-span-12 lg:col-span-5 relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search by vehicle, ID, or customer name..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-bold text-gray-700"
+            />
+          </div>
+
+          <div className="md:col-span-6 lg:col-span-3 relative">
+            <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <select
+              value={filterStatus}
+              onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
+              className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none appearance-none transition-all font-bold text-gray-700 cursor-pointer"
+            >
+              <option value="all">Any Status</option>
+              <option value="Assigned">Assigned</option>
+              <option value="Approved">Approved</option>
+              <option value="Processing">Processing</option>
+              <option value="Waiting for Spare">Waiting for Spare</option>
+              <option value="Service Going on">Service Going on</option>
+              <option value="Bill Pending">Bill Pending</option>
+              <option value="Service Completed">Completed</option>
+            </select>
+          </div>
+
+          <div className="md:col-span-6 lg:col-span-4 relative">
+            <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <select
+              value={dateFilter}
+              onChange={(e) => { setDateFilter(e.target.value); setPage(1); }}
+              className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none appearance-none transition-all font-bold text-gray-700 cursor-pointer"
+            >
+              <option value="all">All Time</option>
+              <option value="today">Today</option>
+              <option value="yesterday">Yesterday</option>
+              <option value="week">This Week</option>
+              <option value="month">This Month</option>
+              <option value="custom">Custom Range</option>
+            </select>
+          </div>
         </div>
 
-        <div className="relative">
-          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <select
-            value={filterStatus}
-            onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
-            className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none appearance-none transition-all font-bold text-gray-700 cursor-pointer"
-          >
-            <option value="all">Any Status</option>
-            <option value="Assigned">Assigned</option>
-            <option value="Service Going on">Service Going on</option>
-            <option value="Bill Pending">Bill Pending</option>
-            <option value="Service Completed">Completed</option>
-          </select>
-        </div>
+        {dateFilter === "custom" && (
+          <div className="flex flex-wrap items-center gap-4 bg-blue-50/50 p-6 rounded-3xl border border-blue-100 animate-fadeIn">
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+              <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1">Start Date</label>
+              <input 
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl font-bold text-gray-700 outline-none focus:ring-4 focus:ring-blue-500/10"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+              <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1">End Date</label>
+              <input 
+                type="date"
+                value={dateRange.end}
+                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl font-bold text-gray-700 outline-none focus:ring-4 focus:ring-blue-500/10"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* LIST SECTION */}
