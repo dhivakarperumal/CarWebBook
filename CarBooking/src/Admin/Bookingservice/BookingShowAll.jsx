@@ -236,15 +236,15 @@ const ShowAllBookings = () => {
       ) : (
         <div className="overflow-hidden bg-white rounded-lg shadow-2xl shadow-blue-900/5 border border-gray-100 animate-fadeIn overflow-x-auto no-scrollbar">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-black text-white">
+            <thead className="bg-[#020617] text-white">
               <tr>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">S No</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Identifier</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Customer Profile</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Vehicle Spec</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Registry Date</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-center">Protocol Status</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Action Control</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Identifier</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer Profile</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Vehicle Spec</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Registry Date</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-center">Protocol Status</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-right">Action Control</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

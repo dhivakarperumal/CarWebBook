@@ -203,13 +203,13 @@ const AllBikes = ({ defaultType = "all" }) => {
       <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden overflow-x-auto">
         <table className="w-full text-left border-collapse whitespace-nowrap">
           <thead>
-            <tr className="bg-slate-900 text-white">
-              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80 first:pl-10">{defaultType === 'all' ? 'Vehicle Details' : `${defaultType} Details`}</th>
-              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Specs</th>
-              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Location</th>
-              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Price</th>
-              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Status</th>
-              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80 last:pr-10 text-right">Actions</th>
+            <tr className="bg-[#020617] text-white">
+              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 first:pl-10">{defaultType === 'all' ? 'Vehicle Details' : `${defaultType} Details`}</th>
+              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Specs</th>
+              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Location</th>
+              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Price</th>
+              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
+              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 last:pr-10 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">

@@ -269,15 +269,15 @@ const Users = () => {
       <div className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm text-gray-700">
-            <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
+            <thead className="bg-[#020617] text-white">
               <tr>
-                <th className="px-4 py-4 text-left font-semibold">S No</th>
-                <th className="px-4 py-4 text-left font-semibold">Name / Username</th>
-                <th className="px-4 py-4 text-left font-semibold">Contact Details</th>
-                <th className="px-4 py-4 text-left font-semibold">Type</th>
-                <th className="px-4 py-4 text-left font-semibold">Role</th>
-                <th className="px-4 py-4 text-left font-semibold">Orders / Bookings</th>
-                <th className="px-4 py-4 text-center font-semibold">Actions</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Name / Username</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Contact Details</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Type</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Role</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Orders / Bookings</th>
+                <th className="px-4 py-4 text-center text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Actions</th>
               </tr>
             </thead>
 

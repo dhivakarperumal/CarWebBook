@@ -212,13 +212,13 @@ const ServicesListAll = () => {
       {view === "table" && (
         <div className="overflow-x-auto bg-white rounded-2xl shadow-sm border border-gray-200 mt-10">
           <table className="w-full text-md whitespace-nowrap">
-            <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
+            <thead className="bg-[#020617] text-white">
               <tr>
-                <th className="px-4 py-4 font-bold">S No</th>
-                <th className="px-4 py-4 font-bold">Image</th>
-                <th className="px-4 py-4 font-bold">Name</th>
-                <th className="px-4 py-4 font-bold">Price</th>
-                <th className="px-4 py-4 text-right font-bold">Actions</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Image</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Name</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Price</th>
+                <th className="px-4 py-4 text-right text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Actions</th>
               </tr>
             </thead>
 

@@ -391,15 +391,15 @@ const AllOrders = () => {
         <div className="bg-white  rounded-2xl ">
   <div className="overflow-x-auto">
     <table className="min-w-[800px] text-sm whitespace-nowrap">
-            <thead className="bg-gradient-to-r  from-black to-cyan-400 shadow text-white text-left">
+            <thead className="bg-[#020617] text-white">
               <tr>
-                <th className="px-4 py-4 text-left">Order ID</th>
-                <th className="px-4 py-4 text-left">Member</th>
-                <th className="px-4 py-4 text-left">Amount</th>
-                <th className="px-4 py-4 text-left">Payment</th>
-                <th className="px-4 py-4 text-left">Status</th>
-                <th className="px-4 py-4 text-left">Actions</th>
-                <th className="px-4 py-4 text-left">Print</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Order ID</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Member</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Amount</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Payment</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Actions</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Print</th>
               </tr>
             </thead>
             <tbody>

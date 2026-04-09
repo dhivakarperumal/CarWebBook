@@ -395,16 +395,16 @@ const AdminCompletedHistory = () => {
       ) : viewMode === "table" ? (
         <div className="bg-white rounded-lg border border-gray-100 shadow-xl shadow-slate-200/50 overflow-hidden">
           <table className="w-full text-left whitespace-nowrap">
-            <thead className="bg-emerald-600 text-white">
+            <thead className="bg-[#020617] text-white">
               <tr>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">S No</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Job ID</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Client</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Vehicle Spec</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Status</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-center">Completion Date</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-emerald-300">Final Bill</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Action</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Job ID</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Client</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Vehicle Spec</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-center">Completion Date</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Final Bill</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

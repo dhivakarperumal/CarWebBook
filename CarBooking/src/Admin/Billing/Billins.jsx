@@ -449,16 +449,16 @@ const Billings = () => {
       <div className="bg-white rounded-2xl shadow">
         <div className="overflow-x-auto no-scrollbar">
           <table className="min-w-[700px] text-sm whitespace-nowrap">
-            <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
+            <thead className="bg-[#020617] text-white">
               <tr>
-                <th className="px-6 py-4 text-left">S No</th>
-                <th className="px-6 py-4 text-left">Invoice</th>
-                <th className="px-6 py-4 text-left">Customer</th>
-                <th className="px-6 py-4 text-left">Vehicle Info</th>
-                <th className="px-6 py-4 text-left">Source</th>
-                <th className="px-6 py-4 text-left font-bold">Total Amount</th>
-                <th className="px-6 py-4 text-left">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Invoice</th>
+                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
+                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Vehicle Info</th>
+                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Source</th>
+                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Total Amount</th>
+                <th className="px-6 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
+                <th className="px-6 py-4 text-right text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Actions</th>
               </tr>
             </thead>
 

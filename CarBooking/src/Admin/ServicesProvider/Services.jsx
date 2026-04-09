@@ -397,17 +397,17 @@ export default function Services() {
           <div className="bg-white rounded-lg shadow-2xl shadow-blue-900/5 border border-gray-100 animate-fadeIn overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
-                <thead className="bg-[#0e5f76] text-white">
+                <thead className="bg-[#020617] text-white">
                   <tr>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">S No</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Booking ID</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Customer</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Vehicle Spec</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Issues</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Mechanic</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Spare Status</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-center">Workflow</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Actions</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Booking ID</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Vehicle Spec</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Issues</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Mechanic</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Spare Status</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-center">Workflow</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">

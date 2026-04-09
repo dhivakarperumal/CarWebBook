@@ -373,16 +373,16 @@ const AdminAppointments = () => {
       ) : (
               <div className="overflow-hidden bg-white rounded-lg shadow-2xl shadow-blue-900/5 border border-gray-100  overflow-x-auto no-scrollbar">
           <table className="w-full text-left text-sm whitespace-nowrap">
-            <thead className="bg-black text-white">
-              <tr className="bg-slate-900 text-white">
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">S No</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Appointment ID</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Customer</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Vehicle</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Schedule</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Technician</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80 text-center">Status</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80 text-right">Actions</th>
+            <thead className="bg-[#020617] text-white">
+              <tr>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Appointment ID</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Vehicle</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Schedule</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Technician</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-center">Status</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
