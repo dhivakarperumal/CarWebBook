@@ -512,114 +512,40 @@ const EmpAddBilling = () => {
         {/* 💳 ACCOUNTING SIDEBAR */}
         <div className="space-y-8 h-fit">
 
-          {/* VEHICLE DETAIL BOX */}
-          {selectionMode === "online" ? (
-            selectedService ? (
-              <div className="bg-gray-900 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-black/20 animate-slideInRight border border-white/5">
-                <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6">Service Overview</h2>
-                <div className="flex items-center gap-5 mb-8">
-                  <div className="w-14 h-14 bg-gray-800 rounded-2xl flex items-center justify-center border border-gray-700 shadow-xl">
-                    <User className="w-7 h-7 text-blue-400" />
-                  </div>
-                  <div>
-                    <p className="font-black text-xl leading-tight uppercase tracking-tight">{selectedService.name}</p>
-                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{selectedService.brand} {selectedService.model}</p>
-                  </div>
-                </div>
-
-               <div className="space-y-5 flex-1 relative z-10">
-                <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100 space-y-4">
-                  <SummaryItem label="Plate No" val={selectedService.vehicleNumber || 'PENDING'} />
-                  <SummaryItem label="Booking ID" val={selectedService.bookingId} />
-                  <SummaryItem label="Workforce" val={userProfile?.displayName} />
-                </div>
-              </div>
-              </div>
-            ) : null
-          ) : (
-            <div className="bg-gray-900 rounded-[2.5rem] p-8 text-white shadow-2xl shadow-black/20 animate-slideInRight border border-white/5">
-                <h2 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em] mb-6">Walk-in Overview</h2>
-                <div className="flex items-center gap-5 mb-8">
-                  <div className="w-14 h-14 bg-gray-800 rounded-2xl flex items-center justify-center border border-gray-700 shadow-xl">
-                    <User className="w-7 h-7 text-emerald-400" />
-                  </div>
-                  <div>
-                    <p className="font-black text-xl leading-tight uppercase tracking-tight">{manualCustomer.name || 'NEW CUSTOMER'}</p>
-                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{manualCustomer.brand} {manualCustomer.model || 'MANUAL ENTRY'}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-4 pt-6 border-t border-white/10">
-                  <SummaryItem label="Reg No" val={manualCustomer.regNo || 'N/A'} />
-                  <SummaryItem label="Phone" val={manualCustomer.phone || 'N/A'} />
-                  <SummaryItem label="Type" val="WALK-IN" />
-                </div>
-            </div>
-          )}
-
           {/* FINANCIAL SUMMARY CARD */}
-          <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/5 border border-gray-50 flex flex-col gap-8">
-            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center border-b border-gray-50 pb-5">Financial Reconciliation</h3>
+          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 space-y-8 transition-all hover:shadow-md">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Reconciliation</h3>
 
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2 block italic">Service Workforce (₹)</label>
-                <input
-                  type="number"
-                  placeholder="₹ 0.00"
-                  className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 font-black text-lg text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 transition-all text-right shadow-inner"
-                  value={labour}
-                  onChange={(e) => setLabour(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2 block italic">Tax Variable (%)</label>
-                <input
-                  type="number"
-                  placeholder="0"
-                  className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 font-black text-lg text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 transition-all text-right shadow-inner"
-                  value={gstPercent}
-                  onChange={(e) => setGstPercent(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-rose-400 uppercase tracking-[0.2em] ml-2 block italic">Loyalty Discount (₹)</label>
-                <input
-                  type="number"
-                  placeholder="₹ 0.00"
-                  className="w-full px-6 py-4 rounded-2xl bg-rose-50/30 border border-rose-100 font-black text-lg text-rose-600 outline-none focus:bg-white focus:ring-4 focus:ring-rose-500/5 transition-all text-right shadow-inner"
-                  value={discount}
-                  onChange={(e) => setDiscount(e.target.value)}
-                />
-              </div>
+            <div className="space-y-4">
+              <CompactInput label="Service Workforce" value={labour} onChange={setLabour} suffix="₹" />
+              <CompactInput label="Tax Variable" value={gstPercent} onChange={setGstPercent} suffix="%" />
+              <CompactInput label="Loyalty Discount" value={discount} onChange={setDiscount} suffix="₹" highlight />
             </div>
 
-            <div className="p-8 bg-black rounded-[2.5rem] text-white shadow-2xl shadow-black/20 space-y-4">
-              <div className="flex justify-between text-[11px] font-black opacity-30 uppercase tracking-widest">
+            <div className="space-y-3 pt-6 border-t border-gray-50">
+              <div className="flex justify-between items-center text-[11px] font-bold text-gray-400 uppercase tracking-widest">
                 <span>Inventory Sum</span>
                 <span>₹{subTotal.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between text-[11px] font-black opacity-30 uppercase tracking-widest">
+              <div className="flex justify-between items-center text-[11px] font-bold text-gray-400 uppercase tracking-widest">
                 <span>Tax Allocation</span>
                 <span>₹{gstAmount.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-[11px] font-black text-rose-400 uppercase tracking-widest">
+              <div className="flex justify-between items-center text-[11px] font-black text-rose-500 uppercase tracking-widest">
                 <span>Applied Discount</span>
                 <span>- ₹{discountAmount.toLocaleString()}</span>
               </div>
-              <div className="h-px bg-white/10 my-4" />
-              <div className="flex flex-col gap-1">
-                <span className="text-[9px] font-black uppercase tracking-[0.3em] opacity-30">Grand Reconciled Total</span>
-                <span className="text-4xl font-black text-emerald-400 tracking-tighter">₹{grandTotal.toLocaleString()}</span>
+              
+              <div className="bg-gray-900 rounded-2xl p-6 mt-6 flex flex-col gap-1 shadow-xl shadow-black/10">
+                <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em]">Grand Final Total</span>
+                <span className="text-3xl font-black text-white tracking-tighter">₹{grandTotal.toLocaleString()}</span>
               </div>
             </div>
 
             <button
               onClick={handleGenerateBill}
               disabled={parts.length === 0 && labourAmount === 0}
-              className="group w-full py-6 rounded-2xl bg-black text-white font-black uppercase tracking-widest text-xs shadow-2xl shadow-black/30 hover:bg-gray-800 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-5 rounded-2xl bg-black text-white font-black uppercase tracking-widest text-[11px] transition-all hover:bg-gray-800 active:scale-95 shadow-xl shadow-black/5 flex items-center justify-center gap-3 disabled:opacity-30 disabled:cursor-not-allowed group"
             >
               <FileText className="group-hover:scale-110 transition-transform" />
               Save Bill
@@ -652,6 +578,21 @@ const MetricBox = ({ label, val }) => (
   <div className="space-y-1 group">
     <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] group-hover:text-blue-400 transition-colors">{label}</p>
     <p className="font-black text-sm uppercase tracking-tight">{val || "---"}</p>
+  </div>
+);
+
+const CompactInput = ({ label, value, onChange, suffix, highlight }) => (
+  <div className="group relative">
+    <label className={`text-[8px] font-black uppercase tracking-widest ml-1 absolute transform -translate-y-1/2 top-0 left-3 bg-white px-2 z-10 ${highlight ? 'text-rose-500' : 'text-gray-400'}`}>{label}</label>
+    <div className="relative">
+      <input
+        type="number"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`w-full px-5 py-4 rounded-xl border font-black text-sm outline-none transition-all text-right pr-12 ${highlight ? 'bg-rose-50/20 border-rose-100 text-rose-600 focus:border-rose-300' : 'bg-white border-gray-100 text-gray-900 focus:border-black'}`}
+      />
+      <span className={`absolute right-5 top-1/2 -translate-y-1/2 font-black text-[10px] uppercase opacity-40 ${highlight ? 'text-rose-500' : 'text-gray-400'}`}>{suffix}</span>
+    </div>
   </div>
 );
 
