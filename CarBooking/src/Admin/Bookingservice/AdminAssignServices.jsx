@@ -243,13 +243,6 @@ export default function AdminAssignServices() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent whitespace-nowrap"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="p-4 max-w-7xl mx-auto space-y-10 animate-fadeIn bg-gray-50/50 min-h-screen">
