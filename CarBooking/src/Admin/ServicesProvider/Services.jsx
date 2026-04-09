@@ -298,7 +298,9 @@ export default function Services() {
                   onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
                   className={`px-4 py-2 rounded-[1.5rem] text-[10px] font-black tracking-widest border transition-all outline-none cursor-pointer appearance-none text-center ${getStatusColor(item.serviceStatus || item.status)}`}
                 >
-                  {STATUS_STEPS.map(s => <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>)}
+                  {STATUS_STEPS.slice(STATUS_STEPS.indexOf(getMappedStatus(item.serviceStatus || item.status))).map(s => (
+                    <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>
+                  ))}
                 </select>
               </div>
               <div className="space-y-5 flex-1 relative z-10">
@@ -394,7 +396,9 @@ export default function Services() {
                         onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
                         className={`px-3 py-1.5 rounded-full text-[9px] font-black border tracking-widest uppercase transition-all outline-none cursor-pointer appearance-none text-center ${getStatusColor(item.serviceStatus || item.status)}`}
                       >
-                        {STATUS_STEPS.map(s => <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>)}
+                        {STATUS_STEPS.slice(STATUS_STEPS.indexOf(getMappedStatus(item.serviceStatus || item.status))).map(s => (
+                          <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>
+                        ))}
                       </select>
                     </td>
                     <td className="px-8 py-6 text-right">
