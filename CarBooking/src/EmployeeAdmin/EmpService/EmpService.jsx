@@ -519,10 +519,10 @@ export default function EmpService() {
                     {issueEntries.map((entry, idx) => (
                       <div key={idx} className="flex items-center gap-4 p-3 border border-gray-100 rounded-xl bg-gray-50/50 hover:bg-white transition-all">
                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest min-w-[50px]">#{idx + 1}</span>
-                        <input type="text" value={entry.issue || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issue: e.target.value }; setIssueEntries(copy); }} className="flex-1 bg-white border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold text-gray-700 outline-none focus:border-black transition-all" placeholder="Diagnostic Issue..." />
+                        <input type="text" value={entry.issue || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issue: e.target.value }; setIssueEntries(copy); }} className="flex-1 bg-white border border-gray-100 rounded-lg px-3 py-2 text-xs font-black text-black outline-none focus:border-black transition-all" placeholder="Diagnostic Issue..." />
                         <div className="relative w-28">
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
-                          <input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Amt" className="w-full pl-6 pr-3 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-gray-800 outline-none focus:border-black" />
+                          <input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Amt" className="w-full pl-6 pr-3 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black" />
                         </div>
                         <div className="w-28 text-center">
                           <span className={`text-[9px] font-black uppercase tracking-widest ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500"}`}>{entry.issueStatus || "pending"}</span>
@@ -556,7 +556,7 @@ export default function EmpService() {
                             }
                             setEditingParts(copy); 
                           }} 
-                          className="flex-1 bg-white border border-gray-100 rounded-lg px-3 py-2 text-xs font-bold text-gray-700 outline-none focus:border-black transition-all" 
+                          className="flex-1 bg-white border border-gray-100 rounded-lg px-3 py-2 text-xs font-black text-black outline-none focus:border-black transition-all" 
                           placeholder="Search or Enter Part Name..." 
                         />
                         <datalist id="spare-parts-list">
@@ -565,10 +565,10 @@ export default function EmpService() {
                           ))}
                         </datalist>
                         <div className="flex items-center gap-2">
-                           <input type="number" value={part.qty || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], qty: e.target.value }; setEditingParts(copy); }} placeholder="Qty" className="w-16 px-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-gray-800 outline-none focus:border-black text-center" />
+                           <input type="number" value={part.qty || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], qty: e.target.value }; setEditingParts(copy); }} placeholder="Qty" className="w-16 px-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black text-center" />
                            <div className="relative w-24">
                              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
-                             <input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-5 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-gray-800 outline-none focus:border-black" />
+                             <input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-5 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black" />
                            </div>
                         </div>
                         <div className="w-28 text-center">
@@ -617,7 +617,7 @@ export default function EmpService() {
                     setActiveModalTab("issues");
                     loadData();
                   } catch (error) { toast.error('Failed to save items'); }
-                }} className="flex-1 rounded-xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Save Spares & Items</button>
+                }} className="flex-1 rounded-xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Save Spares & Issues</button>
               </div>
             </div>
           </div>
