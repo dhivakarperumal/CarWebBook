@@ -523,17 +523,17 @@ export default function AdminAssignServices() {
       ) : (
         <div className="overflow-x-auto bg-white rounded-3xl shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden animate-fadeIn">
           <table className="w-full text-sm text-left whitespace-nowrap">
-            <thead className="bg-black text-white">
-              <tr>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">S No</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Booking ID</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Customer</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Vehicle</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Service Detail</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Date & Time</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Technician</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest text-right">Action</th>
+            <thead>
+              <tr className="bg-slate-900 text-white">
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">S No</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Booking ID</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Customer</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Vehicle</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Service Detail</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Date & Time</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Technician</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Status</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -660,7 +660,10 @@ export default function AdminAssignServices() {
                 >
                   <option value="">Select a booking...</option>
                   {bookings
-                    .filter((b) => !b.assignedEmployeeId && (b.status || "").toLowerCase() === "approved")
+                    .filter((b) => !b.assignedEmployeeId && (
+                      (b.status || "").toLowerCase() === "approved" || 
+                      (b.status || "").toLowerCase() === "confirmed"
+                    ))
                     .map((b) => (
                       <option key={b.id} value={b.id}>
                         {b.brand} {b.model} - {b.name}
