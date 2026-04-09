@@ -161,9 +161,12 @@ export default function EmpService() {
 
   const currentMainList = useMemo(() => {
     const mechanicName = (userProfile?.displayName || "").toLowerCase();
-    const filtered = services.filter(s => 
-      (s.assignedEmployeeName || "").toLowerCase() === mechanicName
-    );
+    const filtered = services.filter(s => {
+      const isAssigned = (s.assignedEmployeeName || "").toLowerCase() === mechanicName;
+      const status = (s.serviceStatus || s.status || "").toLowerCase();
+      const isCompleted = status === "service completed" || status === "bill completed";
+      return isAssigned && !isCompleted;
+    });
 
     return filtered.filter((s) => {
       const text = `${s.bookingId || ""} ${s.name || ""} ${s.brand || ""} ${s.model || ""} ${s.vehicleNumber || ""}`.toLowerCase();
@@ -486,7 +489,7 @@ export default function EmpService() {
                 <button onClick={() => setActiveModalTab("parts")} className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${activeModalTab === "parts" ? "border-b-2 border-black text-black" : "text-gray-400 hover:text-gray-600"}`}>Parts</button>
               </div>
 
-              <div className="flex-1 overflow-y-auto p-8 space-y-4 no-scrollbar">
+              <div className="flex-1 overflow-y-auto p-8 space-y-4">
                 {activeModalTab === "issues" ? (
                   <>
                     {issueEntries.map((entry, idx) => (
@@ -584,13 +587,13 @@ export default function EmpService() {
                        });
                     }
 
-                    toast.success('Manifest saved successfully');
+                    toast.success('Service items saved successfully');
                     setIssueModalVisible(false);
                     setEditingIssueId(null);
                     setActiveModalTab("issues");
                     loadData();
-                  } catch (error) { toast.error('Failed to save manifest'); }
-                }} className="flex-1 rounded-xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Save Manifest</button>
+                  } catch (error) { toast.error('Failed to save items'); }
+                }} className="flex-1 rounded-xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Save Spares & Items</button>
               </div>
             </div>
           </div>
