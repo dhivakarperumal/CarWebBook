@@ -170,9 +170,9 @@ const EmpDashboard = () => {
       });
 
       setStats({
-        todayCount: todayAssigned.length,
-        totalCount: activeTasks.length,
-        inProgress: activeTasks.filter(b => ["processing", "service going on", "waiting for spare", "call verified"].includes(normalize(b.status || b.serviceStatus))).length,
+        todayCount: tasksForToday.length,
+        totalCount: filtered.length,
+        inProgress: filtered.filter(b => ["processing", "service going on", "waiting for spare", "call verified", "approved"].includes(normalize(b.status || b.serviceStatus))).length,
         completed: filtered.filter(b => ["service completed", "completed", "bill pending", "bill completed"].includes(normalize(b.status || b.serviceStatus))).length,
       });
     } catch (err) {
