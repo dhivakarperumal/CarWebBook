@@ -32,6 +32,8 @@ const EmpAddBilling = () => {
   const [issues, setIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectionMode, setSelectionMode] = useState("online"); // 'online' or 'manual'
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingBillId, setEditingBillId] = useState(null);
 
   const [manualCustomer, setManualCustomer] = useState({
     name: "",
@@ -86,11 +88,49 @@ const EmpAddBilling = () => {
      HANDLE NAVIGATION STATE
   ======================= */
   useEffect(() => {
-    if (location.state?.service) {
-      setSelectionMode("online");
-      selectService(location.state.service);
-    }
-  }, [location.state, services]);
+    const initializeFromState = async () => {
+      if (location.state?.service && !isEditMode) {
+        setSelectionMode("online");
+        selectService(location.state.service);
+      }
+      if (location.state?.editBill && !editingBillId) {
+        try {
+          setLoading(true);
+          const res = await api.get(`/billings/${location.state.editBill.id}`);
+          const b = res.data;
+          
+          setIsEditMode(true);
+          setEditingBillId(b.id);
+          setGeneratedInv(b.invoiceNo);
+          setLabour(b.labour || "");
+          setGstPercent(b.gstPercent || 0);
+          setParts((b.parts || []).map(p => ({
+            ...p,
+            qty: Number(p.qty || 0),
+            price: Number(p.price || 0),
+            total: Number(p.total || (Number(p.qty || 0) * Number(p.price || 0)))
+          })));
+          setIssues((b.issues || []).map(i => ({
+            ...i,
+            amount: Number(i.amount || 0)
+          })));
+          setManualCustomer({
+            name: b.customerName || "",
+            phone: b.mobileNumber || "",
+            brand: (b.car || "").split(" ")[0] || "",
+            model: (b.car || "").split(" ").slice(1).join(" ") || "",
+            regNo: b.carNumber || ""
+          });
+          setSelectionMode("manual");
+        } catch (err) {
+          toast.error("Failed to load original bill details");
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    initializeFromState();
+  }, [location.state]);
   const selectService = async (s) => {
     try {
       setSelectedService(s);
@@ -121,13 +161,13 @@ const EmpAddBilling = () => {
     }
   };
 
-  /* =======================
-     CALCULATIONS
-  ======================= */
-  const partsTotal = parts.reduce((sum, p) => sum + p.total, 0);
-  const issueTotal = issues.reduce((sum, i) => sum + i.amount, 0);
-  const labourAmount = Number(labour || 0);
-  const gst = Number(gstPercent || 0);
+   /* =======================
+      CALCULATIONS
+   ======================= */
+   const partsTotal = parts.reduce((sum, p) => Number(sum) + Number(p.total || 0), 0);
+   const issueTotal = issues.reduce((sum, i) => Number(sum) + Number(i.amount || 0), 0);
+   const labourAmount = Number(labour || 0);
+   const gst = Number(gstPercent || 0);
 
   const subTotal = partsTotal + issueTotal + labourAmount;
   const gstAmount = (subTotal * gst) / 100;
@@ -196,12 +236,16 @@ const EmpAddBilling = () => {
         billingType: selectionMode
       };
 
-      await api.post('/billings', payload);
-
-      toast.success("Job invoice successfully pushed");
+      if (isEditMode) {
+        await api.patch(`/billings/${editingBillId}`, payload);
+        toast.success("Job invoice successfully updated");
+      } else {
+        await api.post('/billings', payload);
+        toast.success("Job invoice successfully pushed");
+      }
       navigate("/employee/billing");
     } catch (error) {
-      toast.error("Failed to push invoice to system");
+      toast.error(isEditMode ? "Failed to update invoice" : "Failed to push invoice to system");
     }
   };
 
@@ -219,24 +263,10 @@ const EmpAddBilling = () => {
 
       {/* 🚀 PREMIUM HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div className="flex items-center gap-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="group p-4 bg-white rounded-2xl border border-gray-100 shadow-xl shadow-black/5 hover:bg-black hover:text-white transition-all active:scale-95"
-          >
-            <ChevronLeft className="w-6 h-6 group-hover:-translate-x-1 transition-transform" />
-          </button>
-          <div className="space-y-1">
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none">Generate Billing Invoice</h1>
-            <div className="flex items-center gap-3 pt-1">
-              <span className="bg-black text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg tracking-widest uppercase shadow-lg shadow-black/20">Invoice No</span>
-              <span className="text-blue-600 font-black text-sm uppercase tracking-wider underline underline-offset-4 decoration-2">{generatedInv}</span>
-            </div>
-          </div>
-        </div>
+       
 
         {/* 🎚️ MODE TOGGLE */}
-        <div className="flex items-center p-1.5 bg-gray-100 rounded-[1.25rem] border border-gray-200/50 shadow-inner max-w-fit self-start md:self-center">
+        <div className={`flex items-center p-1.5 bg-gray-100 rounded-[1.25rem] border border-gray-200/50 shadow-inner max-w-fit self-start md:self-center ${isEditMode ? "opacity-50 pointer-events-none" : ""}`}>
           <button
             onClick={() => { setSelectionMode('online'); setSelectedService(null); setParts([]); setIssues([]); }}
             className={`px-8 py-3 rounded-[1rem] text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${selectionMode === 'online' ? 'bg-white text-black shadow-xl shadow-black/5' : 'text-gray-400 hover:text-gray-600'}`}

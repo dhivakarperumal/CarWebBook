@@ -62,6 +62,8 @@ export default function EmpService() {
   const [activeModalTab, setActiveModalTab] = useState("issues");
   const [editingParts, setEditingParts] = useState([]);
   const [products, setProducts] = useState([]);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const loadData = async () => {
     try {
@@ -181,12 +183,35 @@ export default function EmpService() {
       if (dateFilter === "All Time") return true;
       if (!bDateStr) return false;
 
-      const bookingDate = new Date(bDateStr);
       const today = new Date();
       if (dateFilter === "Today") return bookingDate.toDateString() === today.toDateString();
+      if (dateFilter === "Yesterday") {
+        const yesterday = new Date();
+        yesterday.setDate(today.getDate() - 1);
+        return bookingDate.toDateString() === yesterday.toDateString();
+      }
+      if (dateFilter === "This Week") {
+        const lastWeek = new Date();
+        lastWeek.setDate(today.getDate() - 7);
+        lastWeek.setHours(0, 0, 0, 0);
+        return bookingDate >= lastWeek;
+      }
+      if (dateFilter === "This Month") {
+        const lastMonth = new Date();
+        lastMonth.setDate(today.getDate() - 30);
+        lastMonth.setHours(0, 0, 0, 0);
+        return bookingDate >= lastMonth;
+      }
+      if (dateFilter === "Custom Range" && startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(23, 59, 59, 999);
+        return bookingDate >= start && bookingDate <= end;
+      }
       return true;
     });
-  }, [services, search, dateFilter, mainTab, userProfile]);
+  }, [services, search, dateFilter, mainTab, userProfile, startDate, endDate]);
 
   const listData = currentMainList;
   const totalPages = Math.ceil(listData.length / itemsPerPage);
@@ -292,8 +317,8 @@ export default function EmpService() {
         </div>
 
         <div className="flex h-[56px] bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner shrink-0">
-          <button onClick={() => setViewMode("table")} className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaList /> Table</button>
-          <button onClick={() => setViewMode("card")} className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "card" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaThLarge /> Cards</button>
+          <button onClick={() => setViewMode("table")} className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaList /> </button>
+          <button onClick={() => setViewMode("card")} className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "card" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaThLarge /> </button>
         </div>
       </div>
 
@@ -304,12 +329,21 @@ export default function EmpService() {
         </div>
 
         <div className="flex flex-wrap lg:flex-nowrap items-center justify-end gap-3 w-full lg:w-auto">
+          {dateFilter === "Custom Range" && (
+            <div className="flex items-center gap-2 animate-in slide-in-from-right-4 duration-300">
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-[56px] px-6 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-xs outline-none focus:border-black shadow-sm" />
+              <span className="text-gray-400 font-bold">to</span>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-[56px] px-6 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-xs outline-none focus:border-black shadow-sm" />
+            </div>
+          )}
           <select value={dateFilter} onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }} className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm min-w-[160px]">
-            <option value="All Time">All</option>
+            <option value="All Time">All Time</option>
             <option value="Today">Today</option>
+            <option value="Yesterday">Yesterday</option>
+            <option value="This Week">This Week</option>
+            <option value="This Month">This Month</option>
+            <option value="Custom Range">Custom Range</option>
           </select>
-
-
         </div>
       </div>
 
@@ -324,15 +358,9 @@ export default function EmpService() {
                     <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block mb-1">SERVICE ID</span>
                     <p className="text-sm font-black text-blue-900">{item.bookingId || `SER-${item.id}`}</p>
                   </div>
-                  <select
-                    value={getMappedStatus(item.serviceStatus || item.status)}
-                    onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
-                    className={`px-4 py-2 rounded-[1.5rem] text-[10px] font-black tracking-widest border transition-all outline-none cursor-pointer appearance-none text-center ${getStatusColor(item.serviceStatus || item.status)}`}
-                  >
-                    {STATUS_STEPS.slice(STATUS_STEPS.indexOf(getMappedStatus(item.serviceStatus || item.status))).map(s => (
-                      <option key={s} value={s} className="bg-white text-black normal-case text-left">{s}</option>
-                    ))}
-                  </select>
+                  <div className={`px-4 py-2 rounded-[1.5rem] text-[10px] font-black tracking-widest border text-center ${getStatusColor(item.serviceStatus || item.status)}`}>
+                    {getMappedStatus(item.serviceStatus || item.status)}
+                  </div>
                 </div>
                 <div className="space-y-5 flex-1 relative z-10">
                   <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100 space-y-4">

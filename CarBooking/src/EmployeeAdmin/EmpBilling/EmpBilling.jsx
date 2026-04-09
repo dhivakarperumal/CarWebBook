@@ -12,7 +12,8 @@ import {
   Plus,
   Trash,
   History,
-  Filter
+  Filter,
+  Pencil
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
@@ -353,11 +354,11 @@ const EmpBilling = () => {
                     <History size={16} />
                  </button>
                  <button 
-                   onClick={() => handleDelete(bill.id)}
-                   className="w-10 h-10 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm" 
-                   title="Delete"
+                   onClick={() => navigate('/employee/addbillings', { state: { editBill: bill } })}
+                   className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 hover:bg-amber-600 hover:text-white transition-all shadow-sm" 
+                   title="Edit Billing"
                  >
-                    <Trash size={16} />
+                    <Pencil size={16} />
                  </button>
               </div>
             </div>
@@ -429,11 +430,11 @@ const EmpBilling = () => {
                           <Printer size={16} />
                        </button>
                        <button 
-                        onClick={() => handleDelete(bill.id)}
-                        className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Delete"
+                        onClick={() => navigate('/employee/addbillings', { state: { editBill: bill } })}
+                        className="p-2 text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
+                        title="Edit Billing"
                        >
-                          <Trash size={16} />
+                          <Pencil size={16} />
                        </button>
                     </div>
                   </td>
