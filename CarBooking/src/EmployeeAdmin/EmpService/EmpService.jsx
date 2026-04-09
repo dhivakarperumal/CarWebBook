@@ -557,9 +557,9 @@ export default function EmpService() {
 
               <div className="px-8 py-5 border-t border-gray-100 bg-white flex gap-3">
                 {activeModalTab === "issues" ? (
-                  <button onClick={() => setIssueEntries([...issueEntries, { issue: '', issueAmount: '', issueStatus: 'pending' }])} className="px-8 py-4 rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Append Work Entry</button>
+                  <button onClick={() => setIssueEntries([...issueEntries, { issue: '', issueAmount: '', issueStatus: 'pending' }])} className="px-6 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">Add Issue</button>
                 ) : (
-                  <button onClick={() => setEditingParts([...editingParts, { partName: '', qty: 1, price: 0, status: 'pending' }])} className="px-8 py-4 rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all shadow-sm">Append Spare Part</button>
+                  <button onClick={() => setEditingParts([...editingParts, { partName: '', qty: 1, price: 0, status: 'pending' }])} className="px-6 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 text-[10px] font-black uppercase tracking-widest hover:bg-black hover:text-white transition-all">Add Part</button>
                 )}
                 <button onClick={async () => {
                   try {
@@ -578,19 +578,19 @@ export default function EmpService() {
 
                     // Update main issue amounts if necessary based on first entry
                     if (issuesToSave.length > 0) {
-                      await api.put(`/all-services/${editingIssueId}/issue`, {
-                        issue: issuesToSave[0].issue,
-                        issueAmount: Number(issuesToSave[0].issueAmount || 0)
-                      });
+                       await api.put(`/all-services/${editingIssueId}/issue`, {
+                         issue: issuesToSave[0].issue,
+                         issueAmount: Number(issuesToSave[0].issueAmount || 0)
+                       });
                     }
 
-                    toast.success('Manifest synchronized successfully');
+                    toast.success('Manifest saved successfully');
                     setIssueModalVisible(false);
                     setEditingIssueId(null);
                     setActiveModalTab("issues");
                     loadData();
-                  } catch (error) { toast.error('Synchronization failed'); }
-                }} className="flex-1 rounded-2xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Synchronize Manifest</button>
+                  } catch (error) { toast.error('Failed to save manifest'); }
+                }} className="flex-1 rounded-xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Save Manifest</button>
               </div>
             </div>
           </div>
