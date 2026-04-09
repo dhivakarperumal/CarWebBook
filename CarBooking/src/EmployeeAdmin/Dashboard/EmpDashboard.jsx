@@ -122,6 +122,16 @@ const EmpDashboard = () => {
     );
   };
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return "N/A";
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+  };
+
   const fetchMyTasks = async () => {
     try {
       setLoading(true);
@@ -141,13 +151,23 @@ const EmpDashboard = () => {
       const staffRes = await api.get("/staff");
       const totalStaffCount = (staffRes.data || []).length;
 
+      const todayStr = new Date().toDateString();
       const normalize = (s) => (s || "").toLowerCase().trim();
+      
+      const activeTasks = filtered.filter(b => {
+        const s = normalize(b.status || b.serviceStatus);
+        return !["service completed", "completed", "cancelled"].includes(s);
+      });
+
+      const todayAssigned = activeTasks.filter(b => {
+        const dStr = b.created_at || b.createdAt || b.preferredDate;
+        return dStr && new Date(dStr).toDateString() === todayStr;
+      });
+
       setStats({
-        pending: filtered.filter(b => {
-          const s = normalize(b.status || b.serviceStatus);
-          return ["assigned", "approved", "booked", "pending"].includes(s) || s === "";
-        }).length,
-        inProgress: filtered.filter(b => ["processing", "service going on", "waiting for spare", "call verified"].includes(normalize(b.status || b.serviceStatus))).length,
+        todayCount: todayAssigned.length,
+        totalCount: activeTasks.length,
+        inProgress: activeTasks.filter(b => ["processing", "service going on", "waiting for spare", "call verified"].includes(normalize(b.status || b.serviceStatus))).length,
         completed: filtered.filter(b => ["service completed", "completed", "bill pending", "bill completed"].includes(normalize(b.status || b.serviceStatus))).length,
       });
     } catch (err) {
@@ -233,8 +253,8 @@ const EmpDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard 
           icon={<ClipboardList size={24} />} 
-          title="Today's Tasks" 
-          value={stats.pending} 
+          title="Daily / Total Workload" 
+          value={`${stats.todayCount || 0} / ${stats.totalCount || 0}`} 
           color="blue"
         />
         <StatCard 
@@ -274,6 +294,7 @@ const EmpDashboard = () => {
                     <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">S No</th>
                     <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">ID</th>
                     <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">Vehicle Info</th>
+                    <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">Date</th>
                     <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">Status</th>
                     <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-widest text-white">Customer</th>
                     <th className="px-6 py-5 text-right text-[10px] font-black uppercase tracking-widest text-white">Actions</th>
@@ -301,6 +322,11 @@ const EmpDashboard = () => {
                         <td className="px-6 py-5">
                           <p className="font-bold text-gray-800">{task.brand} {task.model}</p>
                           <p className="text-xs text-gray-500">{task.vehicleNumber || "No Plate"}</p>
+                        </td>
+                        <td className="px-6 py-5">
+                          <p className="text-xs font-black text-blue-600 uppercase tracking-tight">
+                            {formatDate(task.created_at || task.createdAt || task.preferredDate)}
+                          </p>
                         </td>
                         <td className="px-6 py-5">
                           <StatusBadge status={task.status} bStatus={task.serviceStatus} />
