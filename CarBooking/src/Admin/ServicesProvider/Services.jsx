@@ -279,7 +279,7 @@ export default function Services() {
     <div className="p-4 max-w-7xl mx-auto space-y-10 animate-fadeIn bg-gray-50/50 min-h-screen">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
-         
+      
         </div>
         <button onClick={() => navigate(`${pathPrefix}/addserviceparts`)} className="h-[56px] px-8 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all flex items-center justify-center gap-3"><FaPlus /> Registry Service Parts</button>
       </div>
