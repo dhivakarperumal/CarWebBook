@@ -398,9 +398,18 @@ export default function EmpService() {
                         <td className="px-8 py-6"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none mb-1">#ID {item.id}</span><span className="text-xs font-black text-blue-900">{item.bookingId || "SER-NEW"}</span></td>
                         <td className="px-8 py-6"><p className="text-sm font-black text-gray-900">{item.name}</p><p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">{item.phone}</p></td>
                         <td className="px-8 py-6">
-                          <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]" title={item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}>
-                            {item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}
-                          </p>
+                          <div className="flex items-center gap-3 group/issue">
+                            <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]" title={item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}>
+                              {item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}
+                            </p>
+                            <button 
+                              onClick={() => handleOpenIssueModal(item)}
+                              className="p-1.5 rounded-lg bg-amber-50 text-amber-500 hover:bg-amber-100 transition-all shadow-sm border border-amber-200/50"
+                              title="Edit Diagnostics"
+                            >
+                              <FaEdit size={10} />
+                            </button>
+                          </div>
                         </td>
                         <td className="px-8 py-6">
                            {(() => {
