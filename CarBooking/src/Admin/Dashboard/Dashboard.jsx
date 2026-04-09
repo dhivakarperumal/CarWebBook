@@ -193,6 +193,93 @@ const Dashboard = () => {
         }
       });
 
+      // 2. APPOINTMENTS CHART
+      const getWeekRange = (offset = 0) => {
+        const today = new Date();
+        const day = today.getDay() || 7;
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - day + 1 - offset * 7);
+        monday.setHours(0, 0, 0, 0);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        sunday.setHours(23, 59, 59, 999);
+        return { start: monday, end: sunday };
+      };
+
+      const thisWeek = getWeekRange(0);
+      const lastWeek = getWeekRange(1);
+      const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      const baseData = days.map((d) => ({
+        day: d,
+        thisWeek: 0,
+        lastWeek: 0,
+        pending: 0,
+        completed: 0,
+        cancelled: 0,
+      }));
+
+      const tempCounts = { pending: 0, completed: 0, cancelled: 0 };
+      const pieCounts = {};
+      let pieSum = 0;
+
+      bookingsData.forEach((data) => {
+        const rawStatus = String(data.status || "").toLowerCase().trim();
+        let status = "pending";
+        if (rawStatus === "service completed") status = "completed";
+        if (rawStatus === "cancelled") status = "cancelled";
+
+        const baseDateStr = (status === "completed" || status === "cancelled")
+            ? (data.updatedAt || data.updated_at || data.createdAt || data.created_at)
+            : (data.createdAt || data.created_at);
+
+        if (baseDateStr) {
+          const date = new Date(baseDateStr);
+          date.setHours(0, 0, 0, 0);
+          const dayIndex = date.getDay() === 0 ? 6 : date.getDay() - 1;
+
+          if (date.getTime() === todayStart.getTime()) {
+            if (status === "pending") tempCounts.pending++;
+            if (status === "completed") tempCounts.completed++;
+            if (status === "cancelled") tempCounts.cancelled++;
+          }
+
+          if (date >= thisWeek.start && date <= thisWeek.end) {
+            baseData[dayIndex].thisWeek++;
+            if (status === "pending") baseData[dayIndex].pending++;
+            if (status === "completed") baseData[dayIndex].completed++;
+            if (status === "cancelled") baseData[dayIndex].cancelled++;
+          }
+          if (date >= lastWeek.start && date <= lastWeek.end) baseData[dayIndex].lastWeek++;
+        }
+        if (rawStatus !== "cancelled") {
+          const brand = data.brand || data.model || "Unknown";
+          pieCounts[brand] = (pieCounts[brand] || 0) + 1;
+          pieSum += 1;
+        }
+      });
+
+      // 3. REVENUE CHART
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const monthly = months.map((m) => ({ month: m, revenue: 0 }));
+      let thisMonthTotal = 0;
+
+      billingsData.forEach((data) => {
+        const billedAmount = Number(data.grandTotal || 0);
+        if (billedAmount > 0) {
+          const date = new Date(data.created_at || data.createdAt);
+          if (date.getFullYear() === now.getFullYear()) {
+            const monthIndex = date.getMonth();
+            monthly[monthIndex].revenue += billedAmount;
+            if (monthIndex === currentMonth) thisMonthTotal += billedAmount;
+          }
+        }
+      });
+
+      const sortedBookings = [...bookingsData].sort((a, b) => new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0));
+      const sortedInventory = [...inventoryData].sort((a, b) => new Date(b.updatedAt || b.updated_at || 0) - new Date(a.updatedAt || a.updated_at || 0));
+
       const newCache = {
         topStats: {
           todayBookings: todayBookingsCount,
