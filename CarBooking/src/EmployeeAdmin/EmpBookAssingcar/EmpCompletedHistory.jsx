@@ -118,6 +118,7 @@ const EmpCompletedHistory = () => {
           <table className="w-full text-left whitespace-nowrap">
             <thead className="bg-emerald-600 text-white">
               <tr>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">S No</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Job ID</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Client</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Vehicle Spec</th>
@@ -126,8 +127,9 @@ const EmpCompletedHistory = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {paginatedServices.map((item) => (
+              {paginatedServices.map((item, index) => (
                 <tr key={item.id} className="hover:bg-emerald-50/30 transition-colors group">
+                  <td className="px-8 py-6 text-xs font-black text-gray-400">{(page - 1) * ITEMS_PER_PAGE + index + 1}</td>
                   <td className="px-8 py-6 text-xs font-black text-gray-400">#{item.bookingId || item.id}</td>
                   <td className="px-8 py-6 font-black text-gray-800">{item.name || item.customer_name}</td>
                   <td className="px-8 py-6">

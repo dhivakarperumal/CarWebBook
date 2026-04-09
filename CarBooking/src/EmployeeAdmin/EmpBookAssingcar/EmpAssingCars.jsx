@@ -267,6 +267,7 @@ const EmpAssingCars = () => {
           <table className="w-full text-left whitespace-nowrap">
             <thead className="bg-black text-white">
               <tr>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">S No</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Job ID</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Customer</th>
                 <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-white">Vehicle</th>
@@ -275,8 +276,11 @@ const EmpAssingCars = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {paginatedServices.map((item) => (
+              {paginatedServices.map((item, index) => (
                 <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 text-xs font-black text-gray-400">
+                    {(page - 1) * ITEMS_PER_PAGE + index + 1}
+                  </td>
                   <td className="px-6 py-4 text-xs font-bold text-gray-400">
                     #{item.bookingId || item.appointmentId || item.id}
                   </td>
