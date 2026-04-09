@@ -50,7 +50,7 @@ export default function AdminAssignServices() {
   const [tab, setTab] = useState("unassigned");
   const [dateFilter, setDateFilter] = useState("All");
   const [searchText, setSearchText] = useState("");
-  const [viewMode, setViewMode] = useState("table"); 
+  const [viewMode, setViewMode] = useState("table");
   const [currentPage, setCurrentPage] = useState(1);
 
   const formatBookingDate = (b) => {
@@ -79,7 +79,7 @@ export default function AdminAssignServices() {
         api.get("/bookings"),
         api.get("/appointments/all")
       ]);
-      
+
       const normalizedBookings = (bookingsRes.data || []).map(b => ({ ...b, source: 'booking' }));
       const normalizedAppointments = (appointmentsRes.data || []).map(a => ({
         ...a,
@@ -168,8 +168,9 @@ export default function AdminAssignServices() {
 
   const assignedCount = dateFilteredList.filter((b) => b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed" && (b.status || "").toLowerCase() !== "completed").length;
   const unassignedCount = dateFilteredList.filter((b) => !b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed" && (b.status || "").toLowerCase() !== "completed").length;
-  const approvedCount = dateFilteredList.filter((b) => (b.status || "").toLowerCase() === "approved" || (b.status || "").toLowerCase() === "confirmed").length;
-  const completedCount = dateFilteredList.filter((b) => (b.status || "").toLowerCase() === "service completed" || (b.status || "").toLowerCase() === "completed").length;
+  const appointmentCount = dateFilteredList.filter((b) => b.source === "appointment" && (b.status || "").toLowerCase() !== "service completed" && (b.status || "").toLowerCase() !== "completed").length;
+  const bookingCount = dateFilteredList.filter((b) => b.source === "booking" && (b.status || "").toLowerCase() !== "service completed" && (b.status || "").toLowerCase() !== "completed").length;
+  const totalActionable = unassignedCount + assignedCount;
 
   const filteredBookings = useMemo(() => {
     return dateFilteredList.filter((b) => {
@@ -248,8 +249,7 @@ export default function AdminAssignServices() {
       {/* HEADER SECTION */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Assignment Station</h1>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Allocate technical resources & monitor order fulfillment</p>
+
         </div>
 
         <div className="flex items-center gap-3">
@@ -264,43 +264,52 @@ export default function AdminAssignServices() {
           >
             <FaUserCheck /> Direct Assignment
           </button>
-          
-        
+
+
         </div>
       </div>
 
       {/* STATS ANALYTICS GRID */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Open Orders" 
-          value={unassignedCount} 
-          icon={<FaUserSlash />} 
-          gradient="from-amber-600 to-amber-400" 
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+        <StatCard
+          title="Total Assignments"
+          value={totalActionable}
+          icon={<LayoutGrid size={24} />}
+          gradient="from-slate-800 to-slate-600"
         />
-        <StatCard 
-          title="Active Assignments" 
-          value={assignedCount} 
-          icon={<FaUserCheck />} 
-          gradient="from-blue-600 to-blue-400" 
+        <StatCard
+          title="Unassigned"
+          value={unassignedCount}
+          icon={<FaUserSlash />}
+          gradient="from-amber-600 to-amber-400"
         />
-        <StatCard 
-          title="Verified Requests" 
-          value={approvedCount} 
-          icon={<FaClipboardCheck />} 
-          gradient="from-indigo-600 to-indigo-400" 
+        <StatCard
+          title="Assigned"
+          value={assignedCount}
+          icon={<FaUserCheck />}
+          gradient="from-blue-600 to-blue-400"
         />
-        <StatCard 
-          title="Closed Jobs" 
-          value={completedCount} 
-          icon={<FaCheckCircle />} 
-          gradient="from-emerald-600 to-emerald-400" 
+        <StatCard
+          title="Appointments"
+          value={appointmentCount}
+          icon={<Calendar size={24} />}
+          gradient="from-indigo-600 to-indigo-400"
+        />
+        <StatCard
+          title="Bookings"
+          value={bookingCount}
+          icon={<FaClock />}
+          gradient="from-emerald-600 to-emerald-400"
         />
       </div>
 
-      {/* SEARCH CONSOLIDATION */}
-      <div className="flex flex-col lg:flex-row items-center justify-end gap-6">
 
-        <div className="relative group w-full lg:max-w-md">
+
+      {/* STATUS TABS & SEARCH */}
+      <div className="flex items-center justify-between gap-6 bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-slate-200/50">
+        
+        {/* LEFT SIDE - SEARCH */}
+        <div className="relative group flex-1 max-w-md">
           <FaSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-all duration-300" />
           <input
             type="text"
@@ -310,32 +319,33 @@ export default function AdminAssignServices() {
             className="w-full pl-16 pr-8 py-4.5 bg-white border border-gray-100 rounded-[2rem] focus:ring-8 focus:ring-black/5 focus:border-black outline-none transition-all duration-500 font-bold text-gray-700 shadow-xl shadow-slate-200/50"
           />
         </div>
-      </div>
 
-      {/* STATUS TABS & SEARCH */}
-      <div className="flex flex-col lg:flex-row gap-6 justify-between items-center bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-slate-200/50">
-        <div className="flex flex-wrap items-center gap-2">
-          {[
-            { id: "unassigned", label: `Unassigned (${unassignedCount})`, color: "text-amber-600" },
-            { id: "assigned", label: `Assigned (${assignedCount})`, color: "text-indigo-600" }
-          ].map(s => (
-            <button
-              key={s.id}
-              onClick={() => { setTab(s.id); setCurrentPage(1); }}
-              className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${tab === s.id ? "bg-black text-white shadow-xl scale-105" : `bg-gray-50 ${s.color} hover:bg-gray-100`}`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
+        {/* RIGHT SIDE - ALL CONTROLS GROUPED ON SINGLE ROW */}
+        <div className="flex items-center gap-4">
+          {/* STATUS BUTTONS */}
+          <div className="flex items-center gap-2">
+            {[
+              { id: "unassigned", label: `Unassigned (${unassignedCount})`, color: "text-amber-600" },
+              { id: "assigned", label: `Assigned (${assignedCount})`, color: "text-indigo-600" }
+            ].map(s => (
+              <button
+                key={s.id}
+                onClick={() => { setTab(s.id); setCurrentPage(1); }}
+                className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${tab === s.id
+                    ? "bg-black text-white shadow-xl scale-105"
+                    : `bg-gray-50 ${s.color} hover:bg-gray-100`
+                  }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
 
-        <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-         
-
+          {/* DATE FILTER */}
           <select
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-inner"
+            className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-inner whitespace-nowrap"
           >
             <option value="Today">Today Only</option>
             <option value="Yesterday">Yesterday</option>
@@ -344,16 +354,23 @@ export default function AdminAssignServices() {
             <option value="All">Full History</option>
           </select>
 
-          <div className="flex h-[56px] bg-gray-100 p-1 rounded-2xl border border-gray-200 shadow-inner">
+          {/* VIEW TOGGLE */}
+          <div className="flex h-[56px] bg-gray-100 p-1 rounded-2xl border border-gray-200 shadow-inner shrink-0">
             <button
               onClick={() => setViewMode("table")}
-              className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}
+              className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "table"
+                  ? "bg-black text-white shadow-xl"
+                  : "text-gray-400 hover:text-gray-900"
+                }`}
             >
               <FaList />
             </button>
             <button
               onClick={() => setViewMode("card")}
-              className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "card" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}
+              className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "card"
+                  ? "bg-black text-white shadow-xl"
+                  : "text-gray-400 hover:text-gray-900"
+                }`}
             >
               <FaThLarge />
             </button>
@@ -389,10 +406,10 @@ export default function AdminAssignServices() {
 
                   <div
                     className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest border transition-all ${(item.status || "").toLowerCase() === "service completed"
-                        ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                        : item.assignedEmployeeId
-                          ? "bg-blue-100 text-blue-700 border-blue-200"
-                          : "bg-amber-100 text-amber-700 border-amber-200"
+                      ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                      : item.assignedEmployeeId
+                        ? "bg-blue-100 text-blue-700 border-blue-200"
+                        : "bg-amber-100 text-amber-700 border-amber-200"
                       }`}
                   >
                     {(item.status || "").toLowerCase() === "service completed"
@@ -581,10 +598,10 @@ export default function AdminAssignServices() {
                     </td>
                     <td className="px-8 py-6">
                       <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest border ${(item.status || "").toLowerCase() === "service completed"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                          : item.assignedEmployeeId
-                            ? "bg-blue-50 text-blue-700 border-blue-100"
-                            : "bg-amber-50 text-amber-700 border-amber-100"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                        : item.assignedEmployeeId
+                          ? "bg-blue-50 text-blue-700 border-blue-100"
+                          : "bg-amber-50 text-amber-700 border-amber-100"
                         }`}>
                         {(item.status || "Booked").toUpperCase()}
                       </span>
@@ -603,7 +620,7 @@ export default function AdminAssignServices() {
                     </td>
                   </tr>
                 )
-              ))}
+                ))}
             </tbody>
           </table>
         </div>
@@ -625,7 +642,7 @@ export default function AdminAssignServices() {
                 className="text-gray-400 hover:text-gray-600 transition-colors p-1"
               >
                 <X className="w-6 h-6" />
-                </button>
+              </button>
             </div>
             <div className="space-y-4">
               <div>
@@ -643,12 +660,12 @@ export default function AdminAssignServices() {
                 >
                   <option value="">Select a booking...</option>
                   {bookings
-                  .filter((b) => !b.assignedEmployeeId && (b.status || "").toLowerCase() === "approved")
-                  .map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.brand} {b.model} - {b.name}
-                    </option>
-                  ))}
+                    .filter((b) => !b.assignedEmployeeId && (b.status || "").toLowerCase() === "approved")
+                    .map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.brand} {b.model} - {b.name}
+                      </option>
+                    ))}
                 </select>
               </div>
 
