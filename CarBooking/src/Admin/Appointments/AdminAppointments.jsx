@@ -173,7 +173,7 @@ const AdminAppointments = () => {
   return (
     <div className="p-10 bg-slate-50 min-h-screen space-y-10">
       {/* HEADER SECTION */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+      {/* <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
           <h1 className="text-3xl font-black text-slate-900 uppercase tracking-tight">Service Appointments</h1>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Manage scheduling, technicians, and service manifests</p>
@@ -186,7 +186,7 @@ const AdminAppointments = () => {
             <FaPlus /> Add Appointment
           </button>
         </div>
-      </div>
+      </div> */}
 
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
         <StatCard 
