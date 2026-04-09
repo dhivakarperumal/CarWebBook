@@ -32,6 +32,9 @@ const StatCard = ({ title, value, icon, gradient }) => (
   </div>
 );
 
+// Global cache for seamless navigation
+let servicesCache = null;
+
 export default function Services() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,12 +45,12 @@ export default function Services() {
 
   const [viewMode, setViewMode] = useState("table");
   const [mainTab, setMainTab] = useState("all");
-  const [services, setServices] = useState([]);
-  const [employees, setEmployees] = useState([]);
+  const [services, setServices] = useState(servicesCache?.services || []);
+  const [employees, setEmployees] = useState(servicesCache?.employees || []);
   const [issueEntries, setIssueEntries] = useState([]);
-  const [serviceParts, setServiceParts] = useState({});
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [serviceParts, setServiceParts] = useState(servicesCache?.partsMap || {});
+  const [products, setProducts] = useState(servicesCache?.products || []);
+  const [loading, setLoading] = useState(!servicesCache);
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState("All Time");
   const [statusFilter, setStatusFilter] = useState("All Status");
@@ -92,6 +95,13 @@ export default function Services() {
       setServices(servicesWithDetails);
       setEmployees(empRes.data);
       setProducts(prodRes.data || []);
+
+      servicesCache = {
+        services: servicesWithDetails,
+        employees: empRes.data,
+        partsMap: partsMap,
+        products: prodRes.data || []
+      };
     } catch (error) {
       toast.error("Failed to fetch data");
     } finally {
@@ -273,7 +283,6 @@ export default function Services() {
     setIssueModalVisible(true);
   };
 
-  if (loading) return <div className="flex h-64 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div></div>;
 
   return (
     <div className="p-4 max-w-7xl mx-auto space-y-10 animate-fadeIn bg-gray-50/50 min-h-screen">

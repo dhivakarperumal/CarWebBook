@@ -300,7 +300,6 @@ const AdminCompletedHistory = () => {
   const totalPages = Math.ceil(filteredServices.length / ITEMS_PER_PAGE);
   const paginatedServices = filteredServices.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
 
-  if (loading) return <div className="flex h-64 items-center justify-center animate-pulse text-blue-600 font-bold">Loading archive...</div>;
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-fadeIn p-4 sm:p-6 lg:p-8">
