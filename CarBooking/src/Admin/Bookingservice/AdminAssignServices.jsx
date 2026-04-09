@@ -44,12 +44,12 @@ export default function AdminAssignServices() {
   const [assigning, setAssigning] = useState(false);
   const [loadingEmployees, setLoadingEmployees] = useState(false);
 
-  const [mainTab, setMainTab] = useState("all"); 
-  const [tab, setTab] = useState("unassigned"); 
+  const [tab, setTab] = useState("unassigned");
   const [dateFilter, setDateFilter] = useState("All");
   const [searchText, setSearchText] = useState("");
-  const [viewMode, setViewMode] = useState("table"); 
+  const [viewMode, setViewMode] = useState("table");
   const [currentPage, setCurrentPage] = useState(1);
+  const [globalModalVisible, setGlobalModalVisible] = useState(false);
 
   const formatBookingDate = (b) => {
     if (b.createdDate) return b.createdDate;
@@ -77,7 +77,7 @@ export default function AdminAssignServices() {
         api.get("/bookings"),
         api.get("/appointments/all")
       ]);
-      
+
       const normalizedBookings = (bookingsRes.data || []).map(b => ({ ...b, source: 'booking' }));
       const normalizedAppointments = (appointmentsRes.data || []).map(a => ({
         ...a,
@@ -114,13 +114,8 @@ export default function AdminAssignServices() {
   };
 
   const currentMainList = useMemo(() => {
-    return bookings.filter(b => {
-      // Removed filter that blocked "booked" status
-      if (mainTab === "all") return true;
-      const isAddVehicle = b.uid === 'admin-created';
-      return mainTab === "booked" ? !isAddVehicle : isAddVehicle;
-    });
-  }, [bookings, mainTab]);
+    return bookings;
+  }, [bookings]);
 
   const dateFilteredList = useMemo(() => {
     return currentMainList.filter((b) => {
@@ -183,22 +178,37 @@ export default function AdminAssignServices() {
     });
   }, [dateFilteredList, tab]);
 
+  const priorityList = useMemo(() => {
+    return dateFilteredList.filter((b) => {
+      const s = (b.status || "").toLowerCase();
+      const isCompleted = s === "service completed" || s === "completed";
+      if (b.source === "booking") {
+        return !b.assignedEmployeeId && !isCompleted;
+      }
+      if (b.source === "appointment") {
+        return s === "approved" && !b.assignedEmployeeId;
+      }
+      return false;
+    });
+  }, [dateFilteredList]);
+
   const totalPages = Math.ceil(filteredBookings.length / ITEMS_PER_PAGE);
   const paginatedBookings = useMemo(() => {
     return filteredBookings.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
   }, [filteredBookings, currentPage]);
 
-  const openAssignModal = async (booking) => {
+  const openAssignModal = (booking) => {
     setSelectedBooking(booking);
-    setSelectedEmployeeId("");
-    await fetchEmployees();
+    setSelectedEmployeeId(booking.assignedEmployeeId || "");
     setModalVisible(true);
+    fetchEmployees();
   };
 
   const assignEmployee = async () => {
     if (!selectedBooking || !selectedEmployeeId || assigning) return;
     try {
       setAssigning(true);
+      const bookingId = selectedBooking.id;
       const isApt = selectedBooking.source === 'appointment';
       const id = selectedBooking.id;
       const selectedEmployee = employees.find(
@@ -225,6 +235,7 @@ export default function AdminAssignServices() {
 
       toast.success(`Mechanic ${selectedEmployee.name} assigned successfully`);
       setModalVisible(false);
+      setGlobalModalVisible(false);
       setSelectedBooking(null);
       setSelectedEmployeeId("");
       fetchData();
@@ -252,56 +263,34 @@ export default function AdminAssignServices() {
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Allocate technical resources & monitor order fulfillment</p>
         </div>
 
-
+        <div className="flex items-center gap-4 self-end lg:self-center">
+          <button
+            onClick={() => setGlobalModalVisible(true)}
+            className="flex items-center gap-3 px-6 py-4 bg-white text-slate-600 border border-slate-200 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all duration-300 shadow-xl hover:border-amber-500 hover:text-amber-500 group"
+          >
+            <div className="w-2 h-2 rounded-full bg-amber-500 group-hover:animate-ping" />
+            Priority Assign View
+          </button>
+        </div>
       </div>
 
       {/* STATS ANALYTICS GRID */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        <StatCard 
-          title="Unassigned Orders" 
-          value={unassignedCount} 
-          icon={<FaUserSlash />} 
-          gradient="from-amber-600 to-amber-400" 
+        <StatCard
+          title="Unassigned Orders"
+          value={unassignedCount}
+          icon={<FaUserSlash />}
+          gradient="from-amber-600 to-amber-400"
         />
-        <StatCard 
-          title="Active Assignments" 
-          value={assignedCount} 
-          icon={<FaUserCheck />} 
-          gradient="from-blue-600 to-blue-400" 
+        <StatCard
+          title="Active Assignments"
+          value={assignedCount}
+          icon={<FaUserCheck />}
+          gradient="from-blue-600 to-blue-400"
         />
       </div>
 
-      {/* CHANNEL TABS & SEARCH CONSOLIDATION */}
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
-        <div className="flex bg-gray-100 p-1.5 rounded-[1.5rem] border border-gray-200 shadow-inner w-full lg:w-fit overflow-x-auto no-scrollbar">
-          {[
-            { id: "all", label: "All" },
-            { id: "booked", label: "Appointments" },
-            { id: "addVehicle", label: "Booking" }
-          ].map(t => (
-            <button
-              key={t.id}
-              onClick={() => { setMainTab(t.id); setCurrentPage(1); }}
-              className={`px-8 py-3.5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === t.id ? "bg-white text-black shadow-[0_8px_30px_rgb(0,0,0,0.12)] scale-[1.02]" : "text-gray-400 hover:text-gray-600"}`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-
-        <div className="relative group w-full lg:max-w-md">
-          <FaSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-all duration-300" />
-          <input
-            type="text"
-            placeholder="Track booking, mobile, personnel..."
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            className="w-full pl-16 pr-8 py-4.5 bg-white border border-gray-100 rounded-[2rem] focus:ring-8 focus:ring-black/5 focus:border-black outline-none transition-all duration-500 font-bold text-gray-700 shadow-xl shadow-slate-200/50"
-          />
-        </div>
-      </div>
-
-      {/* STATUS TABS & SEARCH */}
+      {/* STATUS TABS & SEARCH SECTION */}
       <div className="flex flex-col lg:flex-row gap-6 justify-between items-center bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-slate-200/50">
         <div className="flex flex-wrap items-center gap-2">
           {[
@@ -319,7 +308,16 @@ export default function AdminAssignServices() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-         
+          <div className="relative group w-full lg:max-w-md">
+            <FaSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-all duration-300" />
+            <input
+              type="text"
+              placeholder="Track booking, mobile, personnel..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="w-full pl-16 pr-8 py-4.5 bg-white border border-gray-100 rounded-[2rem] focus:ring-8 focus:ring-black/5 focus:border-black outline-none transition-all duration-500 font-bold text-gray-700 shadow-xl shadow-slate-200/50"
+            />
+          </div>
 
           <select
             value={dateFilter}
@@ -350,324 +348,348 @@ export default function AdminAssignServices() {
         </div>
       </div>
 
-      {viewMode === "card" ? (
-        filteredBookings.length === 0 ? (
-          <div className="text-center py-24 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-100 animate-fadeIn">
-            <p className="text-gray-400 font-black uppercase tracking-widest text-xs">No bookings found in this category</p>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
-            {paginatedBookings.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all duration-500 flex flex-col group relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <LayoutGrid size={80} className="text-blue-900" />
-                </div>
-
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest leading-none">
-                      ID: {item.id}
-                    </span>
-                    <p className="text-sm font-black text-blue-900 mt-1">
-                      {item.bookingId || "BKG-" + item.id}
-                    </p>
+      {
+        viewMode === "card" ? (
+          filteredBookings.length === 0 ? (
+            <div className="text-center py-24 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-100 animate-fadeIn">
+              <p className="text-gray-400 font-black uppercase tracking-widest text-xs">No bookings found in this category</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
+              {paginatedBookings.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all duration-500 flex flex-col group relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <LayoutGrid size={80} className="text-blue-900" />
                   </div>
 
-                  <div
-                    className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest border transition-all ${(item.status || "").toLowerCase() === "service completed"
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest leading-none">
+                        ID: {item.id}
+                      </span>
+                      <p className="text-sm font-black text-blue-900 mt-1">
+                        {item.bookingId || "BKG-" + item.id}
+                      </p>
+                    </div>
+
+                    <div
+                      className={`px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest border transition-all ${(item.status || "").toLowerCase() === "service completed"
                         ? "bg-emerald-100 text-emerald-700 border-emerald-200"
                         : item.assignedEmployeeId
                           ? "bg-blue-100 text-blue-700 border-blue-200"
                           : "bg-amber-100 text-amber-700 border-amber-200"
-                      }`}
-                  >
-                    {(item.status || "").toLowerCase() === "service completed"
-                      ? "COMPLETED"
-                      : item.assignedEmployeeId
-                        ? "ASSIGNED"
-                        : "UNASSIGNED"}
-                  </div>
-                </div>
-
-                <div className="space-y-4 flex-1 relative z-10">
-                  <div>
-                    <div className="flex items-center gap-2 flex-wrap mb-2">
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
-                        {item.vehicleType || 'Car'}
-                      </span>
-                      <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.source === 'appointment' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                        {item.source === 'appointment' ? 'Appointment' : 'Booking'}
-                      </span>
-                      <h3 className="text-xl font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
-                        {item.brand} {item.model}
-                      </h3>
-                      {item.uid === 'admin-created' && (
-                        <span className="bg-cyan-100 text-cyan-700 text-[10px] px-2 py-0.5 rounded-lg font-black uppercase tracking-wider">Walk-in</span>
-                      )}
-                    </div>
-                    {item.vehicleNumber && (
-                      <p className="text-blue-600 text-xs font-black bg-blue-50 w-fit px-3 py-1 rounded-xl border border-blue-100 uppercase tracking-widest">
-                        {item.vehicleNumber}
-                      </p>
-                    )}
-
-                    <div className="flex flex-wrap gap-4 mt-4 py-3 border-y border-gray-50">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                        </div>
-                        <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">{formatBookingDate(item)}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
-                          <Clock className="w-4 h-4 text-gray-400" />
-                        </div>
-                        <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">{formatBookingTime(item)}</span>
-                      </div>
+                        }`}
+                    >
+                      {(item.status || "").toLowerCase() === "service completed"
+                        ? "COMPLETED"
+                        : item.assignedEmployeeId
+                          ? "ASSIGNED"
+                          : "UNASSIGNED"}
                     </div>
                   </div>
 
-                  {item.issue && (
-                    <div className="bg-amber-50/30 p-4 rounded-2xl border border-amber-100/50">
-                      <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Reported Issue</p>
-                      <p className="text-sm font-bold text-gray-700 leading-snug">{item.issue}</p>
-                    </div>
-                  )}
-
-                  <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 space-y-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400 text-xs">👤</div>
-                      <div>
-                        <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Customer</p>
-                        <p className="text-sm font-black text-gray-800">{item.name}</p>
-                      </div>
-                    </div>
-
-                    {item.phone && (
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400 text-xs">📞</div>
-                        <div>
-                          <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Contact</p>
-                          <p className="text-sm font-bold text-gray-500">{item.phone}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {item.address && (
-                      <div className="flex items-start gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400 text-xs shrink-0">📍</div>
-                        <div className="overflow-hidden">
-                          <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Location</p>
-                          <p className="text-[11px] font-bold text-gray-400 leading-snug line-clamp-2">{item.address}</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {item.assignedEmployeeName && (
-                    <div className="flex items-center gap-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 group/staff">
-                      <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-200">
-                        <UserCheck className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Assigned Technician</p>
-                        <p className="text-sm font-black text-emerald-800">{item.assignedEmployeeName}</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {!item.assignedEmployeeId && (
-                  <button
-                    onClick={() => openAssignModal(item)}
-                    className="mt-8 w-full bg-black text-white font-black py-4 rounded-2xl shadow-xl hover:bg-gray-800 transition-all duration-300 uppercase tracking-widest text-xs"
-                  >
-                    Assign Mechanic
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        )
-      ) : (
-        <div className="overflow-x-auto bg-white rounded-3xl shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden animate-fadeIn">
-          <table className="w-full text-sm text-left whitespace-nowrap">
-            <thead className="bg-black text-white">
-              <tr>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">S No</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Booking ID</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Customer</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Vehicle</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Service Detail</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Date & Time</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Technician</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Status</th>
-                <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {paginatedBookings.length === 0 ? (
-                <tr>
-                  <td colSpan="9" className="px-8 py-24 text-center">
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center mb-4 border border-gray-100 text-gray-300">
-                        <List size={24} />
-                      </div>
-                      <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">No bookings found in this category</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                paginatedBookings.map((item, idx) => (
-                  <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
-                    <td className="px-8 py-6">
-                      <span className="text-sm font-black text-gray-800">{idx + 1 + (currentPage - 1) * ITEMS_PER_PAGE}</span>
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none">#{item.id}</span>
-                      <span className="text-xs font-black text-blue-900 block mt-1">{item.bookingId || "BKG-NEW"}</span>
-                    </td>
-                    <td className="px-8 py-6">
-                      <p className="text-sm font-black text-gray-800">{item.name}</p>
-                      <p className="text-xs font-bold text-gray-400 mt-0.5">{item.phone}</p>
-                    </td>
-                    <td className="px-8 py-6">
-                      <div className="flex items-center gap-2">
+                  <div className="space-y-4 flex-1 relative z-10">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap mb-2">
                         <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
                           {item.vehicleType || 'Car'}
                         </span>
                         <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.source === 'appointment' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                          {item.source === 'appointment' ? 'APT' : 'BKG'}
+                          {item.source === 'appointment' ? 'Appointment' : 'Booking'}
                         </span>
-                        <p className="text-sm font-black text-gray-900 font-inter">{item.brand} {item.model}</p>
-                        {item.uid === 'admin-created' && <span className="bg-cyan-100 text-cyan-600 text-[9px] px-2 py-0.5 rounded font-black uppercase">Walk-in</span>}
+                        <h3 className="text-xl font-black text-gray-900 leading-tight group-hover:text-blue-600 transition-colors">
+                          {item.brand} {item.model}
+                        </h3>
+                        {item.uid === 'admin-created' && (
+                          <span className="bg-cyan-100 text-cyan-700 text-[10px] px-2 py-0.5 rounded-lg font-black uppercase tracking-wider">Walk-in</span>
+                        )}
                       </div>
-                      <p className="text-[10px] font-black text-blue-500 mt-1 uppercase tracking-widest">{item.vehicleNumber || "N/A"}</p>
-                    </td>
-                    <td className="px-8 py-6">
-                      <p className="text-xs font-bold text-gray-600 max-w-[200px] truncate" title={item.issue}>
-                        {item.issue}
-                      </p>
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className="text-xs font-black text-blue-900 block">{formatBookingDate(item)}</span>
-                      <span className="text-[10px] font-bold text-gray-400 mt-1 block">{formatBookingTime(item)}</span>
-                    </td>
-                    <td className="px-8 py-6">
-                      {item.assignedEmployeeName ? (
+                      {item.vehicleNumber && (
+                        <p className="text-blue-600 text-xs font-black bg-blue-50 w-fit px-3 py-1 rounded-xl border border-blue-100 uppercase tracking-widest">
+                          {item.vehicleNumber}
+                        </p>
+                      )}
+
+                      <div className="flex flex-wrap gap-4 mt-4 py-3 border-y border-gray-50">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center">
-                            <UserCheck className="w-3.5 h-3.5 text-emerald-600" />
+                          <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
+                            <Calendar className="w-4 h-4 text-gray-400" />
                           </div>
-                          <span className="text-xs font-black text-emerald-700">{item.assignedEmployeeName}</span>
+                          <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">{formatBookingDate(item)}</span>
                         </div>
-                      ) : (
-                        <span className="text-[10px] font-black text-amber-500 border border-amber-200 bg-amber-50 px-3 py-1 rounded-full uppercase tracking-widest">Pending</span>
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
+                            <Clock className="w-4 h-4 text-gray-400" />
+                          </div>
+                          <span className="text-[11px] font-black text-gray-500 uppercase tracking-wider">{formatBookingTime(item)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {item.issue && (
+                      <div className="bg-amber-50/30 p-4 rounded-2xl border border-amber-100/50">
+                        <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Reported Issue</p>
+                        <p className="text-sm font-bold text-gray-700 leading-snug">{item.issue}</p>
+                      </div>
+                    )}
+
+                    <div className="bg-gray-50/50 p-4 rounded-2xl border border-gray-100 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400 text-xs">👤</div>
+                        <div>
+                          <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Customer</p>
+                          <p className="text-sm font-black text-gray-800">{item.name}</p>
+                        </div>
+                      </div>
+
+                      {item.phone && (
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400 text-xs">📞</div>
+                          <div>
+                            <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Contact</p>
+                            <p className="text-sm font-bold text-gray-500">{item.phone}</p>
+                          </div>
+                        </div>
                       )}
-                    </td>
-                    <td className="px-8 py-6">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-widest border ${(item.status || "").toLowerCase() === "service completed"
-                          ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                          : item.assignedEmployeeId
-                            ? "bg-blue-50 text-blue-700 border-blue-100"
-                            : "bg-amber-50 text-amber-700 border-amber-100"
-                        }`}>
-                        {(item.status || "Booked").toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="px-8 py-6 text-right">
-                      {!item.assignedEmployeeId ? (
-                        <button
-                          onClick={() => openAssignModal(item)}
-                          className="bg-black text-white text-[10px] font-black px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-all uppercase tracking-widest shadow-lg shadow-black/10"
-                        >
-                          Assign
-                        </button>
-                      ) : (
-                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Locked</span>
+
+                      {item.address && (
+                        <div className="flex items-start gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm text-gray-400 text-xs shrink-0">📍</div>
+                          <div className="overflow-hidden">
+                            <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest">Location</p>
+                            <p className="text-[11px] font-bold text-gray-400 leading-snug line-clamp-2">{item.address}</p>
+                          </div>
+                        </div>
                       )}
-                    </td>
-                  </tr>
-                )
+                    </div>
+
+                    {item.assignedEmployeeName && (
+                      <div className="flex items-center gap-4 p-4 bg-emerald-50 rounded-2xl border border-emerald-100 group/staff">
+                        <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center shrink-0 shadow-lg shadow-emerald-200">
+                          <UserCheck className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Assigned Technician</p>
+                          <p className="text-sm font-black text-emerald-800">{item.assignedEmployeeName}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    onClick={() => openAssignModal(item)}
+                    className={`mt-8 w-full font-black py-4 rounded-2xl shadow-xl transition-all duration-300 uppercase tracking-widest text-xs ${item.assignedEmployeeId
+                      ? "bg-amber-50 text-amber-600 border border-amber-100 hover:bg-amber-100"
+                      : "bg-black text-white hover:bg-gray-800"
+                      }`}
+                  >
+                    {item.assignedEmployeeId ? "Re-assign Mechanic" : "Assign Mechanic"}
+                  </button>
+                </div>
               ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+            </div>
+          )
+        ) : (
+    <div className="overflow-x-auto bg-white rounded-3xl shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden animate-fadeIn">
+      <table className="w-full text-sm text-left whitespace-nowrap">
+        <thead className="bg-black text-white">
+          <tr>
+            <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">S No</th>
+            <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Booking ID</th>
+            <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Customer</th>
+            <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Vehicle</th>
+            <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Service Detail</th>
+            <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Date & Time</th>
+            <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest">Technician</th>
+            <th className="px-8 py-6 text-[10px] font-black text-white uppercase tracking-widest text-right">Action</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-50">
+          {paginatedBookings.length === 0 ? (
+            <tr>
+              <td colSpan="8" className="px-8 py-24 text-center">
+                <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">No bookings found in this category</p>
+              </td>
+            </tr>
+          ) : (
+            paginatedBookings.map((item, idx) => (
+              <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
+                <td className="px-8 py-6 font-black text-gray-800">{idx + 1 + (currentPage - 1) * ITEMS_PER_PAGE}</td>
+                <td className="px-8 py-6">
+                  <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none">#{item.id}</span>
+                  <span className="text-xs font-black text-blue-900 block mt-1 leading-none">{item.bookingId || "BKG-NEW"}</span>
+                </td>
+                <td className="px-8 py-6">
+                  <p className="text-sm font-black text-gray-800 leading-none">{item.name}</p>
+                  <p className="text-xs font-bold text-gray-400 mt-1 leading-none">{item.phone}</p>
+                </td>
+                <td className="px-8 py-6">
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                      {item.vehicleType || 'Car'}
+                    </span>
+                    <p className="text-sm font-black text-gray-900 font-inter leading-none">{item.brand} {item.model}</p>
+                  </div>
+                </td>
+                <td className="px-8 py-6">
+                  <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]">{item.issue || "General Service"}</p>
+                </td>
+                <td className="px-8 py-6">
+                  <span className="text-xs font-black text-blue-900 block leading-none">{formatBookingDate(item)}</span>
+                  <span className="text-[10px] font-bold text-gray-400 mt-1 block leading-none">{formatBookingTime(item)}</span>
+                </td>
+                <td className="px-8 py-6">
+                  {item.assignedEmployeeName ? (
+                    <div className="flex items-center gap-2 text-emerald-600">
+                      <UserCheck size={14} className="font-black" />
+                      <span className="text-xs font-black">{item.assignedEmployeeName}</span>
+                    </div>
+                  ) : (
+                    <span className="text-[10px] font-black text-amber-500 uppercase tracking-widest">Pending</span>
+                  )}
+                </td>
+                <td className="px-8 py-6 text-right">
+                  <button
+                    onClick={() => openAssignModal(item)}
+                    className={`text-[10px] font-black px-4 py-2.5 rounded-xl transition-all uppercase tracking-widest shadow-lg ${item.assignedEmployeeId
+                        ? "bg-amber-50 text-amber-600 border border-amber-100 hover:bg-amber-100 shadow-amber-500/5"
+                        : "bg-black text-white hover:bg-gray-800 shadow-black/10"
+                      }`}
+                  >
+                    {item.assignedEmployeeId ? "Re-assign" : "Assign"}
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+        )
+      }
+      {/* PAGINATION */}
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}
       />
 
-
-
-      {/* 🔥 CARD MODAL */}
+      {/* ASSIGN MECHANIC MODAL */}
       {modalVisible && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
           <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 border border-gray-100 animate-in fade-in zoom-in duration-200">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-gray-900">Assign Mechanic</h2>
-              <button
-                onClick={() => setModalVisible(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-              >
+              <button onClick={() => setModalVisible(false)} className="text-gray-400 hover:text-black p-1 transition-colors">
                 <X className="w-6 h-6" />
               </button>
             </div>
 
             {selectedBooking && (
               <div className="bg-blue-50 border border-blue-100 p-4 rounded-xl mb-6">
-                <p className="text-xs font-bold text-blue-500 uppercase">
-                  Selected Vehicle
-                </p>
-                <h3 className="text-lg font-bold text-blue-900 mt-0.5">
-                  {selectedBooking.brand} {selectedBooking.model}
-                </h3>
-                <p className="text-sm text-blue-700 font-medium mt-1">
-                  Customer: {selectedBooking.name}
-                </p>
+                <p className="text-xs font-bold text-blue-500 uppercase">Selected Vehicle</p>
+                <h3 className="text-lg font-bold text-blue-900 mt-0.5">{selectedBooking.brand} {selectedBooking.model}</h3>
+                <p className="text-sm text-blue-700 font-medium mt-1">Customer: {selectedBooking.name}</p>
+                {selectedBooking.assignedEmployeeName && (
+                  <div className="mt-3 pt-3 border-t border-blue-100/50">
+                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest leading-none mb-1">Current Technician</p>
+                    <p className="text-sm font-black text-slate-800">{selectedBooking.assignedEmployeeName}</p>
+                  </div>
+                )}
               </div>
             )}
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">
-                  Select Mechanic
-                </label>
+                <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">Select Mechanic</label>
                 <select
                   value={selectedEmployeeId}
                   onChange={(e) => setSelectedEmployeeId(e.target.value)}
                   disabled={loadingEmployees}
-                  className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-3 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 focus:outline-none transition-all disabled:opacity-50"
+                  className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-3 focus:ring-2 focus:ring-black focus:outline-none transition-all"
                 >
                   <option value="">Select a mechanic...</option>
                   {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} {emp.employee_id ? `(${emp.employee_id})` : ""}
-                    </option>
+                    <option key={emp.id} value={emp.id}>{emp.name} ({emp.employee_id})</option>
                   ))}
                 </select>
               </div>
             </div>
 
             <div className="mt-8 flex gap-3">
-              <button
-                onClick={() => setModalVisible(false)}
-                className="flex-1 px-4 py-3 text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
-              >
-                Cancel
-              </button>
+              <button onClick={() => setModalVisible(false)} className="flex-1 px-4 py-3 text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">Cancel</button>
               <button
                 disabled={!selectedEmployeeId || assigning}
                 onClick={assignEmployee}
-                className="flex-1 px-4 py-3 text-sm font-bold text-white bg-black hover:bg-gray-800 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md"
+                className="flex-1 px-4 py-3 text-sm font-bold text-white bg-black hover:bg-gray-800 rounded-xl disabled:opacity-50 shadow-md"
               >
                 {assigning ? "Assigning..." : "Assign"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PRIORITY QUEUE MODAL */}
+      {globalModalVisible && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-4xl max-h-[85vh] rounded-[2.5rem] shadow-2xl flex flex-col border border-gray-100 overflow-hidden scale-in-center">
+            <div className="p-8 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+              <div>
+                <h2 className="text-2xl font-black text-slate-900 tracking-tight uppercase">Priority Assign Queue</h2>
+                <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mt-1 flex items-center gap-2">
+                  <span className="w-2 h-2 bg-amber-500 rounded-full animate-ping" />
+                  Showing unassigned bookings & approved appointments
+                </p>
+              </div>
+              <button onClick={() => setGlobalModalVisible(false)} className="w-12 h-12 flex items-center justify-center bg-white border border-gray-200 text-gray-400 hover:text-black rounded-2xl transition-all shadow-sm">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-8 no-scrollbar">
+              {priorityList.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-24 text-center">
+                  <div className="w-20 h-20 bg-gray-50 rounded-[2rem] flex items-center justify-center mb-6 text-gray-200">
+                    <UserCheck size={32} />
+                  </div>
+                  <h3 className="text-lg font-black text-slate-900 uppercase">Clear Queue</h3>
+                  <p className="text-xs font-bold text-gray-400 mt-1">No pending assignments found.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {priorityList.map((item) => (
+                    <div key={item.id} className="bg-gray-50 p-6 rounded-3xl border border-gray-100 hover:bg-white transition-all group">
+                      <div className="flex justify-between items-start mb-4">
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.source === 'appointment' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                          {item.source === 'appointment' ? 'Appointment' : 'Booking'}
+                        </span>
+                        <span className="text-[10px] font-black text-gray-300">ID: {item.bookingId || item.id}</span>
+                      </div>
+                      <h4 className="text-base font-black text-slate-900">{item.brand} {item.model}</h4>
+                      <p className="text-xs font-bold text-gray-400 mb-4">{item.name} • {item.phone}</p>
+                      
+                      <div className="bg-white p-4 rounded-2xl border border-gray-100 mb-6">
+                        <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest mb-1">Issue</p>
+                        <p className="text-xs font-bold text-slate-700 line-clamp-2">{item.issue || "General Service"}</p>
+                      </div>
+
+                      <button
+                        onClick={() => { setGlobalModalVisible(false); openAssignModal(item); }}
+                        className="w-full py-4 bg-amber-500 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-amber-600 shadow-xl shadow-amber-500/20"
+                      >
+                        Assign Technician
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t border-gray-50 bg-gray-50/30 text-center text-[9px] font-black text-gray-400 uppercase tracking-widest">
+              Total {priorityList.length} Actionable Items in Queue
             </div>
           </div>
         </div>
