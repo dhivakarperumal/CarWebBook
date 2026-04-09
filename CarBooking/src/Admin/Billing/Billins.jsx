@@ -6,6 +6,7 @@ import {
   FaTrashAlt,
   FaPlus,
   FaPrint,
+  FaEdit,
   FaFileInvoiceDollar,
   FaClock,
   FaCheckCircle,
@@ -417,11 +418,14 @@ const Billings = () => {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                        <button onClick={() => fetchAndPrint(b.id)} className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition">
-                        <FaPrint size={14} />
+                        <button onClick={() => fetchAndPrint(b.id)} className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition" title="Print">
+                          <FaPrint size={14} />
                         </button>
-                        <button onClick={() => deleteInvoice(b.id)} className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition">
-                        <FaTrashAlt size={14} />
+                        <button onClick={() => navigate(`/admin/addbillings/${b.id}`)} className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition" title="Edit">
+                          <FaEdit size={14} />
+                        </button>
+                        <button onClick={() => deleteInvoice(b.id)} className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition" title="Delete">
+                          <FaTrashAlt size={14} />
                         </button>
                     </div>
                   </td>
