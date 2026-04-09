@@ -46,6 +46,7 @@ export default function Services() {
   const [employees, setEmployees] = useState([]);
   const [issueEntries, setIssueEntries] = useState([]);
   const [serviceParts, setServiceParts] = useState({});
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [dateFilter, setDateFilter] = useState("All Time");
@@ -67,9 +68,10 @@ export default function Services() {
 
   const loadData = async () => {
     try {
-      const [servRes, empRes] = await Promise.all([
+      const [servRes, empRes, prodRes] = await Promise.all([
         api.get("/all-services"),
         api.get("/staff"),
+        api.get("/products"),
       ]);
       const partsMap = {};
       const servicesWithDetails = [];
@@ -89,6 +91,7 @@ export default function Services() {
       setServiceParts(partsMap);
       setServices(servicesWithDetails);
       setEmployees(empRes.data);
+      setProducts(prodRes.data || []);
     } catch (error) {
       toast.error("Failed to fetch data");
     } finally {

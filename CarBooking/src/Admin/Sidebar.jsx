@@ -77,7 +77,8 @@ const navItems = [
 
 
   { path: "/admin/assignservices", label: "Assign Services", icon: ClipboardCheck },
-  { path: "/admin/services", label: "Services Tracking", icon: Wrench },
+  { path: "/admin/services", label: "Service Tracking", icon: Wrench },
+  { path: "/admin/completed-history", label: "Completed History", icon: CalendarCheck },
 
   { path: "/admin/orders", label: "Orders", icon: ShoppingCart },
 

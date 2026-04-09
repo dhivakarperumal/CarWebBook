@@ -84,7 +84,7 @@ import EmpBookings from "./EmployeeAdmin/EmpBookings/EmpBookings.jsx";
 import EmpProfileSettings from "./EmployeeAdmin/Settings/Profile.jsx";
 import EmpCompletedHistory from "./EmployeeAdmin/EmpBookAssingcar/EmpCompletedHistory.jsx";
 import EmpService from "./EmployeeAdmin/EmpService/EmpService.jsx";
-
+import AdminCompletedHistory from "./Admin/ServicesProvider/AdminCompletedHistory.jsx";
 
 const router = createBrowserRouter([
   {
@@ -138,6 +138,7 @@ const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <Dashboard /> },
+      { path: "completed-history", element: <AdminCompletedHistory /> },
       { path: "services", element: <Servicestype /> },
       { path: "services/:id", element: <ViewService /> },
       { path: "addservicestype", element: <AddServicesType /> },
