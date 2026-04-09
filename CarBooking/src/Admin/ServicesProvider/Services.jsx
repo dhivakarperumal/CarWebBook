@@ -41,8 +41,7 @@ export default function Services() {
   const pathPrefix = location.pathname.startsWith("/employee") ? "/employee" : "/admin";
 
   const [viewMode, setViewMode] = useState("table"); 
-  const [mainTab, setMainTab] = useState("booked"); 
-  const [subTab, setSubTab] = useState("assigned"); 
+  const [mainTab, setMainTab] = useState("all"); 
   const [services, setServices] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [issueEntries, setIssueEntries] = useState([]);
@@ -146,14 +145,16 @@ export default function Services() {
     };
   }, [services, isMechanic, userProfile]);
 
-  const currentMainList = mainTab === "booked" ? searchedServices.filter(s => !s.addVehicle) : searchedServices.filter(s => s.addVehicle);
+  const currentMainList = mainTab === "all" 
+    ? searchedServices 
+    : (mainTab === "booked" ? searchedServices.filter(s => !s.addVehicle) : searchedServices.filter(s => s.addVehicle));
   const assignedServices = currentMainList.filter(s => {
     if (!s.assignedEmployeeId) return false;
     if (isMechanic) return (s.assignedEmployeeName || "").toLowerCase() === (userProfile?.displayName || "").toLowerCase();
     return true;
   });
   const unassignedServices = isMechanic ? [] : currentMainList.filter(s => !s.assignedEmployeeId);
-  const listData = subTab === "assigned" ? assignedServices : unassignedServices;
+  const listData = assignedServices;
 
   const totalPages = Math.ceil(listData.length / itemsPerPage);
   const paginatedData = listData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -244,15 +245,15 @@ export default function Services() {
         <button onClick={() => navigate(`${pathPrefix}/addserviceparts`)} className="h-[56px] px-8 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all flex items-center justify-center gap-3"><FaPlus /> Registry Service Parts</button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard title="Total Service Volume" value={stats.total} icon={<FaCalendarAlt />} gradient="from-blue-600 to-blue-400" />
         <StatCard title="Technician Assigned" value={stats.assigned} icon={<FaClock />} gradient="from-indigo-600 to-indigo-400" />
-        <StatCard title="Open Queue" value={stats.unassigned} icon={<FaWrench />} gradient="from-amber-600 to-amber-400" />
         <StatCard title="Successfully Closed" value={stats.completed} icon={<FaCheckCircle />} gradient="from-emerald-600 to-emerald-400" />
       </div>
 
       <div className="flex flex-col lg:flex-row gap-4 justify-between items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-xl shadow-slate-200/50">
         <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner overflow-x-auto no-scrollbar w-full lg:w-auto">
+          <button onClick={() => { setMainTab("all"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "all" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>All</button>
           <button onClick={() => { setMainTab("booked"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "booked" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>Appointments</button>
           <button onClick={() => { setMainTab("addVehicle"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "addVehicle" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>Booking</button>
         </div>
@@ -275,10 +276,7 @@ export default function Services() {
             <option value="Today">Today</option>
           </select>
 
-          <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner shrink-0">
-            <button onClick={() => setSubTab("assigned")} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${subTab === "assigned" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-600"}`}>Assigned ({assignedServices.length})</button>
-            <button onClick={() => setSubTab("unassigned")} className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${subTab === "unassigned" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-600"}`}>Pending ({unassignedServices.length})</button>
-          </div>
+
         </div>
       </div>
 

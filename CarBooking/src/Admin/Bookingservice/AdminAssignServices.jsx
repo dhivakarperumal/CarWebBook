@@ -7,8 +7,6 @@ import Pagination from "../../Components/Pagination";
 import {
   FaUserCheck,
   FaUserSlash,
-  FaCheckCircle,
-  FaClipboardCheck,
   FaPlus,
   FaSearch,
   FaThLarge,
@@ -41,13 +39,12 @@ export default function AdminAssignServices() {
   const [selectedEmployeeId, setSelectedEmployeeId] = useState("");
 
   const [modalVisible, setModalVisible] = useState(false);
-  const [globalModalVisible, setGlobalModalVisible] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState(false);
   const [loadingEmployees, setLoadingEmployees] = useState(false);
 
-  const [mainTab, setMainTab] = useState("booked"); 
+  const [mainTab, setMainTab] = useState("all"); 
   const [tab, setTab] = useState("unassigned"); 
   const [dateFilter, setDateFilter] = useState("All");
   const [searchText, setSearchText] = useState("");
@@ -174,8 +171,6 @@ export default function AdminAssignServices() {
 
   const assignedCount = dateFilteredList.filter((b) => b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed" && (b.status || "").toLowerCase() !== "completed").length;
   const unassignedCount = dateFilteredList.filter((b) => !b.assignedEmployeeId && (b.status || "").toLowerCase() !== "service completed" && (b.status || "").toLowerCase() !== "completed").length;
-  const completedCount = dateFilteredList.filter((b) => (b.status || "").toLowerCase() === "service completed" || (b.status || "").toLowerCase() === "completed").length;
-  const allCount = dateFilteredList.length;
 
   const filteredBookings = useMemo(() => {
     return dateFilteredList.filter((b) => {
@@ -230,7 +225,6 @@ export default function AdminAssignServices() {
 
       toast.success(`Mechanic ${selectedEmployee.name} assigned successfully`);
       setModalVisible(false);
-      setGlobalModalVisible(false);
       setSelectedBooking(null);
       setSelectedEmployeeId("");
       fetchData();
@@ -258,28 +252,7 @@ export default function AdminAssignServices() {
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Allocate technical resources & monitor order fulfillment</p>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={async () => {
-              setSelectedBooking(null);
-              setSelectedEmployeeId("");
-              await fetchEmployees();
-              setGlobalModalVisible(true);
-            }}
-            className="h-[56px] px-8 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-sky-600 transition-all shadow-xl shadow-black/10 flex items-center justify-center gap-3 active:scale-95"
-          >
-            <FaUserCheck /> Direct Assignment
-          </button>
-          
-          {mainTab === "addVehicle" && (
-            <button
-              onClick={() => window.location.href = "/admin/addservicevehicle"}
-              className="h-[56px] px-8 bg-emerald-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-3 active:scale-95"
-            >
-              <FaPlus /> Registration
-            </button>
-          )}
-        </div>
+
       </div>
 
       {/* STATS ANALYTICS GRID */}
@@ -302,6 +275,7 @@ export default function AdminAssignServices() {
       <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
         <div className="flex bg-gray-100 p-1.5 rounded-[1.5rem] border border-gray-200 shadow-inner w-full lg:w-fit overflow-x-auto no-scrollbar">
           {[
+            { id: "all", label: "All" },
             { id: "booked", label: "Appointments" },
             { id: "addVehicle", label: "Booking" }
           ].map(t => (
@@ -629,82 +603,7 @@ export default function AdminAssignServices() {
         onPageChange={setCurrentPage}
       />
 
-      {/* 🔥 GLOBAL MODAL */}
-      {globalModalVisible && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 border border-gray-100 animate-in fade-in zoom-in duration-200">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold text-gray-900">Assign Service</h2>
-              <button
-                onClick={() => setGlobalModalVisible(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-              >
-                <X className="w-6 h-6" />
-                </button>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">
-                  Select Booking
-                </label>
-                <select
-                  value={selectedBooking?.id || ""}
-                  onChange={(e) =>
-                    setSelectedBooking(
-                      bookings.find((b) => b.id.toString() === e.target.value.toString()) || null
-                    )
-                  }
-                  className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-3 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 focus:outline-none transition-all"
-                >
-                  <option value="">Select a booking...</option>
-                  {bookings
-                  .filter((b) => !b.assignedEmployeeId && (b.status || "").toLowerCase() === "approved")
-                  .map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.brand} {b.model} - {b.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
 
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1.5 ml-1">
-                  Select Mechanic
-                </label>
-                <select
-                  value={selectedEmployeeId}
-                  onChange={(e) => setSelectedEmployeeId(e.target.value)}
-                  disabled={loadingEmployees}
-                  className="w-full bg-gray-50 border border-gray-200 text-gray-900 text-sm rounded-xl px-4 py-3 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 focus:outline-none transition-all disabled:opacity-50"
-                >
-                  <option value="">Select a mechanic...</option>
-                  {employees.map((emp) => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.name} {emp.employee_id ? `(${emp.employee_id})` : ""}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="mt-8 flex gap-3">
-              <button
-                onClick={() => setGlobalModalVisible(false)}
-                className="flex-1 px-4 py-3 text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                disabled={!selectedBooking || !selectedEmployeeId || assigning}
-                onClick={assignEmployee}
-                className="flex-1 px-4 py-3 text-sm font-bold text-white bg-black hover:bg-gray-800 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md"
-              >
-                {assigning ? "Assigning..." : "Assign"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* 🔥 CARD MODAL */}
       {modalVisible && (

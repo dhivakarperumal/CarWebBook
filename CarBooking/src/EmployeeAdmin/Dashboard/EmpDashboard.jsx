@@ -233,7 +233,7 @@ const EmpDashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <StatCard 
           icon={<ClipboardList size={24} />} 
-          title="Assigned Tasks" 
+          title="Today's Tasks" 
           value={stats.pending} 
           color="blue"
         />
@@ -245,7 +245,7 @@ const EmpDashboard = () => {
         />
         <StatCard 
           icon={<CheckCircle2 size={24} />} 
-          title="Jobs Completed" 
+          title="Completed" 
           value={stats.completed} 
           color="emerald"
         />
