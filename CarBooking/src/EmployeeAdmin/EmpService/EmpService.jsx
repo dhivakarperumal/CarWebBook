@@ -173,15 +173,11 @@ export default function EmpService() {
     return filtered.filter((s) => {
       const text = `${s.bookingId || ""} ${s.name || ""} ${s.brand || ""} ${s.model || ""} ${s.vehicleNumber || ""}`.toLowerCase();
       if (!text.includes(search.toLowerCase())) return false;
-      
-      if (mainTab !== "all") {
-        if (mainTab === "booked" && s.addVehicle) return false;
-        if (mainTab === "addVehicle" && !s.addVehicle) return false;
-      }
 
       const bDateStr = s.created_at || s.createdAt;
       if (dateFilter === "All Time") return true;
       if (!bDateStr) return false;
+      const bookingDate = new Date(bDateStr);
 
       const today = new Date();
       if (dateFilter === "Today") return bookingDate.toDateString() === today.toDateString();
@@ -237,20 +233,14 @@ export default function EmpService() {
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this service?")) return;
-    try {
-      await api.delete(`/all-services/${id}`);
-      toast.success("Service deleted");
-      loadData();
-    } catch {
-      toast.error("Failed to delete service");
-    }
-  };
+
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      await api.put(`/all-services/${id}/status`, { serviceStatus: newStatus });
+      await api.put(`/all-services/${id}/status`, { 
+        serviceStatus: newStatus,
+        status: newStatus 
+      });
       toast.success(`Status updated to ${newStatus}`);
       loadData();
     } catch (error) {
@@ -297,53 +287,46 @@ export default function EmpService() {
     <div className="p-4 max-w-7xl mx-auto space-y-10 animate-fadeIn bg-gray-50/50 min-h-screen">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Appointments And Booking</h1>
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Monitor technical workflows & spare parts fulfillment</p>
+           <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Technician Service Board</h1>
+           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Real-time technical workflow & diagnostic manifest</p>
         </div>
         <button onClick={() => navigate(`${pathPrefix}/addserviceparts`)} className="h-[56px] px-8 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all flex items-center justify-center gap-3"><FaPlus /> Registry Service Parts</button>
       </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <StatCard title="Total Assigned" value={stats.total} icon={<FaCalendarAlt />} gradient="from-blue-600 to-blue-400" />
-        <StatCard title="In Progress" value={stats.processing} icon={<FaClock />} gradient="from-indigo-600 to-indigo-400" />
-        <StatCard title="Successfully Finished" value={stats.completed} icon={<FaCheckCircle />} gradient="from-emerald-600 to-emerald-400" />
+        <StatCard title="Assigned Jobs" value={stats.total} icon={<FaCalendarAlt />} gradient="from-blue-600 to-blue-400" />
+        <StatCard title="Active Progress" value={stats.processing} icon={<FaClock />} gradient="from-indigo-600 to-indigo-400" />
+        <StatCard title="Completed Ready" value={stats.completed} icon={<FaCheckCircle />} gradient="from-emerald-600 to-emerald-400" />
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-4 justify-between items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-xl shadow-slate-200/50">
-        <div className="flex bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner overflow-x-auto no-scrollbar w-full lg:w-auto">
-          <button onClick={() => { setMainTab("all"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "all" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>All</button>
-          <button onClick={() => { setMainTab("booked"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "booked" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>Appointments</button>
-          <button onClick={() => { setMainTab("addVehicle"); setCurrentPage(1); }} className={`px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${mainTab === "addVehicle" ? "bg-white text-black shadow-lg" : "text-gray-400 hover:text-gray-600"}`}>Booking</button>
-        </div>
-
-        <div className="flex h-[56px] bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner shrink-0">
-          <button onClick={() => setViewMode("table")} className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaList /> </button>
-          <button onClick={() => setViewMode("card")} className={`flex items-center gap-2 px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "card" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaThLarge /> </button>
-        </div>
-      </div>
-
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-4 bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-slate-200/50">
-        <div className="relative group w-full lg:max-w-xs xl:max-w-md">
+      <div className="flex flex-col xl:flex-row items-center justify-between gap-6 bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-xl shadow-slate-200/50">
+        <div className="relative group w-full xl:max-w-xl">
           <FaSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-all" />
-          <input type="text" placeholder="Track booking, customer, vehicle ID..." value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} className="w-full pl-15 pr-6 py-4 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:ring-8 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-inner" />
+          <input type="text" placeholder="Track service ID, customer, or vehicle plate..." value={search} onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} className="w-full pl-15 pr-6 py-4 bg-gray-50 border border-transparent rounded-[2rem] focus:bg-white focus:ring-8 focus:ring-black/5 focus:border-black outline-none transition-all font-bold text-gray-700 shadow-inner" />
         </div>
 
-        <div className="flex flex-wrap lg:flex-nowrap items-center justify-end gap-3 w-full lg:w-auto">
-          {dateFilter === "Custom Range" && (
-            <div className="flex items-center gap-2 animate-in slide-in-from-right-4 duration-300">
-              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-[56px] px-6 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-xs outline-none focus:border-black shadow-sm" />
-              <span className="text-gray-400 font-bold">to</span>
-              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-[56px] px-6 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-xs outline-none focus:border-black shadow-sm" />
-            </div>
-          )}
-          <select value={dateFilter} onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }} className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm min-w-[160px]">
-            <option value="All Time">All Time</option>
-            <option value="Today">Today</option>
-            <option value="Yesterday">Yesterday</option>
-            <option value="This Week">This Week</option>
-            <option value="This Month">This Month</option>
-            <option value="Custom Range">Custom Range</option>
-          </select>
+        <div className="flex flex-wrap items-center gap-4 w-full xl:w-auto xl:justify-end">
+          <div className="flex h-[56px] bg-gray-100 p-1.5 rounded-2xl border border-gray-200 shadow-inner shrink-0">
+            <button onClick={() => setViewMode("table")} className={`flex items-center px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "table" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaList /> </button>
+            <button onClick={() => setViewMode("card")} className={`flex items-center px-6 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === "card" ? "bg-black text-white shadow-xl" : "text-gray-400 hover:text-gray-900"}`}><FaThLarge /> </button>
+          </div>
+
+          <div className="flex flex-nowrap items-center gap-3">
+            {dateFilter === "Custom Range" && (
+              <div className="flex items-center gap-2 animate-in slide-in-from-right-4 duration-300">
+                <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-[56px] px-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-[10px] outline-none focus:border-black shadow-sm" />
+                <span className="text-gray-400 font-bold">-</span>
+                <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-[56px] px-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold text-[10px] outline-none focus:border-black shadow-sm" />
+              </div>
+            )}
+            <select value={dateFilter} onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }} className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm min-w-[160px]">
+              <option value="All Time">All Time</option>
+              <option value="Today">Today</option>
+              <option value="Yesterday">Yesterday</option>
+              <option value="This Week">This Week</option>
+              <option value="This Month">This Month</option>
+              <option value="Custom Range">Custom Range</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -452,10 +435,15 @@ export default function EmpService() {
                            })()}
                         </td>
                         <td className="px-8 py-6 text-center">
-                           {(() => {
-                             const status = getMappedStatus(item.serviceStatus || item.status);
-                             return <span className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[120px] text-center ${getStatusColor(item.serviceStatus || item.status)}`}>{status}</span>;
-                           })()}
+                           <select 
+                             value={getMappedStatus(item.serviceStatus || item.status)}
+                             onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
+                             className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[150px] text-center cursor-pointer outline-none focus:ring-4 focus:ring-black/5 ${getStatusColor(item.serviceStatus || item.status)}`}
+                           >
+                             {STATUS_STEPS.map(step => (
+                               <option key={step} value={step} className="bg-white text-black font-bold uppercase">{step}</option>
+                             ))}
+                           </select>
                         </td>
                         <td className="px-8 py-6 text-left">
                           <div className="flex justify-end gap-2">
