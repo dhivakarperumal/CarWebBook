@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import {
   ChevronLeft,
@@ -21,6 +21,7 @@ import {
 
 const EmpAddBilling = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { profileName: userProfile } = useAuth();
 
   const [services, setServices] = useState([]);
@@ -82,8 +83,14 @@ const EmpAddBilling = () => {
   }, [userProfile]);
 
   /* =======================
-     SELECT SERVICE
+     HANDLE NAVIGATION STATE
   ======================= */
+  useEffect(() => {
+    if (location.state?.service) {
+      setSelectionMode("online");
+      selectService(location.state.service);
+    }
+  }, [location.state, services]);
   const selectService = async (s) => {
     try {
       setSelectedService(s);
@@ -473,11 +480,13 @@ const EmpAddBilling = () => {
                   </div>
                 </div>
 
-                <div className="space-y-4 pt-6 border-t border-white/10">
+               <div className="space-y-5 flex-1 relative z-10">
+                <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100 space-y-4">
                   <SummaryItem label="Plate No" val={selectedService.vehicleNumber || 'PENDING'} />
                   <SummaryItem label="Booking ID" val={selectedService.bookingId} />
                   <SummaryItem label="Workforce" val={userProfile?.displayName} />
                 </div>
+              </div>
               </div>
             ) : null
           ) : (

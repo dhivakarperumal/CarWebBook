@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import api from "../../api";
 import toast from "react-hot-toast";
-import { FaEdit, FaTrash, FaEye, FaThLarge, FaList, FaPlus, FaCalendarAlt, FaClock, FaCheckCircle, FaSearch, FaWrench, FaUserCheck, FaTimes } from "react-icons/fa";
+import { FaEdit,FaEye, FaThLarge, FaList, FaPlus, FaCalendarAlt, FaClock, FaCheckCircle, FaSearch, FaWrench, FaUserCheck, FaTimes, FaFileInvoice } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../PrivateRouter/AuthContext";
 import Pagination from "../../Components/Pagination";
@@ -147,6 +147,14 @@ export default function EmpService() {
       }).length
     };
   }, [services, userProfile]);
+
+  const getSpareStatus = (parts) => {
+    if (!parts || parts.length === 0) return { label: "No Spares", color: "text-gray-400 bg-gray-50 border-gray-100" };
+    const statuses = parts.map(p => (p.status || "Pending").toLowerCase());
+    if (statuses.every(s => s === "approved")) return { label: "Approved", color: "text-emerald-600 bg-emerald-50 border-emerald-100" };
+    if (statuses.some(s => s === "rejected")) return { label: "Issues/Rejected", color: "text-red-600 bg-red-50 border-red-100" };
+    return { label: "Awaiting Appr.", color: "text-amber-600 bg-amber-50 border-amber-100" };
+  };
 
   const currentMainList = useMemo(() => {
     const mechanicName = (userProfile?.displayName || "").toLowerCase();
@@ -321,22 +329,16 @@ export default function EmpService() {
                   </select>
                 </div>
                 <div className="space-y-5 flex-1 relative z-10">
-                  <div>
-                    <h3 className="text-xl font-black text-gray-900 group-hover:text-blue-600 transition-colors uppercase truncate">
-                      {item.brand || "Unspecified"} {item.model || "Vehicle"}
-                    </h3>
-                    <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest bg-blue-50 w-fit px-3 py-1 rounded-xl border border-blue-100 mt-1">
-                      {item.vehicleNumber || "NO PLATE"}
-                    </p>
-                  </div>
                   <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100 space-y-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400 font-bold text-xs uppercase">{item.name?.charAt(0)}</div>
-                      <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Client</p><p className="text-sm font-black text-gray-800">{item.name}</p></div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400 text-xs"><FaClock /></div>
-                      <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Allocation</p><p className="text-sm font-bold text-gray-500">{item.assignedEmployeeName || "Pending Assignment"}</p></div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-2xl bg-white shadow-sm flex items-center justify-center text-gray-400 font-bold text-xs uppercase">{item.name?.charAt(0)}</div>
+                        <div><p className="text-[9px] font-black text-gray-300 uppercase tracking-widest">Client</p><p className="text-sm font-black text-gray-800">{item.name}</p></div>
+                      </div>
+                      {(() => {
+                        const ss = getSpareStatus(item.parts);
+                        return <span className={`text-[8px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border ${ss.color}`}>{ss.label}</span>;
+                      })()}
                     </div>
                   </div>
                   <div className="rounded-2xl bg-blue-50/50 border border-blue-100 p-4 overflow-hidden">
@@ -355,6 +357,7 @@ export default function EmpService() {
                     <button onClick={() => handleUpdateStatus(item.id, "Service Completed")} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-all border border-transparent" title="Complete Service">Complete</button>
                   )}
                   <button onClick={() => handleOpenIssueModal(item)} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all border border-transparent hover:border-amber-100" title="Edit Log & Parts"><FaEdit className="mr-2" /> Log</button>
+                  <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-black text-white hover:bg-emerald-600 transition-all border border-transparent" title="Generate Bill"><FaFileInvoice className="mr-2" /> Bill</button>
                   <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-11 w-11 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100" title="View Details"><FaEye /></button>
                 </div>
               </div>
@@ -370,9 +373,8 @@ export default function EmpService() {
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">S No</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Identifier</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Customer Profile</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Vehicle Spec</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Issues</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Mechanic Allocation</th>
+                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Spare Status</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-center">Workflow</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Actions</th>
                   </tr>
@@ -396,20 +398,15 @@ export default function EmpService() {
                         <td className="px-8 py-6"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none mb-1">#ID {item.id}</span><span className="text-xs font-black text-blue-900">{item.bookingId || "SER-NEW"}</span></td>
                         <td className="px-8 py-6"><p className="text-sm font-black text-gray-900">{item.name}</p><p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">{item.phone}</p></td>
                         <td className="px-8 py-6">
-                          <div className="flex items-center gap-2 mb-1"><p className="text-sm font-black text-gray-800 uppercase tracking-tight">{item.brand} {item.model}</p></div>
-                          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{item.vehicleNumber || "UNSPECIFIED"}</p>
-                        </td>
-                        <td className="px-8 py-6">
                           <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]" title={item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}>
                             {item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}
                           </p>
                         </td>
                         <td className="px-8 py-6">
-                          {item.assignedEmployeeName ? (
-                            <div className="flex items-center gap-3"><div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-black border border-blue-100 uppercase">{item.assignedEmployeeName.charAt(0)}</div><span className="text-xs font-black text-gray-700">{item.assignedEmployeeName}</span></div>
-                          ) : (
-                            <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-3 py-2 rounded-xl border border-amber-100">Pending Assignment</button>
-                          )}
+                           {(() => {
+                             const ss = getSpareStatus(item.parts);
+                             return <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border ${ss.color}`}>{ss.label}</span>;
+                           })()}
                         </td>
                         <td className="px-8 py-6 text-center">
                           <select
@@ -422,19 +419,18 @@ export default function EmpService() {
                             ))}
                           </select>
                         </td>
-                        <td className="px-8 py-6 text-right">
+                        <td className="px-8 py-6 text-left">
                           <div className="flex justify-end gap-2">
                             {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
                               <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-emerald-500 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Add Parts">Parts</button>
                             )}
-                            {getMappedStatus(item.serviceStatus || item.status) === "Processing" && (
-                              <button onClick={() => handleUpdateStatus(item.id, "Service Going on")} className="h-10 px-4 bg-blue-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-md" title="Start Service">Start</button>
-                            )}
+                           
                             {getMappedStatus(item.serviceStatus || item.status) === "Service Going on" && (
                               <button onClick={() => handleUpdateStatus(item.id, "Service Completed")} className="h-10 px-4 bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-md" title="Complete Service">Complete</button>
                             )}
-                            <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
-                            <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-10 px-4 bg-gray-50 text-gray-400 hover:bg-black hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="View Details"><FaEye /></button>
+                            <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-900 text-gray-400 hover:bg-amber-50 hover:text-amber-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
+                            <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-10 px-4 bg-black text-white hover:bg-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2" title="Generate Bill"><FaFileInvoice /> Bill</button>
+
                           </div>
                         </td>
                       </tr>
