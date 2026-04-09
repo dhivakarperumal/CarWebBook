@@ -524,16 +524,16 @@ export default function AdminAssignServices() {
         <div className="overflow-x-auto bg-white rounded-3xl shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden animate-fadeIn">
           <table className="w-full text-sm text-left whitespace-nowrap">
             <thead>
-              <tr className="bg-slate-900 text-white">
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">S No</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Booking ID</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Customer</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Vehicle</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Service Detail</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Date & Time</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Technician</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80">Status</th>
-                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-80 text-right">Action</th>
+              <tr className="bg-[#020617] text-white">
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Booking ID</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Vehicle</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Service Detail</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Date & Time</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Technician</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
+                <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

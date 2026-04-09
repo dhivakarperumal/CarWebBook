@@ -367,9 +367,7 @@ const OverallAttendance = () => {
 
       {/* Table */}
       <div className=" overflow-hidden ">
-        {loading ? (
-          <div className="p-20 text-center text-slate-400 font-bold uppercase tracking-widest animate-pulse">Synchronizing Data...</div>
-        ) : paginatedData.length === 0 ? (
+        {paginatedData.length === 0 ? (
           <div className="text-center py-32">
             <FaCalendarAlt className="w-16 h-16 text-slate-100 mx-auto mb-6" />
             <p className="text-slate-900 text-xl font-black uppercase tracking-tight">No records discovered</p>
@@ -378,14 +376,14 @@ const OverallAttendance = () => {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left whitespace-nowrap">
-              <thead className="bg-slate-50 border-b border-slate-100">
+              <thead className="bg-[#020617] text-white">
                 <tr>
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Personnel</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Department/Role</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Clock In</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Clock Out</th>
-                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Productivity</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Personnel</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Department/Role</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Clock In</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Clock Out</th>
+                  <th className="px-8 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Productivity</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">

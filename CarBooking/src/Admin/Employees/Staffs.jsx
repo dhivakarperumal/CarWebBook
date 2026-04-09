@@ -171,18 +171,18 @@ const Staffs = () => {
       {/* <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden"> */}
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm text-gray-700 whitespace-nowrap">
-            <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
+            <thead className="bg-[#020617] text-white">
               <tr>
-                <th className="px-4 py-4 text-left font-semibold">S.No</th>
-                <th className="px-4 py-4 text-left font-semibold">Name</th>
-                <th className="px-4 py-4 text-left font-semibold">Email</th>
-                <th className="px-4 py-4 text-left font-semibold">Phone</th>
-                <th className="px-4 py-4 text-left font-semibold">Role</th>
-                <th className="px-4 py-4 text-left font-semibold">Time In</th>
-                <th className="px-4 py-4 text-left font-semibold">Time Out</th>
-                <th className="px-4 py-4 text-left font-semibold">Status</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S.No</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Name</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Email</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Phone</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Role</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Time In</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Time Out</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
                 {(userProfile?.role === "admin" || userProfile?.role === "manager") && (
-                  <th className="px-4 py-4 text-left font-semibold">Actions</th>
+                  <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Actions</th>
                 )}
               </tr>
             </thead>

@@ -110,7 +110,6 @@ const AllProducts = () => {
     page * ITEMS_PER_PAGE
   );
 
-  if (loading) return <div className="p-6">Loading products...</div>;
 
   return (
     <div className="p-6 min-h-screen space-y-8 animate-fadeIn">
@@ -200,16 +199,16 @@ const AllProducts = () => {
         /* TABLE VIEW */
         <div className="overflow-x-auto bg-white rounded-2xl shadow-sm border border-gray-200">
           <table className="w-full text-md whitespace-nowrap">
-            <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
+            <thead className="bg-[#020617] text-white">
               <tr>
-                <th className="px-4 py-4 text-left">S No</th>
-                <th className="px-4 py-4 text-left">Image</th>
-                <th className="px-4 py-4 text-left">Name</th>
-                <th className="px-4 py-4 text-left">Price</th>
-                <th className="px-4 py-4 text-left">Stock</th>
-                <th className="px-4 py-4 text-left">Rating</th>
-                <th className="px-4 py-4 text-left">Status</th>
-                <th className="px-4 py-4 text-left">Actions</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Image</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Name</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Price</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Stock</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Rating</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Actions</th>
               </tr>
             </thead>
             <tbody>
