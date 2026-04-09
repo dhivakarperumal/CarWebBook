@@ -25,6 +25,7 @@ const EmpAssingCars = () => {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
   const [viewMode, setViewMode] = useState("table"); // 'card' or 'table'
   const [page, setPage] = useState(1);
   const [dateFilter, setDateFilter] = useState("all");
