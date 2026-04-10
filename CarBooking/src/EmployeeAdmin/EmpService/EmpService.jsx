@@ -237,6 +237,7 @@ export default function EmpService() {
 
   const getMappedStatus = (status) => {
     if (!status) return "Booked";
+    if (status.toLowerCase() === "cancelled") return "Cancelled";
     const found = STATUS_STEPS.find(s => s.toLowerCase() === status.toLowerCase());
     return found || "Booked";
   };
@@ -251,6 +252,7 @@ export default function EmpService() {
       case "Bill Pending": return "bg-pink-100 text-pink-700";
       case "Bill Completed": return "bg-cyan-100 text-cyan-700";
       case "Service Completed": return "bg-green-100 text-green-700";
+      case "Cancelled": return "bg-red-100 text-red-700";
       default: return "bg-gray-100 text-gray-700";
     }
   };
@@ -639,7 +641,12 @@ export default function EmpService() {
                              onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
                              className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[150px] text-center cursor-pointer outline-none focus:ring-4 focus:ring-black/5 ${getStatusColor(item.serviceStatus || item.status)}`}
                            >
+                             <option value="Cancelled" className="bg-white text-red-500 font-bold uppercase hidden">CANCELLED</option>
                              {STATUS_STEPS.map((step, idx) => {
+                               const mappedStatus = getMappedStatus(item.serviceStatus || item.status);
+                               if (mappedStatus === "Cancelled") {
+                                 return <option key={step} value={step} className="bg-white text-black font-bold uppercase">{step}</option>;
+                               }
                                const currentIdx = STATUS_STEPS.findIndex(s => s.toLowerCase() === (item.serviceStatus || item.status || "Booked").toLowerCase()) || 0;
                                if (idx < currentIdx) return null;
                                return (
