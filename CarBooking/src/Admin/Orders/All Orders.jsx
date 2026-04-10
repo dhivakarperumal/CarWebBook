@@ -219,8 +219,6 @@ const AllOrders = () => {
   const printOrder = async (orderSummary) => {
     let o = orderSummary;
     
-    // Fetch full order details to ensure we have the "items" array
-    // Many list APIs exclude nested items for performance.
     try {
       toast.loading("Preparing invoice...", { id: "print-load" });
       const res = await api.get(`/orders/${orderSummary.id}`);
@@ -228,15 +226,13 @@ const AllOrders = () => {
       toast.dismiss("print-load");
     } catch (err) {
       console.error("Failed to fetch order details for printing", err);
-      toast.error("Could not fetch full order details", { id: "print-load" });
-      // Proceed with what we have, but it might be incomplete
+      toast.dismiss("print-load");
     }
 
     const customer = getCustomerDetails(o);
     const date = parseOrderDate(o.createdAt)?.toLocaleDateString("en-IN") || "-";
     const items = o.items || [];
 
-    // Create a hidden iframe
     const iframe = document.createElement("iframe");
     iframe.style.position = "fixed";
     iframe.style.right = "0";
@@ -253,29 +249,60 @@ const AllOrders = () => {
         <head>
           <title>Order Invoice - ${o.orderId}</title>
           <style>
-            body { font-family: 'Inter', system-ui, sans-serif; padding: 40px; color: #333; }
-            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
-            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
-            .info-block h4 { margin: 0 0 10px 0; color: #777; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
-            .info-block p { margin: 0; font-weight: 700; font-size: 14px; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-            th { text-align: left; background: #f8fafc; padding: 12px; font-size: 11px; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #e2e8f0; }
-            td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
-            .total-section { margin-left: auto; width: 250px; }
-            .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
-            .total-row.grand { border-top: 2px solid #333; margin-top: 10px; padding-top: 15px; font-weight: 900; font-size: 18px; }
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+            body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
+            .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; }
+            .logo-section img { height: 60px; object-fit: contain; margin-bottom: 10px; }
+            .company-info { font-size: 11px; color: #64748b; }
+            .company-info h2 { color: #0f172a; margin: 0 0 4px 0; font-weight: 900; font-size: 18px; text-transform: uppercase; letter-spacing: -0.5px; }
+            .invoice-label { text-align: right; }
+            .invoice-label h1 { margin: 0; font-size: 32px; font-weight: 900; color: #0f172a; letter-spacing: -1px; }
+            .invoice-label p { margin: 4px 0 0 0; font-weight: 700; color: #64748b; font-size: 12px; }
+            
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; padding: 24px; background: #f8fafc; rounded-2xl; border: 1px solid #f1f5f9; }
+            .info-block h4 { margin: 0 0 12px 0; color: #94a3b8; text-transform: uppercase; font-size: 10px; font-weight: 900; letter-spacing: 1.5px; }
+            .info-block p { margin: 0 0 4px 0; font-weight: 700; font-size: 14px; color: #0f172a; }
+            .info-block .sub-text { font-weight: 400; font-size: 12px; color: #64748b; }
+            
+            table { width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 40px; }
+            th { text-align: left; background: #0f172a; padding: 14px 20px; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #fff; letter-spacing: 1px; }
+            th:first-child { border-radius: 12px 0 0 0; }
+            th:last-child { border-radius: 0 12px 0 0; text-align: right; }
+            td { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; font-size: 13px; font-weight: 600; }
+            td:last-child { text-align: right; }
+            .item-brand { font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase; margin-top: 4px; }
+            
+            .footer-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 40px; }
+            .total-section { background: #0f172a; padding: 24px; border-radius: 20px; color: #fff; }
+            .total-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 12px; color: #94a3b8; font-weight: 700; }
+            .total-row.grand { border-top: 1px solid rgba(255,255,255,0.1); margin-top: 12px; padding-top: 20px; font-weight: 900; font-size: 24px; color: #fff; }
+            .total-row.grand span:last-child { color: #22d3ee; }
+            
+            .notes { font-size: 11px; color: #94a3b8; line-height: 1.6; }
+            .notes h4 { color: #0f172a; text-transform: uppercase; font-weight: 900; margin-bottom: 8px; }
+
             @media print { 
               body { padding: 0; }
-              .no-print { display: none; } 
+              .info-grid { background: #fff !important; border: 1px solid #eee; }
+              .total-section { background: #000 !important; -webkit-print-color-adjust: exact; }
             }
           </style>
         </head>
         <body>
-          <div class="header">
-            <h1 style="margin:0; font-size: 24px; font-weight: 900;">INVOICE</h1>
-            <div style="text-align: right">
-              <p style="margin:0; font-weight: 800;">${o.orderId}</p>
-              <p style="margin:0; font-size: 12px; color: #666;">Date: ${date}</p>
+          <div class="header-top">
+            <div class="logo-section">
+              <img src="/logo_no_bg.png" alt="Logo" />
+              <div class="company-info">
+                <h2>CARBOOKING HUB</h2>
+                <p>123 Service Street, Automotive Zone</p>
+                <p>Chennai, Tamil Nadu - 600001</p>
+                <p>Contact: +91 98765 43210 | support@carhub.com</p>
+              </div>
+            </div>
+            <div class="invoice-label">
+              <h1>INVOICE</h1>
+              <p>ID: ${o.orderId}</p>
+              <p>DATE: ${date}</p>
             </div>
           </div>
 
@@ -283,68 +310,74 @@ const AllOrders = () => {
             <div class="info-block">
               <h4>Billed To</h4>
               <p>${customer.name}</p>
-              <p style="font-weight: 400; font-size: 12px; color: #666; margin-top: 4px;">
-                ${o.phone || o.mobile || o.shippingPhone || "-"}
-              </p>
-              <p style="font-weight: 400; font-size: 12px; color: #666;">
+              <div class="sub-text">
+                ${o.phone || o.mobile || o.shippingPhone || "-"} <br/>
                 ${o.shippingAddress || o.address || "-"}
-              </p>
+              </div>
             </div>
             <div class="info-block" style="text-align: right">
-              <h4>Payment Status</h4>
-              <p style="color: ${o.paymentStatus === "paid" ? "#16a34a" : "#ca8a04"}">
+              <h4>Payment Summary</h4>
+              <p style="color: ${o.paymentStatus === "paid" ? "#10b981" : "#f59e0b"}">
                 ${(o.paymentStatus || "Pending").toUpperCase()}
               </p>
-              <h4 style="margin-top: 15px;">Method</h4>
-              <p>${(o.paymentMethod || "COD").toUpperCase()}</p>
+              <div class="sub-text">VIA ${(o.paymentMethod || "COD").toUpperCase()}</div>
             </div>
           </div>
 
           <table>
             <thead>
               <tr>
-                <th>Item Details</th>
+                <th>Product Description</th>
                 <th style="text-align: center">Qty</th>
-                <th style="text-align: right">Price</th>
-                <th style="text-align: right">Subtotal</th>
+                <th style="text-align: right">Unit Price</th>
+                <th>Total</th>
               </tr>
             </thead>
             <tbody>
               ${items.length > 0 ? items.map(item => `
                 <tr>
                   <td>
-                    <div style="font-weight: 700;">${item.name || "Product"}</div>
-                    <div style="font-size: 11px; color: #888;">${item.brand || ""} ${item.variant ? `(${item.variant})` : ""}</div>
+                    <div>${item.name || "Product"}</div>
+                    <div class="item-brand">${item.brand || "Authentic Parts"} ${item.variant ? `• ${item.variant}` : ""}</div>
                   </td>
                   <td style="text-align: center">${item.qty || item.quantity || 1}</td>
                   <td style="text-align: right">₹ ${Number(item.price || 0).toLocaleString("en-IN")}</td>
-                  <td style="text-align: right">₹ ${Number(item.total || (item.price || 0) * (item.qty || item.quantity || 1)).toLocaleString("en-IN")}</td>
+                  <td>₹ ${Number(item.total || (item.price || 0) * (item.qty || item.quantity || 1)).toLocaleString("en-IN")}</td>
                 </tr>
               `).join("") : `
                 <tr>
-                  <td colspan="4" style="text-align: center; color: #999; padding: 20px;">No items found for this order.</td>
+                  <td colspan="4" style="text-align: center; color: #94a3b8; padding: 40px;">No items found in this order manifest.</td>
                 </tr>
               `}
             </tbody>
           </table>
 
-          <div class="total-section">
-            <div class="total-row">
-              <span>Subtotal</span>
-              <span>₹ ${Number(o.subtotal || o.total || 0).toLocaleString("en-IN")}</span>
+          <div class="footer-grid">
+            <div class="notes">
+              <h4>Terms & Conditions</h4>
+              <p>1. Please keep this invoice for any warranty claims.<br/>
+                 2. Warranty is applicable only on selected spare parts as per manufacturer policy.<br/>
+                 3. This is a computer-generated document and does not require a physical signature.</p>
             </div>
-            <div class="total-row">
-              <span>Tax (GST)</span>
-              <span>₹ 0.00</span>
-            </div>
-            <div class="total-row grand">
-              <span>Total</span>
-              <span>₹ ${Number(o.total || 0).toLocaleString("en-IN")}</span>
+            <div class="total-section">
+              <div class="total-row">
+                <span>SUBTOTAL</span>
+                <span>₹ ${Number(o.subtotal || o.total || 0).toLocaleString("en-IN")}</span>
+              </div>
+              <div class="total-row">
+                <span>ESTIMATED TAX (GST 0%)</span>
+                <span>₹ 0.00</span>
+              </div>
+              <div class="total-row grand">
+                <span>TOTAL</span>
+                <span>₹ ${Number(o.total || 0).toLocaleString("en-IN")}</span>
+              </div>
             </div>
           </div>
 
-          <div style="margin-top: 60px; border-top: 1px solid #eee; padding-top: 20px; text-align: center; color: #999; font-size: 11px;">
-            Thank you for your business! This is a computer-generated invoice.
+          <div style="margin-top: 80px; text-align: center; border-top: 1px dashed #e2e8f0; padding-top: 20px;">
+            <p style="font-size: 12px; font-weight: 900; color: #0f172a; margin: 0;">THANK YOU FOR YOUR TRUST!</p>
+            <p style="font-size: 10px; color: #94a3b8; margin: 4px 0 0 0;">Visit us again at www.carhubservice.com</p>
           </div>
         </body>
       </html>
@@ -352,15 +385,10 @@ const AllOrders = () => {
 
     doc.close();
 
-    // Small delay to ensure content is ready
     setTimeout(() => {
       iframe.contentWindow.focus();
       iframe.contentWindow.print();
-      
-      // Remove the iframe after printing is initiated
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-      }, 1000);
+      setTimeout(() => { document.body.removeChild(iframe); }, 1000);
     }, 500);
   };
 

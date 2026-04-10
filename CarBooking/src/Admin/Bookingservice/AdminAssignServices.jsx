@@ -567,9 +567,6 @@ export default function AdminAssignServices() {
                         <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
                           {item.vehicleType || 'Car'}
                         </span>
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.source === 'appointment' ? 'bg-indigo-100 text-indigo-600' : 'bg-emerald-100 text-emerald-600'}`}>
-                          {item.source === 'appointment' ? 'APT' : 'BKG'}
-                        </span>
                         <p className="text-sm font-black text-gray-900 font-inter">{item.brand} {item.model}</p>
                         {item.uid === 'admin-created' && <span className="bg-cyan-100 text-cyan-600 text-[9px] px-2 py-0.5 rounded font-black uppercase">Walk-in</span>}
                       </div>
