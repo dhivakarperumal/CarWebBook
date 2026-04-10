@@ -252,7 +252,7 @@ const ServiceStatus = () => {
       </h2>
 
       {/* Show pending spares alert */}
-      {pendingSpares.length > 0 && (
+      {/* {pendingSpares.length > 0 && (
         <div className="mb-6 bg-orange-500/20 border border-orange-500/40 rounded-lg p-4">
           <p className="font-semibold text-orange-300">
             ⚠️ {pendingSpares.length} service(s) have spare parts pending
@@ -283,7 +283,7 @@ const ServiceStatus = () => {
             View & Approve Spare Parts
           </button>
         </div>
-      )}
+      )} */}
 
       <div className="space-y-4">
         {bookings.length > 0 ? (

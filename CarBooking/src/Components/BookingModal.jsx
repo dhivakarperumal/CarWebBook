@@ -110,46 +110,16 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
 
                   {/* STATUS */}
                   <p
-                    className={`text-xs font-bold mt-1 ${status === "pending"
+                    className={`text-xs font-bold mt-1 ${
+                      status === "pending"
                         ? "text-yellow-400"
                         : status === "approved"
                           ? "text-green-400"
                           : "text-red-400"
-                      }`}
+                    }`}
                   >
                     {status.toUpperCase()}
                   </p>
-
-                  {/* 🔥 ACTION BUTTONS */}
-                  {status === "pending" && (
-                    <div className="flex gap-2 mt-3">
-                      <button
-                        onClick={() =>
-                          onApprove(
-                            bookingSpare.serviceId,
-                            part.id,
-                            "approved"
-                          )
-                        }
-                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
-                      >
-                        Approve
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          onApprove(
-                            bookingSpare.serviceId,
-                            part.id,
-                            "rejected"
-                          )
-                        }
-                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  )}
                 </div>
               );
             })}
@@ -163,6 +133,7 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
             </div>
           </div>
         )}
+
         {/* SERVICE ISSUE SECTION */}
         <div className="mt-6">
           <h4 className="text-sky-400 font-bold mb-3">
@@ -179,24 +150,7 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
                       <p className="text-sm text-orange-300 font-semibold mt-1">Amount: ₹{Number(issueEntry.issueAmount).toFixed(2)}</p>
                     )}
                     <p className="text-xs text-gray-500 mt-2">Issue Date: {issueEntry.createdAt ? new Date(issueEntry.createdAt).toLocaleDateString() : 'N/A'}</p>
-                    <p className="text-xs text-gray-400 mt-1">Status: <span className={`font-bold ${status === 'approved' ? 'text-green-300' : status === 'rejected' ? 'text-red-300' : 'text-yellow-300'}`}>{status.toUpperCase()}</span></p>
-
-                    {status === 'pending' && booking.serviceId && (
-                      <div className="flex gap-2 mt-3">
-                        <button
-                          onClick={() => onApprove(booking.serviceId, issueEntry.id, 'approved', 'issue')}
-                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => onApprove(booking.serviceId, issueEntry.id, 'rejected', 'issue')}
-                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
+                    <p className="text-xs text-gray-400 mt-1">Status: <span className={status === 'approved' ? 'font-bold text-green-300' : status === 'rejected' ? 'font-bold text-red-300' : 'font-bold text-yellow-300'}>{status.toUpperCase()}</span></p>
                   </div>
                 );
               })
@@ -207,30 +161,88 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
                   <p className="text-sm text-orange-300 font-semibold mt-1">Amount: ₹{Number(booking.issueAmount).toFixed(2)}</p>
                 )}
                 <p className="text-xs text-gray-500 mt-2">Issue Date: {booking.createdAt ? new Date(booking.createdAt).toLocaleDateString() : 'N/A'}</p>
-                <p className="text-xs text-gray-400 mt-1">Status: <span className={`font-bold ${booking.issueStatus === 'approved' ? 'text-green-300' : booking.issueStatus === 'rejected' ? 'text-red-300' : 'text-yellow-300'}`}>{(booking.issueStatus || 'pending').toUpperCase()}</span></p>
-
-                {(booking.issueStatus || 'pending') === 'pending' && booking.serviceId && (
-                  <div className="flex gap-2 mt-3">
-                    <button
-                      onClick={() => onApprove(booking.serviceId, null, 'approved', 'issue')}
-                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => onApprove(booking.serviceId, null, 'rejected', 'issue')}
-                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                )}
+                <p className="text-xs text-gray-400 mt-1">Status: <span className={booking.issueStatus === 'approved' ? 'font-bold text-green-300' : booking.issueStatus === 'rejected' ? 'font-bold text-red-300' : 'font-bold text-yellow-300'}>{(booking.issueStatus || 'pending').toUpperCase()}</span></p>
               </div>
             ) : (
               <p className="text-gray-500 italic text-sm">No service issue details entered yet.</p>
             )}
           </div>
         </div>
+
+        {/* COMMON APPROVE/REJECT BUTTONS */}
+        {(() => {
+          const hasPendingSpares = bookingSpare?.parts?.some(part => part.status === "pending");
+          const hasPendingIssues = booking.issues && booking.issues.length > 0
+            ? booking.issues.some(issueEntry => (issueEntry.issueStatus || 'pending').toLowerCase() === 'pending')
+            : (booking.issueStatus || 'pending') === 'pending';
+
+          if (!(hasPendingSpares || hasPendingIssues)) return null;
+
+          return (
+            <div className="mt-6 bg-slate-800 rounded-lg p-4 border border-slate-700">
+              <h4 className="text-sky-400 font-bold mb-3 text-center">
+                Approve or Reject All Pending Items
+              </h4>
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={() => {
+                    // Approve all pending spares
+                    if (hasPendingSpares) {
+                      bookingSpare.parts
+                        .filter(part => part.status === "pending")
+                        .forEach(part => {
+                          onApprove(bookingSpare.serviceId, part.id, "approved");
+                        });
+                    }
+                    // Approve all pending issues
+                    if (hasPendingIssues) {
+                      if (booking.issues && booking.issues.length > 0) {
+                        booking.issues
+                          .filter(issueEntry => (issueEntry.issueStatus || 'pending').toLowerCase() === 'pending')
+                          .forEach(issueEntry => {
+                            onApprove(booking.serviceId, issueEntry.id, 'approved', 'issue');
+                          });
+                      } else {
+                        onApprove(booking.serviceId, null, 'approved', 'issue');
+                      }
+                    }
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg text-lg font-semibold transition cursor-pointer"
+                >
+                  Approve All
+                </button>
+                <button
+                  onClick={() => {
+                    // Reject all pending spares
+                    if (hasPendingSpares) {
+                      bookingSpare.parts
+                        .filter(part => part.status === "pending")
+                        .forEach(part => {
+                          onApprove(bookingSpare.serviceId, part.id, "rejected");
+                        });
+                    }
+                    // Reject all pending issues
+                    if (hasPendingIssues) {
+                      if (booking.issues && booking.issues.length > 0) {
+                        booking.issues
+                          .filter(issueEntry => (issueEntry.issueStatus || 'pending').toLowerCase() === 'pending')
+                          .forEach(issueEntry => {
+                            onApprove(booking.serviceId, issueEntry.id, 'rejected', 'issue');
+                          });
+                      } else {
+                        onApprove(booking.serviceId, null, 'rejected', 'issue');
+                      }
+                    }
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg text-lg font-semibold transition cursor-pointer"
+                >
+                  Reject All
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* STATUS TRACKER */}
         <div className="mt-6">
           {booking.status !== "CANCELLED" ? (
