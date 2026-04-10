@@ -34,7 +34,7 @@ const BookingBanner = () => {
 
           {/* BUTTON */}
           <button
-            onClick={() => navigate("/bookservice")}
+            onClick={() => navigate("/bookservice", { state: { selectedPackage: { title: "Premium Car Service", price: "Pending Quote" } } })}
             className="
               px-6 py-3
               rounded-full

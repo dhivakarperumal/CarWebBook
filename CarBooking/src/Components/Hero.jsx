@@ -76,7 +76,7 @@ export default function Hero() {
 
                         {/* Premium Button */}
                         <button
-                          onClick={() => navigate("/bookservice")}
+                          onClick={() => navigate("/bookservice", { state: { selectedPackage: { title: slide.title, price: "Pending Quote" } } })}
                           className="mt-8 px-10 py-4 rounded-full font-semibold
                       bg-gradient-to-r from-blue-600 to-cyan-400
                       hover:scale-105 transition-all duration-300 shadow-lg shadow-blue-500/40 cursor-pointer"

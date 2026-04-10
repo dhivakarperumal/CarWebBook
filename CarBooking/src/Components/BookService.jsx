@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, forwardRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../PrivateRouter/AuthContext";
 import PageHeader from "./PageHeader";
 import PageContainer from "./PageContainer";
@@ -109,7 +109,19 @@ const BookService = () => {
 
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.selectedPackage) {
+      const pkg = location.state.selectedPackage;
+      setFormData((prev) => ({
+        ...prev,
+        issue: "Others",
+        otherIssue: `Package: ${pkg.title} - Price: ₹${pkg.price}`,
+      }));
+    }
+  }, [location.state]);
 
   const [locationQuery, setLocationQuery] = useState("");
   const [locationResults, setLocationResults] = useState([]);
@@ -270,7 +282,7 @@ const BookService = () => {
 
             <div className="grid md:grid-cols-2 gap-6">
               <Input label="Phone Number" name="phone" value={formData.phone} placeholder="+91 00000 00000" required error={errors.phone} onChange={handleChange} />
-              <Input label="Alternative Phone" name="altPhone" placeholder="Optional" onChange={handleChange} />
+              <Input label="Alternative Phone" name="altPhone" value={formData.altPhone} placeholder="Optional" onChange={handleChange} />
             </div>
 
             {/* <div className="flex gap-6 py-4 border-y border-white/10">
@@ -285,22 +297,22 @@ const BookService = () => {
             </div> */}
 
             <div className="grid md:grid-cols-2 gap-6">
-              <Select label="Brand" name="brand" required error={errors.brand} onChange={handleChange}>
+              <Select label="Brand" name="brand" value={formData.brand} required error={errors.brand} onChange={handleChange}>
                 <option className="bg-[#0a0a0b]" value="">Select Brand</option>
-                {vehicleType === "car" ? ["Honda", "Hyundai", "BMW", "Audi"].map(b => <option className="bg-[#0a0a0b]" key={b}>{b}</option>) : ["Yamaha", "Royal Enfield", "Bajaj"].map(b => <option className="bg-[#0a0a0b]" key={b}>{b}</option>)}
+                {vehicleType === "car" ? ["Honda", "Hyundai", "BMW", "Audi"].map(b => <option className="bg-[#0a0a0b]" key={b} value={b}>{b}</option>) : ["Yamaha", "Royal Enfield", "Bajaj"].map(b => <option className="bg-[#0a0a0b]" key={b} value={b}>{b}</option>)}
               </Select>
-              <Input label="Model" name="model" placeholder="Model Name" required error={errors.model} onChange={handleChange} />
+              <Input label="Model" name="model" value={formData.model} placeholder="Model Name" required error={errors.model} onChange={handleChange} />
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              <Select label="Issue" name="issue" required error={errors.issue} onChange={handleChange}>
+              <Select label="Issue" name="issue" value={formData.issue} required error={errors.issue} onChange={handleChange}>
                 <option className="bg-[#0a0a0b]" value="">Select Issue</option>
-                {["Engine Problem", "Brake Issue", "Electrical", "Others"].map(i => <option className="bg-[#0a0a0b]" key={i}>{i}</option>)}
+                {["Engine Problem", "Brake Issue", "Electrical", "Others"].map(i => <option className="bg-[#0a0a0b]" key={i} value={i}>{i}</option>)}
               </Select>
-              <Input label="Vehicle Number" name="vehicleNumber" placeholder="TN 01 AB 1234" onChange={handleChange} />
+              <Input label="Vehicle Number" name="vehicleNumber" value={formData.vehicleNumber} placeholder="TN 01 AB 1234" onChange={handleChange} />
             </div>
 
-            {formData.issue === "Others" && <Input label="Describe Issue" name="otherIssue" onChange={handleChange} />}
+            {formData.issue === "Others" && <Input label="Package" name="otherIssue" value={formData.otherIssue} onChange={handleChange} />}
 
 
             <div className="flex gap-6 py-4 border-y border-white/10">
@@ -340,7 +352,7 @@ const BookService = () => {
                   <button type="button" onClick={handleUseCurrentLocation} className="px-6 py-2 rounded-lg bg-sky-500 font-bold hover:bg-sky-600 transition tracking-wide text-xs">USE CURRENT LOCATION</button>
                 </div>
 
-                <Textarea label="Service Address" name="address" required error={errors.address} onChange={handleChange} />
+                <Textarea label="Service Address" name="address" value={formData.address} required error={errors.address} onChange={handleChange} />
               </>)}
             <div className="flex justify-end pt-8">
               <button onClick={handleSubmit} disabled={submitting} className="w-full md:w-auto px-12 py-4 rounded-full font-black text-white bg-gradient-to-r from-blue-600 to-cyan-400 hover:shadow-[0_0_20px_rgba(56,189,248,0.5)] transition-all cursor-pointer">
