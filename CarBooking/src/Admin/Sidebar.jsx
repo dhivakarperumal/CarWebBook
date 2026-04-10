@@ -188,8 +188,13 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           isToday(v.created_at || v.createdAt)
         ).length;
 
-        // Unassigned services (needs attention)
-        const unassigned = (servRes.data || []).filter(s => !s.assignedEmployeeId).length;
+        // Unassigned services (needs attention) - Filter out cancelled/completed
+        const unassigned = (servRes.data || []).filter(s => {
+          const isUnassigned = !s.assignedEmployeeId;
+          const status = (s.serviceStatus || s.status || "").toLowerCase();
+          const isActive = status !== "cancelled" && status !== "service completed" && status !== "bill completed";
+          return isUnassigned && isActive;
+        }).length;
 
         setCounts({ 
           bookings: todayBk, 
