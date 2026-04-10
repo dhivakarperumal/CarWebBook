@@ -31,7 +31,7 @@ export default function Products() {
     offer: false,
   });
 
-  const PRODUCTS_PER_PAGE = 6;
+  const PRODUCTS_PER_PAGE = 8;
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -280,7 +280,7 @@ export default function Products() {
                   </p>
                 </div>
 
-                {/* 🔥 BRAND (CHECKBOX) */}
+                {/* BRAND (CHECKBOX) */}
                 <div>
                   <p className="text-sm text-sky-300 mb-2">Brands</p>
 
@@ -321,7 +321,7 @@ export default function Products() {
                   {[
                     { label: "All Ratings", value: "" },
                     { label: "4★ & up", value: "4" },
-                    { label: "3★ & up", value: "3" },  
+                    { label: "3★ & up", value: "3" },
                   ].map((r) => (
                     <label
                       key={r.label}
@@ -403,7 +403,7 @@ export default function Products() {
 
             {/* 🔥 PRODUCTS GRID */}
             <div className="flex-1">
-              <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
                 {paginatedProducts.map((product) => (
                   <ProductCard
                     key={product.docId}
