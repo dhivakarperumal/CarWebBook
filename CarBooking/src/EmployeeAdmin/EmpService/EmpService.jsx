@@ -181,13 +181,13 @@ export default function EmpService() {
     const filtered = services.filter(s => {
       const isAssigned = (s.assignedEmployeeName || "").toLowerCase() === mechanicName;
       const statusValue = (s.serviceStatus || s.status || "").toLowerCase();
-      const isCompleted = statusValue.includes("completed") || statusValue.includes("bill completed");
+      const isFinalized = statusValue === "bill completed";
       
-      // If a specific status filter is selected, respect it even if completed
+      // If a specific status filter is selected, respect it even if finalized
       if (statusFilter !== "All Status") return isAssigned;
       
-      // Default: hide completed from the busy technical board
-      return isAssigned && !isCompleted;
+      // Default: hide fully billed/finalized jobs from the busy technical board
+      return isAssigned && !isFinalized;
     });
 
     return filtered.filter((s) => {
