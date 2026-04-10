@@ -16,7 +16,7 @@ const BookingBanner = () => {
         />
 
         {/* DARK BLUE OVERLAY */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-black/40 to-blue-900/30" />
+        <div className="absolute inset-0 bg-gradient-to-r from-sky-400/30 via-sky-400/20 to-sky-300/30" />
 
         {/* CONTENT */}
         <div className="relative z-10 w-full flex flex-col items-center justify-center text-center gap-5 px-6 md:px-12 py-8">
