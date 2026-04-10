@@ -29,7 +29,10 @@ import {
   ListChecks,
   Truck,
   HardHat,
+  Bell,
 } from "lucide-react";
+
+import api from "../api";
 
 
 import { useAuth } from "../PrivateRouter/AuthContext";
@@ -67,11 +70,11 @@ const navItems = [
   { path: "/admin", label: "Dashboard", icon: Gauge, exact: true },
 
   {
-    label: "Booking & Appointls",
+    label: "Booking Status",
     icon: ShoppingBag,
     children: [
-      { path: "/admin/bookings", label: "Service Bookings", icon: CalendarCheck },
-      { path: "/admin/appointments", label: "Service Appoint", icon: CalendarDays },
+      { path: "/admin/bookings", label: "Booking List", icon: CalendarCheck },
+      { path: "/admin/appointments", label: "Appointments", icon: CalendarDays },
     ],
   },
 
@@ -146,6 +149,45 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const { profileName: userProfile } = useAuth();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
+  const [counts, setCounts] = useState({ bookings: 0, appointments: 0 });
+
+  /* ================= FETCH COUNTS ================= */
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const [bkRes, appRes] = await Promise.all([
+          api.get("/bookings"),
+          api.get("/appointments/all")
+        ]);
+
+        const today = new Date();
+        const todayStr = today.toDateString();
+
+        const isToday = (dateStr) => {
+          if (!dateStr) return false;
+          const d = new Date(dateStr);
+          return d.toDateString() === todayStr;
+        };
+
+        const todayBk = (bkRes.data || []).filter(b => 
+          isToday(b.created_at || b.createdAt) && (b.status || "").toLowerCase() !== "cancelled"
+        ).length;
+        
+        const todayApp = (appRes.data || []).filter(a => 
+          isToday(a.preferredDate) && (a.status || "").toLowerCase() !== "cancelled"
+        ).length;
+
+        setCounts({ bookings: todayBk, appointments: todayApp });
+      } catch (err) {
+        console.error("Failed to fetch sidebar counts", err);
+      }
+    };
+
+    fetchCounts();
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchCounts, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   /* ================= HELPERS ================= */
   const routeMappings = {
@@ -303,6 +345,14 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                         <span className="flex-1 text-left text-base" style={{ fontWeight: 800, letterSpacing: '0.01em' }}>
                           {item.label}
                         </span>
+                        
+                        {/* PARENT BADGE (TOTAL TODAY) */}
+                        {item.label === "Booking Status" && (counts.bookings + counts.appointments) > 0 && (
+                          <span className="mr-2 flex items-center justify-center min-w-[22px] h-5.5 px-1.5 rounded-lg bg-orange-500 text-white text-[11px] font-black shadow-lg shadow-orange-500/20">
+                            {counts.bookings + counts.appointments}
+                          </span>
+                        )}
+
                         <ChevronDown
                           className={`w-4 h-4 transition-transform ${isMenuOpen ? "rotate-180" : ""} ${hasActiveChild ? "text-cyan-600" : ""}`}
                         />
@@ -335,7 +385,19 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                         >
 
                           <SubIcon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-slate-500"}`} />
-                          <span className="text-base" style={{ fontWeight: 800 }}>{sub.label}</span>
+                          <span className="flex-1 text-base text-left" style={{ fontWeight: 800 }}>{sub.label}</span>
+                          
+                          {/* BADGES */}
+                          {sub.path === "/admin/bookings" && counts.bookings > 0 && (
+                            <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-cyan-500 text-white text-[10px] font-black shadow-lg shadow-cyan-500/20">
+                              {counts.bookings}
+                            </span>
+                          )}
+                          {sub.path === "/admin/appointments" && counts.appointments > 0 && (
+                            <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-blue-500 text-white text-[10px] font-black shadow-lg shadow-blue-500/20">
+                              {counts.appointments}
+                            </span>
+                          )}
                         </NavLink>
                       );
                     })}
