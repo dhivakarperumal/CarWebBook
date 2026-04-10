@@ -264,7 +264,7 @@ const ShowAllBookings = () => {
                     <td className="px-8 py-6"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none mb-1">ID: {b.id}</span><span className="text-xs font-black text-blue-900">{b.bookingId || "BKG-NEW"}</span></td>
                     <td className="px-8 py-6"><p className="text-sm font-black text-gray-900">{b.name}</p><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{b.phone}</p></td>
                     <td className="px-8 py-6">
-                      <div className="flex items-center gap-2 mb-1"><span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase ${b.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>{b.vehicleType || 'Car'}</span><p className="text-sm font-black text-gray-800">{b.brand} {b.model}</p></div>
+                      <div className="flex items-center gap-2 mb-1"><p className="text-sm font-black text-gray-800">{b.brand} {b.model}</p> <p>{b.vehicleType || 'Car'}</p></div>
                       <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{b.vehicleNumber || "UNSPECIFIED"}</p>
                     </td>
                     <td className="px-8 py-6"><p className="text-xs font-black text-gray-800">{formatDate(b.created_at || b.createdAt)}</p><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mt-1">{formatTime(b.created_at || b.createdAt)}</p></td>
