@@ -194,6 +194,7 @@ const AddBillings = () => {
     }
 
     try {
+      const pathPrefix = location.pathname.startsWith("/employee") ? "/employee" : "/admin";
       const payload = {
         invoiceNo: invoiceNo || `INV-${Date.now()}`,
         serviceId: activeTab === "online" && selectedService ? selectedService.id : null,
@@ -228,7 +229,7 @@ const AddBillings = () => {
         await api.post('/billings', payload);
         toast.success("Invoice generated successfully");
       }
-      navigate("/admin/billing");
+      navigate(`${pathPrefix}/billing`);
     } catch (error) {
       toast.error(isEditMode ? "Failed to update invoice" : "Failed to generate invoice");
     }
@@ -263,17 +264,11 @@ const AddBillings = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-fadeIn pb-10">
+    <div className="max-w-7xl mx-auto p-6 space-y-8 animate-fadeIn pb-10">
       
       {/* TOP HEADER */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex items-center gap-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="group p-4 bg-white rounded-2xl border border-gray-100 shadow-xl shadow-black/5 hover:bg-black hover:text-white transition-all active:scale-95"
-          >
-            <FaArrowLeft className="group-hover:-translate-x-1 transition-transform" />
-          </button>
           <div className="space-y-1">
             <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-3">
               {isEditMode && <FaEdit className="text-blue-600" size={22} />}
@@ -533,18 +528,7 @@ const AddBillings = () => {
         {/* SUMMARY SIDEBAR */}
         <div className="space-y-8 h-fit">
           
-          {/* CUSTOMER OVERVIEW */}
-          <div className="bg-black p-8 text-white rounded-[2.5rem] shadow-2xl shadow-black/20 animate-slideDown">
-            <h2 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6">
-              {isEditMode ? "Invoice Overview" : "Service Overview"}
-            </h2>
-            <div className="grid grid-cols-2 gap-y-6">
-              <MetricBox label="Customer" val={activeTab === "online" && selectedService ? selectedService.name : manualCustomer.name || "---"} />
-              <MetricBox label="Contact" val={activeTab === "online" && selectedService ? selectedService.phone : manualCustomer.phone || "---"} />
-              <MetricBox label="Vehicle" val={activeTab === "online" && selectedService ? `${selectedService.brand} ${selectedService.model}` : `${manualCustomer.brand} ${manualCustomer.model}` || "---"} />
-              <MetricBox label="Ref ID" val={activeTab === "online" && selectedService ? selectedService.bookingId : manualCustomer.regNo || "---"} />
-            </div>
-          </div>
+          
 
           {/* ACCOUNTING SUMMARY */}
           <div className="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-black/5 border border-gray-50 flex flex-col gap-6">

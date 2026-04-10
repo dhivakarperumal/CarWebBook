@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import api from "../../api";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   FaSearch,
   FaTrashAlt,
