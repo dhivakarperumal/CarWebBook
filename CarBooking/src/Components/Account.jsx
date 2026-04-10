@@ -9,6 +9,7 @@ import VehicleBookings from "./VehicleBookings";
 import PageContainer from "./PageContainer";
 import SetPassword from "./SetPassword";
 import { useLocation } from "react-router-dom";
+import { FiChevronDown } from "react-icons/fi";
 
 const Account = () => {
   const location = useLocation();
@@ -33,6 +34,16 @@ const Account = () => {
     password: "Set Password",
   };
 
+  const tabs = [
+    ["servicestatus", "Service"],
+    ["personal", "Profile"],
+    ["orders", "Orders"],
+    ["vehicle-bookings", "Vehicles"],
+    ["history", "History"],
+    ["address", "Address"],
+    ["password", "Password"],
+  ];
+
   const renderComponent = () => {
     switch (activeTab) {
       case "servicestatus":
@@ -54,36 +65,66 @@ const Account = () => {
     }
   };
 
-  return (
-    <>
-      <PageHeader title={titleMap[activeTab]} />
+  const MobileDropdown = ({ activeTab, setActiveTab, tabs }) => {
+    const [open, setOpen] = useState(false);
 
-      <div className="min-h-screen bg-black text-white py-10">
-        <PageContainer className="overflow-visible">
-          {/* ===== MOBILE TABS ===== */}
-          <div className="md:hidden flex gap-2 overflow-x-auto pb-3 mb-4 hide-scrollbar bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-4 py-3 rounded-2xl border border-sky-400/30">
-            {[
-              ["servicestatus", "Service"],
-              ["personal", "Profile"],
-              ["orders", "Orders"],
-              ["vehicle-bookings", "Vehicles"],
-              ["history", "History"],
-              ["address", "Address"],
-              ["password", "Password"],
-            ].map(([key, label]) => (
+    const activeLabel =
+      tabs.find(([key]) => key === activeTab)?.[1] || "Select Section";
+
+    return (
+      <div className="md:hidden mb-4 relative">
+        <button
+          onClick={() => setOpen(!open)}
+          className="w-full flex justify-between items-center px-4 py-3 rounded-xl 
+        bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 
+        text-white border border-sky-400/30 shadow-md"
+        >
+          <span className="font-semibold">{activeLabel}</span>
+
+          <FiChevronDown
+            className={`transition-transform duration-300 ${open ? "rotate-180" : ""
+              }`}
+            size={20}
+          />
+        </button>
+
+        {open && (
+          <div className="absolute w-full mt-2 rounded-xl overflow-hidden 
+        bg-slate-900 border border-sky-400/20 shadow-xl z-50">
+            {tabs.map(([key, label]) => (
               <button
                 key={key}
-                onClick={() => setActiveTab(key)}
-                className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-semibold transition-all
-                  ${activeTab === key
-                    ? "bg-gradient-to-r from-sky-500 to-cyan-400 text-black shadow-lg shadow-sky-500/50"
-                    : "bg-slate-700/50 text-white hover:bg-slate-600/50"
+                onClick={() => {
+                  setActiveTab(key);
+                  setOpen(false);
+                }}
+                className={`w-full text-left px-4 py-3 text-sm
+                ${activeTab === key
+                    ? "bg-gradient-to-r from-sky-500 to-cyan-400 text-black"
+                    : "text-white hover:bg-slate-800"
                   }`}
               >
                 {label}
               </button>
             ))}
           </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <PageHeader title={titleMap[activeTab]} />
+
+      <div className="min-h-screen bg-black text-white py-10">
+        <PageContainer className="overflow-visible">
+
+          <MobileDropdown
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            tabs={tabs}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
             {/* ===== DESKTOP SIDEBAR (STICKY WORKING) ===== */}
@@ -148,7 +189,10 @@ const Account = () => {
   );
 };
 
+
 export default Account;
+
+
 
 /* ===== Sidebar Button ===== */
 const SidebarButton = ({ active, onClick, label }) => (
@@ -160,3 +204,4 @@ const SidebarButton = ({ active, onClick, label }) => (
     {label}
   </button>
 );
+
