@@ -120,12 +120,16 @@ const BookService = () => {
         issue: "Others",
         otherIssue: `Package: ${pkg.title} - Price: ₹${pkg.price}`,
       }));
+      setServiceType(pkg.place === "shop" ? "shop" : "home");
     }
   }, [location.state]);
 
   const [locationQuery, setLocationQuery] = useState("");
   const [locationResults, setLocationResults] = useState([]);
   const [coords, setCoords] = useState({ lat: null, lng: null });
+
+  const selectedPackage = location.state?.selectedPackage;
+  const isShopOnly = selectedPackage?.place === "shop";
 
   useEffect(() => {
     if (currentUser) {
@@ -316,17 +320,23 @@ const BookService = () => {
 
 
             <div className="flex gap-6 py-4 border-y border-white/10">
-              <label className="flex items-center gap-2 cursor-pointer">
+
+              {/* Home */}
+              <label className={`flex items-center gap-2 
+                ${isShopOnly ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
+
                 <input
                   type="radio"
                   value="home"
                   checked={serviceType === "home"}
                   onChange={() => setServiceType("home")}
+                  disabled={isShopOnly}
                   className="accent-sky-400 w-5 h-5"
                 />
                 <span className="font-bold">Home Service</span>
               </label>
 
+              {/* Shop */}
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
@@ -337,6 +347,7 @@ const BookService = () => {
                 />
                 <span className="font-bold">Shop Service</span>
               </label>
+
             </div>
 
             {serviceType === "home" && (
