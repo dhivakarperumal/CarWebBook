@@ -216,16 +216,152 @@ const AllOrders = () => {
   };
 
   /* ================= PRINT ================= */
-  const printOrder = (o) => {
-    const w = window.open("", "_blank");
-    if (!w) return alert("Popup blocked");
+  const printOrder = async (orderSummary) => {
+    let o = orderSummary;
+    
+    // Fetch full order details to ensure we have the "items" array
+    // Many list APIs exclude nested items for performance.
+    try {
+      toast.loading("Preparing invoice...", { id: "print-load" });
+      const res = await api.get(`/orders/${orderSummary.id}`);
+      o = res.data;
+      toast.dismiss("print-load");
+    } catch (err) {
+      console.error("Failed to fetch order details for printing", err);
+      toast.error("Could not fetch full order details", { id: "print-load" });
+      // Proceed with what we have, but it might be incomplete
+    }
 
-    w.document.write(`<h2>Order ${o.orderId}</h2>`);
-    w.document.write(
-      `<p>Total: ₹ ${Number(o.total).toLocaleString("en-IN")}</p>`
-    );
-    w.document.close();
-    w.print();
+    const customer = getCustomerDetails(o);
+    const date = parseOrderDate(o.createdAt)?.toLocaleDateString("en-IN") || "-";
+    const items = o.items || [];
+
+    // Create a hidden iframe
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+
+    doc.write(`
+      <html>
+        <head>
+          <title>Order Invoice - ${o.orderId}</title>
+          <style>
+            body { font-family: 'Inter', system-ui, sans-serif; padding: 40px; color: #333; }
+            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px; }
+            .info-block h4 { margin: 0 0 10px 0; color: #777; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
+            .info-block p { margin: 0; font-weight: 700; font-size: 14px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+            th { text-align: left; background: #f8fafc; padding: 12px; font-size: 11px; text-transform: uppercase; color: #64748b; border-bottom: 1px solid #e2e8f0; }
+            td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+            .total-section { margin-left: auto; width: 250px; }
+            .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
+            .total-row.grand { border-top: 2px solid #333; margin-top: 10px; padding-top: 15px; font-weight: 900; font-size: 18px; }
+            @media print { 
+              body { padding: 0; }
+              .no-print { display: none; } 
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1 style="margin:0; font-size: 24px; font-weight: 900;">INVOICE</h1>
+            <div style="text-align: right">
+              <p style="margin:0; font-weight: 800;">${o.orderId}</p>
+              <p style="margin:0; font-size: 12px; color: #666;">Date: ${date}</p>
+            </div>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-block">
+              <h4>Billed To</h4>
+              <p>${customer.name}</p>
+              <p style="font-weight: 400; font-size: 12px; color: #666; margin-top: 4px;">
+                ${o.phone || o.mobile || o.shippingPhone || "-"}
+              </p>
+              <p style="font-weight: 400; font-size: 12px; color: #666;">
+                ${o.shippingAddress || o.address || "-"}
+              </p>
+            </div>
+            <div class="info-block" style="text-align: right">
+              <h4>Payment Status</h4>
+              <p style="color: ${o.paymentStatus === "paid" ? "#16a34a" : "#ca8a04"}">
+                ${(o.paymentStatus || "Pending").toUpperCase()}
+              </p>
+              <h4 style="margin-top: 15px;">Method</h4>
+              <p>${(o.paymentMethod || "COD").toUpperCase()}</p>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Item Details</th>
+                <th style="text-align: center">Qty</th>
+                <th style="text-align: right">Price</th>
+                <th style="text-align: right">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.length > 0 ? items.map(item => `
+                <tr>
+                  <td>
+                    <div style="font-weight: 700;">${item.name || "Product"}</div>
+                    <div style="font-size: 11px; color: #888;">${item.brand || ""} ${item.variant ? `(${item.variant})` : ""}</div>
+                  </td>
+                  <td style="text-align: center">${item.qty || item.quantity || 1}</td>
+                  <td style="text-align: right">₹ ${Number(item.price || 0).toLocaleString("en-IN")}</td>
+                  <td style="text-align: right">₹ ${Number(item.total || (item.price || 0) * (item.qty || item.quantity || 1)).toLocaleString("en-IN")}</td>
+                </tr>
+              `).join("") : `
+                <tr>
+                  <td colspan="4" style="text-align: center; color: #999; padding: 20px;">No items found for this order.</td>
+                </tr>
+              `}
+            </tbody>
+          </table>
+
+          <div class="total-section">
+            <div class="total-row">
+              <span>Subtotal</span>
+              <span>₹ ${Number(o.subtotal || o.total || 0).toLocaleString("en-IN")}</span>
+            </div>
+            <div class="total-row">
+              <span>Tax (GST)</span>
+              <span>₹ 0.00</span>
+            </div>
+            <div class="total-row grand">
+              <span>Total</span>
+              <span>₹ ${Number(o.total || 0).toLocaleString("en-IN")}</span>
+            </div>
+          </div>
+
+          <div style="margin-top: 60px; border-top: 1px solid #eee; padding-top: 20px; text-align: center; color: #999; font-size: 11px;">
+            Thank you for your business! This is a computer-generated invoice.
+          </div>
+        </body>
+      </html>
+    `);
+
+    doc.close();
+
+    // Small delay to ensure content is ready
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      
+      // Remove the iframe after printing is initiated
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 1000);
+    }, 500);
   };
 
   /* ================= STATUS BADGE ================= */
@@ -391,7 +527,7 @@ const AllOrders = () => {
         <div className="bg-white  rounded-2xl ">
   <div className="overflow-x-auto">
     <table className="min-w-[800px] text-sm whitespace-nowrap">
-            <thead className="bg-[#020617] text-white">
+            <thead className="text-white">
               <tr>
                 <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Order ID</th>
                 <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Member</th>
