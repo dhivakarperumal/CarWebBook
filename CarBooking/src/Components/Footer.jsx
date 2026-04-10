@@ -136,7 +136,7 @@ useEffect(() => {
               <button
                 className="mt-4 w-full py-4 rounded-lg font-semibold
               bg-gradient-to-r from-blue-600 to-cyan-400
-              hover:scale-[1.02] transition-all duration-300 shadow-lg shadow-blue-500/30"
+              hover:scale-[1.02] transition-all duration-300 shadow-lg shadow-blue-500/30 cursor-pointer"
               >
                 Subscribe
               </button>

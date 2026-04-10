@@ -117,7 +117,7 @@ const OrderModal = ({ order, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center px-3 sm:px-6">
       <div className="bg-slate-900 w-full max-w-3xl rounded-2xl p-6 relative border border-sky-400 max-h-[85vh] overflow-y-auto hide-scrollbar">
-        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white">✕</button>
+        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white cursor-pointer">✕</button>
         <h3 className="text-xl font-bold text-sky-400 mb-2">Order ID: {order.orderId}</h3>
         <p className="text-slate-400 mb-6">Placed on: {new Date(order.createdAt).toLocaleString()}</p>
         

@@ -278,7 +278,7 @@ const ServiceStatus = () => {
           </p>
           <button
             onClick={() => setShowSpareModal(true)}
-            className="mt-3 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition"
+            className="mt-3 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition cursor-pointer"
           >
             View & Approve Spare Parts
           </button>
@@ -432,7 +432,7 @@ const ServiceStatus = () => {
                                   )
                                 }
                                 disabled={approvingPartId === part.id}
-                                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition disabled:opacity-50"
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
                               >
                                 <FaCheck /> Approve
                               </button>
@@ -445,7 +445,7 @@ const ServiceStatus = () => {
                                   )
                                 }
                                 disabled={approvingPartId === part.id}
-                                className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition disabled:opacity-50"
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition disabled:opacity-50 cursor-pointer"
                               >
                                 <FaTimes /> Reject
                               </button>
@@ -479,7 +479,7 @@ const ServiceStatus = () => {
 
             <button
               onClick={() => setShowSpareModal(false)}
-              className="w-full bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-bold transition mt-4"
+              className="w-full bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-bold transition mt-4 cursor-pointer"
             >
               Close
             </button>

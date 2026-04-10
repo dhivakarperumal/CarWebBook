@@ -114,7 +114,7 @@ const History = () => {
                 onClick={() =>
                   setExpandedService(isExpanded ? null : service.id)
                 }
-                className="w-full text-left px-4 md:px-6 py-4 hover:bg-slate-700/50 transition"
+                className="w-full text-left px-4 md:px-6 py-4 hover:bg-slate-700/50 transition cursor-pointer"
               >
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1">

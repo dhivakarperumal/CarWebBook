@@ -136,7 +136,7 @@ const Account = () => {
                   rounded-2xl
                   p-4
                   space-y-3
-                  border border-sky-400
+                  border border-sky-400 
                 "
               >
                 <SidebarButton
@@ -198,7 +198,7 @@ export default Account;
 const SidebarButton = ({ active, onClick, label }) => (
   <button
     onClick={onClick}
-    className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition
+    className={`w-full text-left px-4 py-3 rounded-lg font-semibold transition cursor-pointer
       ${active ? "bg-sky-500 text-black" : "bg-slate-800 hover:bg-slate-700"}`}
   >
     {label}
