@@ -61,9 +61,9 @@ export default function ServiceSwiper() {
             autoplay={{ delay: 3000 }}
             loop
             grabCursor
-            spaceBetween={30}
+            spaceBetween={17}
             breakpoints={{
-              0: { slidesPerView: 1 },
+              0: { slidesPerView: 2 },
               640: { slidesPerView: 2 },
               1024: { slidesPerView: 3 },
               1280: { slidesPerView: 4 },

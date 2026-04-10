@@ -46,10 +46,11 @@ export default function ProductSwiper() {
             disableOnInteraction: false,
           }}
           loop={true}
-          spaceBetween={30}
+          spaceBetween={17}
           slidesPerView={1}
           breakpoints={{
-            640: { slidesPerView: 1 },
+            0: { slidesPerView: 2 },
+            640: { slidesPerView: 2 },
             768: { slidesPerView: 2 },
             1024: { slidesPerView: 3 },
             1280: { slidesPerView: 4 },
