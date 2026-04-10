@@ -196,7 +196,8 @@ export default function Services() {
     return true;
   });
   const unassignedServices = isMechanic ? [] : currentMainList.filter(s => !s.assignedEmployeeId);
-  const listData = assignedServices;
+  // Admin sees ALL services; mechanic sees only their assigned ones
+  const listData = isMechanic ? assignedServices : currentMainList;
 
   const totalPages = Math.ceil(listData.length / itemsPerPage);
   const paginatedData = listData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);

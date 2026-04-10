@@ -49,7 +49,7 @@ const ShowAllBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [view, setView] = useState("table");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("Booked");
   const [dateFilter, setDateFilter] = useState("All");
   const [page, setPage] = useState(1);
 
@@ -195,7 +195,7 @@ const ShowAllBookings = () => {
             <option value="Yesterday">Yesterday</option>
             <option value="This Week">Last 7 Days</option>
             <option value="This Month">Last 30 Days</option>
-            <option value="All">Full History</option>
+            <option value="All">All</option>
           </select>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="h-[56px] px-8 bg-gray-50 border border-gray-100 rounded-2xl font-black uppercase tracking-widest text-[10px] outline-none cursor-pointer focus:border-black shadow-sm transition-all min-w-[160px]">
             <option value="All">Global Registry</option>
