@@ -595,13 +595,13 @@ const Dashboard = () => {
           <div className="bg-white overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm text-gray-700 border-collapse">
-                <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
+                <thead className="bg-[#020617] text-white">
                   <tr>
-                    <th className="px-3 py-4 text-left font-bold">S No</th>
-                    <th className="px-3 py-4 text-left font-bold">Customer</th>
-                    <th className="px-3 py-4 text-left font-bold">Contact</th>
-                    <th className="px-3 py-4 text-left font-bold">Car</th>
-                    <th className="px-3 py-4 text-left font-bold">Booking Date</th>
+                    <th className="px-3 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+                    <th className="px-3 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
+                    <th className="px-3 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Contact</th>
+                    <th className="px-3 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Car</th>
+                    <th className="px-3 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Booking Date</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -677,14 +677,14 @@ const Dashboard = () => {
           <div className="bg-white overflow-hidden">
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm text-gray-700">
-                <thead className="bg-gradient-to-r from-black to-cyan-400 text-white">
+                <thead className="bg-[#020617] text-white">
                   <tr>
-                    <th className="px-3 py-4 text-left font-bold">S No</th>
-                    <th className="px-3 py-4 text-left font-bold">Item</th>
-                    <th className="px-3 py-4 text-left font-bold">Category</th>
-                    <th className="px-3 py-4 text-left font-bold">Stock</th>
-                    <th className="px-3 py-4 text-left font-bold">Min</th>
-                    <th className="px-3 py-4 text-left font-bold">Supplier</th>
+                    <th className="px-3 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+                    <th className="px-3 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Item</th>
+                    <th className="px-3 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Category</th>
+                    <th className="px-3 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Stock</th>
+                    <th className="px-3 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Min</th>
+                    <th className="px-3 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Supplier</th>
                   </tr>
                 </thead>
                 <tbody>

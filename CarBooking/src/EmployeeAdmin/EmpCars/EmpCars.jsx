@@ -420,14 +420,14 @@ const EmpCars = () => {
 
         <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden overflow-x-auto">
           <table className="w-full text-left">
-            <thead>
+            <thead className="text-white">
               <tr>
-                <th className="px-6 py-5">ID</th>
-                <th className="px-6 py-5">Vehicle</th>
-                <th className="px-6 py-5">Customer</th>
-                <th className="px-6 py-5">Status</th>
-                <th className="px-6 py-5">Issue</th>
-                <th className="px-6 py-5 text-right">Actions</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">ID</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Vehicle</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Issue</th>
+                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">

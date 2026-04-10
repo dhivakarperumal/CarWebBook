@@ -208,13 +208,13 @@ const PricingList = () => {
         {view === "table" && (
           <div className="overflow-x-auto mt-10 bg-white rounded-2xl shadow-sm border border-gray-200">
             <table className="w-full text-md">
-              <thead className="bg-gradient-to-r from-black to-cyan-400 text-white text-left">
+              <thead className="bg-[#020617] text-white">
                 <tr>
-                  <th className="px-4 py-4 font-bold">S No</th>
-                  <th className="px-4 py-4 font-bold">Title</th>
-                  <th className="px-4 py-4 font-bold">Price</th>
-                  <th className="px-4 py-4 font-bold">Features</th>
-                  <th className="px-4 py-4 font-bold">Actions</th>
+                  <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+                  <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Title</th>
+                  <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Price</th>
+                  <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Features</th>
+                  <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Actions</th>
                 </tr>
               </thead>
 

@@ -259,8 +259,8 @@ table {
 }
 
 /* Premium Header: Black to Cyan Gradient */
-thead {
-  background: linear-gradient(90deg, #0f172a 0%, #0891b2 100%) !important; /* Deep Slate to Cyan */
+thead, thead tr {
+  background: linear-gradient(90deg, #000000 0%, #06b6d4 100%) !important; /* Pure Black to Vibrant Cyan */
   color: #ffffff !important;
   border: none !important;
 }

@@ -202,8 +202,8 @@ const AllBikes = ({ defaultType = "all" }) => {
       {/* LIST */}
       <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden overflow-x-auto">
         <table className="w-full text-left border-collapse whitespace-nowrap">
-          <thead>
-            <tr className="bg-[#020617] text-white">
+          <thead className="text-white">
+            <tr>
               <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 first:pl-10">S No</th>
               <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">{defaultType === 'all' ? 'Vehicle Details' : `${defaultType} Details`}</th>
               <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Specs</th>

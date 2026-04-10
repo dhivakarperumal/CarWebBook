@@ -524,7 +524,7 @@ export default function AdminAssignServices() {
         <div className="overflow-x-auto bg-white rounded-3xl shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden animate-fadeIn">
           <table className="w-full text-sm text-left whitespace-nowrap">
             <thead>
-              <tr className="bg-[#020617] text-white">
+              <tr className="text-white">
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Booking ID</th>
                 <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>

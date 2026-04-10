@@ -201,15 +201,15 @@ const CarServices = () => {
       <div className="bg-white rounded-2xl shadow overflow-hidden mt-6">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm border-collapse">
-            <thead className="bg-black text-white">
+            <thead className="bg-[#020617] text-white">
               <tr>
-                <th className="px-4 py-4 text-left">Service ID</th>
-                <th className="px-4 py-4 text-left">Car No</th>
-                <th className="px-4 py-4 text-left">Customer</th>
-                <th className="px-4 py-4 text-left">Mechanic</th>
-                <th className="px-4 py-4 text-left">Status</th>
-                <th className="px-4 py-4 text-left">Cost</th>
-                <th className="px-4 py-4 text-left">Actions</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Service ID</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Car No</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Mechanic</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Cost</th>
+                <th className="px-4 py-4 text-right text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Actions</th>
               </tr>
             </thead>
             <tbody>
