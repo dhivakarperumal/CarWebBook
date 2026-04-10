@@ -429,7 +429,7 @@ export default function Services() {
 
                         <td className="px-8 py-6"><span className="text-xs font-black text-blue-900">{item.bookingId || "SER-NEW"}</span><p className="text-sm font-black text-gray-900">{item.name}</p><p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">{item.phone}</p></td>
                         <td className="px-8 py-6">
-                          <div className="flex items-center gap-2 mb-1"><p className="text-sm font-black text-gray-800 uppercase tracking-tight">{item.brand} {item.model}</p></div>
+                          <div className="flex items-center gap-2 mb-1"><p className="text-sm font-black text-gray-800">{item.brand} {item.model}</p></div>
                           <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{item.vehicleNumber || "UNSPECIFIED"}</p>
                         </td>
                         <td className="px-8 py-6">

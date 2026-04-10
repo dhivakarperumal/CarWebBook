@@ -149,15 +149,17 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const { profileName: userProfile } = useAuth();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
-  const [counts, setCounts] = useState({ bookings: 0, appointments: 0 });
+  const [counts, setCounts] = useState({ bookings: 0, appointments: 0, orders: 0, vehicles: 0 });
 
   /* ================= FETCH COUNTS ================= */
   useEffect(() => {
     const fetchCounts = async () => {
       try {
-        const [bkRes, appRes] = await Promise.all([
+        const [bkRes, appRes, ordRes, vehRes] = await Promise.all([
           api.get("/bookings"),
-          api.get("/appointments/all")
+          api.get("/appointments/all"),
+          api.get("/orders"),
+          api.get("/vehicle-bookings")
         ]);
 
         const today = new Date();
@@ -177,7 +179,20 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           isToday(a.preferredDate) && (a.status || "").toLowerCase() !== "cancelled"
         ).length;
 
-        setCounts({ bookings: todayBk, appointments: todayApp });
+        const todayOrd = (ordRes.data || []).filter(o => 
+          isToday(o.created_at || o.createdAt)
+        ).length;
+
+        const todayVeh = (vehRes.data || []).filter(v => 
+          isToday(v.created_at || v.createdAt)
+        ).length;
+
+        setCounts({ 
+          bookings: todayBk, 
+          appointments: todayApp, 
+          orders: todayOrd, 
+          vehicles: todayVeh 
+        });
       } catch (err) {
         console.error("Failed to fetch sidebar counts", err);
       }
@@ -416,14 +431,30 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                 to={itemPath}
                 end={item.exact}
                 onClick={() => isOpen && onClose()}
-                className={`flex items-center gap-3 px-4 py-2.5 rounded font-bold transition-all duration-300
+                className={`flex items-center gap-3 px-4 py-2.5 rounded font-bold transition-all duration-300 relative
   ${isActive
                     ? "bg-gradient-to-r from-black to-cyan-400 text-white shadow-md shadow-cyan-100"
                     : "text-black/80 hover:bg-gradient-to-r hover:from-cyan-400 hover:to-black/30 hover:text-white"
                   }`}
               >
                 <Icon className={`w-5 h-5 shrink-0 ${isActive ? "text-white" : "text-slate-600"}`} />
-                {!collapsed && <span className="text-base" style={{ fontWeight: 800 }}>{item.label}</span>}
+                {!collapsed && (
+                  <div className="flex-1 flex justify-between items-center">
+                    <span className="text-base" style={{ fontWeight: 800 }}>{item.label}</span>
+                    
+                    {/* INDIVIDUAL BADGES FOR TODAY'S COUNT */}
+                    {item.label === "Orders" && counts.orders > 0 && (
+                      <span className={`flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-lg text-[10px] font-black shadow-lg ${isActive ? 'bg-white text-cyan-600' : 'bg-cyan-500 text-white'}`}>
+                        {counts.orders}
+                      </span>
+                    )}
+                    {item.label === "Booked Vehicles" && counts.vehicles > 0 && (
+                      <span className={`flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-lg text-[10px] font-black shadow-lg ${isActive ? 'bg-white text-blue-600' : 'bg-blue-500 text-white'}`}>
+                        {counts.vehicles}
+                      </span>
+                    )}
+                  </div>
+                )}
               </NavLink>
             );
           })}
