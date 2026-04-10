@@ -36,9 +36,9 @@ export default function PricingSwiper() {
           modules={[Autoplay]}
           autoplay={{ delay: 2500 }}
           loop
-          spaceBetween={30}
+          spaceBetween={17}
           breakpoints={{
-            0: { slidesPerView: 1 },
+            0: { slidesPerView: 2 },
             640: { slidesPerView: 2 },
             1024: { slidesPerView: 3 },
             1280: { slidesPerView: 4 },
