@@ -658,24 +658,9 @@ export default function EmpService() {
                            )}
                         </td>
                         <td className="px-8 py-6 text-center">
-                           <select 
-                             value={getMappedStatus(item.serviceStatus || item.status)}
-                             onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
-                             className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[150px] text-center cursor-pointer outline-none focus:ring-4 focus:ring-black/5 ${getStatusColor(item.serviceStatus || item.status)}`}
-                           >
-                             <option value="Cancelled" className="bg-white text-red-500 font-bold uppercase hidden">CANCELLED</option>
-                             {STATUS_STEPS.map((step, idx) => {
-                               const mappedStatus = getMappedStatus(item.serviceStatus || item.status);
-                               if (mappedStatus === "Cancelled") {
-                                 return <option key={step} value={step} className="bg-white text-black font-bold uppercase">{step}</option>;
-                               }
-                               const currentIdx = STATUS_STEPS.findIndex(s => s.toLowerCase() === (item.serviceStatus || item.status || "Booked").toLowerCase()) || 0;
-                               if (idx < currentIdx) return null;
-                               return (
-                                 <option key={step} value={step} className="bg-white text-black font-bold uppercase">{step}</option>
-                               );
-                             })}
-                           </select>
+                           <span className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[150px] text-center ${getStatusColor(item.serviceStatus || item.status)}`}>
+                             {getMappedStatus(item.serviceStatus || item.status)}
+                           </span>
                         </td>
                         <td className="px-8 py-6 text-left">
                           <div className="flex justify-end gap-2">
@@ -758,19 +743,9 @@ export default function EmpService() {
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
                           <input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Amt" className="w-full pl-6 pr-3 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black" />
                         </div>
-                        <select 
-                          value={entry.issueStatus || "pending"} 
-                          onChange={(e) => { 
-                            const copy = [...issueEntries]; 
-                            copy[idx] = { ...copy[idx], issueStatus: e.target.value }; 
-                            setIssueEntries(copy); 
-                          }}
-                          className={`text-[9px] font-black uppercase tracking-widest bg-transparent outline-none cursor-pointer border-b-2 border-transparent focus:border-black transition-all ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500"}`}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="approved">Approved</option>
-                          <option value="rejected">Rejected</option>
-                        </select>
+                        <span className={`text-[9px] font-black uppercase tracking-widest bg-transparent border-b-2 border-transparent transition-all ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500"}`}>
+                          {entry.issueStatus || "pending"}
+                        </span>
                         <button onClick={() => { const copy = [...issueEntries]; copy.splice(idx, 1); setIssueEntries(copy); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><FaTimes size={12} /></button>
                       </div>
                     ))}
@@ -815,19 +790,9 @@ export default function EmpService() {
                              <input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-5 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black" />
                            </div>
                         </div>
-                        <select 
-                          value={part.status || "pending"} 
-                          onChange={(e) => { 
-                            const copy = [...editingParts]; 
-                            copy[idx] = { ...copy[idx], status: e.target.value }; 
-                            setEditingParts(copy); 
-                          }}
-                          className={`text-[9px] font-black uppercase tracking-widest bg-transparent outline-none cursor-pointer border-b-2 border-transparent focus:border-black transition-all ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500"}`}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="approved">Approved</option>
-                          <option value="rejected">Rejected</option>
-                        </select>
+                        <span className={`text-[9px] font-black uppercase tracking-widest bg-transparent border-b-2 border-transparent transition-all ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500"}`}>
+                          {part.status || "pending"}
+                        </span>
                         <button onClick={() => { const copy = [...editingParts]; copy.splice(idx, 1); setEditingParts(copy); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><FaTimes size={12} /></button>
                       </div>
                     ))}
