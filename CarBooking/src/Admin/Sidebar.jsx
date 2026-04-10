@@ -173,7 +173,8 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         };
 
         const todayBk = (bkRes.data || []).filter(b => 
-          isToday(b.created_at || b.createdAt) && (b.status || "").toLowerCase() === "booked"
+          isToday(b.created_at || b.createdAt) && 
+          ((b.status || "").toLowerCase() === "booked" || (b.status || "").toLowerCase() === "approved" || (b.status || "").toLowerCase() === "confirmed")
         ).length;
         
         const todayApp = (appRes.data || []).filter(a => 
@@ -192,8 +193,10 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         const unassigned = (servRes.data || []).filter(s => {
           const isUnassigned = !s.assignedEmployeeId;
           const status = (s.serviceStatus || s.status || "").toLowerCase();
-          const isActive = status !== "cancelled" && status !== "service completed" && status !== "bill completed";
-          return isUnassigned && isActive;
+          const isTodayService = isToday(s.created_at || s.createdAt);
+          // Count active services that are not yet assigned (conceptual "Pending")
+          const isActive = status !== "cancelled" && status !== "service completed" && status !== "bill completed" && status !== "completed";
+          return isUnassigned && isTodayService && isActive;
         }).length;
 
         setCounts({ 
