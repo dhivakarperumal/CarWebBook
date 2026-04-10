@@ -63,6 +63,8 @@ const StatCard = ({ title, value, icon, gradient }) => (
 ========================= */
 const Billings = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const pathPrefix = location.pathname.startsWith("/employee") ? "/employee" : "/admin";
 
   const [bills, setBills] = useState([]);
   const [search, setSearch] = useState("");
@@ -295,7 +297,7 @@ const Billings = () => {
       <div className="flex justify-end items-center">
 
         <button
-          onClick={() => navigate("/admin/addbillings")}
+          onClick={() => navigate(`${pathPrefix}/addbillings`)}
           className="h-[42px] w-full sm:w-auto bg-black text-white px-5 rounded-md font-bold shadow
              hover:bg-gray-900 transition flex items-center justify-center gap-2 text-xs uppercase tracking-widest"
         >
@@ -502,7 +504,7 @@ const Billings = () => {
                         <button onClick={() => fetchAndPrint(b.id)} className="p-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition" title="Print">
                           <FaPrint size={14} />
                         </button>
-                        <button onClick={() => navigate(`/admin/addbillings/${b.id}`)} className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition" title="Edit">
+                        <button onClick={() => navigate(`${pathPrefix}/addbillings/${b.id}`)} className="p-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg transition" title="Edit">
                           <FaEdit size={14} />
                         </button>
                         <button onClick={() => deleteInvoice(b.id)} className="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition" title="Delete">

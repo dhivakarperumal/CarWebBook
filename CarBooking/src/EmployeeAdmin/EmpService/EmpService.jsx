@@ -623,8 +623,8 @@ export default function EmpService() {
                     <th className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
                     <th className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Issues</th>
                     <th className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Spare Status</th>
-                    <th className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-center">Workflow</th>
-                    <th className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-right">Actions</th>
+                    <th className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Workflow</th>
+                    <th className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
@@ -671,7 +671,7 @@ export default function EmpService() {
                              </div>
                            )}
                         </td>
-                        <td className="px-2 py-2 text-center">
+                        <td className="px-2 py-2 text-left">
                            <select 
                              value={getMappedStatus(item.serviceStatus || item.status)}
                              onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
@@ -692,7 +692,7 @@ export default function EmpService() {
                            </select>
                         </td>
                         <td className="px-2 py-2 text-left">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex justify-start gap-2">
                           
                            {getMappedStatus(item.serviceStatus || item.status) === "Waiting for Spare" && (
                               <button 
