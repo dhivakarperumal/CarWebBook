@@ -214,20 +214,21 @@ const EmpBookings = () => {
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden overflow-x-auto">
-          <table className="w-full text-left whitespace-nowrap">
-            <thead className="text-white">
-              <tr>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-white">S No</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-white">Job ID</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-white">Customer</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-white">Vehicle</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-white">Status</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-white">Date</th>
-                <th className="px-6 py-5 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-white text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
+        <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/5 border border-gray-100 overflow-hidden group/container">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm whitespace-nowrap min-w-[1200px] border-separate border-spacing-0">
+              <thead className="text-white relative">
+                <tr className="relative z-10">
+                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 first:rounded-tl-[2.5rem]">S No</th>
+                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Identifier</th>
+                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer Profile</th>
+                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Issues</th>
+                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Spare Status</th>
+                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-center">Workflow</th>
+                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 last:rounded-tr-[2.5rem] text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50 text-slate-600">
               {paginatedBookings.map((b, index) => (
                 <tr key={b.id} className="hover:bg-gray-50 transition-colors group">
                   <td className="px-6 py-4 text-xs font-black text-gray-400">

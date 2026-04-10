@@ -400,7 +400,7 @@ export default function Services() {
                 <thead className="bg-[#020617] text-white">
                   <tr>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Booking ID</th>
+                   
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Vehicle Spec</th>
                     <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Issues</th>
@@ -426,8 +426,8 @@ export default function Services() {
                     paginatedData.map((item, index) => (
                       <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
                         <td className="px-8 py-6"><span className="text-xs font-black text-gray-400">{(currentPage - 1) * itemsPerPage + index + 1}</span></td>
-                        <td className="px-8 py-6"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none mb-1">#ID {item.id}</span><span className="text-xs font-black text-blue-900">{item.bookingId || "SER-NEW"}</span></td>
-                        <td className="px-8 py-6"><p className="text-sm font-black text-gray-900">{item.name}</p><p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">{item.phone}</p></td>
+
+                        <td className="px-8 py-6"><span className="text-xs font-black text-blue-900">{item.bookingId || "SER-NEW"}</span><p className="text-sm font-black text-gray-900">{item.name}</p><p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">{item.phone}</p></td>
                         <td className="px-8 py-6">
                           <div className="flex items-center gap-2 mb-1"><p className="text-sm font-black text-gray-800 uppercase tracking-tight">{item.brand} {item.model}</p></div>
                           <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{item.vehicleNumber || "UNSPECIFIED"}</p>
@@ -476,10 +476,7 @@ export default function Services() {
                         </td>
                         <td className="px-8 py-6 text-left">
                           <div className="flex justify-end gap-2">
-                            {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
-                              <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-10 px-4 bg-emerald-500 text-white hover:bg-emerald-900 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Add Parts">Parts</button>
-                            )}
-                           
+                        
                            
                             <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-900 text-gray-400 hover:bg-amber-50 hover:text-amber-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
                             <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-10 px-4 bg-black text-white hover:bg-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2" title="Generate Bill"><FaFileInvoice /> Bill</button>

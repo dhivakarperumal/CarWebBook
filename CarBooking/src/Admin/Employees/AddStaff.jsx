@@ -703,11 +703,11 @@ const AddEditStaff = () => {
         {/* ACTIONS */}
         <div className="col-span-2 flex justify-end gap-4 mt-6">
           <button type="button" onClick={() => navigate(-1)}
-            className="border border-orange-400 px-6 py-2 rounded">
+            className="border border-gray-300 px-6 py-2 rounded">
             Cancel
           </button>
           <button type="submit" disabled={loading}
-            className="flex items-center gap-2 px-5 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:scale-105 transition-all shadow-lg">
+            className="flex items-center gap-2 px-5 py-2 rounded-lg font-semibold text-white bg-gradient-to-r from-black to-black hover:scale-105 transition-all shadow-lg">
             {loading ? "Saving..." : isEdit ? "Update" : "Save"}
           </button>
         </div>

@@ -368,27 +368,22 @@ const AllOrders = () => {
   const statusBadge = (status) => {
     const key = normalizeKey(status);
 
-    let base = "bg-gray-100 text-gray-700";
+    const configs = {
+      orderplaced: { bg: "bg-blue-50/50", text: "text-blue-600", border: "border-blue-100", label: "Order Placed" },
+      processing: { bg: "bg-amber-50/50", text: "text-amber-600", border: "border-amber-100", label: "Processing" },
+      packing: { bg: "bg-purple-50/50", text: "text-purple-600", border: "border-purple-100", label: "Packing" },
+      outfordelivery: { bg: "bg-cyan-50/50", text: "text-cyan-600", border: "border-cyan-100", label: "Out Delivery" },
+      delivered: { bg: "bg-emerald-50/50", text: "text-emerald-600", border: "border-emerald-100", label: "Delivered" },
+      cancelled: { bg: "bg-rose-50/50", text: "text-rose-600", border: "border-rose-100", label: "Cancelled" },
+    };
 
-    if (key === "orderplaced") {
-      base = "bg-blue-100 text-blue-700";
-    } else if (key === "processing") {
-      base = "bg-amber-100 text-amber-700";
-    } else if (key === "packing") {
-      base = "bg-purple-100 text-purple-700";
-    } else if (key === "outfordelivery") {
-      base = "bg-cyan-100 text-cyan-700";
-    } else if (key === "delivered") {
-      base = "bg-emerald-100 text-emerald-700";
-    } else if (key === "cancelled") {
-      base = "bg-red-100 text-red-700";
-    }
+    const config = configs[key] || { bg: "bg-gray-50", text: "text-gray-600", border: "border-gray-100", label: status };
 
     return (
       <span
-        className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${base}`}
+        className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border shadow-sm transition-all duration-300 ${config.bg} ${config.text} ${config.border} hover:scale-105 inline-block`}
       >
-        {formatStatusLabel(status)}
+        {config.label}
       </span>
     );
   };
@@ -524,72 +519,93 @@ const AllOrders = () => {
 
       {/* ================= TABLE VIEW ================= */}
       {view === "table" && (
-        <div className="bg-white  rounded-2xl ">
-  <div className="overflow-x-auto">
-    <table className="min-w-[800px] text-sm whitespace-nowrap">
-            <thead className="text-white">
-              <tr>
-                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Order ID</th>
-                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Member</th>
-                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Amount</th>
-                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Payment</th>
-                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
-                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Actions</th>
-                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Print</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedOrders.map((o) => (
-                <tr key={o.id} className="border-b border-gray-300 ">
-                  <td onClick={(e) => { e.stopPropagation(); navigate(`/admin/orders/${o.id}`) }} className="px-4 py-4">{o.orderId}</td>
-                  <td onClick={(e) => { e.stopPropagation(); navigate(`/admin/orders/${o.id}`) }} className="px-4 py-4">
-                    {o.customerName || o.shippingName || "-"}
-                  </td>
-                  <td className="px-4 py-4">
-                    ₹ {Number(o.total).toLocaleString("en-IN")}
-                  </td>
-                  <td onClick={(e) => { e.stopPropagation(); navigate(`/admin/orders/${o.id}`) }} className="px-4 py-4">{o.paymentStatus}</td>
-                  <td className="px-4 py-4">{statusBadge(o.status)}</td>
-                  <td className="px-4 py-4 flex gap-2">
-                    <select
-                      value={normalizeKey(o.status)}
-                      onChange={(e) => updateStatus(o.id, e.target.value)}
-                      className="bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-xs"
-                    >
-                      {ORDER_STATUS_LIST.slice(
-                        ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status)) === -1
-                          ? 0
-                          : ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status))
-                      )
-                      .filter(s => {
-                        const current = normalizeKey(o.status);
-                        if (current === "outfordelivery" || current === "delivered") {
-                          return s.id !== "cancelled";
-                        }
-                        return true;
-                      })
-                      .map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.label}
-                        </option>
-                      ))}
-                    </select>
-
-
-                  </td>
-                  <td>
-                    <button
-                      onClick={() => printOrder(o)}
-                      className="px-2 py-1 bg-black text-white rounded-lg text-xs flex items-center gap-1"
-                    >
-                      <FaPrint /> Print
-                    </button>
-                  </td>
+        <div className="bg-white rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden group/container">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm whitespace-nowrap border-separate border-spacing-0">
+              <thead className="text-white relative">
+                <tr className="relative z-10">
+                  <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90 first:rounded-tl-[2rem]">Order ID</th>
+                  <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
+                  <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Amount</th>
+                  <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Payment</th>
+                  <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
+                  <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Update Status</th>
+                  <th className="px-6 py-5 text-center text-[10px] font-black uppercase tracking-[0.2em] opacity-90 last:rounded-tr-[2rem]">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {paginatedOrders.map((o) => (
+                  <tr 
+                    key={o.id} 
+                    className="hover:bg-slate-50/80 transition-all duration-300 group/row"
+                  >
+                    <td 
+                      onClick={() => navigate(`/admin/orders/${o.id}`)} 
+                      className="px-6 py-5 font-black text-slate-400 group-hover/row:text-cyan-600 cursor-pointer transition-colors"
+                    >
+                      #{o.orderId}
+                    </td>
+                    <td 
+                      onClick={() => navigate(`/admin/orders/${o.id}`)} 
+                      className="px-6 py-5 cursor-pointer"
+                    >
+                      <div className="font-bold text-slate-800 tracking-tight group-hover/row:translate-x-1 transition-transform">{o.customerName || o.shippingName || "-"}</div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{o.shippingCity || "Local Order"}</div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex flex-col">
+                        <span className="font-black text-slate-900 leading-none">₹ {Number(o.total).toLocaleString("en-IN")}</span>
+                        <span className="text-[9px] text-slate-400 font-black mt-1 uppercase tracking-tight">{o.items?.length || 0} ITEMS</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full ${o.paymentStatus === 'paid' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)] animate-pulse'}`} />
+                        <span className="font-black text-[11px] uppercase tracking-wider text-slate-600">{o.paymentStatus}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">{statusBadge(o.status)}</td>
+                    <td className="px-6 py-5">
+                      <div className="relative inline-block w-full max-w-[140px]">
+                        <select
+                          value={normalizeKey(o.status)}
+                          onChange={(e) => updateStatus(o.id, e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 cursor-pointer transition-all hover:bg-white"
+                        >
+                          {ORDER_STATUS_LIST.slice(
+                            ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status)) === -1
+                              ? 0
+                              : ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status))
+                          )
+                          .filter(s => {
+                            const current = normalizeKey(o.status);
+                            if (current === "outfordelivery" || current === "delivered") {
+                              return s.id !== "cancelled";
+                            }
+                            return true;
+                          })
+                          .map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <button
+                        onClick={() => printOrder(o)}
+                        className="mx-auto flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.1em] hover:bg-cyan-600 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-slate-900/10"
+                      >
+                        <FaPrint className="text-cyan-400 group-hover/row:text-white" />
+                        Print Invite
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
