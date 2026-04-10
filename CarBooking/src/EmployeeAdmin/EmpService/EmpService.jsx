@@ -540,9 +540,24 @@ export default function EmpService() {
                     <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block mb-1">SERVICE ID</span>
                     <p className="text-sm font-black text-blue-900">{item.bookingId || `SER-${item.id}`}</p>
                   </div>
-                  <div className={`px-4 py-2 rounded-[1.5rem] text-[10px] font-black tracking-widest border text-center ${getStatusColor(item.serviceStatus || item.status)}`}>
-                    {getMappedStatus(item.serviceStatus || item.status)}
-                  </div>
+                  <select 
+                    value={getMappedStatus(item.serviceStatus || item.status)}
+                    onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
+                    className={`px-4 py-2 rounded-[1.5rem] text-[10px] font-black tracking-widest uppercase border text-center cursor-pointer outline-none focus:ring-4 focus:ring-black/5 ${getStatusColor(item.serviceStatus || item.status)}`}
+                  >
+                    {(() => {
+                      const currentStatus = getMappedStatus(item.serviceStatus || item.status);
+                      const currentIndex = STATUS_STEPS.indexOf(currentStatus);
+                      return STATUS_STEPS.map((status, idx) => {
+                        if (idx < currentIndex) return null;
+                        return (
+                          <option key={status} value={status} className="bg-white text-black font-bold">
+                            {status.toUpperCase()}
+                          </option>
+                        );
+                      });
+                    })()}
+                  </select>
                 </div>
                 <div className="space-y-5 flex-1 relative z-10">
                   <div className="bg-gray-50/50 p-4 rounded-3xl border border-gray-100 space-y-4">
@@ -604,19 +619,18 @@ export default function EmpService() {
               <table className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
                 <thead className="text-white">
                   <tr>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Identifier</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer Profile</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Issues</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Spare Status</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-center">Workflow</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-right">Actions</th>
+                    <th className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+                    <th className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
+                    <th className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Issues</th>
+                    <th className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Spare Status</th>
+                    <th className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-center">Workflow</th>
+                    <th className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {paginatedData.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="px-8 py-24 text-center">
+                      <td colSpan="8" className="px-2 py-24 text-center">
                         <div className="flex flex-col items-center justify-center">
                           <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mb-4 border border-gray-100 text-gray-300">
                             <FaWrench size={24} />
@@ -628,10 +642,10 @@ export default function EmpService() {
                   ) : (
                     paginatedData.map((item, index) => (
                       <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
-                        <td className="px-8 py-6"><span className="text-xs font-black text-gray-400">{(currentPage - 1) * itemsPerPage + index + 1}</span></td>
-                        <td className="px-8 py-6"><span className="text-[10px] font-black text-gray-300 uppercase tracking-widest block leading-none mb-1">#ID {item.id}</span><span className="text-xs font-black text-blue-900">{item.bookingId || "SER-NEW"}</span></td>
-                        <td className="px-8 py-6"><p className="text-sm font-black text-gray-900">{item.name}</p><p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">{item.phone}</p></td>
-                        <td className="px-8 py-6">
+                        <td className="px-2 py-2"><span className="text-xs font-black text-gray-400">{(currentPage - 1) * itemsPerPage + index + 1}</span></td>
+
+                        <td className="px-2 py-2"><span className="text-xs font-black text-blue-900">{item.bookingId || "SER-NEW"}</span><p className="text-sm font-black text-gray-900">{item.name}</p><p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">{item.phone}</p></td>
+                        <td className="px-2 py-2">
                           <div className="flex items-center gap-3 group/issue">
                             <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]" title={item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}>
                               {item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}
@@ -645,7 +659,7 @@ export default function EmpService() {
                             </button>
                           </div>
                         </td>
-                        <td className="px-8 py-6">
+                        <td className="px-2 py-2">
                            {(() => {
                              const ss = getSpareStatus(item.parts);
                              return <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border ${ss.color}`}>{ss.label}</span>;
@@ -657,12 +671,27 @@ export default function EmpService() {
                              </div>
                            )}
                         </td>
-                        <td className="px-8 py-6 text-center">
-                           <span className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[150px] text-center ${getStatusColor(item.serviceStatus || item.status)}`}>
-                             {getMappedStatus(item.serviceStatus || item.status)}
-                           </span>
+                        <td className="px-2 py-2 text-center">
+                           <select 
+                             value={getMappedStatus(item.serviceStatus || item.status)}
+                             onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
+                             className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[150px] text-center cursor-pointer outline-none focus:ring-4 focus:ring-black/5 ${getStatusColor(item.serviceStatus || item.status)}`}
+                           >
+                             {(() => {
+                               const currentStatus = getMappedStatus(item.serviceStatus || item.status);
+                               const currentIndex = STATUS_STEPS.indexOf(currentStatus);
+                               return STATUS_STEPS.map((status, idx) => {
+                                 if (idx < currentIndex) return null;
+                                 return (
+                                   <option key={status} value={status} className="bg-white text-black font-bold">
+                                     {status.toUpperCase()}
+                                   </option>
+                                 );
+                               });
+                             })()}
+                           </select>
                         </td>
-                        <td className="px-8 py-6 text-left">
+                        <td className="px-2 py-2 text-left">
                           <div className="flex justify-end gap-2">
                           
                            {getMappedStatus(item.serviceStatus || item.status) === "Waiting for Spare" && (
@@ -676,7 +705,7 @@ export default function EmpService() {
                                 <span className="text-[7px] font-bold opacity-60 group-hover/btn:opacity-100">{getElapsedTime(item.updatedAt || item.updated_at)}</span>
                               </button>
                             )}
-                           
+                                
                             <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-900 text-gray-400 hover:bg-amber-50 hover:text-amber-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
                             {getMappedStatus(item.serviceStatus || item.status) === "Bill Pending" && (
                               <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-10 px-4 bg-black text-white hover:bg-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2" title="Generate Bill"><FaFileInvoice /> Bill</button>
@@ -743,9 +772,19 @@ export default function EmpService() {
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
                           <input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Amt" className="w-full pl-6 pr-3 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black" />
                         </div>
-                        <span className={`text-[9px] font-black uppercase tracking-widest bg-transparent border-b-2 border-transparent transition-all ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500"}`}>
-                          {entry.issueStatus || "pending"}
-                        </span>
+                        <select 
+                          value={entry.issueStatus || "pending"} 
+                          onChange={(e) => { 
+                            const copy = [...issueEntries]; 
+                            copy[idx] = { ...copy[idx], issueStatus: e.target.value }; 
+                            setIssueEntries(copy); 
+                          }}
+                          className={`text-[9px] font-black uppercase tracking-widest bg-transparent outline-none cursor-pointer border-b-2 border-transparent focus:border-black transition-all ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500"}`}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="approved">Approved</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
                         <button onClick={() => { const copy = [...issueEntries]; copy.splice(idx, 1); setIssueEntries(copy); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><FaTimes size={12} /></button>
                       </div>
                     ))}
@@ -790,9 +829,19 @@ export default function EmpService() {
                              <input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-5 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black" />
                            </div>
                         </div>
-                        <span className={`text-[9px] font-black uppercase tracking-widest bg-transparent border-b-2 border-transparent transition-all ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500"}`}>
-                          {part.status || "pending"}
-                        </span>
+                        <select 
+                          value={part.status || "pending"} 
+                          onChange={(e) => { 
+                            const copy = [...editingParts]; 
+                            copy[idx] = { ...copy[idx], status: e.target.value }; 
+                            setEditingParts(copy); 
+                          }}
+                          className={`text-[9px] font-black uppercase tracking-widest bg-transparent outline-none cursor-pointer border-b-2 border-transparent focus:border-black transition-all ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500"}`}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="approved">Approved</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
                         <button onClick={() => { const copy = [...editingParts]; copy.splice(idx, 1); setEditingParts(copy); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><FaTimes size={12} /></button>
                       </div>
                     ))}
