@@ -119,40 +119,39 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
                   >
                     {status.toUpperCase()}
                   </p>
-
-                  {/* 🔥 ACTION BUTTONS */}
-                  {status === "pending" && (
-                    <div className="flex gap-2 mt-3">
-                      <button
-                        onClick={() =>
-                          onApprove(
-                            bookingSpare.serviceId,
-                            part.id,
-                            "approved"
-                          )
-                        }
-                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
-                      >
-                        Approve
-                      </button>
-
-                      <button
-                        onClick={() =>
-                          onApprove(
-                            bookingSpare.serviceId,
-                            part.id,
-                            "rejected"
-                          )
-                        }
-                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  )}
                 </div>
               );
             })}
+
+            {/* COMMON ACTION BUTTONS FOR SPARE PARTS */}
+            {bookingSpare.parts.some(part => part.status === "pending") && (
+              <div className="flex gap-2 mt-3">
+                <button
+                  onClick={() => {
+                    bookingSpare.parts
+                      .filter(part => part.status === "pending")
+                      .forEach(part => {
+                        onApprove(bookingSpare.serviceId, part.id, "approved");
+                      });
+                  }}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition cursor-pointer"
+                >
+                  Approve All Parts
+                </button>
+                <button
+                  onClick={() => {
+                    bookingSpare.parts
+                      .filter(part => part.status === "pending")
+                      .forEach(part => {
+                        onApprove(bookingSpare.serviceId, part.id, "rejected");
+                      });
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition cursor-pointer"
+                >
+                  Reject All Parts
+                </button>
+              </div>
+            )}
 
             {/* TOTAL */}
             <div className="mt-3 text-right font-bold text-sky-400">
@@ -170,36 +169,51 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
           </h4>
           <div className="bg-slate-800 rounded-lg p-4 border border-slate-700 space-y-3">
             {(booking.issues && booking.issues.length > 0) ? (
-              booking.issues.map((issueEntry) => {
-                const status = (issueEntry.issueStatus || 'pending').toLowerCase();
-                return (
-                  <div key={issueEntry.id} className="bg-slate-900 rounded-lg p-3 border border-slate-700">
-                    <p className="text-gray-300 text-sm leading-relaxed">{issueEntry.issue}</p>
-                    {issueEntry.issueAmount != null && Number(issueEntry.issueAmount) > 0 && (
-                      <p className="text-sm text-orange-300 font-semibold mt-1">Amount: ₹{Number(issueEntry.issueAmount).toFixed(2)}</p>
-                    )}
-                    <p className="text-xs text-gray-500 mt-2">Issue Date: {issueEntry.createdAt ? new Date(issueEntry.createdAt).toLocaleDateString() : 'N/A'}</p>
-                    <p className="text-xs text-gray-400 mt-1">Status: <span className={`font-bold ${status === 'approved' ? 'text-green-300' : status === 'rejected' ? 'text-red-300' : 'text-yellow-300'}`}>{status.toUpperCase()}</span></p>
+              <>
+                {booking.issues.map((issueEntry) => {
+                  const status = (issueEntry.issueStatus || 'pending').toLowerCase();
+                  return (
+                    <div key={issueEntry.id} className="bg-slate-900 rounded-lg p-3 border border-slate-700">
+                      <p className="text-gray-300 text-sm leading-relaxed">{issueEntry.issue}</p>
+                      {issueEntry.issueAmount != null && Number(issueEntry.issueAmount) > 0 && (
+                        <p className="text-sm text-orange-300 font-semibold mt-1">Amount: ₹{Number(issueEntry.issueAmount).toFixed(2)}</p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-2">Issue Date: {issueEntry.createdAt ? new Date(issueEntry.createdAt).toLocaleDateString() : 'N/A'}</p>
+                      <p className="text-xs text-gray-400 mt-1">Status: <span className={`font-bold ${status === 'approved' ? 'text-green-300' : status === 'rejected' ? 'text-red-300' : 'text-yellow-300'}`}>{status.toUpperCase()}</span></p>
+                    </div>
+                  );
+                })}
 
-                    {status === 'pending' && booking.serviceId && (
-                      <div className="flex gap-2 mt-3">
-                        <button
-                          onClick={() => onApprove(booking.serviceId, issueEntry.id, 'approved', 'issue')}
-                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => onApprove(booking.serviceId, issueEntry.id, 'rejected', 'issue')}
-                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    )}
+                {/* COMMON ACTION BUTTONS FOR ISSUES */}
+                {booking.issues.some(issueEntry => (issueEntry.issueStatus || 'pending').toLowerCase() === 'pending') && (
+                  <div className="flex gap-2 mt-3">
+                    <button
+                      onClick={() => {
+                        booking.issues
+                          .filter(issueEntry => (issueEntry.issueStatus || 'pending').toLowerCase() === 'pending')
+                          .forEach(issueEntry => {
+                            onApprove(booking.serviceId, issueEntry.id, 'approved', 'issue');
+                          });
+                      }}
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition cursor-pointer"
+                    >
+                      Approve All Issues
+                    </button>
+                    <button
+                      onClick={() => {
+                        booking.issues
+                          .filter(issueEntry => (issueEntry.issueStatus || 'pending').toLowerCase() === 'pending')
+                          .forEach(issueEntry => {
+                            onApprove(booking.serviceId, issueEntry.id, 'rejected', 'issue');
+                          });
+                      }}
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition cursor-pointer"
+                    >
+                      Reject All Issues
+                    </button>
                   </div>
-                );
-              })
+                )}
+              </>
             ) : booking.issue ? (
               <div>
                 <p className="text-gray-300 text-sm leading-relaxed">{booking.issue}</p>
@@ -213,15 +227,15 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
                   <div className="flex gap-2 mt-3">
                     <button
                       onClick={() => onApprove(booking.serviceId, null, 'approved', 'issue')}
-                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
+                      className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition cursor-pointer"
                     >
-                      Approve
+                      Approve Issue
                     </button>
                     <button
                       onClick={() => onApprove(booking.serviceId, null, 'rejected', 'issue')}
-                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
+                      className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-semibold transition cursor-pointer"
                     >
-                      Reject
+                      Reject Issue
                     </button>
                   </div>
                 )}
