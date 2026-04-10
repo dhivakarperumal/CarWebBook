@@ -243,15 +243,27 @@ export default function Services() {
   };
 
   const handleUpdateStatus = async (id, newStatus) => {
+    // Store old status for rollback
+    const oldService = services.find(s => s.id === id);
+    const oldStatus = oldService?.serviceStatus || oldService?.status;
+
+    // ⚡ Optimistic update — reflect change in UI immediately
+    setServices(prev =>
+      prev.map(s => s.id === id ? { ...s, serviceStatus: newStatus } : s)
+    );
     try {
       await api.put(`/all-services/${id}/status`, { 
         serviceStatus: newStatus,
         employeeName: userProfile?.displayName || userProfile?.name || "System Admin"
       });
       toast.success(`Status updated to ${newStatus}`);
-      loadData();
+      servicesCache = null; // invalidate cache silently
     } catch (error) {
       toast.error("Failed to update status");
+      // Revert to old status on failure
+      setServices(prev =>
+        prev.map(s => s.id === id ? { ...s, serviceStatus: oldStatus } : s)
+      );
     }
   };
 

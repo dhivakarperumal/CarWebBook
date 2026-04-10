@@ -260,15 +260,26 @@ export default function EmpService() {
 
 
   const handleUpdateStatus = async (id, newStatus) => {
+    // Store old status for rollback
+    const oldService = services.find(s => s.id === id);
+    const oldStatus = oldService?.serviceStatus || oldService?.status;
+
+    // ⚡ Optimistic update — reflect in UI immediately
+    setServices(prev =>
+      prev.map(s => s.id === id ? { ...s, serviceStatus: newStatus } : s)
+    );
     try {
       await api.put(`/all-services/${id}/status`, { 
         serviceStatus: newStatus,
         status: newStatus 
       });
       toast.success(`Status updated to ${newStatus}`);
-      loadData();
     } catch (error) {
       toast.error("Failed to update status");
+      // Revert to old status on failure
+      setServices(prev =>
+        prev.map(s => s.id === id ? { ...s, serviceStatus: oldStatus } : s)
+      );
     }
   };
 
