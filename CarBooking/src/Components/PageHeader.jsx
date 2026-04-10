@@ -6,7 +6,7 @@ const PageHeader = ({
   bgImage = "/images/Home4.webp",
 }) => {
   return (
-    <section className="relative h-[40vh] min-h-[280px] w-full overflow-hidden">
+    <section className="relative h-[28vh] min-h-[200px] w-full overflow-hidden">
 
       {/* Background Image */}
       <img
@@ -21,20 +21,20 @@ const PageHeader = ({
       {/* CENTER TITLE */}
       <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-6">
 
-        <h1 className="text-white text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight">
+        <h1 className="text-white text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight whitespace-nowrap">
           {title}
         </h1>
 
         {/* Accent */}
-        <div className="w-16 h-[3px] bg-blue-500 mt-4" />
+        <div className="w-16 h-[3px] bg-blue-500 mt-3" />
 
       </div>
 
       {/* BREADCRUMB */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10">
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10">
 
-        <nav className="flex items-center gap-2 text-sm uppercase tracking-widest
-          text-gray-300 bg-black/50 px-6 py-2 rounded-full backdrop-blur">
+        <nav className="flex items-center gap-2 text-xs sm:text-sm uppercase tracking-widest
+          text-gray-300 bg-black/50 px-4 py-2 rounded-full backdrop-blur whitespace-nowrap">
 
           <Link
             to="/"
