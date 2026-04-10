@@ -58,7 +58,7 @@ const EmpBilling = () => {
       if (!isSilent) setLoading(true);
       const [billRes, bookRes] = await Promise.all([
         api.get('/billings'),
-        api.get('/bookings')
+        api.get('/all-services')
       ]);
 
       const userRole = (userProfile?.role || "").toLowerCase();
@@ -76,8 +76,11 @@ const EmpBilling = () => {
           (b.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase()
         );
         const assignedBookingIds = new Set(assignedBookings.map(b => b.bookingId));
+        
         myBills = (billRes.data || []).filter(bill =>
-          assignedBookingIds.has(bill.bookingId)
+          assignedBookingIds.has(bill.bookingId) || 
+          (bill.assignedEmployeeName && bill.assignedEmployeeName.toLowerCase() === mechanicName.toLowerCase()) ||
+          (bill.billingType === "manual" && !bill.assignedEmployeeName) // Fallback for old manual bills if needed, though risky
         );
       }
 
@@ -199,7 +202,7 @@ const EmpBilling = () => {
           </div>
           <div className="bg-amber-50 px-6 py-3 rounded-2xl border border-amber-100 min-w-[120px]">
             <p className="text-[10px] text-amber-400 font-black uppercase tracking-widest">Pending</p>
-            <p className="text-2xl font-black text-amber-600">{bills.filter(b => b.paymentStatus !== 'Paid').length}</p>
+            <p className="text-2xl font-black text-amber-600">{bills.filter(b => (b.paymentStatus || "").toLowerCase() !== 'paid').length}</p>
           </div>
         </div>
 

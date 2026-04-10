@@ -236,7 +236,8 @@ const EmpAddBilling = () => {
         paymentStatus: "Pending",
         paymentMode: "",
         status: "Generated",
-        billingType: selectionMode
+        billingType: selectionMode,
+        assignedEmployeeName: userProfile?.displayName || ""
       };
 
       if (isEditMode) {
