@@ -535,6 +535,13 @@ export default function EmpService() {
                       })()}
                     </div>
                   </div>
+                  {getMappedStatus(item.serviceStatus || item.status) === "Cancelled" && (
+                    <div className="bg-red-50/50 p-4 rounded-3xl border border-red-100">
+                      <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1">Cancellation Cause</p>
+                      <p className="text-xs font-bold text-red-900">{item.closeReason || "No explicit reason provided"}</p>
+                      <p className="text-[8px] font-black text-red-400 uppercase tracking-widest mt-2 text-right">- {item.lastUpdatedBy || "System Admin"}</p>
+                    </div>
+                  )}
                   <div className="rounded-2xl bg-blue-50/50 border border-blue-100 p-4 overflow-hidden">
                     <div className="flex justify-between items-center mb-3"><span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Diagnostic Log & Parts</span><button onClick={() => handleOpenIssueModal(item)} className="text-[9px] font-black text-blue-600 uppercase hover:underline">Edit</button></div>
                     <div className="space-y-2">{item.issues?.slice(0, 2).map((iss, i) => <p key={i} className="text-xs font-bold text-gray-600 line-clamp-1 flex items-center gap-2"><span className="w-1 h-1 bg-blue-400 rounded-full" />{iss.issue}</p>) || <p className="text-xs italic text-gray-400">No log entries</p>}</div>
@@ -619,6 +626,12 @@ export default function EmpService() {
                              const ss = getSpareStatus(item.parts);
                              return <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border ${ss.color}`}>{ss.label}</span>;
                            })()}
+                           {getMappedStatus(item.serviceStatus || item.status) === "Cancelled" && (
+                             <div className="mt-2 text-left">
+                                <p className="text-[8px] font-black text-red-500 uppercase tracking-widest">Cancelled By: {item.lastUpdatedBy || "System"}</p>
+                                <p className="text-[9px] font-bold text-red-700 truncate max-w-[150px]" title={item.closeReason}>{item.closeReason || "Unknown Reason"}</p>
+                             </div>
+                           )}
                         </td>
                         <td className="px-8 py-6 text-center">
                            <select 
