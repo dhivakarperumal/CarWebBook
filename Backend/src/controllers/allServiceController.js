@@ -104,6 +104,7 @@ exports.updateServiceStatus = async (req, res) => {
     // 2. Map service status to booking status for consistency
     let bookingStatus = serviceStatus;
     if (serviceStatus === 'Completed') bookingStatus = 'Service Completed';
+    else if (serviceStatus === 'Bill Completed') bookingStatus = 'Completed';
     else if (serviceStatus === 'Cancelled') bookingStatus = 'Cancelled';
     
     // 3. Update bookings table if linked

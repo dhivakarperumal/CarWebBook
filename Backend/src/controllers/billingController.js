@@ -19,47 +19,67 @@ exports.createInvoice = async (req, res) => {
     customerName,
     mobileNumber,
     car,
+    registrationNumber,
     parts,
+    issues,
     partsTotal,
+    issueTotal,
     labour,
     gstPercent,
     gstAmount,
+    discount,
     subTotal,
     grandTotal,
     paymentStatus,
     paymentMode,
-    status
+    status,
+    billingType
   } = req.body;
 
   try {
     // 1. Insert into billings table
     const [result] = await db.query(`
       INSERT INTO billings (
-        invoiceNo, serviceId, bookingId, customerName, mobileNumber, car, 
-        partsTotal, labour, gstPercent, gstAmount, subTotal, grandTotal, 
-        paymentStatus, paymentMode, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        invoiceNo, serviceId, bookingId, customerName, mobileNumber, car,
+        registrationNumber, partsTotal, issueTotal, labour, gstPercent, gstAmount,
+        discount, subTotal, grandTotal, paymentStatus, paymentMode, status, billingType
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       invoiceNo, serviceId, bookingId, customerName, mobileNumber, car,
-      partsTotal, labour, gstPercent, gstAmount, subTotal, grandTotal,
-      paymentStatus, paymentMode, status
+      registrationNumber, partsTotal, issueTotal || 0, labour, gstPercent, gstAmount,
+      discount || 0, subTotal, grandTotal, paymentStatus, paymentMode, status || 'Generated', billingType || 'online'
     ]);
 
     const billing_id = result.insertId;
 
-    // 2. Insert parts into billing_items
+    // 2. Insert spare parts into billing_items
     if (parts && parts.length) {
       for (const p of parts) {
-        await db.query(`
-          INSERT INTO billing_items (billing_id, partName, qty, price, total)
-          VALUES (?, ?, ?, ?, ?)
-        `, [billing_id, p.partName, p.qty, p.price, p.total]);
+        await db.query(
+          'INSERT INTO billing_items (billing_id, partName, qty, price, total) VALUES (?, ?, ?, ?, ?)',
+          [billing_id, p.partName, p.qty, p.price, p.total]
+        );
       }
     }
 
-    // 3. Mark service as "Bill Completed"
+    // 3. Insert diagnostic issues into billing_items (as line items)
+    if (issues && issues.length) {
+      for (const i of issues) {
+        await db.query(
+          'INSERT INTO billing_items (billing_id, partName, qty, price, total) VALUES (?, ?, ?, ?, ?)',
+          [billing_id, `[Issue] ${i.issueName}`, 1, i.amount, i.amount]
+        );
+      }
+    }
+
+    // 4. Mark service as "Bill Completed"
     if (serviceId) {
       await db.query('UPDATE all_services SET serviceStatus = ? WHERE id = ?', ['Bill Completed', serviceId]);
+    }
+
+    // 5. Mark booking as "Completed" via bookingId
+    if (bookingId && !String(bookingId).startsWith('MANUAL')) {
+      await db.query('UPDATE bookings SET status = ? WHERE bookingId = ?', ['Completed', bookingId]);
     }
 
     res.json({ id: billing_id, message: 'Invoice generated' });
@@ -79,20 +99,73 @@ exports.deleteInvoice = async (req, res) => {
   }
 };
 
-/* ✏️ UPDATE INVOICE STATUS */
+/* ✏️ UPDATE INVOICE (full update) */
 exports.updateInvoiceStatus = async (req, res) => {
+  const {
+    invoiceNo,
+    serviceId,
+    bookingId,
+    customerName,
+    mobileNumber,
+    car,
+    registrationNumber,
+    parts,
+    issues,
+    partsTotal,
+    issueTotal,
+    labour,
+    gstPercent,
+    gstAmount,
+    discount,
+    subTotal,
+    grandTotal,
+    paymentStatus,
+    paymentMode,
+    status,
+    billingType
+  } = req.body;
+
   try {
-    const { paymentStatus } = req.body;
-    if (!paymentStatus) {
-      return res.status(400).json({ message: 'paymentStatus is required' });
+    // 1. Update the main billing record
+    await db.query(`
+      UPDATE billings SET
+        invoiceNo = ?, serviceId = ?, bookingId = ?, customerName = ?, mobileNumber = ?,
+        car = ?, registrationNumber = ?, partsTotal = ?, issueTotal = ?, labour = ?,
+        gstPercent = ?, gstAmount = ?, discount = ?, subTotal = ?, grandTotal = ?,
+        paymentStatus = ?, paymentMode = ?, status = ?, billingType = ?
+      WHERE id = ?
+    `, [
+      invoiceNo, serviceId, bookingId, customerName, mobileNumber,
+      car, registrationNumber, partsTotal, issueTotal, labour,
+      gstPercent, gstAmount, discount, subTotal, grandTotal,
+      paymentStatus, paymentMode, status || 'Generated', billingType,
+      req.params.id
+    ]);
+
+    // 2. Refresh parts — delete old, insert new
+    await db.query('DELETE FROM billing_items WHERE billing_id = ?', [req.params.id]);
+    if (parts && parts.length) {
+      for (const p of parts) {
+        await db.query(
+          'INSERT INTO billing_items (billing_id, partName, qty, price, total) VALUES (?, ?, ?, ?, ?)',
+          [req.params.id, p.partName, p.qty, p.price, p.total]
+        );
+      }
     }
-    
-    // Update the paymentStatus in the billings table
-    await db.query('UPDATE billings SET paymentStatus = ? WHERE id = ?', [paymentStatus, req.params.id]);
-    
-    // Check if billing document exists
-    res.json({ message: 'Status updated successfully' });
+
+    // 3. Mark all_services as Bill Completed
+    if (serviceId) {
+      await db.query('UPDATE all_services SET serviceStatus = ? WHERE id = ?', ['Bill Completed', serviceId]);
+    }
+
+    // 4. Mark booking as Completed
+    if (bookingId && !String(bookingId).startsWith('MANUAL')) {
+      await db.query('UPDATE bookings SET status = ? WHERE bookingId = ?', ['Completed', bookingId]);
+    }
+
+    res.json({ message: 'Invoice updated successfully' });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
