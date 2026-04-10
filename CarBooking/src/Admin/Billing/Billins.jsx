@@ -124,9 +124,7 @@ const Billings = () => {
     let data = bills.filter((b) => {
       const text = `${b.invoiceNo} ${b.customerName} ${b.car} ${b.bookingId}`.toLowerCase();
       const matchSearch = text.includes(search.toLowerCase());
-      const matchStatus = statusFilter === "all" 
-        ? b.paymentStatus?.toLowerCase() !== "paid" 
-        : b.paymentStatus?.toLowerCase() === statusFilter;
+      const matchStatus = statusFilter === "all" || b.paymentStatus?.toLowerCase() === statusFilter;
 
       let matchDate = true;
       if (dateFilter !== "all") {

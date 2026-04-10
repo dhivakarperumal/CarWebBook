@@ -44,7 +44,7 @@ const EmpBilling = () => {
   const [loading, setLoading] = useState(!cachedData.billingHistory);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [viewMode, setViewMode] = useState("table"); 
+  const [viewMode, setViewMode] = useState("table");
   const [page, setPage] = useState(1);
   const [selectedBillDetail, setSelectedBillDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -72,11 +72,11 @@ const EmpBilling = () => {
         myBills = billRes.data || [];
         assignedBookings = bookRes.data || [];
       } else {
-        assignedBookings = (bookRes.data || []).filter(b => 
+        assignedBookings = (bookRes.data || []).filter(b =>
           (b.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase()
         );
         const assignedBookingIds = new Set(assignedBookings.map(b => b.bookingId));
-        myBills = (billRes.data || []).filter(bill => 
+        myBills = (billRes.data || []).filter(bill =>
           assignedBookingIds.has(bill.bookingId)
         );
       }
@@ -185,69 +185,60 @@ const EmpBilling = () => {
     win.document.close();
   };
 
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 animate-pulse">
-        <FileText className="w-12 h-12 text-blue-500 animate-spin mb-4" />
-        <p className="text-gray-500 font-medium font-inter tracking-wide">Fetching your billing records...</p>
-      </div>
-    );
-  }
+  // removed loading block for instant dashboard access
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
-      
+
       {/* HEADER */}
       <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div className="flex items-center gap-3">
           <div className="bg-emerald-50 px-6 py-3 rounded-2xl border border-emerald-100 min-w-[140px]">
-              <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">Total Billings</p>
-              <p className="text-2xl font-black text-emerald-600">₹{bills.reduce((sum, b) => sum + Number(b.grandTotal), 0).toLocaleString()}</p>
-           </div>
-           <div className="bg-amber-50 px-6 py-3 rounded-2xl border border-amber-100 min-w-[120px]">
-              <p className="text-[10px] text-amber-400 font-black uppercase tracking-widest">Pending</p>
-              <p className="text-2xl font-black text-amber-600">{bills.filter(b => b.paymentStatus !== 'Paid').length}</p>
-           </div>
+            <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest">Total Billings</p>
+            <p className="text-2xl font-black text-emerald-600">₹{bills.reduce((sum, b) => sum + Number(b.grandTotal), 0).toLocaleString()}</p>
+          </div>
+          <div className="bg-amber-50 px-6 py-3 rounded-2xl border border-amber-100 min-w-[120px]">
+            <p className="text-[10px] text-amber-400 font-black uppercase tracking-widest">Pending</p>
+            <p className="text-2xl font-black text-amber-600">{bills.filter(b => b.paymentStatus !== 'Paid').length}</p>
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-4">
-           {/* View Mode Toggle */}
-           <div className="hidden sm:flex p-1 bg-gray-100 rounded-xl w-fit">
-              <button
-                onClick={() => setViewMode("card")}
-                className={`p-2 rounded-lg transition-all ${
-                  viewMode === "card" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+          {/* View Mode Toggle */}
+          <div className="hidden sm:flex p-1 bg-gray-100 rounded-xl w-fit">
+            <button
+              onClick={() => setViewMode("card")}
+              className={`p-2 rounded-lg transition-all ${viewMode === "card" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
                 }`}
-                title="Card View"
-              >
-                <LayoutGrid size={18} />
-              </button>
-              <button
-                onClick={() => setViewMode("table")}
-                className={`p-2 rounded-lg transition-all ${
-                  viewMode === "table" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              title="Card View"
+            >
+              <LayoutGrid size={18} />
+            </button>
+            <button
+              onClick={() => setViewMode("table")}
+              className={`p-2 rounded-lg transition-all ${viewMode === "table" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500 hover:text-gray-700"
                 }`}
-                title="Table View"
-              >
-                <List size={18} />
-              </button>
-           </div>
-           
-           
-           
-           <button
-             onClick={() => navigate("/employee/addbillings")}
-             className="relative group overflow-hidden bg-black text-white px-8 py-4 rounded-2xl flex items-center gap-4 transition-all hover:translate-y-[-2px] active:scale-95 shadow-2xl shadow-black/20"
-           >
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center group-hover:bg-white/20 transition-colors shrink-0">
-                <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500" />
-              </div>
-              <div className="text-left relative z-10 hidden sm:block">
-                <span className="block text-[8px] font-black uppercase tracking-[0.25em] text-emerald-500 leading-none mb-1.5 opacity-80">New Entry</span>
-                <span className="block text-xs font-black uppercase tracking-widest leading-none">Create Billing</span>
-              </div>
-           </button>
+              title="Table View"
+            >
+              <List size={18} />
+            </button>
+          </div>
+
+
+
+          <button
+            onClick={() => navigate("/employee/addbillings")}
+            className="relative group overflow-hidden bg-black text-white px-8 py-4 rounded-2xl flex items-center gap-4 transition-all hover:translate-y-[-2px] active:scale-95 shadow-2xl shadow-black/20"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center group-hover:bg-white/20 transition-colors shrink-0">
+              <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500" />
+            </div>
+            <div className="text-left relative z-10 hidden sm:block">
+              <span className="block text-[8px] font-black uppercase tracking-[0.25em] text-emerald-500 leading-none mb-1.5 opacity-80">New Entry</span>
+              <span className="block text-xs font-black uppercase tracking-widest leading-none">Create Billing</span>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -286,7 +277,7 @@ const EmpBilling = () => {
           </div>
           <h3 className="text-xl font-black text-gray-800">No Billings Found</h3>
           <p className="text-gray-400 font-medium max-w-sm mx-auto mt-2">
-            {(userProfile?.role || "").toLowerCase() === "admin" 
+            {(userProfile?.role || "").toLowerCase() === "admin"
               ? "All generated invoices across the system will be displayed here."
               : "Once bills are generated for your assigned services, they will appear here."
             }
@@ -297,20 +288,19 @@ const EmpBilling = () => {
           {paginatedBills.map((bill) => (
             <div key={bill.id} className="group bg-white rounded-[2rem] border border-gray-100 p-8 hover:shadow-2xl hover:border-blue-100 transition-all duration-500 flex flex-col">
               <div className="flex justify-between items-start mb-6">
-                 <select 
-                   value={bill.paymentStatus?.toLowerCase() || "pending"}
-                   onChange={(e) => handleUpdateStatus(bill.id, e.target.value)}
-                   className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 border-transparent transition-all outline-none cursor-pointer appearance-none text-center shadow-sm ${
-                    bill.paymentStatus?.toLowerCase() === "paid" ? "bg-emerald-500 text-white" :
-                    bill.paymentStatus?.toLowerCase() === "partial" ? "bg-orange-500 text-white" :
-                    "bg-amber-500 text-white"
-                   }`}
-                 >
-                   <option value="pending" className="bg-white text-black">Pending</option>
-                   <option value="partial" className="bg-white text-black">Partial</option>
-                   <option value="paid" className="bg-white text-black">Paid</option>
-                 </select>
-                 <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">INV: {bill.invoiceNo}</span>
+                <select
+                  value={bill.paymentStatus?.toLowerCase() || "pending"}
+                  onChange={(e) => handleUpdateStatus(bill.id, e.target.value)}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 border-transparent transition-all outline-none cursor-pointer appearance-none text-center shadow-sm ${bill.paymentStatus?.toLowerCase() === "paid" ? "bg-emerald-500 text-white" :
+                      bill.paymentStatus?.toLowerCase() === "partial" ? "bg-orange-500 text-white" :
+                        "bg-amber-500 text-white"
+                    }`}
+                >
+                  <option value="pending" className="bg-white text-black">Pending</option>
+                  <option value="partial" className="bg-white text-black">Partial</option>
+                  <option value="paid" className="bg-white text-black">Paid</option>
+                </select>
+                <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">INV: {bill.invoiceNo}</span>
               </div>
 
               <div className="mb-6">
@@ -320,41 +310,41 @@ const EmpBilling = () => {
               </div>
 
               <div className="bg-gray-50 rounded-2xl p-4 space-y-2 mb-6">
-                 <div className="flex justify-between items-center text-xs font-bold text-gray-400">
-                    <span>Parts & Labour</span>
-                    <span>₹{bill.subTotal}</span>
-                 </div>
-                 <div className="flex justify-between items-center text-xs font-bold text-gray-400">
-                    <span>Service Tax</span>
-                    <span>₹{bill.gstAmount}</span>
-                 </div>
-                 <div className="flex justify-between items-center pt-2 border-t border-gray-200">
-                    <span className="text-xs font-black text-gray-900 uppercase">Total Amount</span>
-                    <span className="text-xl font-black text-emerald-600">₹{Number(bill.grandTotal).toLocaleString()}</span>
-                 </div>
+                <div className="flex justify-between items-center text-xs font-bold text-gray-400">
+                  <span>Parts & Labour</span>
+                  <span>₹{bill.subTotal}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs font-bold text-gray-400">
+                  <span>Service Tax</span>
+                  <span>₹{bill.gstAmount}</span>
+                </div>
+                <div className="flex justify-between items-center pt-2 border-t border-gray-200">
+                  <span className="text-xs font-black text-gray-900 uppercase">Total Amount</span>
+                  <span className="text-xl font-black text-emerald-600">₹{Number(bill.grandTotal).toLocaleString()}</span>
+                </div>
               </div>
 
               <div className="mt-auto flex items-start gap-3">
-                 <button 
+                <button
                   onClick={() => fetchAndPrint(bill.id)}
                   className="flex-1 flex items-center justify-center gap-2 py-3 bg-gray-900 text-white rounded-xl text-[10px] font-black hover:bg-black transition-all shadow-lg"
-                 >
-                    <Printer size={16} /> Print
-                 </button>
-                 <button 
-                   onClick={() => showDetails(bill.id)}
-                   className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm" 
-                   title="View Detail"
-                 >
-                    <History size={16} />
-                 </button>
-                 <button 
-                   onClick={() => navigate('/employee/addbillings', { state: { editBill: bill } })}
-                   className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 hover:bg-amber-600 hover:text-white transition-all shadow-sm" 
-                   title="Edit Billing"
-                 >
-                    <Pencil size={16} />
-                 </button>
+                >
+                  <Printer size={16} /> Print
+                </button>
+                <button
+                  onClick={() => showDetails(bill.id)}
+                  className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                  title="View Detail"
+                >
+                  <History size={16} />
+                </button>
+                <button
+                  onClick={() => navigate('/employee/addbillings', { state: { editBill: bill } })}
+                  className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 hover:bg-amber-600 hover:text-white transition-all shadow-sm"
+                  title="Edit Billing"
+                >
+                  <Pencil size={16} />
+                </button>
               </div>
             </div>
           ))}
@@ -394,14 +384,13 @@ const EmpBilling = () => {
                     <p className="font-black text-emerald-600">₹{Number(bill.grandTotal).toLocaleString()}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <select 
+                    <select
                       value={bill.paymentStatus?.toLowerCase() || "pending"}
                       onChange={(e) => handleUpdateStatus(bill.id, e.target.value)}
-                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 border-transparent transition-all outline-none cursor-pointer appearance-none text-center shadow-sm ${
-                        bill.paymentStatus?.toLowerCase() === "paid" ? "bg-emerald-500 text-white" :
-                        bill.paymentStatus?.toLowerCase() === "partial" ? "bg-orange-500 text-white" :
-                        "bg-amber-500 text-white"
-                      }`}
+                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-2 border-transparent transition-all outline-none cursor-pointer appearance-none text-center shadow-sm ${bill.paymentStatus?.toLowerCase() === "paid" ? "bg-emerald-500 text-white" :
+                          bill.paymentStatus?.toLowerCase() === "partial" ? "bg-orange-500 text-white" :
+                            "bg-amber-500 text-white"
+                        }`}
                     >
                       <option value="pending" className="bg-white text-black">Pending</option>
                       <option value="partial" className="bg-white text-black">Partial</option>
@@ -410,27 +399,27 @@ const EmpBilling = () => {
                   </td>
                   <td className="px-6 py-4 text-left">
                     <div className="flex items-center justify-start gap-2">
-                       <button 
+                      <button
                         onClick={() => showDetails(bill.id)}
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="View Details"
-                       >
-                          <History size={16} />
-                       </button>
-                       <button 
+                      >
+                        <History size={16} />
+                      </button>
+                      <button
                         onClick={() => fetchAndPrint(bill.id)}
                         className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                         title="Print"
-                       >
-                          <Printer size={16} />
-                       </button>
-                       <button 
+                      >
+                        <Printer size={16} />
+                      </button>
+                      <button
                         onClick={() => navigate('/employee/addbillings', { state: { editBill: bill } })}
                         className="p-2 text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
                         title="Edit Billing"
-                       >
-                          <Pencil size={16} />
-                       </button>
+                      >
+                        <Pencil size={16} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -440,7 +429,7 @@ const EmpBilling = () => {
         </div>
       )}
 
-      <Pagination 
+      <Pagination
         currentPage={page}
         totalPages={totalPages}
         onPageChange={setPage}
@@ -451,71 +440,71 @@ const EmpBilling = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="w-full max-w-2xl bg-white rounded-[3rem] shadow-2xl border border-white overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-10 py-8 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center">
-               <div className="flex items-center gap-5">
-                  <div className="w-14 h-14 bg-black text-white rounded-2xl flex items-center justify-center shadow-xl shadow-black/20"><FileText size={24}/></div>
-                  <div>
-                    <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Invoice Insight</h2>
-                    <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">#INV-{selectedBillDetail.invoiceNo} • {new Date(selectedBillDetail.createdAt).toLocaleDateString()}</p>
-                  </div>
-               </div>
-               <button onClick={() => setSelectedBillDetail(null)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-100 text-gray-400 hover:text-red-500 transition-all shadow-sm"><AlertCircle size={20} /></button>
+              <div className="flex items-center gap-5">
+                <div className="w-14 h-14 bg-black text-white rounded-2xl flex items-center justify-center shadow-xl shadow-black/20"><FileText size={24} /></div>
+                <div>
+                  <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Invoice Insight</h2>
+                  <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">#INV-{selectedBillDetail.invoiceNo} • {new Date(selectedBillDetail.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedBillDetail(null)} className="w-10 h-10 flex items-center justify-center rounded-xl bg-white border border-gray-100 text-gray-400 hover:text-red-500 transition-all shadow-sm"><AlertCircle size={20} /></button>
             </div>
 
             <div className="p-10 max-h-[60vh] overflow-y-auto no-scrollbar space-y-8">
-               <div className="grid grid-cols-2 gap-8 bg-black p-8 rounded-[2rem] text-white">
-                  <div>
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] mb-2">Customer Recipient</p>
-                    <p className="font-black text-xl uppercase tracking-tight">{selectedBillDetail.customerName}</p>
-                    <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">{selectedBillDetail.mobileNumber || "Personal Entry"}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] mb-2">Vehicle Specification</p>
-                    <p className="font-black text-xl uppercase tracking-tight">{selectedBillDetail.car || "General Service"}</p>
-                    <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mt-1">{selectedBillDetail.carNumber || "MH-XX-XXXX"}</p>
-                  </div>
-               </div>
+              <div className="grid grid-cols-2 gap-8 bg-black p-8 rounded-[2rem] text-white">
+                <div>
+                  <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] mb-2">Customer Recipient</p>
+                  <p className="font-black text-xl uppercase tracking-tight">{selectedBillDetail.customerName}</p>
+                  <p className="text-[10px] text-blue-400 font-bold uppercase tracking-widest mt-1">{selectedBillDetail.mobileNumber || "Personal Entry"}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em] mb-2">Vehicle Specification</p>
+                  <p className="font-black text-xl uppercase tracking-tight">{selectedBillDetail.car || "General Service"}</p>
+                  <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-widest mt-1">{selectedBillDetail.carNumber || "MH-XX-XXXX"}</p>
+                </div>
+              </div>
 
-               <div className="space-y-4">
-                  <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Inventory & Service Log</h3>
-                  <div className="border border-gray-100 rounded-3xl overflow-hidden">
-                    <table className="w-full text-left text-xs font-bold">
-                      <thead className="bg-gray-50 text-[9px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
-                        <tr>
-                          <th className="px-6 py-4">Item</th>
-                          <th className="px-6 py-4 text-center">Qty</th>
-                          <th className="px-6 py-4 text-right">Price</th>
+              <div className="space-y-4">
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest pl-1">Inventory & Service Log</h3>
+                <div className="border border-gray-100 rounded-3xl overflow-hidden">
+                  <table className="w-full text-left text-xs font-bold">
+                    <thead className="bg-gray-50 text-[9px] font-black uppercase tracking-widest text-gray-400 border-b border-gray-100">
+                      <tr>
+                        <th className="px-6 py-4">Item</th>
+                        <th className="px-6 py-4 text-center">Qty</th>
+                        <th className="px-6 py-4 text-right">Price</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {(selectedBillDetail.parts || []).map((p, i) => (
+                        <tr key={i} className="text-gray-700">
+                          <td className="px-6 py-4">{p.partName}</td>
+                          <td className="px-6 py-4 text-center">{p.qty}</td>
+                          <td className="px-6 py-4 text-right">₹{p.total.toLocaleString()}</td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-50">
-                        {(selectedBillDetail.parts || []).map((p, i) => (
-                          <tr key={i} className="text-gray-700">
-                            <td className="px-6 py-4">{p.partName}</td>
-                            <td className="px-6 py-4 text-center">{p.qty}</td>
-                            <td className="px-6 py-4 text-right">₹{p.total.toLocaleString()}</td>
-                          </tr>
-                        ))}
-                        {selectedBillDetail.labour > 0 && (
-                          <tr className="text-gray-700">
-                            <td className="px-6 py-4 italic">Labour & Service Fees</td>
-                            <td className="px-6 py-4 text-center">1</td>
-                            <td className="px-6 py-4 text-right">₹{Number(selectedBillDetail.labour).toLocaleString()}</td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-               </div>
+                      ))}
+                      {selectedBillDetail.labour > 0 && (
+                        <tr className="text-gray-700">
+                          <td className="px-6 py-4 italic">Labour & Service Fees</td>
+                          <td className="px-6 py-4 text-center">1</td>
+                          <td className="px-6 py-4 text-right">₹{Number(selectedBillDetail.labour).toLocaleString()}</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
 
             <div className="px-10 py-8 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
-               <div className="flex items-center gap-4">
-                  <StatusBadge status={selectedBillDetail.paymentStatus} />
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Payment Strategy: {selectedBillDetail.paymentMode || "Unspecified"}</p>
-               </div>
-               <div className="text-right">
-                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest opacity-50">Reconciled Grand Total</p>
-                  <p className="text-3xl font-black text-gray-900 tracking-tighter">₹{Number(selectedBillDetail.grandTotal).toLocaleString()}</p>
-               </div>
+              <div className="flex items-center gap-4">
+                <StatusBadge status={selectedBillDetail.paymentStatus} />
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Payment Strategy: {selectedBillDetail.paymentMode || "Unspecified"}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest opacity-50">Reconciled Grand Total</p>
+                <p className="text-3xl font-black text-gray-900 tracking-tighter">₹{Number(selectedBillDetail.grandTotal).toLocaleString()}</p>
+              </div>
             </div>
           </div>
         </div>

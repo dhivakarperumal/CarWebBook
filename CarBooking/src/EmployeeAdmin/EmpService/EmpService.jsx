@@ -472,8 +472,7 @@ export default function EmpService() {
     }, 500);
   };
 
-  if (loading) return <div className="flex h-64 items-center justify-center"><div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-900 border-t-cyan-500"></div></div>;
-
+  // removed loading block for instant dashboard access
   return (
     <div className="p-4 max-w-7xl mx-auto space-y-10 animate-fadeIn bg-gray-50/50 min-h-screen">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
