@@ -156,16 +156,16 @@ export default function Home() {
       <h1>
         <Hero />
         <AboutHome />
-        <ServiceSwiper />
-        <BookingBanner />
+        <BrandSwiper />
         <PricingSwiper />
+        <BookingBanner />
         <ProductSwiper />
         <VehicleSwiper
           handleViewDetails={handleViewDetails}
           handleBookNow={handleBuyNow}
           bookingInProgress={bookingInProgress}
         />
-        <BrandSwiper />
+        <ServiceSwiper />
         <Reviews />
       </h1>
 
