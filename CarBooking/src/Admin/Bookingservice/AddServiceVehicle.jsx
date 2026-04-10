@@ -4,7 +4,7 @@ import { Car, ArrowLeft, CheckCircle } from "lucide-react";
 import api from "../../api";
 import toast from "react-hot-toast";
 
-const VEHICLE_TYPES = ["Two Wheeler", "Four Wheeler", "Three Wheeler", "Heavy Vehicle"];
+const VEHICLE_TYPES = ["Car", "Bike"];
 
 const ISSUE_OPTIONS = [
   "Engine Problem",
@@ -45,7 +45,7 @@ const AddServiceVehicle = () => {
     phone: "",
     email: "",
     address: "",
-    vehicleType: "",
+    vehicleType: "Car",
     vehicleNumber: "",
     brand: "",
     model: "",
@@ -81,7 +81,6 @@ const AddServiceVehicle = () => {
 
     const now = new Date();
     const serviceData = {
-      bookingId: `BKG${now.getTime()}`, // Generate unique ID
       uid: "admin-created",
       name: form.name,
       phone: form.phone,
@@ -106,7 +105,7 @@ const AddServiceVehicle = () => {
       
       // 1. Create Booking
       const bookRes = await api.post("/bookings/create", serviceData);
-      const bookingId = serviceData.bookingId;
+      const bookingId = bookRes.data.bookingId;
 
       // 2. Automatically Create User Account (ignore error if already exists)
       if (form.email && form.phone) {

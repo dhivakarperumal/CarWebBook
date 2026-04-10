@@ -35,7 +35,11 @@ exports.createBooking = async (req, res) => {
     );
 
     const insertId = result.insertId;
-    const generatedBookingId = `BS${String(insertId).padStart(3, '0')}`;
+    let prefix = 'BS';
+    if (uid === 'admin-created') {
+      prefix = 'ADV';
+    }
+    const generatedBookingId = `${prefix}${String(insertId).padStart(3, '0')}`;
 
     // 2. Update with the real sequential ID
     await db.query('UPDATE bookings SET bookingId = ? WHERE id = ?', [generatedBookingId, insertId]);
