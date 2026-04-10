@@ -169,7 +169,7 @@ const Dashboard = () => {
 
       // 1. TOP STATS
       
-      const todayBookingsCount = bookingsData.filter(b => isToday(b.created_at || b.createdAt)).length;
+      const todayBookingsCount = bookingsData.filter(b => isToday(b.created_at || b.createdAt) && (b.status || "").toLowerCase() === "booked").length;
       
       // Calculate total earnings & billing
       let earnings = 0;

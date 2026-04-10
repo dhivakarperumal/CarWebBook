@@ -173,7 +173,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
         };
 
         const todayBk = (bkRes.data || []).filter(b => 
-          isToday(b.created_at || b.createdAt) && (b.status || "").toLowerCase() !== "cancelled"
+          isToday(b.created_at || b.createdAt) && (b.status || "").toLowerCase() === "booked"
         ).length;
         
         const todayApp = (appRes.data || []).filter(a => 
