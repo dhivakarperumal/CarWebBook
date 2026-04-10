@@ -72,15 +72,17 @@ const EmpBilling = () => {
         myBills = billRes.data || [];
         assignedBookings = bookRes.data || [];
       } else {
-        assignedBookings = (bookRes.data || []).filter(b =>
-          (b.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase()
-        );
+        const mechanicName = (userProfile?.displayName || "").toLowerCase().trim();
+        assignedBookings = (bookRes.data || []).filter(b => {
+          const assignedName = (b.assignedEmployeeName || "").toLowerCase().trim();
+          return assignedName === mechanicName || assignedName.includes(mechanicName);
+        });
         const assignedBookingIds = new Set(assignedBookings.map(b => b.bookingId));
         
         myBills = (billRes.data || []).filter(bill =>
           assignedBookingIds.has(bill.bookingId) || 
-          (bill.assignedEmployeeName && bill.assignedEmployeeName.toLowerCase() === mechanicName.toLowerCase()) ||
-          (bill.billingType === "manual" && !bill.assignedEmployeeName) // Fallback for old manual bills if needed, though risky
+          ((bill.assignedEmployeeName || "").toLowerCase().trim().includes(mechanicName)) ||
+          (bill.billingType === "manual" && !bill.assignedEmployeeName) 
         );
       }
 

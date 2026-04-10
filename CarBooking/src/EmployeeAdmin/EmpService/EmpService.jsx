@@ -150,10 +150,15 @@ export default function EmpService() {
   }, [services, search, dateFilter]);
 
   const stats = useMemo(() => {
-    const mechanicName = (userProfile?.displayName || "").toLowerCase();
-    const relevantServices = services.filter(s => 
-      (s.assignedEmployeeName || "").toLowerCase() === mechanicName
-    );
+    const mechanicName = (userProfile?.displayName || "").toLowerCase().trim();
+    const userRole = (userProfile?.role || "").toLowerCase();
+    const isAdmin = userRole === "admin";
+
+    const relevantServices = services.filter(s => {
+      if (isAdmin) return true;
+      const assignedName = (s.assignedEmployeeName || "").toLowerCase().trim();
+      return assignedName === mechanicName || assignedName.includes(mechanicName);
+    });
 
     return {
       total: relevantServices.length,
@@ -177,9 +182,13 @@ export default function EmpService() {
   };
 
   const currentMainList = useMemo(() => {
-    const mechanicName = (userProfile?.displayName || "").toLowerCase();
+    const mechanicName = (userProfile?.displayName || "").toLowerCase().trim();
+    const userRole = (userProfile?.role || "").toLowerCase();
+    const isAdmin = userRole === "admin";
+
     const filtered = services.filter(s => {
-      const isAssigned = (s.assignedEmployeeName || "").toLowerCase() === mechanicName;
+      const assignedName = (s.assignedEmployeeName || "").toLowerCase().trim();
+      const isAssigned = isAdmin || assignedName === mechanicName || assignedName.includes(mechanicName);
       const statusValue = (s.serviceStatus || s.status || "").toLowerCase();
       const isFinalized = statusValue === "bill completed";
       

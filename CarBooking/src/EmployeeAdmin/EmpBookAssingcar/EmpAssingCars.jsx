@@ -41,10 +41,15 @@ const EmpAssingCars = () => {
       // 🔥 Fetching from all-services to include both bookings and appointments
       const res = await api.get("/all-services");
       
-      const mechanicName = userProfile?.displayName || "";
-      const filtered = res.data.filter(s => 
-        (s.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase()
-      );
+      const mechanicName = (userProfile?.displayName || "").toLowerCase().trim();
+      const userRole = (userProfile?.role || "").toLowerCase();
+      const isAdmin = userRole === "admin";
+
+      const filtered = res.data.filter(s => {
+        if (isAdmin) return true;
+        const assignedName = (s.assignedEmployeeName || "").toLowerCase().trim();
+        return assignedName === mechanicName || assignedName.includes(mechanicName);
+      });
       
       setServices(filtered);
       updateCache("assignedHistory", filtered);

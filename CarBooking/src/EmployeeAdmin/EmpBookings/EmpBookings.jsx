@@ -40,12 +40,16 @@ const EmpBookings = () => {
         setLoading(true);
         const response = await api.get("/bookings");
         
-        const mechanicName = userProfile?.displayName || "";
+        const mechanicName = (userProfile?.displayName || "").toLowerCase().trim();
+        const userRole = (userProfile?.role || "").toLowerCase();
+        const isAdmin = userRole === "admin";
         
         // IMPORTANT: Filter by assigned mechanic
-        const filtered = (response.data || []).filter(b => 
-          (b.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase()
-        );
+        const filtered = (response.data || []).filter(b => {
+          if (isAdmin) return true;
+          const assignedName = (b.assignedEmployeeName || "").toLowerCase().trim();
+          return assignedName === mechanicName || assignedName.includes(mechanicName);
+        });
 
         const sorted = filtered.sort((a, b) => 
           new Date(b.created_at || b.createdAt || 0) - new Date(a.created_at || a.createdAt || 0)
