@@ -149,17 +149,18 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
   const { profileName: userProfile } = useAuth();
   const location = useLocation();
   const [openMenu, setOpenMenu] = useState(null);
-  const [counts, setCounts] = useState({ bookings: 0, appointments: 0, orders: 0, vehicles: 0 });
+  const [counts, setCounts] = useState({ bookings: 0, appointments: 0, orders: 0, vehicles: 0, unassigned: 0 });
 
   /* ================= FETCH COUNTS ================= */
   useEffect(() => {
     const fetchCounts = async () => {
       try {
-        const [bkRes, appRes, ordRes, vehRes] = await Promise.all([
+        const [bkRes, appRes, ordRes, vehRes, servRes] = await Promise.all([
           api.get("/bookings"),
           api.get("/appointments/all"),
           api.get("/orders"),
-          api.get("/vehicle-bookings")
+          api.get("/vehicle-bookings"),
+          api.get("/all-services")
         ]);
 
         const today = new Date();
@@ -187,11 +188,15 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
           isToday(v.created_at || v.createdAt)
         ).length;
 
+        // Unassigned services (needs attention)
+        const unassigned = (servRes.data || []).filter(s => !s.assignedEmployeeId).length;
+
         setCounts({ 
           bookings: todayBk, 
           appointments: todayApp, 
           orders: todayOrd, 
-          vehicles: todayVeh 
+          vehicles: todayVeh,
+          unassigned 
         });
       } catch (err) {
         console.error("Failed to fetch sidebar counts", err);
@@ -362,11 +367,11 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                         </span>
                         
                         {/* PARENT BADGE (TOTAL TODAY) */}
-                        {item.label === "Booking Status" && (counts.bookings + counts.appointments) > 0 && (
-                          <span className="mr-2 flex items-center justify-center min-w-[22px] h-5.5 px-1.5 rounded-lg bg-orange-500 text-white text-[11px] font-black shadow-lg shadow-orange-500/20">
+                        {/* {item.label === "Booking Status" && (counts.bookings + counts.appointments) > 0 && (
+                          <span className="mr-2 flex items-center justify-center min-w-[22px] h-5.5 px-1.5 rounded-lg bg-cyan-500 text-white text-[11px] font-black shadow-lg shadow-cyan-500/20">
                             {counts.bookings + counts.appointments}
                           </span>
-                        )}
+                        )} */}
 
                         <ChevronDown
                           className={`w-4 h-4 transition-transform ${isMenuOpen ? "rotate-180" : ""} ${hasActiveChild ? "text-cyan-600" : ""}`}
@@ -409,7 +414,7 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                             </span>
                           )}
                           {sub.path === "/admin/appointments" && counts.appointments > 0 && (
-                            <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-blue-500 text-white text-[10px] font-black shadow-lg shadow-blue-500/20">
+                            <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-cyan-500 text-white text-[10px] font-black shadow-lg shadow-cyan-500/20">
                               {counts.appointments}
                             </span>
                           )}
@@ -449,8 +454,13 @@ const Sidebar = ({ isOpen, onClose, collapsed, onToggleCollapse }) => {
                       </span>
                     )}
                     {item.label === "Booked Vehicles" && counts.vehicles > 0 && (
-                      <span className={`flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-lg text-[10px] font-black shadow-lg ${isActive ? 'bg-white text-blue-600' : 'bg-blue-500 text-white'}`}>
+                      <span className={`flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-lg text-[10px] font-black shadow-lg ${isActive ? 'bg-white text-cyan-600' : 'bg-cyan-500 text-white'}`}>
                         {counts.vehicles}
+                      </span>
+                    )}
+                    {item.label === "Assign Services" && counts.unassigned > 0 && (
+                      <span className={`flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-lg text-[10px] font-black shadow-lg ${isActive ? 'bg-white text-cyan-600' : 'bg-cyan-500 text-white'}`}>
+                        {counts.unassigned}
                       </span>
                     )}
                   </div>
