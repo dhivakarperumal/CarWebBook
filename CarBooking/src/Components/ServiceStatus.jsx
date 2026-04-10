@@ -23,18 +23,18 @@ export const STATUS_LABELS = {
 
 /* ===== NORMALIZER (Firestore → Enum) ===== */
 export const STATUS_NORMALIZER = {
-  "Booked": "BOOKED",
+  Booked: "BOOKED",
   "Appointment Booked": "APPOINTMENT_BOOKED",
   "Call Verified": "CALL_VERIFIED",
-  "Approved": "APPROVED",
-  "Processing": "PROCESSING",
+  Approved: "APPROVED",
+  Processing: "PROCESSING",
   "Waiting for Spare": "WAITING_SPARE",
   "Service Going on": "SERVICE_GOING",
   "Bill Pending": "BILL_PENDING",
   "Bill Completed": "BILL_COMPLETED",
   "Service Completed": "SERVICE_COMPLETED",
-  "Cancelled": "CANCELLED",
-  "Assigned": "ASSIGNED",
+  Cancelled: "CANCELLED",
+  Assigned: "ASSIGNED",
 };
 
 const ServiceStatus = () => {
@@ -61,22 +61,24 @@ const ServiceStatus = () => {
       // 1. Fetch bookings
       console.log("📋 [ServiceStatus] Fetching bookings...");
       const res = await api.get("/bookings");
-      
+
       const regularBookings = (res.data || [])
         .filter((b) => b.email?.toLowerCase() === user.email.toLowerCase())
         .map((raw) => ({
           ...raw,
-          bookingType: 'Booking',
+          bookingType: "Booking",
           normalizedStatus: STATUS_NORMALIZER[raw.status] || raw.status,
         }));
 
       // 2. Fetch separate appointments
       console.log("📋 [ServiceStatus] Fetching separate appointments...");
-      const appointmentsRes = await api.get("/appointments/my", { params: { uid: user.uid } });
-      const appointmentData = (appointmentsRes.data || []).map(apt => ({
+      const appointmentsRes = await api.get("/appointments/my", {
+        params: { uid: user.uid },
+      });
+      const appointmentData = (appointmentsRes.data || []).map((apt) => ({
         ...apt,
         bookingId: apt.appointmentId,
-        bookingType: 'Appointment',
+        bookingType: "Appointment",
         normalizedStatus: STATUS_NORMALIZER[apt.status] || apt.status,
         // Map common fields
         issue: apt.serviceType,
@@ -84,12 +86,18 @@ const ServiceStatus = () => {
       }));
 
       // Merge them
-      const combinedData = [...regularBookings, ...appointmentData].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+      const combinedData = [...regularBookings, ...appointmentData].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at),
+      );
 
       // Fetch all services to get spare parts and issue entries
-      console.log("🔍 [ServiceStatus] Fetching all services to enrich details...");
+      console.log(
+        "🔍 [ServiceStatus] Fetching all services to enrich details...",
+      );
       const servicesRes = await api.get("/all-services");
-      const allServices = (servicesRes.data || []).filter((s) => s.email?.toLowerCase() === user.email.toLowerCase());
+      const allServices = (servicesRes.data || []).filter(
+        (s) => s.email?.toLowerCase() === user.email.toLowerCase(),
+      );
 
       // Enrich combined data with parts and issues
       const enrichedServices = [];
@@ -109,7 +117,10 @@ const ServiceStatus = () => {
 
       const finalBookings = combinedData.map((b) => {
         const matchedService = enrichedServices.find(
-          (s) => s.bookingId === b.bookingId || s.id === b.id || s.bookingDocId === b.id
+          (s) =>
+            s.bookingId === b.bookingId ||
+            s.id === b.id ||
+            s.bookingDocId === b.id,
         );
         const liveStatus = matchedService?.serviceStatus || b.status;
         return {
@@ -119,8 +130,12 @@ const ServiceStatus = () => {
           normalizedStatus: STATUS_NORMALIZER[liveStatus] || liveStatus,
           issues: matchedService?.issues || [],
           issue: matchedService?.issue || b.issue,
-          issueAmount: matchedService?.issueAmount != null ? matchedService.issueAmount : b.issueAmount,
-          issueStatus: matchedService?.issueStatus || b.issueStatus || 'pending',
+          issueAmount:
+            matchedService?.issueAmount != null
+              ? matchedService.issueAmount
+              : b.issueAmount,
+          issueStatus:
+            matchedService?.issueStatus || b.issueStatus || "pending",
           issueUpdatedAt: matchedService?.updatedAt || b.updatedAt,
         };
       });
@@ -130,17 +145,16 @@ const ServiceStatus = () => {
       // Fetch spare parts for these services
       const allSpareParts = [];
       for (let service of enrichedServices) {
-         if (service.parts.length > 0) {
-            allSpareParts.push({
-               serviceName: service.bookingId,
-               serviceId: service.id,
-               customerName: service.name,
-               parts: service.parts,
-            });
-         }
+        if (service.parts.length > 0) {
+          allSpareParts.push({
+            serviceName: service.bookingId,
+            serviceId: service.id,
+            customerName: service.name,
+            parts: service.parts,
+          });
+        }
       }
       setSpareParts(allSpareParts);
-
     } catch (err) {
       console.error("❌ [ServiceStatus] Failed to load data:", err);
     } finally {
@@ -152,24 +166,26 @@ const ServiceStatus = () => {
     fetchData();
   }, [user]);
 
-  const handleApproveSpare = async (serviceId, itemId, status, type = 'part') => {
+  const handleApproveSpare = async (
+    serviceId,
+    itemId,
+    status,
+    type = "part",
+  ) => {
     try {
-      if (type === 'part') {
+      if (type === "part") {
         setApprovingPartId(itemId);
         await api.put(`/all-services/${serviceId}/parts/${itemId}/approve`, {
           status: status,
           approvedBy: user.email,
           approvalNotes: `${status} by customer`,
         });
-      } else if (type === 'issue') {
+      } else if (type === "issue") {
         setApprovingPartId(itemId);
         if (itemId) {
-          await api.put(
-            `/all-services/${serviceId}/issues/${itemId}/status`,
-            {
-              issueStatus: status,
-            }
-          );
+          await api.put(`/all-services/${serviceId}/issues/${itemId}/status`, {
+            issueStatus: status,
+          });
         } else {
           await api.put(`/all-services/${serviceId}/issue-status`, {
             issueStatus: status,
@@ -177,13 +193,27 @@ const ServiceStatus = () => {
         }
       }
 
-      toast.success(`${type === 'issue' ? 'Issue' : 'Spare part'} ${status} successfully`);
-      
+      toast.success(
+        `${type === "issue" ? "Issue" : "Spare part"} ${status} successfully`,
+      );
+
       // Complete Refresh
-      await fetchData();
+      // Update spare parts locally instead of refetching everything
+      setSpareParts((prev) =>
+        prev.map((service) => {
+          if (service.serviceId !== serviceId) return service;
+
+          return {
+            ...service,
+            parts: service.parts.map((p) =>
+              p.id === itemId ? { ...p, status } : p,
+            ),
+          };
+        }),
+      );
 
       // Update selectedBooking for immediate modal change
-      if (type === 'issue') {
+      if (type === "issue") {
         setSelectedBooking((prev) => {
           if (!prev) return prev;
           return {
@@ -193,7 +223,7 @@ const ServiceStatus = () => {
               ? prev.issues.map((issue) =>
                   issue.id === itemId
                     ? { ...issue, issueStatus: status }
-                    : issue
+                    : issue,
                 )
               : prev.issues,
           };
@@ -211,8 +241,8 @@ const ServiceStatus = () => {
     return <div className="p-6 text-center text-gray-300">Loading...</div>;
 
   // Check if there are pending spare parts
-  const pendingSpares = spareParts.filter(sp =>
-    sp.parts.some(p => p.status === "pending")
+  const pendingSpares = spareParts.filter((sp) =>
+    sp.parts.some((p) => p.status === "pending"),
   );
 
   return (
@@ -224,9 +254,27 @@ const ServiceStatus = () => {
       {/* Show pending spares alert */}
       {pendingSpares.length > 0 && (
         <div className="mb-6 bg-orange-500/20 border border-orange-500/40 rounded-lg p-4">
-          <p className="font-semibold text-orange-300">⚠️ {pendingSpares.length} service(s) have spare parts pending approval</p>
+          <p className="font-semibold text-orange-300">
+            ⚠️ {pendingSpares.length} service(s) have spare parts pending
+            approval
+          </p>
           <p className="text-sm text-orange-300 mt-1">
-            Total pending amount: <span className="font-bold">₹{pendingSpares.reduce((sum, sp) => sum + sp.parts.reduce((psum, p) => p.status === 'pending' ? psum + Number(p.total) : psum, 0), 0).toFixed(2)}</span>
+            Total pending amount:{" "}
+            <span className="font-bold">
+              ₹
+              {pendingSpares
+                .reduce(
+                  (sum, sp) =>
+                    sum +
+                    sp.parts.reduce(
+                      (psum, p) =>
+                        p.status === "pending" ? psum + Number(p.total) : psum,
+                      0,
+                    ),
+                  0,
+                )
+                .toFixed(2)}
+            </span>
           </p>
           <button
             onClick={() => setShowSpareModal(true)}
@@ -241,17 +289,21 @@ const ServiceStatus = () => {
         {bookings.length > 0 ? (
           bookings.map((booking) => {
             // Find spare parts for this booking
-            const bookingSpares = spareParts.find(sp => sp.serviceId === booking.id);
-            const hasPendingSpares = bookingSpares?.parts?.some(p => p.status === 'pending');
-            
+            const bookingSpares = spareParts.find(
+              (sp) => sp.serviceId === booking.id,
+            );
+            const hasPendingSpares = bookingSpares?.parts?.some(
+              (p) => p.status === "pending",
+            );
+
             return (
               <div
                 key={booking.id}
                 onClick={() => setSelectedBooking(booking)}
                 className={`cursor-pointer bg-[#020617] border rounded-xl px-2 md:px-6 py-4 flex justify-between items-center hover:shadow-lg transition ${
-                  hasPendingSpares 
-                    ? 'border-orange-500/40 hover:shadow-orange-500/30' 
-                    : 'border-sky-500/30 hover:shadow-sky-500/30'
+                  hasPendingSpares
+                    ? "border-orange-500/40 hover:shadow-orange-500/30"
+                    : "border-sky-500/30 hover:shadow-sky-500/30"
                 }`}
               >
                 <div>
@@ -261,39 +313,60 @@ const ServiceStatus = () => {
                   <p className="text-sm text-gray-400">
                     {booking.name} • {booking.phone}
                   </p>
-                  
+
                   {/* Show spare parts summary */}
                   {bookingSpares?.parts?.length > 0 && (
                     <div className="mt-2 text-xs">
                       <p className="text-gray-500">
-                        🔧 Spares: ₹{bookingSpares.parts.reduce((sum, p) => sum + Number(p.total), 0).toFixed(2)} - 
-                        <span className={`ml-1 font-bold ${
-                          hasPendingSpares ? 'text-orange-400' : 
-                          bookingSpares.parts.every(p => p.status === 'approved') ? 'text-green-400' :
-                          'text-red-400'
-                        }`}>
-                          {bookingSpares.parts.filter(p => p.status === 'pending').length ? 'PENDING' : 
-                           bookingSpares.parts.every(p => p.status === 'approved') ? 'APPROVED' : 'PARTIAL'}
+                        🔧 Spares: ₹
+                        {bookingSpares.parts
+                          .reduce((sum, p) => sum + Number(p.total), 0)
+                          .toFixed(2)}{" "}
+                        -
+                        <span
+                          className={`ml-1 font-bold ${
+                            hasPendingSpares
+                              ? "text-orange-400"
+                              : bookingSpares.parts.every(
+                                    (p) => p.status === "approved",
+                                  )
+                                ? "text-green-400"
+                                : "text-red-400"
+                          }`}
+                        >
+                          {bookingSpares.parts.filter(
+                            (p) => p.status === "pending",
+                          ).length
+                            ? "PENDING"
+                            : bookingSpares.parts.every(
+                                  (p) => p.status === "approved",
+                                )
+                              ? "APPROVED"
+                              : "PARTIAL"}
                         </span>
                       </p>
                     </div>
                   )}
                 </div>
 
-                <span className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest border transition-all ${
-                  hasPendingSpares 
-                    ? 'bg-orange-500/20 text-orange-400 border-orange-500/40'
-                    : 'bg-sky-500/20 text-sky-400 border-sky-500/40 shadow-lg shadow-sky-500/10'
-                }`}>
-                  {(STATUS_LABELS[booking.normalizedStatus] || booking.status || "PENDING").toUpperCase()}
+                <span
+                  className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest border transition-all ${
+                    hasPendingSpares
+                      ? "bg-orange-500/20 text-orange-400 border-orange-500/40"
+                      : "bg-sky-500/20 text-sky-400 border-sky-500/40 shadow-lg shadow-sky-500/10"
+                  }`}
+                >
+                  {(
+                    STATUS_LABELS[booking.normalizedStatus] ||
+                    booking.status ||
+                    "PENDING"
+                  ).toUpperCase()}
                 </span>
               </div>
             );
           })
         ) : (
-          <div className="p-6 text-center text-gray-500">
-            No bookings found
-          </div>
+          <div className="p-6 text-center text-gray-500">No bookings found</div>
         )}
       </div>
 
@@ -301,65 +374,103 @@ const ServiceStatus = () => {
       {showSpareModal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-900 rounded-2xl max-w-2xl w-full max-h-[70vh] overflow-y-auto p-6">
-            <h3 className="text-2xl font-bold text-white mb-4">Spare Parts Status</h3>
-            
-            {spareParts.filter(sp => sp.parts.length > 0).length > 0 ? (
-              spareParts.map((service) => (
-                service.parts.length > 0 && (
-                  <div key={service.serviceId} className="mb-6 pb-6 border-b border-gray-700">
-                    <p className="text-sky-400 font-bold mb-3">📋 {service.serviceName} - {service.customerName}</p>
-                    
-                    {service.parts.map((part) => (
-                      <div key={part.id} className="bg-gray-800 rounded-lg p-4 mb-3">
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex-1">
-                            <p className="text-white font-semibold">{part.partName}</p>
-                            <p className="text-sm text-gray-400">
-                              Qty: {part.qty} × ₹{Number(part.price).toFixed(2)} = <span className="text-orange-400 font-bold">₹{Number(part.total).toFixed(2)}</span>
-                            </p>
-                          </div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ml-2 ${
-                            part.status === 'pending' 
-                              ? 'bg-yellow-500/20 text-yellow-400' 
-                              : part.status === 'approved'
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-red-500/20 text-red-400'
-                          }`}>
-                            {(part.status || 'pending').toUpperCase()}
-                          </span>
-                        </div>
+            <h3 className="text-2xl font-bold text-white mb-4">
+              Spare Parts Status
+            </h3>
 
-                        {part.status === 'pending' && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleApproveSpare(service.serviceId, part.id, 'approved')}
-                              disabled={approvingPartId === part.id}
-                              className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition disabled:opacity-50"
+            {spareParts.filter((sp) => sp.parts.length > 0).length > 0 ? (
+              spareParts.map(
+                (service) =>
+                  service.parts.length > 0 && (
+                    <div
+                      key={service.serviceId}
+                      className="mb-6 pb-6 border-b border-gray-700"
+                    >
+                      <p className="text-sky-400 font-bold mb-3">
+                        📋 {service.serviceName} - {service.customerName}
+                      </p>
+
+                      {service.parts.map((part) => (
+                        <div
+                          key={part.id}
+                          className="bg-gray-800 rounded-lg p-4 mb-3"
+                        >
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="flex-1">
+                              <p className="text-white font-semibold">
+                                {part.partName}
+                              </p>
+                              <p className="text-sm text-gray-400">
+                                Qty: {part.qty} × ₹
+                                {Number(part.price).toFixed(2)} ={" "}
+                                <span className="text-orange-400 font-bold">
+                                  ₹{Number(part.total).toFixed(2)}
+                                </span>
+                              </p>
+                            </div>
+                            <span
+                              className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ml-2 ${
+                                part.status === "pending"
+                                  ? "bg-yellow-500/20 text-yellow-400"
+                                  : part.status === "approved"
+                                    ? "bg-green-500/20 text-green-400"
+                                    : "bg-red-500/20 text-red-400"
+                              }`}
                             >
-                              <FaCheck /> Approve
-                            </button>
-                            <button
-                              onClick={() => handleApproveSpare(service.serviceId, part.id, 'rejected')}
-                              disabled={approvingPartId === part.id}
-                              className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition disabled:opacity-50"
-                            >
-                              <FaTimes /> Reject
-                            </button>
+                              {(part.status || "pending").toUpperCase()}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                    ))}
-                    
-                    {/* Total for this service */}
-                    <div className="bg-blue-500/20 border border-blue-500/40 rounded-lg p-3 mt-3">
-                      <div className="flex justify-between items-center">
-                        <p className="text-blue-300 font-bold">Total for {service.serviceName}</p>
-                        <p className="text-xl font-black text-blue-400">₹{service.parts.reduce((sum, p) => sum + Number(p.total), 0).toFixed(2)}</p>
+
+                          {part.status === "pending" && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() =>
+                                  handleApproveSpare(
+                                    service.serviceId,
+                                    part.id,
+                                    "approved",
+                                  )
+                                }
+                                disabled={approvingPartId === part.id}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition disabled:opacity-50"
+                              >
+                                <FaCheck /> Approve
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleApproveSpare(
+                                    service.serviceId,
+                                    part.id,
+                                    "rejected",
+                                  )
+                                }
+                                disabled={approvingPartId === part.id}
+                                className="flex-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition disabled:opacity-50"
+                              >
+                                <FaTimes /> Reject
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Total for this service */}
+                      <div className="bg-blue-500/20 border border-blue-500/40 rounded-lg p-3 mt-3">
+                        <div className="flex justify-between items-center">
+                          <p className="text-blue-300 font-bold">
+                            Total for {service.serviceName}
+                          </p>
+                          <p className="text-xl font-black text-blue-400">
+                            ₹
+                            {service.parts
+                              .reduce((sum, p) => sum + Number(p.total), 0)
+                              .toFixed(2)}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )
-              ))
+                  ),
+              )
             ) : (
               <div className="p-6 text-center text-gray-400">
                 No spare parts added yet
