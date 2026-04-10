@@ -22,6 +22,14 @@ export default function PricingCard({ pkg }) {
           {pkg.title}
         </h3>
 
+        {/* Place */}
+        <p className="text-[12px] sm:text-xs text-gray-400 mb-3">
+          Place:{" "}
+          <span className="text-white font-semibold">
+            {pkg.place === "home" ? "Home & Shop" : "Shop"}
+          </span>
+        </p>
+
         {/* Price */}
         <div className="flex items-end gap-1 sm:gap-2 mb-4 sm:mb-6">
           <span className="text-xl sm:text-3xl md:text-4xl font-extrabold text-white">
