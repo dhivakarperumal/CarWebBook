@@ -159,7 +159,12 @@ const PricingList = () => {
                 key={pkg.id}
                 className="border border-gray-300 rounded-xl p-4 shadow-sm hover:shadow-md transition bg-white"
               >
-                <h3 className="font-semibold text-md">{pkg.title}</h3>
+                <div className="flex justify-between items-start">
+                  <h3 className="font-semibold text-md">{pkg.title}</h3>
+                  <span className="text-[10px] uppercase font-bold bg-gray-200 text-gray-600 px-2 py-1 rounded">
+                    {pkg.place || "home"}
+                  </span>
+                </div>
 
                 <p className="text-sm font-medium mt-1">
                   ₹{Number(pkg.price || 0).toLocaleString()}
@@ -212,6 +217,7 @@ const PricingList = () => {
                 <tr>
                   <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
                   <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Title</th>
+                  <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Place</th>
                   <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Price</th>
                   <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Features</th>
                   <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Actions</th>
@@ -223,6 +229,9 @@ const PricingList = () => {
                   <tr key={pkg.id} className="border-t border-gray-300 hover:bg-gray-50">
                     <td className="px-4 py-4">{i + 1}</td>
                     <td className="px-4 py-4">{pkg.title}</td>
+                    <td className="px-4 py-4 font-semibold capitalize text-gray-700">
+                      {pkg.place || "Home"}
+                    </td>
                     <td className="px-4 py-4">
                       ₹{Number(pkg.price || 0).toLocaleString()}
                     </td>
@@ -255,7 +264,7 @@ const PricingList = () => {
 
                 {filteredPackages.length === 0 && (
                   <tr>
-                    <td colSpan="4" className="text-center p-6 text-gray-500">
+                    <td colSpan="6" className="text-center p-6 text-gray-500">
                       No packages found
                     </td>
                   </tr>
