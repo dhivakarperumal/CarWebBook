@@ -205,13 +205,6 @@ const BuyVehicles = () => {
       <PageHeader title="Buy Quality Vehicles" />
 
       <section className="relative py-16 bg-black text-white overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfAJ3Ai3tu58SWAJ2mK_EhozE-OIgQXcLXNg&s)",
-          }}
-        />
         <div className="absolute inset-0 bg-black/80" />
 
         <PageContainer className="relative z-10">

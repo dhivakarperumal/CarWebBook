@@ -26,15 +26,6 @@ export default function Pricing() {
 
       <section className="relative py-24 bg-black text-white overflow-hidden">
 
-        {/* Background Image */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "url(https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQfAJ3Ai3tu58SWAJ2mK_EhozE-OIgQXcLXNg&s)",
-          }}
-        />
-
         {/* Overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-black/60" />
 
