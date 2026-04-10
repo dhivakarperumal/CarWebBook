@@ -204,6 +204,24 @@ async function initializeDatabase() {
     } catch (err) {
       console.log('Sync vehicle_bookings error:', err.message);
     }
+
+    // Sync all_services columns
+    try {
+      const [cols] = await db.query('SHOW COLUMNS FROM all_services');
+      const colNames = cols.map(c => c.Field);
+      if (!colNames.includes('closeReason')) {
+        await db.query("ALTER TABLE all_services ADD COLUMN closeReason TEXT NULL");
+      }
+      if (!colNames.includes('lastUpdatedBy')) {
+        await db.query("ALTER TABLE all_services ADD COLUMN lastUpdatedBy VARCHAR(255) NULL");
+      }
+      if (!colNames.includes('updatedAt')) {
+         await db.query("ALTER TABLE all_services ADD COLUMN updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+      }
+      console.log('✓ all_services schema synchronized');
+    } catch (err) {
+      console.log('Sync all_services error (table might not exist yet):', err.message);
+    }
   } catch (error) {
     console.error('✗ Error initializing database:', error.message);
   }

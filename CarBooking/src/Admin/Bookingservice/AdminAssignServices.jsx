@@ -564,11 +564,11 @@ export default function AdminAssignServices() {
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-2">
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-black uppercase ${item.vehicleType === 'bike' ? 'bg-orange-100 text-orange-600' : 'bg-blue-100 text-blue-600'}`}>
+                      
+                        <p className="text-[14px] font-black text-gray-900 font-inter">{item.brand} {item.model}   <p>
                           {item.vehicleType || 'Car'}
-                        </span>
-                        <p className="text-sm font-black text-gray-900 font-inter">{item.brand} {item.model}</p>
-                        {item.uid === 'admin-created' && <span className="bg-cyan-100 text-cyan-600 text-[9px] px-2 py-0.5 rounded font-black uppercase">Walk-in</span>}
+                        </p></p>
+                        
                       </div>
                       <p className="text-[10px] font-black text-blue-500 mt-1 uppercase tracking-widest">{item.vehicleNumber || "N/A"}</p>
                     </td>

@@ -94,7 +94,7 @@ const PersonalInfo = () => {
           className="mt-4 px-6 py-3 rounded-lg font-semibold
                      bg-sky-500 text-black
                      hover:bg-sky-400 transition
-                     disabled:opacity-50"
+                     disabled:opacity-50 cursor-pointer"
         >
           {loading ? "Updating..." : "Update Changes"}
         </button>

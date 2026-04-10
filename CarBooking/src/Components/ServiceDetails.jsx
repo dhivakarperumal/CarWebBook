@@ -54,7 +54,7 @@ const ServiceDetails = () => {
                      px-4 py-2 rounded-md
                      transition-all duration-300
                      hover:bg-sky-400 hover:text-black
-                     hover:shadow-[0_0_20px_rgba(56,189,248,0.6)]"
+                     hover:shadow-[0_0_20px_rgba(56,189,248,0.6)] cursor-pointer"
           >
             ← BACK
           </button>

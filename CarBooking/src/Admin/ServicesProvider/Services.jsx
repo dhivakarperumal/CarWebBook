@@ -211,6 +211,7 @@ export default function Services() {
 
   const getMappedStatus = (status) => {
     if (!status) return "Booked";
+    if (status.toLowerCase() === "cancelled") return "Cancelled";
     const found = STATUS_STEPS.find(s => s.toLowerCase() === status.toLowerCase());
     return found || "Booked";
   };
@@ -225,6 +226,7 @@ export default function Services() {
       case "Bill Pending": return "bg-pink-100 text-pink-700";
       case "Bill Completed": return "bg-cyan-100 text-cyan-700";
       case "Service Completed": return "bg-green-100 text-green-700";
+      case "Cancelled": return "bg-red-100 text-red-700";
       default: return "bg-gray-100 text-gray-700";
     }
   };
@@ -242,7 +244,10 @@ export default function Services() {
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      await api.put(`/all-services/${id}/status`, { serviceStatus: newStatus });
+      await api.put(`/all-services/${id}/status`, { 
+        serviceStatus: newStatus,
+        employeeName: userProfile?.displayName || userProfile?.name || "System Admin"
+      });
       toast.success(`Status updated to ${newStatus}`);
       loadData();
     } catch (error) {
@@ -370,6 +375,13 @@ export default function Services() {
                       })()}
                     </div>
                   </div>
+                  {getMappedStatus(item.serviceStatus || item.status) === "Cancelled" && (
+                    <div className="bg-red-50/50 p-4 rounded-3xl border border-red-100">
+                      <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1">Cancellation Cause</p>
+                      <p className="text-xs font-bold text-red-900">{item.closeReason || "No explicit reason provided"}</p>
+                      <p className="text-[8px] font-black text-red-400 uppercase tracking-widest mt-2 text-right">- {item.lastUpdatedBy || "System Admin"}</p>
+                    </div>
+                  )}
                   <div className="rounded-2xl bg-blue-50/50 border border-blue-100 p-4 overflow-hidden">
                     <div className="flex justify-between items-center mb-3"><span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Diagnostic Log & Parts</span><button onClick={() => handleOpenIssueModal(item)} className="text-[9px] font-black text-blue-600 uppercase hover:underline">Edit</button></div>
                     <div className="space-y-2">{item.issues?.slice(0, 2).map((iss, i) => <p key={i} className="text-xs font-bold text-gray-600 line-clamp-1 flex items-center gap-2"><span className="w-1 h-1 bg-blue-400 rounded-full" />{iss.issue}</p>) || <p className="text-xs italic text-gray-400">No log entries</p>}</div>
@@ -458,6 +470,12 @@ export default function Services() {
                              const ss = getSpareStatus(item.parts);
                              return <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border ${ss.color}`}>{ss.label}</span>;
                            })()}
+                           {getMappedStatus(item.serviceStatus || item.status) === "Cancelled" && (
+                             <div className="mt-2 text-left">
+                                <p className="text-[8px] font-black text-red-500 uppercase tracking-widest">Cancelled By: {item.lastUpdatedBy || "System"}</p>
+                                <p className="text-[9px] font-bold text-red-700 truncate max-w-[150px]" title={item.closeReason}>{item.closeReason || "Unknown Reason"}</p>
+                             </div>
+                           )}
                         </td>
                         <td className="px-8 py-6 text-center">
                            <select 
@@ -465,7 +483,12 @@ export default function Services() {
                              onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
                              className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[150px] text-center cursor-pointer outline-none focus:ring-4 focus:ring-black/5 ${getStatusColor(item.serviceStatus || item.status)}`}
                            >
+                             <option value="Cancelled" className="bg-white text-red-500 font-bold uppercase hidden">CANCELLED</option>
                              {STATUS_STEPS.map((step, idx) => {
+                               const mappedStatus = getMappedStatus(item.serviceStatus || item.status);
+                               if (mappedStatus === "Cancelled") {
+                                 return <option key={step} value={step} className="bg-white text-black font-bold uppercase">{step}</option>;
+                               }
                                const currentIdx = STATUS_STEPS.findIndex(s => s.toLowerCase() === (item.serviceStatus || item.status || "Booked").toLowerCase()) || 0;
                                if (idx < currentIdx) return null;
                                return (

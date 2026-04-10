@@ -64,6 +64,11 @@ export default function EmpService() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  const [closeModalVisible, setCloseModalVisible] = useState(false);
+  const [closeReason, setCloseReason] = useState("");
+  const [isClosing, setIsClosing] = useState(false);
+  const [timer, setTimer] = useState(0);
+
   const loadData = async (isSilent = false) => {
     try {
       if (!isSilent) setLoading(true);
@@ -104,6 +109,11 @@ export default function EmpService() {
   };
 
   useEffect(() => { loadData(!!cachedData.globalServices); }, []);
+  
+  useEffect(() => {
+    const interval = setInterval(() => setTimer(t => t + 1), 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const searchedServices = useMemo(() => {
     return services.filter((s) => {
@@ -227,6 +237,7 @@ export default function EmpService() {
 
   const getMappedStatus = (status) => {
     if (!status) return "Booked";
+    if (status.toLowerCase() === "cancelled") return "Cancelled";
     const found = STATUS_STEPS.find(s => s.toLowerCase() === status.toLowerCase());
     return found || "Booked";
   };
@@ -241,6 +252,7 @@ export default function EmpService() {
       case "Bill Pending": return "bg-pink-100 text-pink-700";
       case "Bill Completed": return "bg-cyan-100 text-cyan-700";
       case "Service Completed": return "bg-green-100 text-green-700";
+      case "Cancelled": return "bg-red-100 text-red-700";
       default: return "bg-gray-100 text-gray-700";
     }
   };
@@ -258,6 +270,63 @@ export default function EmpService() {
     } catch (error) {
       toast.error("Failed to update status");
     }
+  };
+
+  const handleCloseBooking = async () => {
+    if (!selectedBooking || !closeReason.trim() || isClosing) return;
+    try {
+      setIsClosing(true);
+      
+      // Auto-reject pending issues and parts
+      const updatedIssues = (selectedBooking.issues || []).map(iss => 
+        iss.issueStatus === 'pending' ? { ...iss, issueStatus: 'rejected' } : iss
+      );
+      const updatedParts = (selectedBooking.parts || []).map(p => 
+        p.status === 'pending' ? { ...p, status: 'rejected' } : p
+      );
+
+      // Save the rejections
+      if (updatedIssues.length > 0) {
+        for (const iss of updatedIssues) {
+          if (iss.id) await api.put(`/all-services/${selectedBooking.id}/issues/${iss.id}`, iss);
+        }
+      }
+      if (updatedParts.length > 0) {
+        await api.post(`/all-services/${selectedBooking.id}/parts`, { parts: updatedParts });
+      }
+
+      await api.put(`/all-services/${selectedBooking.id}/status`, { 
+        serviceStatus: "Cancelled",
+        status: "Cancelled",
+        closeReason: closeReason.trim()
+      });
+      toast.success("Booking closed and items rejected");
+      setCloseModalVisible(false);
+      setCloseReason("");
+      setSelectedBooking(null);
+      loadData();
+    } catch (error) {
+      toast.error("Failed to close booking");
+    } finally {
+      setIsClosing(false);
+    }
+  };
+
+  const getHoursDifference = (dateStr) => {
+    if (!dateStr) return 0;
+    const past = new Date(dateStr);
+    const now = new Date();
+    return Math.floor((now - past) / (1000 * 60 * 60));
+  };
+
+  const getElapsedTime = (dateStr) => {
+    if (!dateStr) return "0h";
+    const past = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - past;
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `${diffHrs}h ${diffMins}m`;
   };
 
   const assignEmployee = async () => {
@@ -468,6 +537,13 @@ export default function EmpService() {
                       })()}
                     </div>
                   </div>
+                  {getMappedStatus(item.serviceStatus || item.status) === "Cancelled" && (
+                    <div className="bg-red-50/50 p-4 rounded-3xl border border-red-100">
+                      <p className="text-[9px] font-black text-red-500 uppercase tracking-widest mb-1">Cancellation Cause</p>
+                      <p className="text-xs font-bold text-red-900">{item.closeReason || "No explicit reason provided"}</p>
+                      <p className="text-[8px] font-black text-red-400 uppercase tracking-widest mt-2 text-right">- {item.lastUpdatedBy || "System Admin"}</p>
+                    </div>
+                  )}
                   <div className="rounded-2xl bg-blue-50/50 border border-blue-100 p-4 overflow-hidden">
                     <div className="flex justify-between items-center mb-3"><span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Diagnostic Log & Parts</span><button onClick={() => handleOpenIssueModal(item)} className="text-[9px] font-black text-blue-600 uppercase hover:underline">Edit</button></div>
                     <div className="space-y-2">{item.issues?.slice(0, 2).map((iss, i) => <p key={i} className="text-xs font-bold text-gray-600 line-clamp-1 flex items-center gap-2"><span className="w-1 h-1 bg-blue-400 rounded-full" />{iss.issue}</p>) || <p className="text-xs italic text-gray-400">No log entries</p>}</div>
@@ -485,6 +561,15 @@ export default function EmpService() {
                   )}
                   <button onClick={() => handleOpenIssueModal(item)} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all border border-transparent hover:border-amber-100" title="Edit Log & Parts"><FaEdit className="mr-2" /> Log</button>
                   <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-black text-white hover:bg-emerald-600 transition-all border border-transparent" title="Generate Bill"><FaFileInvoice className="mr-2" /> Bill</button>
+                  {getMappedStatus(item.serviceStatus || item.status) === "Waiting for Spare" && (
+                    <button 
+                      onClick={() => { setSelectedBooking(item); setCloseModalVisible(true); }} 
+                      className="h-11 flex-1 flex flex-col justify-center items-center rounded-xl bg-red-50 text-red-500 hover:bg-red-600 hover:text-white transition-all border border-red-100 group/close"
+                    >
+                      <span className="text-[9px] font-black uppercase tracking-widest">No Response</span>
+                      <span className="text-[8px] font-bold opacity-70 group-hover/close:opacity-100">{getElapsedTime(item.updatedAt || item.updated_at)}</span>
+                    </button>
+                  )}
                   <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-11 w-11 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100" title="View Details"><FaEye /></button>
                 </div>
               </div>
@@ -543,6 +628,12 @@ export default function EmpService() {
                              const ss = getSpareStatus(item.parts);
                              return <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border ${ss.color}`}>{ss.label}</span>;
                            })()}
+                           {getMappedStatus(item.serviceStatus || item.status) === "Cancelled" && (
+                             <div className="mt-2 text-left">
+                                <p className="text-[8px] font-black text-red-500 uppercase tracking-widest">Cancelled By: {item.lastUpdatedBy || "System"}</p>
+                                <p className="text-[9px] font-bold text-red-700 truncate max-w-[150px]" title={item.closeReason}>{item.closeReason || "Unknown Reason"}</p>
+                             </div>
+                           )}
                         </td>
                         <td className="px-8 py-6 text-center">
                            <select 
@@ -550,7 +641,12 @@ export default function EmpService() {
                              onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
                              className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[150px] text-center cursor-pointer outline-none focus:ring-4 focus:ring-black/5 ${getStatusColor(item.serviceStatus || item.status)}`}
                            >
+                             <option value="Cancelled" className="bg-white text-red-500 font-bold uppercase hidden">CANCELLED</option>
                              {STATUS_STEPS.map((step, idx) => {
+                               const mappedStatus = getMappedStatus(item.serviceStatus || item.status);
+                               if (mappedStatus === "Cancelled") {
+                                 return <option key={step} value={step} className="bg-white text-black font-bold uppercase">{step}</option>;
+                               }
                                const currentIdx = STATUS_STEPS.findIndex(s => s.toLowerCase() === (item.serviceStatus || item.status || "Booked").toLowerCase()) || 0;
                                if (idx < currentIdx) return null;
                                return (
@@ -561,14 +657,22 @@ export default function EmpService() {
                         </td>
                         <td className="px-8 py-6 text-left">
                           <div className="flex justify-end gap-2">
-                            {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
-                              <button onClick={() => navigate(`${pathPrefix}/addserviceparts`, { state: { service: item } })} className="h-10 px-4 bg-emerald-500 text-white hover:bg-emerald-900 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Add Parts">Parts</button>
+                          
+                           {getMappedStatus(item.serviceStatus || item.status) === "Waiting for Spare" && (
+                              <button 
+                                onClick={() => { setSelectedBooking(item); setCloseModalVisible(true); }} 
+                                className="h-10 px-4 bg-red-100 text-red-600 hover:bg-red-600 hover:text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center leading-tight group/btn"
+                              >
+                                <span className={getHoursDifference(item.updatedAt || item.updated_at) >= 72 ? "text-red-700 group-hover/btn:text-white" : ""}>
+                                  {getHoursDifference(item.updatedAt || item.updated_at) >= 72 ? "Time Out" : "No Response"}
+                                </span>
+                                <span className="text-[7px] font-bold opacity-60 group-hover/btn:opacity-100">{getElapsedTime(item.updatedAt || item.updated_at)}</span>
+                              </button>
                             )}
-                           
                            
                             <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-900 text-gray-400 hover:bg-amber-50 hover:text-amber-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
                             <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-10 px-4 bg-black text-white hover:bg-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2" title="Generate Bill"><FaFileInvoice /> Bill</button>
-
+                            
                           </div>
                         </td>
                       </tr>
@@ -630,9 +734,19 @@ export default function EmpService() {
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
                           <input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Amt" className="w-full pl-6 pr-3 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black" />
                         </div>
-                        <div className="w-28 text-center">
-                          <span className={`text-[9px] font-black uppercase tracking-widest ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500"}`}>{entry.issueStatus || "pending"}</span>
-                        </div>
+                        <select 
+                          value={entry.issueStatus || "pending"} 
+                          onChange={(e) => { 
+                            const copy = [...issueEntries]; 
+                            copy[idx] = { ...copy[idx], issueStatus: e.target.value }; 
+                            setIssueEntries(copy); 
+                          }}
+                          className={`text-[9px] font-black uppercase tracking-widest bg-transparent outline-none cursor-pointer border-b-2 border-transparent focus:border-black transition-all ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500"}`}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="approved">Approved</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
                         <button onClick={() => { const copy = [...issueEntries]; copy.splice(idx, 1); setIssueEntries(copy); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><FaTimes size={12} /></button>
                       </div>
                     ))}
@@ -677,9 +791,19 @@ export default function EmpService() {
                              <input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-5 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black" />
                            </div>
                         </div>
-                        <div className="w-28 text-center">
-                           <span className={`text-[9px] font-black uppercase tracking-widest ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500"}`}>{part.status || "pending"}</span>
-                        </div>
+                        <select 
+                          value={part.status || "pending"} 
+                          onChange={(e) => { 
+                            const copy = [...editingParts]; 
+                            copy[idx] = { ...copy[idx], status: e.target.value }; 
+                            setEditingParts(copy); 
+                          }}
+                          className={`text-[9px] font-black uppercase tracking-widest bg-transparent outline-none cursor-pointer border-b-2 border-transparent focus:border-black transition-all ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500"}`}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="approved">Approved</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
                         <button onClick={() => { const copy = [...editingParts]; copy.splice(idx, 1); setEditingParts(copy); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><FaTimes size={12} /></button>
                       </div>
                     ))}
@@ -724,6 +848,52 @@ export default function EmpService() {
                     loadData();
                   } catch (error) { toast.error('Failed to save items'); }
                 }} className="flex-1 rounded-xl bg-black text-white text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all shadow-xl shadow-black/10">Save Spares & Issues</button>
+              </div>
+            </div>
+          </div>
+        )}
+        {closeModalVisible && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200">
+              <div className="mb-6 text-center">
+                <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-100 text-red-500">
+                  <FaTimes size={24} />
+                </div>
+                <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Close Booking</h2>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">Provide reason for closing this service</p>
+                {selectedBooking && getHoursDifference(selectedBooking.updatedAt || selectedBooking.updated_at) >= 72 && (
+                  <p className="mt-2 text-[10px] text-red-500 font-bold uppercase tracking-widest bg-red-50 py-1 px-3 rounded-full inline-block">72+ Hours since last update</p>
+                )}
+              </div>
+              <div className="mb-6 space-y-4">
+                <div>
+                  <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-2 block">Closing Reason</label>
+                  <textarea 
+                    value={closeReason} 
+                    onChange={(e) => setCloseReason(e.target.value)} 
+                    placeholder="e.g. Customer not approved spare parts / No response after 72 hours" 
+                    className="w-full min-h-[100px] rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs font-bold text-gray-800 focus:bg-white focus:border-red-500 outline-none transition-all resize-none"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button onClick={() => setCloseReason("Customer not approve spare part")} className="px-3 py-1.5 rounded-lg bg-gray-50 text-[9px] font-black uppercase tracking-widest text-gray-500 hover:bg-gray-100">Not Approved</button>
+                  <button onClick={() => setCloseReason("No response from customer after 72 hours")} className="px-3 py-1.5 rounded-lg bg-gray-50 text-[9px] font-black uppercase tracking-widest text-gray-500 hover:bg-gray-100">No Response (72h)</button>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => { setCloseModalVisible(false); setCloseReason(""); setSelectedBooking(null); }} 
+                  className="flex-1 rounded-xl bg-gray-100 py-3 text-[10px] font-black text-gray-500 uppercase tracking-widest hover:bg-gray-200 transition-all font-bold"
+                >
+                  Back
+                </button>
+                <button 
+                  onClick={handleCloseBooking} 
+                  disabled={isClosing || !closeReason.trim()} 
+                  className="flex-1 rounded-xl bg-red-600 py-3 text-[10px] font-black text-white uppercase tracking-widest hover:bg-red-700 transition-all disabled:opacity-20 shadow-lg shadow-red-200 font-bold"
+                >
+                  {isClosing ? "Closing..." : "Close Booking"}
+                </button>
               </div>
             </div>
           </div>

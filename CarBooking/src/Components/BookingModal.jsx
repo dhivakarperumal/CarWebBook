@@ -26,7 +26,7 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
           className="
             absolute top-3 right-3 sm:top-4 sm:right-4
             text-gray-400 hover:text-white
-            text-xl
+            text-xl cursor-pointer
           "
         >
           ✕
@@ -131,7 +131,7 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
                             "approved"
                           )
                         }
-                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition"
+                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
                       >
                         Approve
                       </button>
@@ -144,7 +144,7 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
                             "rejected"
                           )
                         }
-                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition"
+                        className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
                       >
                         Reject
                       </button>
@@ -185,13 +185,13 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
                       <div className="flex gap-2 mt-3">
                         <button
                           onClick={() => onApprove(booking.serviceId, issueEntry.id, 'approved', 'issue')}
-                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition"
+                          className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
                         >
                           Approve
                         </button>
                         <button
                           onClick={() => onApprove(booking.serviceId, issueEntry.id, 'rejected', 'issue')}
-                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition"
+                          className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
                         >
                           Reject
                         </button>
@@ -213,13 +213,13 @@ const BookingModal = ({ booking, spareParts, onClose, onApprove }) => {
                   <div className="flex gap-2 mt-3">
                     <button
                       onClick={() => onApprove(booking.serviceId, null, 'approved', 'issue')}
-                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition"
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
                     >
                       Approve
                     </button>
                     <button
                       onClick={() => onApprove(booking.serviceId, null, 'rejected', 'issue')}
-                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition"
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-xs font-semibold transition cursor-pointer"
                     >
                       Reject
                     </button>

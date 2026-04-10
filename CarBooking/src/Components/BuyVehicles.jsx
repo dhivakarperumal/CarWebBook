@@ -296,7 +296,7 @@ const BuyVehicles = () => {
               </div>
               <button
                 onClick={closeModal}
-                className="text-gray-400 hover:text-white hover:bg-white/10 p-3 rounded-full transition"
+                className="text-gray-400 hover:text-white hover:bg-white/10 p-3 rounded-full transition cursor-pointer"
               >
                 <FaTimes size={24} />
               </button>
@@ -677,14 +677,14 @@ const BuyVehicles = () => {
                 <>
                   <button
                     onClick={closeModal}
-                    className="flex-1 py-3 rounded-lg border border-gray-600 text-white hover:bg-white/10 transition font-semibold text-lg"
+                    className="flex-1 py-3 rounded-lg border border-gray-600 text-white hover:bg-white/10 transition font-semibold text-lg cursor-pointer"
                   >
                     Close
                   </button>
                   <button
                     onClick={() => handleBuyNow(selectedVehicle)}
                     disabled={bookingInProgress === selectedVehicle.id}
-                    className="flex-1 py-3 rounded-lg bg-gradient-to-r from-sky-500 to-cyan-500 text-white hover:scale-105 transition font-semibold text-lg shadow-lg shadow-sky-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 py-3 rounded-lg bg-gradient-to-r from-sky-500 to-cyan-500 text-white hover:scale-105 transition font-semibold text-lg shadow-lg shadow-sky-500/50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     {bookingInProgress === selectedVehicle.id
                       ? "Processing..."

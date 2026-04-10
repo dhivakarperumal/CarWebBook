@@ -218,7 +218,7 @@ const AllOrders = () => {
   /* ================= PRINT ================= */
   const printOrder = async (orderSummary) => {
     let o = orderSummary;
-    
+
     try {
       toast.loading("Preparing invoice...", { id: "print-load" });
       const res = await api.get(`/orders/${orderSummary.id}`);
@@ -353,27 +353,34 @@ const AllOrders = () => {
           </table>
 
           <div class="footer-grid">
-            <div class="notes">
-              <h4>Terms & Conditions</h4>
-              <p>1. Please keep this invoice for any warranty claims.<br/>
-                 2. Warranty is applicable only on selected spare parts as per manufacturer policy.<br/>
-                 3. This is a computer-generated document and does not require a physical signature.</p>
-            </div>
-            <div class="total-section">
-              <div class="total-row">
-                <span>SUBTOTAL</span>
-                <span>₹ ${Number(o.subtotal || o.total || 0).toLocaleString("en-IN")}</span>
-              </div>
-              <div class="total-row">
-                <span>ESTIMATED TAX (GST 0%)</span>
-                <span>₹ 0.00</span>
-              </div>
-              <div class="total-row grand">
-                <span>TOTAL</span>
-                <span>₹ ${Number(o.total || 0).toLocaleString("en-IN")}</span>
-              </div>
-            </div>
-          </div>
+  
+  <div class="notes">
+    <h4 style="margin: 0 0 6px 0;">Terms & Conditions</h4>
+    <p style="margin: 0; font-size: 12px; line-height: 1.5;">
+      1. Please keep this invoice for any warranty claims.<br/>
+      2. Warranty is applicable only on selected spare parts as per manufacturer policy.<br/>
+      3. This is a computer-generated document and does not require a physical signature.
+    </p>
+  </div>
+
+  <div class="total-section">
+    <div class="total-row">
+      <span>SUBTOTAL</span>
+      <span>₹ ${Number(o.subtotal || o.total || 0).toLocaleString("en-IN")}</span>
+    </div>
+
+    <div class="total-row">
+      <span>ESTIMATED TAX (GST 0%)</span>
+      <span>₹ 0.00</span>
+    </div>
+
+    <div class="total-row grand">
+      <span><strong>TOTAL</strong></span>
+      <span><strong>₹ ${Number(o.total || 0).toLocaleString("en-IN")}</strong></span>
+    </div>
+  </div>
+
+</div>
 
           <div style="margin-top: 80px; text-align: center; border-top: 1px dashed #e2e8f0; padding-top: 20px;">
             <p style="font-size: 12px; font-weight: 900; color: #0f172a; margin: 0;">THANK YOU FOR YOUR TRUST!</p>
@@ -525,8 +532,8 @@ const AllOrders = () => {
             <button
               onClick={() => setView("table")}
               className={`px-3 py-2 transition ${view === "table"
-                  ? "bg-black text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-100"
+                ? "bg-black text-white"
+                : "bg-white text-gray-600 hover:bg-gray-100"
                 }`}
             >
               <FaList />
@@ -534,8 +541,8 @@ const AllOrders = () => {
             <button
               onClick={() => setView("grid")}
               className={`px-3 py-3 transition ${view === "grid"
-                  ? "bg-black text-white"
-                  : "bg-white text-gray-600 hover:bg-gray-100"
+                ? "bg-black text-white"
+                : "bg-white text-gray-600 hover:bg-gray-100"
                 }`}
             >
               <FaThLarge />
@@ -550,7 +557,7 @@ const AllOrders = () => {
         <div className="bg-white rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden group/container">
           <div className="overflow-x-auto">
             <table className="w-full text-sm whitespace-nowrap border-separate border-spacing-0">
-              <thead className="text-white relative">
+              <thead className="bg-[#020617] text-white relative">
                 <tr className="relative z-10">
                   <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90 first:rounded-tl-[2rem]">Order ID</th>
                   <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
@@ -563,18 +570,18 @@ const AllOrders = () => {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {paginatedOrders.map((o) => (
-                  <tr 
-                    key={o.id} 
+                  <tr
+                    key={o.id}
                     className="hover:bg-slate-50/80 transition-all duration-300 group/row"
                   >
-                    <td 
-                      onClick={() => navigate(`/admin/orders/${o.id}`)} 
+                    <td
+                      onClick={() => navigate(`/admin/orders/${o.id}`)}
                       className="px-6 py-5 font-black text-slate-400 group-hover/row:text-cyan-600 cursor-pointer transition-colors"
                     >
                       #{o.orderId}
                     </td>
-                    <td 
-                      onClick={() => navigate(`/admin/orders/${o.id}`)} 
+                    <td
+                      onClick={() => navigate(`/admin/orders/${o.id}`)}
                       className="px-6 py-5 cursor-pointer"
                     >
                       <div className="font-bold text-slate-800 tracking-tight group-hover/row:translate-x-1 transition-transform">{o.customerName || o.shippingName || "-"}</div>
@@ -605,18 +612,18 @@ const AllOrders = () => {
                               ? 0
                               : ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status))
                           )
-                          .filter(s => {
-                            const current = normalizeKey(o.status);
-                            if (current === "outfordelivery" || current === "delivered") {
-                              return s.id !== "cancelled";
-                            }
-                            return true;
-                          })
-                          .map((s) => (
-                            <option key={s.id} value={s.id}>
-                              {s.label}
-                            </option>
-                          ))}
+                            .filter(s => {
+                              const current = normalizeKey(o.status);
+                              if (current === "outfordelivery" || current === "delivered") {
+                                return s.id !== "cancelled";
+                              }
+                              return true;
+                            })
+                            .map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.label}
+                              </option>
+                            ))}
                         </select>
                       </div>
                     </td>
@@ -698,8 +705,8 @@ const AllOrders = () => {
               <div className="flex items-center justify-between">
                 <span
                   className={`text-xs font-semibold px-2 py-0.5 rounded-full ${o.paymentStatus === "paid"
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-amber-100 text-amber-700"
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-amber-100 text-amber-700"
                     }`}
                 >
                   {o.paymentStatus}
@@ -724,18 +731,18 @@ const AllOrders = () => {
                         ? 0
                         : ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status))
                     )
-                    .filter(s => {
-                      const current = normalizeKey(o.status);
-                      if (current === "outfordelivery" || current === "delivered") {
-                        return s.id !== "cancelled";
-                      }
-                      return true;
-                    })
-                    .map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.label}
-                      </option>
-                    ))}
+                      .filter(s => {
+                        const current = normalizeKey(o.status);
+                        if (current === "outfordelivery" || current === "delivered") {
+                          return s.id !== "cancelled";
+                        }
+                        return true;
+                      })
+                      .map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.label}
+                        </option>
+                      ))}
                   </select>
                 </div>
 
@@ -758,7 +765,7 @@ const AllOrders = () => {
       )}
 
       {/* ================= PAGINATION ================= */}
-      <Pagination 
+      <Pagination
         currentPage={currentPage}
         totalPages={totalPages}
         onPageChange={setCurrentPage}

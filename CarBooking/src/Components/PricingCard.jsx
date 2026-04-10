@@ -50,11 +50,11 @@ export default function PricingCard({ pkg }) {
 
         {/* CTA */}
         <button
-          onClick={() => navigate("/bookservice")}
+          onClick={() => navigate("/bookservice", { state: { selectedPackage: pkg } })}
           className="mt-auto w-full py-2 sm:py-3 text-[10px] sm:text-sm rounded-xl font-semibold text-black
           bg-gradient-to-r from-sky-400 to-cyan-300
           hover:from-sky-300 hover:to-cyan-200
-          transition-all duration-300 shadow-lg shadow-sky-500/30"
+          transition-all duration-300 shadow-lg shadow-sky-500/30 cursor-pointer"
         >
           Book Now →
         </button>

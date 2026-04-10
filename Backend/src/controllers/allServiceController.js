@@ -80,10 +80,26 @@ exports.getPartsByBookingId = async (req, res) => {
 /* �🔄 UPDATE STATUS */
 exports.updateServiceStatus = async (req, res) => {
   const { id } = req.params;
-  const { serviceStatus } = req.body;
+  const { serviceStatus, closeReason, employeeName } = req.body;
   try {
+    // Ensure all_services table has necessary columns
+    const [columns] = await db.query('SHOW COLUMNS FROM all_services');
+    const colNames = columns.map(c => c.Field);
+
+    if (!colNames.includes('closeReason')) {
+      await db.query("ALTER TABLE all_services ADD COLUMN closeReason TEXT NULL");
+      console.log('✅ Added missing column all_services.closeReason');
+    }
+    if (!colNames.includes('lastUpdatedBy')) {
+      await db.query("ALTER TABLE all_services ADD COLUMN lastUpdatedBy VARCHAR(255) NULL");
+      console.log('✅ Added missing column all_services.lastUpdatedBy');
+    }
+
     // 1. Update service status
-    await db.query('UPDATE all_services SET serviceStatus = ? WHERE id = ?', [serviceStatus, id]);
+    await db.query(
+      'UPDATE all_services SET serviceStatus = ?, closeReason = ?, lastUpdatedBy = ?, updatedAt = NOW() WHERE id = ?', 
+      [serviceStatus, closeReason || null, employeeName || null, id]
+    );
     
     // 2. Map service status to booking status for consistency
     let bookingStatus = serviceStatus;
@@ -93,11 +109,25 @@ exports.updateServiceStatus = async (req, res) => {
     // 3. Update bookings table if linked
     const [service] = await db.query('SELECT bookingDocId, uid FROM all_services WHERE id = ?', [id]);
     if (service.length && service[0].bookingDocId) {
-       await db.query('UPDATE bookings SET status = ? WHERE id = ?', [bookingStatus, service[0].bookingDocId]);
+       // Also ensure bookings table has closeReason and updatedAt
+       const [bookingCols] = await db.query('SHOW COLUMNS FROM bookings');
+       const bkColNames = bookingCols.map(c => c.Field);
+       if (!bkColNames.includes('closeReason')) {
+         await db.query("ALTER TABLE bookings ADD COLUMN closeReason TEXT NULL");
+       }
+       if (!bkColNames.includes('updatedAt')) {
+         await db.query("ALTER TABLE bookings ADD COLUMN updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+       }
+
+       await db.query(
+         'UPDATE bookings SET status = ?, closeReason = ?, updatedAt = NOW() WHERE id = ?', 
+         [bookingStatus, closeReason || null, service[0].bookingDocId]
+       );
     }
 
     res.json({ message: 'Status updated' });
   } catch (err) {
+    console.error(`❌ [updateServiceStatus] Error:`, err);
     res.status(500).json({ message: 'Error updating status', error: err.message });
   }
 };

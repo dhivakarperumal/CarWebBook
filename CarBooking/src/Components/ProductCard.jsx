@@ -257,7 +257,7 @@ export default function ProductCard({ product }) {
 
             md:bg-transparent md:border md:border-sky-400/40
             md:hover:bg-gradient-to-r md:hover:from-sky-500 md:hover:to-cyan-400
-            md:hover:text-black transition-all"
+            md:hover:text-black transition-all cursor-pointer"
           >
             View →
           </button>

@@ -4,7 +4,7 @@ import { Car, ArrowLeft, CheckCircle } from "lucide-react";
 import api from "../../api";
 import toast from "react-hot-toast";
 
-const VEHICLE_TYPES = ["Two Wheeler", "Four Wheeler", "Three Wheeler", "Heavy Vehicle"];
+const VEHICLE_TYPES = ["Car", "Bike"];
 
 const ISSUE_OPTIONS = [
   "Engine Problem",
@@ -45,7 +45,7 @@ const AddServiceVehicle = () => {
     phone: "",
     email: "",
     address: "",
-    vehicleType: "",
+    vehicleType: "Car",
     vehicleNumber: "",
     brand: "",
     model: "",
@@ -81,7 +81,6 @@ const AddServiceVehicle = () => {
 
     const now = new Date();
     const serviceData = {
-      bookingId: `BKG${now.getTime()}`, // Generate unique ID
       uid: "admin-created",
       name: form.name,
       phone: form.phone,
@@ -106,7 +105,7 @@ const AddServiceVehicle = () => {
       
       // 1. Create Booking
       const bookRes = await api.post("/bookings/create", serviceData);
-      const bookingId = serviceData.bookingId;
+      const bookingId = bookRes.data.bookingId;
 
       // 2. Automatically Create User Account (ignore error if already exists)
       if (form.email && form.phone) {
@@ -135,39 +134,7 @@ const AddServiceVehicle = () => {
     }
   };
 
-  /* ===== SUCCESS STATE ===== */
-  if (success) {
-    return (
-      <section className="relative py-24 bg-black text-white overflow-hidden">
-        <div className="relative max-w-6xl mx-auto">
-          <div className="min-h-[60vh] flex flex-col items-center justify-center gap-6 p-8">
-        <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center">
-          <CheckCircle className="w-10 h-10 text-emerald-500" />
-        </div>
-        <div className="text-center">
-          <h2 className="text-xl font-bold text-gray-800 mb-1">Service Vehicle Added!</h2>
-          <p className="text-gray-500 text-sm mb-1">Booking ID</p>
-          <span className="text-2xl font-extrabold text-sky-600">{success}</span>
-        </div>
-        <div className="flex gap-3 flex-wrap justify-center">
-          <button
-            onClick={() => { setSuccess(null); setForm({ name: "", phone: "", email: "", address: "", vehicleType: "", vehicleNumber: "", brand: "", model: "", issue: "", otherIssue: "" }); }}
-            className="px-6 py-3 rounded-xl bg-gradient-to-r from-black to-cyan-400 text-white font-semibold text-sm hover:opacity-90 transition"
-          >
-            Add Another
-          </button>
-          <button
-            onClick={() => navigate("/admin/bookings")}
-            className="px-6 py-3 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition"
-          >
-            View All Bookings
-          </button>
-        </div>
-      </div>
-    </div>
-  </section>
-    );
-  }
+  /* ===== SUCCESS STATE (Moved to popup below) ===== */
 
   /* ===== FORM ===== */
   return (
@@ -317,6 +284,37 @@ shadow-lg shadow-sky-500/40 disabled:opacity-50 disabled:cursor-not-allowed"
         </div>
       </form>
     </div>
+
+    {/* SUCCESS POPUP OVERLAY */}
+    {success && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full flex flex-col items-center text-center transform transition-all scale-100">
+          <div className="w-20 h-20 rounded-full bg-emerald-50 flex items-center justify-center mb-6 shadow-inner">
+            <CheckCircle className="w-10 h-10 text-emerald-500" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Success!</h2>
+          <p className="text-gray-500 text-sm mb-1">Service Vehicle Added</p>
+          <p className="text-gray-500 text-sm mb-4">
+            Booking ID: <span className="text-lg font-extrabold text-sky-600 ml-1">{success}</span>
+          </p>
+          
+          <div className="flex flex-col gap-3 w-full mt-2">
+            <button
+              onClick={() => { setSuccess(null); setForm({ name: "", phone: "", email: "", address: "", vehicleType: "", vehicleNumber: "", brand: "", model: "", issue: "", otherIssue: "" }); }}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-black to-cyan-400 text-white font-semibold text-sm hover:scale-105 transition-transform shadow-lg shadow-cyan-500/30"
+            >
+              Add Another
+            </button>
+            <button
+              onClick={() => navigate("/admin/bookings")}
+              className="w-full py-3 rounded-xl border border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50 transition-colors"
+            >
+              View All Bookings
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
   </section>
   );
 };
