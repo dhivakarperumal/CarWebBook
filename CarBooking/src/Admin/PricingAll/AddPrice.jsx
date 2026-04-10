@@ -10,6 +10,7 @@ const PricingForm = () => {
 
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
+  const [place, setPlace] = useState("home");
   const [features, setFeatures] = useState([""]);
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -25,12 +26,13 @@ const PricingForm = () => {
 
         setTitle(data.title || "");
         setPrice(data.price || "");
+        setPlace(data.place || "home");
         setFeatures(data.features?.length ? data.features : [""]);
         setEditId(id);
       } catch (err) {
         console.error(err);
         toast.error("Package not found");
-        navigate("/admin/pricing");
+        navigate("/admin/priceslist");
       }
     };
 
@@ -54,6 +56,7 @@ const PricingForm = () => {
   const resetForm = () => {
     setTitle("");
     setPrice("");
+    setPlace("home");
     setFeatures([""]);
     setEditId(null);
   };
@@ -84,16 +87,18 @@ const PricingForm = () => {
         await api.put(`/pricing_packages/${editId}`, {
           title: title.trim(),
           price: Number(price),
+          place,
           features: cleanFeatures,
         });
 
         toast.success("Package updated");
-        navigate("/admin/pricing");
+        navigate("/admin/priceslist");
       } else {
         /* ➕ ADD */
         await api.post("/pricing_packages", {
           title: title.trim(),
           price: Number(price),
+          place,
           features: cleanFeatures,
         });
 
@@ -117,6 +122,30 @@ const PricingForm = () => {
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+
+          {/* Service Place */}
+          <div className="flex gap-6 pt-2">
+            <label className="flex items-center gap-2 cursor-pointer text-gray-800">
+              <input
+                type="radio"
+                value="home"
+                checked={place === "home"}
+                onChange={() => setPlace("home")}
+                className="accent-black w-5 h-5"
+              />
+              <span className="font-bold">Home Service</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer text-gray-800">
+              <input
+                type="radio"
+                value="shop"
+                checked={place === "shop"}
+                onChange={() => setPlace("shop")}
+                className="accent-black w-5 h-5"
+              />
+              <span className="font-bold">Shop Service</span>
+            </label>
+          </div>
 
           {/* Title + Price */}
           <div className="grid md:grid-cols-2 gap-5">
@@ -178,7 +207,7 @@ const PricingForm = () => {
           <div className="flex justify-end gap-3">
             <button
               type="button"
-              onClick={() => navigate("/admin/pricing")}
+              onClick={() => navigate("/admin/priceslist")}
               className="px-6 py-2 border border-gray-300 rounded-md"
             >
               Back
