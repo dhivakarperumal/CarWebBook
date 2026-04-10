@@ -76,7 +76,7 @@ const EmpCompletedHistory = () => {
       const filtered = (servRes.data || []).filter(s => {
           const isMine = (s.assignedEmployeeName || "").toLowerCase() === mechanicName;
           const sStat = (s.serviceStatus || s.status || "").toLowerCase();
-          const isDone = sStat.includes("completed") || sStat === "bill completed";
+          const isDone = sStat === "bill completed";
           return isMine && isDone;
       }).map(s => {
         // Try to find the bill amount using all available IDs
