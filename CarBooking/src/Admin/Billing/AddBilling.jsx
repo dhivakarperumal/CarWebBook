@@ -315,43 +315,67 @@ const AddBillings = () => {
           {/* CUSTOMER / SERVICE SELECTION */}
           <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-black/5 border border-gray-50 overflow-hidden transition-all duration-500">
             <div className="p-8">
-              {activeTab === "online" && !isEditMode ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-slideUp">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Quick Search</label>
-                    <div className="relative group">
-                      <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-colors" />
-                      <input
-                        placeholder="Search Booking ID / Phone / Customer..."
-                        className="w-full pl-14 pr-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 font-bold text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                      />
+               {activeTab === "online" && !isEditMode ? (
+                <div className="space-y-6 animate-slideUp">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Quick Search</label>
+                      <div className="relative group">
+                        <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-colors" />
+                        <input
+                          placeholder="Search Booking ID / Phone / Customer..."
+                          className="w-full pl-14 pr-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 font-bold text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
+                          value={search}
+                          onChange={(e) => setSearch(e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Verification Queue</label>
+                      <select
+                        className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 font-black text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all cursor-pointer appearance-none shadow-sm"
+                        value={selectedService?.id || ""}
+                        onChange={(e) => {
+                          const s = services.find(srv => String(srv.id) === String(e.target.value));
+                          if (s) selectService(s);
+                          else { setSelectedService(null); setParts([]); setIssues([]); }
+                        }}
+                      >
+                        <option value="" className="text-gray-400 italic">-- Select Assigned Job --</option>
+                        {services
+                          .filter(s => `${s.bookingId} ${s.name} ${s.phone} ${s.brand} ${s.model}`.toLowerCase().includes(search.toLowerCase()))
+                          .map(s => (
+                            <option key={s.id} value={s.id}>
+                              {s.bookingId} | {s.name.toUpperCase()}
+                            </option>
+                          ))
+                        }
+                      </select>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Verification Queue</label>
-                    <select
-                      className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 font-black text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all cursor-pointer appearance-none shadow-sm"
-                      value={selectedService?.id || ""}
-                      onChange={(e) => {
-                        const s = services.find(srv => String(srv.id) === String(e.target.value));
-                        if (s) selectService(s);
-                        else { setSelectedService(null); setParts([]); setIssues([]); }
-                      }}
-                    >
-                      <option value="" className="text-gray-400 italic">-- Select Assigned Job --</option>
-                      {services
-                        .filter(s => `${s.bookingId} ${s.name} ${s.phone} ${s.brand} ${s.model}`.toLowerCase().includes(search.toLowerCase()))
-                        .map(s => (
-                          <option key={s.id} value={s.id}>
-                            {s.bookingId} | {s.name.toUpperCase()}
-                          </option>
-                        ))
-                      }
-                    </select>
-                  </div>
+                  {selectedService && (
+                    <div className="p-6 bg-gray-900 rounded-3xl text-white border border-gray-800 animate-fadeIn shadow-2xl shadow-black/20">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="space-y-1">
+                          <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Customer Identity</p>
+                          <p className="text-sm font-black text-white">{selectedService.name}</p>
+                          <p className="text-[10px] font-bold text-gray-400 tracking-widest">{selectedService.phone}</p>
+                        </div>
+                        <div className="space-y-1 border-l-0 md:border-l border-white/10 md:pl-6">
+                          <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Vehicle Specification</p>
+                          <p className="text-sm font-black text-white uppercase">{selectedService.brand} {selectedService.model}</p>
+                          <p className="text-[10px] font-black text-emerald-400 tracking-widest">{selectedService.registrationNumber}</p>
+                        </div>
+                        <div className="space-y-1 border-l-0 md:border-l border-white/10 md:pl-6">
+                          <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.2em]">Operational ID</p>
+                          <p className="text-sm font-black text-blue-400">{selectedService.bookingId}</p>
+                          <p className="text-[10px] font-bold text-gray-400 tracking-widest uppercase">Assigned Service</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-6 animate-slideUp">
