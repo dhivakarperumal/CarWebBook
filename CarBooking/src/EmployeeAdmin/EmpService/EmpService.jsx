@@ -293,16 +293,106 @@ export default function EmpService() {
     setIssueModalVisible(true);
   };
 
-  if (loading) return <div className="flex h-64 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div></div>;
+  /* ================= PRINT SERVICE ================= */
+  const printService = async (item) => {
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    const date = new Date(item.created_at || item.createdAt).toLocaleDateString("en-IN");
+
+    doc.write(`
+      <html>
+        <head>
+          <title>Service Protocol - ${item.bookingId || item.id}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+            body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
+            .header { display: flex; justify-content: space-between; border-bottom: 2px solid #0f172a; padding-bottom: 20px; margin-bottom: 30px; }
+            .logo img { height: 50px; }
+            .protocol-title { text-align: right; }
+            .protocol-title h1 { margin: 0; font-size: 24px; font-weight: 900; color: #0f172a; text-transform: uppercase; }
+            
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 40px; padding: 20px; background: #f8fafc; border-radius: 12px; }
+            .block h4 { margin: 0 0 8px 0; color: #64748b; text-transform: uppercase; font-size: 10px; font-weight: 900; letter-spacing: 1px; }
+            .block p { margin: 0; font-weight: 700; font-size: 13px; color: #0f172a; }
+
+            .diagnostic-section { background: #fff; padding: 0; margin-bottom: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+            .diagnostic-section h3 { margin: 0 0 15px 0; font-size: 14px; font-weight: 900; text-transform: uppercase; color: #0f172a; }
+            .issue-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: #334155; }
+            .dot { width: 6px; height: 6px; background: #0f172a; border-radius: 50%; }
+
+            .tech-info { margin-top: 40px; padding: 20px; border: 1px dashed #cbd5e1; border-radius: 12px; }
+            .footer { margin-top: 60px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 20px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo"><img src="/logo_no_bg.png" /></div>
+            <div class="protocol-title">
+              <h1>SERVICE PROTOCOL</h1>
+              <p style="margin:4px 0 0 0; font-weight:700; color:#64748b; font-size:12px;">ID: ${item.bookingId || "NEW"}</p>
+            </div>
+          </div>
+
+          <div class="info-grid">
+            <div class="block">
+              <h4>Customer Details</h4>
+              <p>${item.name}</p>
+              <p style="font-weight:400; color:#64748b; font-size:11px;">${item.phone}</p>
+            </div>
+            <div class="block" style="text-align: right">
+              <h4>Vehicle Information</h4>
+              <p>${item.brand} ${item.model}</p>
+              <p style="font-weight:400; color:#64748b; font-size:11px;">REG: ${item.vehicleNumber || "N/A"}</p>
+            </div>
+          </div>
+
+          <div class="diagnostic-section">
+            <h3>Technical Diagnostic Report</h3>
+            ${item.issues?.length > 0 ? item.issues.map(iss => `
+              <div class="issue-item"><span class="dot"></span> ${iss.issue}</div>
+            `).join("") : `<p style="font-size:12px; color:#64748b;">System diagnostic: Routine review - no critical faults logged.</p>`}
+          </div>
+
+          <div class="tech-info">
+             <h4>Chief Technician</h4>
+             <p>${item.assignedEmployeeName || userProfile?.displayName || "Technical Team"}</p>
+             <p style="margin-top: 5px; font-size: 10px; color: #64748b;">(Verified by Electronic Signature)</p>
+          </div>
+
+          <div class="footer">
+            <p>Certified Service Report generated on ${date}.</p>
+            <p style="font-weight:900; color:#0f172a; margin-top:10px; font-size: 12px;">CARBOOKING HUB AUTOMOTIVE</p>
+          </div>
+        </body>
+      </html>
+    `);
+
+    doc.close();
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => { document.body.removeChild(iframe); }, 1000);
+    }, 500);
+  };
+
+  if (loading) return <div className="flex h-64 items-center justify-center"><div className="h-12 w-12 animate-spin rounded-full border-4 border-slate-900 border-t-cyan-500"></div></div>;
 
   return (
     <div className="p-4 max-w-7xl mx-auto space-y-10 animate-fadeIn bg-gray-50/50 min-h-screen">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
-           <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Technician Service Board</h1>
+           <h1 className="text-2xl font-black text-slate-900 uppercase tracking-tight">Technical Service Board</h1>
            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Real-time technical workflow & diagnostic manifest</p>
         </div>
-        <button onClick={() => navigate(`${pathPrefix}/addserviceparts`)} className="h-[56px] px-8 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all flex items-center justify-center gap-3"><FaPlus /> Registry Service Parts</button>
+        <button onClick={() => navigate(`${pathPrefix}/addserviceparts`)} className="h-[56px] px-8 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-cyan-600 transition-all flex items-center justify-center gap-3 shadow-xl"><FaPlus /> Registry Service Parts</button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <StatCard title="Assigned Jobs" value={stats.total} icon={<FaCalendarAlt />} gradient="from-blue-600 to-blue-400" />

@@ -17,6 +17,7 @@ import {
   LayoutGrid,
   List
 } from "lucide-react";
+import Pagination from "../../Components/Pagination";
 
 const EmpBookings = () => {
   const navigate = useNavigate();
@@ -259,13 +260,14 @@ const EmpBookings = () => {
                     >
                       Update
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
       {filteredBookings.length > ITEMS_PER_PAGE && (
          <div className="pb-10">
