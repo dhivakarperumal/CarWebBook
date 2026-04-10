@@ -73,7 +73,7 @@ const SetPassword = () => {
       <button
         type="button"
         onClick={onToggle}
-        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-sky-400 transition"
+        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-sky-400 transition cursor-pointer"
       >
         {show ? <FiEyeOff size={16} /> : <FiEye size={16} />}
       </button>
@@ -149,7 +149,7 @@ const SetPassword = () => {
         <button
           onClick={handlePasswordUpdate}
           disabled={loading}
-          className="w-full bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-600 hover:to-cyan-500 text-black py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          className="w-full bg-gradient-to-r from-sky-500 to-cyan-400 hover:from-sky-600 hover:to-cyan-500 text-black py-3 rounded-xl font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
         >
           {loading ? (
             <>
