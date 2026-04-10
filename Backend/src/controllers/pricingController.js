@@ -43,14 +43,14 @@ const getSinglePackage = async (req, res) => {
 /* CREATE PACKAGE */
 const addPackage = async (req, res) => {
   try {
-    const { title, price, features } = req.body;
+    const { title, price, features, place, time } = req.body;
 
     if (!title || !price || !features) {
       return res.status(400).json({ message: "Title, price, and features are required" });
     }
 
-    const sql = "INSERT INTO pricing_packages (title, price, features, created_at, updated_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
-    await db.query(sql, [title, price, JSON.stringify(features)]);
+    const sql = "INSERT INTO pricing_packages (title, price, features, place, time, created_at, updated_at) VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
+    await db.query(sql, [title, price, JSON.stringify(features), place || 'home', time || '']);
     
     res.status(201).json({ message: "Package created successfully" });
   } catch (err) {
@@ -63,14 +63,14 @@ const addPackage = async (req, res) => {
 const editPackage = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, price, features } = req.body;
+    const { title, price, features, place, time } = req.body;
 
     if (!title || !price || !features) {
       return res.status(400).json({ message: "Title, price, and features are required" });
     }
 
-    const sql = "UPDATE pricing_packages SET title=?, price=?, features=?, updated_at=CURRENT_TIMESTAMP WHERE id=?";
-    const [result] = await db.query(sql, [title, price, JSON.stringify(features), id]);
+    const sql = "UPDATE pricing_packages SET title=?, price=?, features=?, place=?, time=?, updated_at=CURRENT_TIMESTAMP WHERE id=?";
+    const [result] = await db.query(sql, [title, price, JSON.stringify(features), place || 'home', time || '', id]);
 
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "Package not found" });

@@ -218,6 +218,7 @@ const PricingList = () => {
                   <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
                   <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Title</th>
                   <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Place</th>
+                  <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Time</th>
                   <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Price</th>
                   <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Features</th>
                   <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Actions</th>
@@ -231,6 +232,9 @@ const PricingList = () => {
                     <td className="px-4 py-4">{pkg.title}</td>
                     <td className="px-4 py-4 font-semibold capitalize text-gray-700">
                       {pkg.place || "Home"}
+                    </td>
+                    <td className="px-4 py-4 text-xs font-semibold text-gray-600">
+                      {pkg.time || "-"}
                     </td>
                     <td className="px-4 py-4">
                       ₹{Number(pkg.price || 0).toLocaleString()}
@@ -264,7 +268,7 @@ const PricingList = () => {
 
                 {filteredPackages.length === 0 && (
                   <tr>
-                    <td colSpan="6" className="text-center p-6 text-gray-500">
+                    <td colSpan="7" className="text-center p-6 text-gray-500">
                       No packages found
                     </td>
                   </tr>

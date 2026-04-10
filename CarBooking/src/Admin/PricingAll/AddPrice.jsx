@@ -11,6 +11,7 @@ const PricingForm = () => {
   const [title, setTitle] = useState("");
   const [price, setPrice] = useState("");
   const [place, setPlace] = useState("home");
+  const [time, setTime] = useState("");
   const [features, setFeatures] = useState([""]);
   const [editId, setEditId] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -27,6 +28,7 @@ const PricingForm = () => {
         setTitle(data.title || "");
         setPrice(data.price || "");
         setPlace(data.place || "home");
+        setTime(data.time || "");
         setFeatures(data.features?.length ? data.features : [""]);
         setEditId(id);
       } catch (err) {
@@ -57,6 +59,7 @@ const PricingForm = () => {
     setTitle("");
     setPrice("");
     setPlace("home");
+    setTime("");
     setFeatures([""]);
     setEditId(null);
   };
@@ -88,6 +91,7 @@ const PricingForm = () => {
           title: title.trim(),
           price: Number(price),
           place,
+          time,
           features: cleanFeatures,
         });
 
@@ -99,6 +103,7 @@ const PricingForm = () => {
           title: title.trim(),
           price: Number(price),
           place,
+          time,
           features: cleanFeatures,
         });
 
@@ -165,6 +170,14 @@ const PricingForm = () => {
               className="w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm focus:ring-2 focus:ring-black outline-none transition"
             />
           </div>
+
+          <input
+            type="text"
+            placeholder="Service Time (e.g., 2 Hours)"
+            value={time}
+            onChange={(e) => setTime(e.target.value)}
+            className="w-full bg-white rounded-lg border border-gray-300 px-5 py-3 text-gray-900 shadow-sm focus:ring-2 focus:ring-black outline-none transition"
+          />
 
           {/* Features */}
           <div>
