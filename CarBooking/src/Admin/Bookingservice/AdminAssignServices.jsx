@@ -140,6 +140,11 @@ export default function AdminAssignServices() {
 
       if (!matchSearch) return false;
 
+      // Restrict visibility to validated statuses only
+      const status = (b.status || "").toLowerCase();
+      const isValidStatus = status === "approved" || status === "confirmed" || status === "conform";
+      if (!isValidStatus) return false;
+
       const bDateStr = b.created_at || b.createdAt || b.preferredDate;
       const bookingDate = bDateStr ? new Date(bDateStr) : null;
       const today = new Date();
