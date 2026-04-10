@@ -55,27 +55,29 @@ export default function ProductDetails() {
 
           // 2) try full product list auto-match
           try {
-            const list = await api.get('/products');
+            const list = await api.get("/products");
             const match = (list.data || []).find((p) => {
               if (!p.slug) return false;
-              return [slug, trimmed, p.slug].some((v) => v && v.toLowerCase() === p.slug.toLowerCase());
+              return [slug, trimmed, p.slug].some(
+                (v) => v && v.toLowerCase() === p.slug.toLowerCase(),
+              );
             });
             if (match) {
-              console.debug('ProductDetails fallback list match', match.slug);
+              console.debug("ProductDetails fallback list match", match.slug);
               setProduct(match);
               setSelectedVariantIndex(0);
               setActiveImage(0);
               return;
             }
           } catch (listErr) {
-            console.warn('ProductDetails fallback list failed', listErr);
+            console.warn("ProductDetails fallback list failed", listErr);
           }
 
-          setError('Product not found');
+          setError("Product not found");
           setProduct(null);
         } else {
-          setError('Unable to load product details');
-          console.error('Failed to load product', err);
+          setError("Unable to load product details");
+          console.error("Failed to load product", err);
           setProduct(null);
         }
       } finally {
@@ -91,7 +93,7 @@ export default function ProductDetails() {
     try {
       const res = await api.get(`/reviews?productId=${product.docId}`);
       // Only show approved reviews
-      setReviews(res.data.filter(r => r.status === 1 || r.status === true));
+      setReviews(res.data.filter((r) => r.status === 1 || r.status === true));
     } catch (err) {
       console.error("Failed to fetch reviews", err);
     }
@@ -126,7 +128,7 @@ export default function ProductDetails() {
         rating: newReview.rating,
         message: newReview.message,
         productId: product.docId,
-        image: user.photoURL || ""
+        image: user.photoURL || "",
       });
       toast.success("Review submitted for approval!");
       setNewReview({ rating: 0, message: "" });
@@ -139,7 +141,8 @@ export default function ProductDetails() {
   };
 
   const productImages = useMemo(() => {
-    if (Array.isArray(product?.images) && product.images.length > 0) return product.images;
+    if (Array.isArray(product?.images) && product.images.length > 0)
+      return product.images;
     if (product?.thumbnail) return [product.thumbnail];
     return ["https://via.placeholder.com/600x400?text=No+Image+Available"];
   }, [product]);
@@ -171,9 +174,10 @@ export default function ProductDetails() {
 
     // ✅ pick selected variant
     const variant = product.variants?.[selectedVariantIndex] || {};
-    const variantLabel = (variant.position || variant.material)
-      ? `${variant.position || ''} ${variant.material || ''}`.trim()
-      : variant.sku;
+    const variantLabel =
+      variant.position || variant.material
+        ? `${variant.position || ""} ${variant.material || ""}`.trim()
+        : variant.sku;
 
     if (!variant?.sku) {
       toast.error("Product variant not available");
@@ -217,9 +221,10 @@ export default function ProductDetails() {
     }
 
     const variant = product.variants?.[selectedVariantIndex] || {};
-    const variantLabel = (variant.position || variant.material)
-      ? `${variant.position || ''} ${variant.material || ''}`.trim()
-      : variant.sku;
+    const variantLabel =
+      variant.position || variant.material
+        ? `${variant.position || ""} ${variant.material || ""}`.trim()
+        : variant.sku;
 
     if (!variant?.sku) {
       toast.error("Product variant not available");
@@ -267,7 +272,9 @@ export default function ProductDetails() {
     );
 
   if (!product)
-    return <div className="text-white text-center py-40">Product not found</div>;
+    return (
+      <div className="text-white text-center py-40">Product not found</div>
+    );
 
   const activeSrc = productImages[activeImage] || productImages[0];
 
@@ -282,31 +289,35 @@ export default function ProductDetails() {
               <div className="lg:sticky lg:top-24">
                 {/* MAIN IMAGE */}
                 <div
-                  className="bg-[#050b14] rounded-2xl p-6 border border-white/10
-          shadow-xl shadow-sky-500/10"
+                  className="bg-[#050b14] rounded-2xl p-2 border border-white/10
+shadow-xl shadow-sky-500/10 max-w-[480px] mx-auto"
                 >
                   <img
                     src={activeSrc}
-                    className="w-full h-[360px] md:h-[420px] object-contain"
+                    className="w-full h-[260px] md:h-[340px] object-cover rounded-xl"
                   />
                 </div>
 
                 {/* THUMBNAILS */}
                 <div className="grid grid-cols-4 gap-4 mt-6">
                   {productImages.slice(-4).map((img, i) => {
-                    const index = productImages.length > 4 ? productImages.length - 4 + i : i;
+                    const index =
+                      productImages.length > 4
+                        ? productImages.length - 4 + i
+                        : i;
 
                     return (
                       <button
                         key={index}
                         onClick={() => setActiveImage(index)}
-                        className={`bg-[#050b14] rounded-xl p-2 border transition
-            ${activeImage === index
-                            ? "border-sky-400 shadow-md shadow-sky-400/30"
-                            : "border-white/10 hover:border-sky-400/50"
-                          }`}
+                        className={`bg-[#050b14] rounded-xl p-1 border transition
+            ${
+              activeImage === index
+                ? "border-sky-400 shadow-md shadow-sky-400/30"
+                : "border-white/10 hover:border-sky-400/50"
+            }`}
                       >
-                        <img src={img} className="w-full h-20 object-contain" />
+                        <img src={img} className="w-full h-16 object-cover rounded-md" />
                       </button>
                     );
                   })}
@@ -317,7 +328,7 @@ export default function ProductDetails() {
               <div className="space-y-8">
                 {/* TITLE */}
                 <div>
-                  <h1 className="text-3xl md:text-4xl xl:text-5xl font-extrabold leading-tight">
+                  <h1 className="text-2xl md:text-4xl xl:text-5xl font-extrabold leading-tight">
                     {product.name}
                   </h1>
 
@@ -332,7 +343,7 @@ export default function ProductDetails() {
                             key={star}
                             className="text-gray-500 text-sm"
                           />
-                        )
+                        ),
                       )}
                       {product.rating && (
                         <span className="text-gray-400 text-xs ml-1">
@@ -345,10 +356,9 @@ export default function ProductDetails() {
 
                 {/* PRICE + TOTAL SECTION */}
                 <div className="flex flex-col gap-3 mt-2">
-
                   {/* PRICE ROW */}
                   <div className="flex flex-wrap items-center gap-4">
-                    <span className="text-sky-400 text-3xl font-bold">
+                    <span className="text-sky-400 text-2xl md:text-3xl font-bold">
                       ₹{product.offerPrice}
                     </span>
 
@@ -375,12 +385,10 @@ export default function ProductDetails() {
                       ₹{(product.offerPrice || 0) * qty}
                     </span>
                   </div>
-
                 </div>
 
-
                 {/* PRODUCT DETAILS */}
-                <div className="mt-6 grid grid-cols-2 gap-y-3 text-xl">
+                <div className="mt-6 grid grid-cols-2 gap-y-3 text-base md:text-xl">
                   {/* QUANTITY */}
                   <span className="text-gray-400">Quantity</span>
 
@@ -401,10 +409,11 @@ hover:bg-sky-400 hover:text-black transition"
                       onClick={increaseQty}
                       disabled={qty >= currentStock}
                       className={`w-9 h-9 rounded-full border border-sky-400/40 transition
-      ${qty >= currentStock
-                          ? "opacity-40 cursor-not-allowed"
-                          : "bg-[#050b14] hover:bg-sky-400 hover:text-black"
-                        }`}
+      ${
+        qty >= currentStock
+          ? "opacity-40 cursor-not-allowed"
+          : "bg-[#050b14] hover:bg-sky-400 hover:text-black"
+      }`}
                     >
                       +
                     </button>
@@ -492,7 +501,7 @@ hover:bg-sky-400 hover:text-black transition"
                 <div className="mt-15 flex flex-col sm:flex-row gap-4">
                   <button
                     onClick={handleAddToCart}
-                    className="flex-1 px-10 py-4 rounded-full font-semibold
+                    className="flex-1 px-6 md:px-10 py-3 md:py-4 text-sm md:text-base rounded-full font-semibold
 bg-gradient-to-r from-blue-600 to-cyan-400 text-black
 hover:scale-105 transition-all duration-300
 shadow-xl shadow-blue-500/40 cursor-pointer"
@@ -502,10 +511,10 @@ shadow-xl shadow-blue-500/40 cursor-pointer"
 
                   <button
                     onClick={handleBuyNow}
-                    className="flex-1 px-10 py-4 rounded-full font-semibold
-  border border-sky-400 text-sky-400
-  hover:bg-sky-400 hover:text-black
-  transition-all duration-300 cursor-pointer"
+                    className="flex-1 px-6 md:px-10 py-3 md:py-4 text-sm md:text-base rounded-full font-semibold
+border border-sky-400 text-sky-400
+hover:bg-sky-400 hover:text-black
+transition-all duration-300 cursor-pointer"
                   >
                     Buy Now
                   </button>
@@ -522,25 +531,44 @@ shadow-xl shadow-blue-500/40 cursor-pointer"
                 <h2 className="text-3xl font-bold mb-8">Customer Reviews</h2>
 
                 {reviews.length === 0 ? (
-                  <p className="text-gray-400 italic">No reviews yet. Be the first to review this product!</p>
+                  <p className="text-gray-400 italic">
+                    No reviews yet. Be the first to review this product!
+                  </p>
                 ) : (
                   <div className="space-y-6">
                     {reviews.map((rev) => (
-                      <div key={rev.id} className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                      <div
+                        key={rev.id}
+                        className="bg-white/5 border border-white/10 rounded-2xl p-6"
+                      >
                         <div className="flex items-center gap-4 mb-4">
                           <div className="w-12 h-12 rounded-full bg-sky-400/20 flex items-center justify-center text-sky-400 font-bold overflow-hidden">
-                            {rev.image ? <img src={rev.image} alt="" className="w-full h-full object-cover" /> : (rev.name?.[0] || "A")}
+                            {rev.image ? (
+                              <img
+                                src={rev.image}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              rev.name?.[0] || "A"
+                            )}
                           </div>
                           <div>
                             <h4 className="font-semibold">{rev.name}</h4>
                             <div className="flex items-center gap-1">
-                              {[1, 2, 3, 4, 5].map((star) => (
+                              {[1, 2, 3, 4, 5].map((star) =>
                                 star <= rev.rating ? (
-                                  <FaStar key={star} className="text-sky-400 text-xs" />
+                                  <FaStar
+                                    key={star}
+                                    className="text-sky-400 text-xs"
+                                  />
                                 ) : (
-                                  <FaRegStar key={star} className="text-gray-600 text-xs" />
-                                )
-                              ))}
+                                  <FaRegStar
+                                    key={star}
+                                    className="text-gray-600 text-xs"
+                                  />
+                                ),
+                              )}
                             </div>
                           </div>
                           <span className="ml-auto text-xs text-gray-500">
@@ -562,13 +590,17 @@ shadow-xl shadow-blue-500/40 cursor-pointer"
 
                 <form onSubmit={handleSubmitReview} className="space-y-6">
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2">Rating</label>
+                    <label className="block text-sm text-gray-400 mb-2">
+                      Rating
+                    </label>
                     <div className="flex gap-2">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           key={star}
                           type="button"
-                          onClick={() => setNewReview({ ...newReview, rating: star })}
+                          onClick={() =>
+                            setNewReview({ ...newReview, rating: star })
+                          }
                           className="text-2xl transition-transform hover:scale-110"
                         >
                           {star <= newReview.rating ? (
@@ -582,10 +614,14 @@ shadow-xl shadow-blue-500/40 cursor-pointer"
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-400 mb-2">Message</label>
+                    <label className="block text-sm text-gray-400 mb-2">
+                      Message
+                    </label>
                     <textarea
                       value={newReview.message}
-                      onChange={(e) => setNewReview({ ...newReview, message: e.target.value })}
+                      onChange={(e) =>
+                        setNewReview({ ...newReview, message: e.target.value })
+                      }
                       placeholder="Tell us what you think..."
                       className="w-full bg-white/5 border border-white/10 rounded-xl p-4 min-h-[120px] focus:border-sky-400 outline-none transition"
                       required
@@ -595,7 +631,7 @@ shadow-xl shadow-blue-500/40 cursor-pointer"
                   <button
                     type="submit"
                     disabled={submittingReview}
-                    className="w-full py-4 rounded-full font-semibold bg-sky-400 text-black hover:bg-sky-300 disabled:opacity-50 transition-colors"
+                    className="w-full py-2.5 md:py-3 text-sm md:text-base rounded-full font-semibold bg-sky-400 text-black hover:bg-sky-300 disabled:opacity-50 transition-colors"
                   >
                     {submittingReview ? "Submitting..." : "Submit Review"}
                   </button>
