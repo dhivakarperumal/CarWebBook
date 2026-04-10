@@ -11,9 +11,9 @@ const STATUS_STEPS = [
   "Processing",
   "Waiting for Spare",
   "Service Going on",
+  "Service Completed",
   "Bill Pending",
   "Bill Completed",
-  "Service Completed",
 ];
 
 const StatCard = ({ title, value, icon, gradient }) => (
@@ -180,8 +180,13 @@ export default function EmpService() {
     const mechanicName = (userProfile?.displayName || "").toLowerCase();
     const filtered = services.filter(s => {
       const isAssigned = (s.assignedEmployeeName || "").toLowerCase() === mechanicName;
-      const status = (s.serviceStatus || s.status || "").toLowerCase();
-      const isCompleted = status === "service completed" || status === "bill completed";
+      const statusValue = (s.serviceStatus || s.status || "").toLowerCase();
+      const isCompleted = statusValue.includes("completed") || statusValue.includes("bill completed");
+      
+      // If a specific status filter is selected, respect it even if completed
+      if (statusFilter !== "All Status") return isAssigned;
+      
+      // Default: hide completed from the busy technical board
       return isAssigned && !isCompleted;
     });
 
@@ -190,9 +195,9 @@ export default function EmpService() {
       if (!text.includes(search.toLowerCase())) return false;
       
       if (statusFilter !== "All Status") {
-        const rawStatus = s.serviceStatus || s.status || "Booked";
-        const found = STATUS_STEPS.find(step => step.toLowerCase() === rawStatus.toLowerCase());
-        const mappedStatus = found || "Booked";
+        const rawStatus = (s.serviceStatus || s.status || "Booked").toLowerCase();
+        const found = STATUS_STEPS.find(step => step.toLowerCase() === rawStatus);
+        const mappedStatus = found || (rawStatus.includes("bill completed") ? "Bill Completed" : (rawStatus.includes("completed") ? "Service Completed" : "Booked"));
         if (mappedStatus !== statusFilter) return false;
       }
 
@@ -237,9 +242,13 @@ export default function EmpService() {
 
   const getMappedStatus = (status) => {
     if (!status) return "Booked";
-    if (status.toLowerCase() === "cancelled") return "Cancelled";
-    const found = STATUS_STEPS.find(s => s.toLowerCase() === status.toLowerCase());
-    return found || "Booked";
+    const sLow = status.toLowerCase();
+    if (sLow === "cancelled") return "Cancelled";
+    const found = STATUS_STEPS.find(s => s.toLowerCase() === sLow);
+    if (found) return found;
+    if (sLow.includes("bill completed")) return "Bill Completed";
+    if (sLow.includes("completed")) return "Service Completed";
+    return "Booked";
   };
 
   const getStatusColor = (status) => {

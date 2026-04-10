@@ -13,9 +13,9 @@ const STATUS_STEPS = [
   "Processing",
   "Waiting for Spare",
   "Service Going on",
+  "Service Completed",
   "Bill Pending",
   "Bill Completed",
-  "Service Completed",
 ];
 
 const StatCard = ({ title, value, icon, gradient }) => (
@@ -117,9 +117,9 @@ export default function Services() {
       if (!text.includes(search.toLowerCase())) return false;
       
       if (statusFilter !== "All Status") {
-        const rawStatus = s.serviceStatus || s.status || "Booked";
-        const found = STATUS_STEPS.find(step => step.toLowerCase() === rawStatus.toLowerCase());
-        const mappedStatus = found || "Booked";
+        const rawStatus = (s.serviceStatus || s.status || "Booked").toLowerCase();
+        const found = STATUS_STEPS.find(step => step.toLowerCase() === rawStatus);
+        const mappedStatus = found || (rawStatus.includes("bill completed") ? "Bill Completed" : (rawStatus.includes("completed") ? "Service Completed" : "Booked"));
         if (mappedStatus !== statusFilter) return false;
       }
 
@@ -192,12 +192,18 @@ export default function Services() {
     : (mainTab === "booked" ? searchedServices.filter(s => !s.addVehicle) : searchedServices.filter(s => s.addVehicle));
   const assignedServices = currentMainList.filter(s => {
     if (!s.assignedEmployeeId) return false;
-    if (isMechanic) return (s.assignedEmployeeName || "").toLowerCase() === (userProfile?.displayName || "").toLowerCase();
+    if (isMechanic && (s.assignedEmployeeName || "").toLowerCase() !== (userProfile?.displayName || "").toLowerCase()) return false;
+    
+    // Hide completed items from the active board unless specifically filtering for them
+    if (statusFilter === "All Status") {
+      const status = (s.serviceStatus || s.status || "").toLowerCase();
+      if (status.includes("bill completed") || status === "service completed") return false;
+    }
     return true;
   });
   const unassignedServices = isMechanic ? [] : currentMainList.filter(s => !s.assignedEmployeeId);
-  // Admin sees ALL services; mechanic sees only their assigned ones
-  const listData = isMechanic ? assignedServices : currentMainList;
+  // Focus strictly on assigned active protocols for the main board
+  const listData = assignedServices;
 
   const totalPages = Math.ceil(listData.length / itemsPerPage);
   const paginatedData = listData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -212,9 +218,13 @@ export default function Services() {
 
   const getMappedStatus = (status) => {
     if (!status) return "Booked";
-    if (status.toLowerCase() === "cancelled") return "Cancelled";
-    const found = STATUS_STEPS.find(s => s.toLowerCase() === status.toLowerCase());
-    return found || "Booked";
+    const sLow = status.toLowerCase();
+    if (sLow === "cancelled") return "Cancelled";
+    const found = STATUS_STEPS.find(s => s.toLowerCase() === sLow);
+    if (found) return found;
+    if (sLow.includes("bill completed")) return "Bill Completed";
+    if (sLow.includes("completed")) return "Service Completed";
+    return "Booked";
   };
 
   const getStatusColor = (status) => {
@@ -311,10 +321,11 @@ export default function Services() {
         <button onClick={() => navigate(`${pathPrefix}/addserviceparts`)} className="h-[56px] px-8 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all flex items-center justify-center gap-3"><FaPlus /> Registry Service Parts</button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         <StatCard title="Total Service Volume" value={stats.total} icon={<FaCalendarAlt />} gradient="from-blue-600 to-blue-400" />
         <StatCard title="Appointments" value={stats.appointments} icon={<FaCalendarCheck />} gradient="from-purple-600 to-purple-400" />
-        <StatCard title="Bookings" value={stats.bookings} icon={<FaCar />} gradient="from-orange-600 to-orange-400" />
+        <StatCard title="Direct Bookings" value={stats.bookings} icon={<FaCar />} gradient="from-orange-600 to-orange-400" />
+        <StatCard title="Pending Assignment" value={stats.unassigned} icon={<FaUserCheck />} gradient="from-rose-600 to-rose-400" />
         <StatCard title="Successfully Closed" value={stats.completed} icon={<FaCheckCircle />} gradient="from-emerald-600 to-emerald-400" />
       </div>
 
