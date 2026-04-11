@@ -32,6 +32,7 @@ const ServicesListAll = () => {
   /* ================= FETCH DATA ================= */
   const fetchServices = async () => {
     try {
+      const res = await api.get('/services');
       const data = res.data || [];
       setServices(data);
       servicesCache = data;
