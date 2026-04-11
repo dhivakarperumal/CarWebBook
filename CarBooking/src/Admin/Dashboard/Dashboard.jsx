@@ -687,7 +687,7 @@ const Dashboard = () => {
                     <th className="px-3 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Category</th>
                     <th className="px-3 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Stock</th>
                     <th className="px-3 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Min</th>
-                    <th className="px-3 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Supplier</th>
+            
                   </tr>
                 </thead>
                 <tbody>
@@ -706,7 +706,7 @@ const Dashboard = () => {
                       <td className="px-3 py-4">{r.category}</td>
                       <td className="px-3 py-4">{r.stockQty || r.quantity}</td>
                       <td className="px-3 py-4">{r.minStock || 0}</td>
-                      <td className="px-3 py-4">{r.vendor || r.supplier || '-'}</td>
+                   
                     </tr>
                   ))}
                 </tbody>
