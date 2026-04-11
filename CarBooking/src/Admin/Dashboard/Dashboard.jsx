@@ -226,10 +226,10 @@ const Dashboard = () => {
       let pieSum = 0;
 
       bookingsData.forEach((data) => {
-        const rawStatus = String(data.status || "").toLowerCase().trim();
+        const rawStatus = String(data.serviceStatus || data.status || "").toLowerCase().trim();
         let status = "pending";
-        if (rawStatus === "service completed") status = "completed";
-        if (rawStatus === "cancelled") status = "cancelled";
+        if (rawStatus.includes("completed") || rawStatus.includes("bill pending") || rawStatus.includes("finalized") || rawStatus.includes("delivered")) status = "completed";
+        if (rawStatus.includes("cancelled") || rawStatus.includes("closed") || rawStatus.includes("rejected")) status = "cancelled";
 
         const baseDateStr = (status === "completed" || status === "cancelled")
             ? (data.updatedAt || data.updated_at || data.createdAt || data.created_at)

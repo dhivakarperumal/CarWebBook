@@ -164,11 +164,11 @@ export default function EmpService() {
       total: relevantServices.length,
       processing: relevantServices.filter(s => {
         const sStat = (s.serviceStatus || s.status || "").toLowerCase();
-        return sStat !== "" && !sStat.includes("completed") && !sStat.includes("bill completed") && sStat !== "cancelled";
+        return sStat !== "" && !sStat.includes("completed") && !sStat.includes("bill completed") && !sStat.includes("bill pending") && sStat !== "cancelled";
       }).length,
       completed: relevantServices.filter(s => {
         const sStat = (s.serviceStatus || s.status || "").toLowerCase();
-        return sStat.includes("completed") || sStat.includes("bill completed");
+        return sStat.includes("completed") || sStat.includes("bill completed") || sStat.includes("bill pending");
       }).length
     };
   }, [services, userProfile]);

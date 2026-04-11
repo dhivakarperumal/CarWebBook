@@ -182,7 +182,7 @@ export default function Services() {
       unassigned: isMechanic ? 0 : relevantServices.filter(s => !s.assignedEmployeeId).length,
       completed: relevantServices.filter(s => {
         const sStat = (s.serviceStatus || s.status || "").toLowerCase();
-        return sStat.includes("completed") || sStat.includes("bill completed");
+        return sStat.includes("completed") || sStat.includes("bill completed") || sStat.includes("bill pending");
       }).length
     };
   }, [services, isMechanic, userProfile]);
