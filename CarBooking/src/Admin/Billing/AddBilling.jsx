@@ -478,10 +478,11 @@ const AddBillings = () => {
                   <label className="text-[10px] font-bold text-gray-400 mb-1">Quantity</label>
                   <input
                     type="number"
+                    min="1"
                     placeholder="Qty"
                     className="border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-black text-black outline-none focus:border-gray-300"
                     value={newPart.qty}
-                    onChange={e => setNewPart({ ...newPart, qty: Number(e.target.value) })}
+                    onChange={e => setNewPart({ ...newPart, qty: e.target.value === '' ? '' : Math.max(1, Number(e.target.value)) })}
                   />
                 </div>
 
@@ -489,10 +490,11 @@ const AddBillings = () => {
                   <label className="text-[10px] font-bold text-gray-400 mb-1">Unit Price (₹)</label>
                   <input
                     type="number"
+                    min="0"
                     placeholder="₹"
                     className="border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-black text-black outline-none focus:border-gray-300"
                     value={newPart.price}
-                    onChange={e => setNewPart({ ...newPart, price: Number(e.target.value) })}
+                    onChange={e => setNewPart({ ...newPart, price: e.target.value === '' ? '' : Math.max(0, Number(e.target.value)) })}
                   />
                 </div>
 
@@ -562,10 +564,11 @@ const AddBillings = () => {
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Workforce Charges (₹)</label>
               <input
                 type="number"
+                min="0"
                 placeholder="₹ 0.00"
                 className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 font-black text-lg text-gray-900 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 transition-all text-right shadow-inner"
                 value={labour}
-                onChange={(e) => setLabour(e.target.value)}
+                onChange={(e) => setLabour(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
               />
             </div>
 
@@ -573,10 +576,11 @@ const AddBillings = () => {
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Taxation Layer (%)</label>
               <input
                 type="number"
+                min="0"
                 placeholder="18%"
                 className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 font-black text-lg text-gray-900 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 transition-all text-right shadow-inner"
                 value={gstPercent}
-                onChange={(e) => setGstPercent(e.target.value)}
+                onChange={(e) => setGstPercent(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
               />
             </div>
 
@@ -584,10 +588,11 @@ const AddBillings = () => {
               <label className="text-[10px] font-black text-rose-400 uppercase tracking-widest ml-1">Discount (₹)</label>
               <input
                 type="number"
+                min="0"
                 placeholder="₹ 0.00"
                 className="w-full px-6 py-4 rounded-2xl bg-rose-50/30 border border-rose-100 font-black text-lg text-rose-600 outline-none focus:bg-white focus:ring-4 focus:ring-rose-200/50 transition-all text-right shadow-inner"
                 value={discount}
-                onChange={(e) => setDiscount(e.target.value)}
+                onChange={(e) => setDiscount(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
               />
             </div>
 
