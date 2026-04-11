@@ -115,7 +115,7 @@ export default function Services() {
     return services.filter((s) => {
       const text = `${s.bookingId || ""} ${s.name || ""} ${s.phone || ""} ${s.brand || ""} ${s.model || ""} ${s.vehicleNumber || ""}`.toLowerCase();
       if (!text.includes(search.toLowerCase())) return false;
-      
+
       if (statusFilter !== "All Status") {
         const rawStatus = (s.serviceStatus || s.status || "Booked").toLowerCase();
         const found = STATUS_STEPS.find(step => step.toLowerCase() === rawStatus);
@@ -195,7 +195,7 @@ export default function Services() {
       if (!s.assignedEmployeeId) return false;
       if ((s.assignedEmployeeName || "").toLowerCase() !== (userProfile?.displayName || "").toLowerCase()) return false;
     }
-    
+
     // Hide 'Bill Completed' from 'All Status' view, show everything else
     if (statusFilter === "All Status") {
       const status = (s.serviceStatus || s.status || "").toLowerCase();
@@ -241,6 +241,16 @@ export default function Services() {
     }
   };
 
+  const getElapsedTime = (dateStr) => {
+    if (!dateStr) return "0h";
+    const past = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now - past;
+    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return `${diffHrs}h ${diffMins}m`;
+  };
+
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this service?")) return;
     try {
@@ -262,7 +272,7 @@ export default function Services() {
       prev.map(s => s.id === id ? { ...s, serviceStatus: newStatus } : s)
     );
     try {
-      await api.put(`/all-services/${id}/status`, { 
+      await api.put(`/all-services/${id}/status`, {
         serviceStatus: newStatus,
         employeeName: userProfile?.displayName || userProfile?.name || "System Admin"
       });
@@ -315,7 +325,7 @@ export default function Services() {
     <div className="p-4 max-w-7xl mx-auto space-y-10 animate-fadeIn bg-gray-50/50 min-h-screen">
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
         <div>
-      
+
         </div>
         <button onClick={() => navigate(`${pathPrefix}/addserviceparts`)} className="h-[56px] px-8 bg-black text-white rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-emerald-600 transition-all flex items-center justify-center gap-3"><FaPlus /> Registry Service Parts</button>
       </div>
@@ -371,7 +381,7 @@ export default function Services() {
       </div>
 
       <>
-       {viewMode === "card" ? (
+        {viewMode === "card" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
             {paginatedData.map((item) => (
               <div key={item.id} className="group bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:border-blue-100 transition-all duration-500 flex flex-col relative overflow-hidden">
@@ -428,8 +438,14 @@ export default function Services() {
                   {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
                     <button onClick={() => handleOpenIssueModal(item)} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all border border-transparent hover:border-amber-100" title="Edit Log & Parts"><FaEdit className="mr-2" /> Log</button>
                   )}
-                  {getMappedStatus(item.serviceStatus || item.status) === "Bill Pending" && (
-                    <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-black text-white hover:bg-emerald-600 transition-all border border-transparent" title="Generate Bill"><FaFileInvoice className="mr-2" /> Bill</button>
+                  {["Bill Pending", "Service Completed"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                    <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-11 flex-1 flex flex-col justify-center items-center rounded-xl bg-black text-white hover:bg-emerald-600 transition-all border border-transparent shadow-lg shadow-black/10 group/bill" title="Generate Bill">
+                      <div className="flex items-center gap-2">
+                        <FaFileInvoice /> 
+                        <span className="text-[9px] font-black uppercase tracking-widest">Bill</span>
+                      </div>
+                      <span className="text-[7px] font-bold opacity-50 group-hover/bill:opacity-100 uppercase tracking-tighter">Ready: {getElapsedTime(item.updatedAt || item.updated_at)}</span>
+                    </button>
                   )}
                   <button onClick={() => navigate(`${pathPrefix}/services/${item.id}`)} className="h-11 w-11 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100" title="View Details"><FaEye /></button>
                 </div>
@@ -444,7 +460,7 @@ export default function Services() {
                 <thead className="bg-[#020617] text-white">
                   <tr>
                     <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
-                   
+
                     <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
                     <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Vehicle Spec</th>
                     <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Issues</th>
@@ -482,7 +498,7 @@ export default function Services() {
                               {item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}
                             </p>
                             {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
-                              <button 
+                              <button
                                 onClick={() => handleOpenIssueModal(item)}
                                 className="p-1.5 rounded-lg bg-amber-50 text-amber-500 hover:bg-amber-100 transition-all shadow-sm border border-amber-200/50"
                                 title="Edit Diagnostics"
@@ -500,46 +516,51 @@ export default function Services() {
                           )}
                         </td>
                         <td className="px-4 py-4">
-                           {(() => {
-                             const ss = getSpareStatus(item.parts);
-                             return <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border ${ss.color}`}>{ss.label}</span>;
-                           })()}
-                           {getMappedStatus(item.serviceStatus || item.status) === "Cancelled" && (
-                             <div className="mt-2 text-left">
-                                <p className="text-[8px] font-black text-red-500 uppercase tracking-widest">Cancelled By: {item.lastUpdatedBy || "System"}</p>
-                                <p className="text-[9px] font-bold text-red-700 truncate max-w-[150px]" title={item.closeReason}>{item.closeReason || "Unknown Reason"}</p>
-                             </div>
-                           )}
+                          {(() => {
+                            const ss = getSpareStatus(item.parts);
+                            return <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border ${ss.color}`}>{ss.label}</span>;
+                          })()}
+                          {getMappedStatus(item.serviceStatus || item.status) === "Cancelled" && (
+                            <div className="mt-2 text-left">
+                              <p className="text-[8px] font-black text-red-500 uppercase tracking-widest">Cancelled By: {item.lastUpdatedBy || "System"}</p>
+                              <p className="text-[9px] font-bold text-red-700 truncate max-w-[150px]" title={item.closeReason}>{item.closeReason || "Unknown Reason"}</p>
+                            </div>
+                          )}
                         </td>
                         <td className="px-4 py-4 text-center">
-                           <select 
-                             value={getMappedStatus(item.serviceStatus || item.status)}
-                             onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
-                             className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[150px] text-center cursor-pointer outline-none focus:ring-4 focus:ring-black/5 ${getStatusColor(item.serviceStatus || item.status)}`}
-                           >
-                             <option value="Cancelled" className="bg-white text-red-500 font-bold uppercase hidden">CANCELLED</option>
-                             {STATUS_STEPS.map((step, idx) => {
-                               const mappedStatus = getMappedStatus(item.serviceStatus || item.status);
-                               if (mappedStatus === "Cancelled") {
-                                 return <option key={step} value={step} className="bg-white text-black font-bold uppercase">{step}</option>;
-                               }
-                               const currentIdx = STATUS_STEPS.findIndex(s => s.toLowerCase() === (item.serviceStatus || item.status || "Booked").toLowerCase()) || 0;
-                               if (idx < currentIdx) return null;
-                               return (
-                                 <option key={step} value={step} className="bg-white text-black font-bold uppercase">{step}</option>
-                               );
-                             })}
-                           </select>
+                          <select
+                            value={getMappedStatus(item.serviceStatus || item.status)}
+                            onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
+                            className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[150px] text-center cursor-pointer outline-none focus:ring-4 focus:ring-black/5 ${getStatusColor(item.serviceStatus || item.status)}`}
+                          >
+                            <option value="Cancelled" className="bg-white text-red-500 font-bold uppercase hidden">CANCELLED</option>
+                            {STATUS_STEPS.map((step, idx) => {
+                              const mappedStatus = getMappedStatus(item.serviceStatus || item.status);
+                              if (mappedStatus === "Cancelled") {
+                                return <option key={step} value={step} className="bg-white text-black font-bold uppercase">{step}</option>;
+                              }
+                              const currentIdx = STATUS_STEPS.findIndex(s => s.toLowerCase() === (item.serviceStatus || item.status || "Booked").toLowerCase()) || 0;
+                              if (idx < currentIdx) return null;
+                              return (
+                                <option key={step} value={step} className="bg-white text-black font-bold uppercase">{step}</option>
+                              );
+                            })}
+                          </select>
                         </td>
                         <td className="px-4 py-4 text-left">
                           <div className="flex justify-end gap-2">
-                        
-                           
+
+
                             {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
                               <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-900 text-gray-400 hover:bg-amber-50 hover:text-amber-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
                             )}
-                            {getMappedStatus(item.serviceStatus || item.status) === "Bill Pending" && (
-                              <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-10 px-4 bg-black text-white hover:bg-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2" title="Generate Bill"><FaFileInvoice /> Bill</button>
+                            {["Bill Pending", "Service Completed"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                              <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-10 px-4 bg-black text-white hover:bg-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center leading-tight group/bill" title="Generate Bill">
+                                <div className="flex items-center gap-2">
+                                   <FaFileInvoice /> Bill
+                                </div>
+                                <span className="text-[7px] font-bold opacity-50 group-hover/bill:opacity-100 uppercase tracking-tighter">Ready: {getElapsedTime(item.updatedAt || item.updated_at)}</span>
+                              </button>
                             )}
 
                           </div>
@@ -616,27 +637,27 @@ export default function Services() {
                     {editingParts.map((part, idx) => (
                       <div key={idx} className="flex items-center gap-4 p-3 border border-gray-100 rounded-xl bg-gray-50/50 hover:bg-white transition-all relative">
                         <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest min-w-[50px]">Part #{idx + 1}</span>
-                        <input 
-                          type="text" 
+                        <input
+                          type="text"
                           list="spare-parts-list"
-                          value={part.partName || ""} 
-                          onChange={(e) => { 
+                          value={part.partName || ""}
+                          onChange={(e) => {
                             const val = e.target.value;
-                            const copy = [...editingParts]; 
+                            const copy = [...editingParts];
                             const matchedProduct = products.find(p => p.name === val);
                             if (matchedProduct) {
-                              copy[idx] = { 
-                                ...copy[idx], 
-                                partName: val, 
-                                price: matchedProduct.offerPrice || matchedProduct.mrp || 0 
+                              copy[idx] = {
+                                ...copy[idx],
+                                partName: val,
+                                price: matchedProduct.offerPrice || matchedProduct.mrp || 0
                               };
                             } else {
-                              copy[idx] = { ...copy[idx], partName: val }; 
+                              copy[idx] = { ...copy[idx], partName: val };
                             }
-                            setEditingParts(copy); 
-                          }} 
-                          className="flex-1 bg-white border border-gray-100 rounded-lg px-3 py-2 text-xs font-black text-black outline-none focus:border-black transition-all" 
-                          placeholder="Search or Enter Part Name..." 
+                            setEditingParts(copy);
+                          }}
+                          className="flex-1 bg-white border border-gray-100 rounded-lg px-3 py-2 text-xs font-black text-black outline-none focus:border-black transition-all"
+                          placeholder="Search or Enter Part Name..."
                         />
                         <datalist id="spare-parts-list">
                           {products.map(p => (
@@ -644,14 +665,14 @@ export default function Services() {
                           ))}
                         </datalist>
                         <div className="flex items-center gap-2">
-                           <input type="number" value={part.qty || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], qty: e.target.value }; setEditingParts(copy); }} placeholder="Qty" className="w-16 px-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black text-center" />
-                           <div className="relative w-24">
-                             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
-                             <input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-5 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black" />
-                           </div>
+                          <input type="number" value={part.qty || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], qty: e.target.value }; setEditingParts(copy); }} placeholder="Qty" className="w-16 px-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black text-center" />
+                          <div className="relative w-24">
+                            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
+                            <input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-5 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black" />
+                          </div>
                         </div>
                         <div className="w-28 text-center">
-                           <span className={`text-[9px] font-black uppercase tracking-widest ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500"}`}>{part.status || "pending"}</span>
+                          <span className={`text-[9px] font-black uppercase tracking-widest ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500"}`}>{part.status || "pending"}</span>
                         </div>
                         <button onClick={() => { const copy = [...editingParts]; copy.splice(idx, 1); setEditingParts(copy); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><FaTimes size={12} /></button>
                       </div>
@@ -684,10 +705,10 @@ export default function Services() {
 
                     // Update main issue amounts if necessary based on first entry
                     if (issuesToSave.length > 0) {
-                       await api.put(`/all-services/${editingIssueId}/issue`, {
-                         issue: issuesToSave[0].issue,
-                         issueAmount: Number(issuesToSave[0].issueAmount || 0)
-                       });
+                      await api.put(`/all-services/${editingIssueId}/issue`, {
+                        issue: issuesToSave[0].issue,
+                        issueAmount: Number(issuesToSave[0].issueAmount || 0)
+                      });
                     }
 
                     toast.success('Service items saved successfully');

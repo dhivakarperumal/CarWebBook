@@ -611,8 +611,14 @@ export default function EmpService() {
                   {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
                     <button onClick={() => handleOpenIssueModal(item)} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all border border-transparent hover:border-amber-100" title="Edit Log & Parts"><FaEdit className="mr-2" /> Log</button>
                   )}
-                  {getMappedStatus(item.serviceStatus || item.status) === "Bill Pending" && (
-                    <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-black text-white hover:bg-emerald-600 transition-all border border-transparent" title="Generate Bill"><FaFileInvoice className="mr-2" /> Bill</button>
+                  {["Bill Pending", "Service Completed"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                    <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-11 flex-1 flex flex-col justify-center items-center rounded-xl bg-black text-white hover:bg-emerald-600 transition-all border border-transparent shadow-lg shadow-black/10 group/bill" title="Generate Bill">
+                      <div className="flex items-center gap-2">
+                        <FaFileInvoice /> 
+                        <span className="text-[9px] font-black uppercase tracking-widest">Bill</span>
+                      </div>
+                      <span className="text-[7px] font-bold opacity-50 group-hover/bill:opacity-100 uppercase tracking-tighter">Ready: {getElapsedTime(item.updatedAt || item.updated_at)}</span>
+                    </button>
                   )}
                   {getMappedStatus(item.serviceStatus || item.status) === "Waiting for Spare" && (
                     <button 
@@ -728,8 +734,13 @@ export default function EmpService() {
                             {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
                               <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-900 text-gray-400 hover:bg-amber-50 hover:text-amber-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
                             )}
-                            {getMappedStatus(item.serviceStatus || item.status) === "Bill Pending" && (
-                              <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-10 px-4 bg-black text-white hover:bg-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2" title="Generate Bill"><FaFileInvoice /> Bill</button>
+                            {["Bill Pending", "Service Completed"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                              <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-10 px-4 bg-black text-white hover:bg-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center leading-tight group/bill" title="Generate Bill">
+                                <div className="flex items-center gap-2">
+                                   <FaFileInvoice /> Bill
+                                </div>
+                                <span className="text-[7px] font-bold opacity-50 group-hover/bill:opacity-100 uppercase tracking-tighter">Ready: {getElapsedTime(item.updatedAt || item.updated_at)}</span>
+                              </button>
                             )}
                             
                           </div>
