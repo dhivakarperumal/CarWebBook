@@ -87,10 +87,9 @@ const Staffs = () => {
     }
   };
 
-  // ===== Stats =====
   const totalStaff = staff.length;
-  const activeStaff = staff.filter(s => s.status === "active").length;
-  const inactiveStaff = staff.filter(s => s.status !== "active").length;
+  const activeStaff = staff.filter(s => (s.status || "").toLowerCase() === "active").length;
+  const inactiveStaff = staff.filter(s => (s.status || "").toLowerCase() !== "active").length;
 
   return (
     <div className="p-4 min-h-screen space-y-6">
@@ -211,7 +210,7 @@ const Staffs = () => {
 
                   <td className="px-4 py-4">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${s.status === "active"
+                      className={`px-3 py-1 rounded-full text-xs font-semibold ${(s.status || "").toLowerCase() === "active"
                         ? "bg-green-100 text-green-700"
                         : "bg-red-100 text-red-700"
                         }`}
