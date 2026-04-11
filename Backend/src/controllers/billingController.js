@@ -10,6 +10,18 @@ exports.getAllBillings = async (req, res) => {
   }
 };
 
+/* 💰 UPDATE PAYMENT STATUS ONLY */
+exports.updatePaymentStatus = async (req, res) => {
+  const { paymentStatus } = req.body;
+  const newStatus = paymentStatus.toLowerCase() === 'paid' ? 'Paid' : 'Generated';
+  try {
+    await db.query('UPDATE billings SET paymentStatus = ?, status = ? WHERE id = ?', [paymentStatus, newStatus, req.params.id]);
+    res.json({ message: 'Payment status updated' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
 /* ➕ CREATE INVOICE */
 exports.createInvoice = async (req, res) => {
   const {

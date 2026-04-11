@@ -133,7 +133,7 @@ const EmpBilling = () => {
 
   const handleUpdateStatus = async (id, newStatus) => {
     try {
-      await api.patch(`/billings/${id}`, { paymentStatus: newStatus });
+      await api.patch(`/billings/${id}/payment-status`, { paymentStatus: newStatus });
       toast.success(`Payment status updated to ${newStatus}`);
       loadData();
     } catch {

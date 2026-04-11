@@ -164,11 +164,11 @@ export default function EmpService() {
       total: relevantServices.length,
       processing: relevantServices.filter(s => {
         const sStat = (s.serviceStatus || s.status || "").toLowerCase();
-        return sStat !== "" && !sStat.includes("completed") && !sStat.includes("bill completed") && sStat !== "cancelled";
+        return sStat !== "" && !sStat.includes("completed") && !sStat.includes("bill completed") && !sStat.includes("bill pending") && sStat !== "cancelled";
       }).length,
       completed: relevantServices.filter(s => {
         const sStat = (s.serviceStatus || s.status || "").toLowerCase();
-        return sStat.includes("completed") || sStat.includes("bill completed");
+        return sStat.includes("completed") || sStat.includes("bill completed") || sStat.includes("bill pending");
       }).length
     };
   }, [services, userProfile]);
@@ -553,13 +553,14 @@ export default function EmpService() {
                     onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
                     className={`px-4 py-2 rounded-[1.5rem] text-[10px] font-black tracking-widest uppercase border text-center cursor-pointer outline-none focus:ring-4 focus:ring-black/5 ${getStatusColor(item.serviceStatus || item.status)}`}
                   >
+                    <option value="Cancelled" className="bg-white text-red-500 font-bold uppercase hidden">CANCELLED</option>
                     {(() => {
                       const currentStatus = getMappedStatus(item.serviceStatus || item.status);
                       const currentIndex = STATUS_STEPS.indexOf(currentStatus);
                       return STATUS_STEPS.map((status, idx) => {
-                        if (idx < currentIndex) return null;
+                        if (currentStatus !== "Cancelled" && idx < currentIndex) return null;
                         return (
-                          <option key={status} value={status} className="bg-white text-black font-bold">
+                          <option key={status} value={status} className="bg-white text-black font-bold uppercase">
                             {status.toUpperCase()}
                           </option>
                         );
@@ -588,7 +589,12 @@ export default function EmpService() {
                     </div>
                   )}
                   <div className="rounded-2xl bg-blue-50/50 border border-blue-100 p-4 overflow-hidden">
-                    <div className="flex justify-between items-center mb-3"><span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Diagnostic Log & Parts</span><button onClick={() => handleOpenIssueModal(item)} className="text-[9px] font-black text-blue-600 uppercase hover:underline">Edit</button></div>
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Diagnostic Log & Parts</span>
+                      {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                        <button onClick={() => handleOpenIssueModal(item)} className="text-[9px] font-black text-blue-600 uppercase hover:underline">Edit</button>
+                      )}
+                    </div>
                     <div className="space-y-2">{item.issues?.slice(0, 2).map((iss, i) => <p key={i} className="text-xs font-bold text-gray-600 line-clamp-1 flex items-center gap-2"><span className="w-1 h-1 bg-blue-400 rounded-full" />{iss.issue}</p>) || <p className="text-xs italic text-gray-400">No log entries</p>}</div>
                   </div>
                 </div>
@@ -602,9 +608,17 @@ export default function EmpService() {
                   {getMappedStatus(item.serviceStatus || item.status) === "Service Going on" && (
                     <button onClick={() => handleUpdateStatus(item.id, "Service Completed")} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 transition-all border border-transparent" title="Complete Service">Complete</button>
                   )}
-                  <button onClick={() => handleOpenIssueModal(item)} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all border border-transparent hover:border-amber-100" title="Edit Log & Parts"><FaEdit className="mr-2" /> Log</button>
-                  {getMappedStatus(item.serviceStatus || item.status) === "Bill Pending" && (
-                    <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-black text-white hover:bg-emerald-600 transition-all border border-transparent" title="Generate Bill"><FaFileInvoice className="mr-2" /> Bill</button>
+                  {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                    <button onClick={() => handleOpenIssueModal(item)} className="h-11 flex-1 flex justify-center items-center rounded-xl bg-gray-50 text-gray-400 hover:bg-amber-50 hover:text-amber-500 transition-all border border-transparent hover:border-amber-100" title="Edit Log & Parts"><FaEdit className="mr-2" /> Log</button>
+                  )}
+                  {["Bill Pending", "Service Completed"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                    <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-11 flex-1 flex flex-col justify-center items-center rounded-xl bg-black text-white hover:bg-emerald-600 transition-all border border-transparent shadow-lg shadow-black/10 group/bill" title="Generate Bill">
+                      <div className="flex items-center gap-2">
+                        <FaFileInvoice /> 
+                        <span className="text-[9px] font-black uppercase tracking-widest">Bill</span>
+                      </div>
+                      <span className="text-[7px] font-bold opacity-50 group-hover/bill:opacity-100 uppercase tracking-tighter">Ready: {getElapsedTime(item.updatedAt || item.updated_at)}</span>
+                    </button>
                   )}
                   {getMappedStatus(item.serviceStatus || item.status) === "Waiting for Spare" && (
                     <button 
@@ -622,9 +636,9 @@ export default function EmpService() {
             {paginatedData.length === 0 && <div className="col-span-full py-20 text-center text-gray-400 font-black uppercase tracking-widest text-xs">No service protocols found for designated metrics</div>}
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-2xl shadow-blue-900/5 border border-gray-100 animate-fadeIn overflow-hidden">
+          <div className=" animate-fadeIn overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
+              <table className="w-full text-left text-sm whitespace-nowrap min-w-max">
                 <thead className="text-white">
                   <tr>
                     <th className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
@@ -658,13 +672,15 @@ export default function EmpService() {
                             <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]" title={item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}>
                               {item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}
                             </p>
-                            <button 
-                              onClick={() => handleOpenIssueModal(item)}
-                              className="p-1.5 rounded-lg bg-amber-50 text-amber-500 hover:bg-amber-100 transition-all shadow-sm border border-amber-200/50"
-                              title="Edit Diagnostics"
-                            >
-                              <FaEdit size={10} />
-                            </button>
+                            {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                              <button 
+                                onClick={() => handleOpenIssueModal(item)}
+                                className="p-1.5 rounded-lg bg-amber-50 text-amber-500 hover:bg-amber-100 transition-all shadow-sm border border-amber-200/50"
+                                title="Edit Diagnostics"
+                              >
+                                <FaEdit size={10} />
+                              </button>
+                            )}
                           </div>
                         </td>
                         <td className="px-2 py-2">
@@ -685,13 +701,14 @@ export default function EmpService() {
                              onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
                              className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[150px] text-center cursor-pointer outline-none focus:ring-4 focus:ring-black/5 ${getStatusColor(item.serviceStatus || item.status)}`}
                            >
+                             <option value="Cancelled" className="bg-white text-red-500 font-bold uppercase hidden">CANCELLED</option>
                              {(() => {
                                const currentStatus = getMappedStatus(item.serviceStatus || item.status);
                                const currentIndex = STATUS_STEPS.indexOf(currentStatus);
                                return STATUS_STEPS.map((status, idx) => {
-                                 if (idx < currentIndex) return null;
+                                 if (currentStatus !== "Cancelled" && idx < currentIndex) return null;
                                  return (
-                                   <option key={status} value={status} className="bg-white text-black font-bold">
+                                   <option key={status} value={status} className="bg-white text-black font-bold uppercase">
                                      {status.toUpperCase()}
                                    </option>
                                  );
@@ -714,9 +731,16 @@ export default function EmpService() {
                               </button>
                             )}
                                 
-                            <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-900 text-gray-400 hover:bg-amber-50 hover:text-amber-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
-                            {getMappedStatus(item.serviceStatus || item.status) === "Bill Pending" && (
-                              <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-10 px-4 bg-black text-white hover:bg-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-2" title="Generate Bill"><FaFileInvoice /> Bill</button>
+                            {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                              <button onClick={() => handleOpenIssueModal(item)} className="h-10 px-4 bg-gray-900 text-gray-400 hover:bg-amber-50 hover:text-amber-500 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all" title="Edit Log & Parts"><FaEdit /></button>
+                            )}
+                            {["Bill Pending", "Service Completed"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
+                              <button onClick={() => navigate(`${pathPrefix}/addbillings`, { state: { service: item } })} className="h-10 px-4 bg-black text-white hover:bg-emerald-600 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex flex-col items-center justify-center leading-tight group/bill" title="Generate Bill">
+                                <div className="flex items-center gap-2">
+                                   <FaFileInvoice /> Bill
+                                </div>
+                                <span className="text-[7px] font-bold opacity-50 group-hover/bill:opacity-100 uppercase tracking-tighter">Ready: {getElapsedTime(item.updatedAt || item.updated_at)}</span>
+                              </button>
                             )}
                             
                           </div>
