@@ -569,75 +569,88 @@ const AllOrders = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {paginatedOrders.map((o) => (
-                  <tr
-                    key={o.id}
-                    className="hover:bg-slate-50/80 transition-all duration-300 group/row"
-                  >
-                    <td
-                      onClick={() => navigate(`/admin/orders/${o.id}`)}
-                      className="px-6 py-5 font-black text-slate-400 group-hover/row:text-cyan-600 cursor-pointer transition-colors"
-                    >
-                      #{o.orderId}
-                    </td>
-                    <td
-                      onClick={() => navigate(`/admin/orders/${o.id}`)}
-                      className="px-6 py-5 cursor-pointer"
-                    >
-                      <div className="font-bold text-slate-800 tracking-tight group-hover/row:translate-x-1 transition-transform">{o.customerName || o.shippingName || "-"}</div>
-                      <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{o.shippingCity || "Local Order"}</div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex flex-col">
-                        <span className="font-black text-slate-900 leading-none">₹ {Number(o.total).toLocaleString("en-IN")}</span>
-                        <span className="text-[9px] text-slate-400 font-black mt-1 uppercase tracking-tight">{o.items?.length || 0} ITEMS</span>
+                {paginatedOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" className="px-6 py-24 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mb-4 border border-slate-100 text-slate-300">
+                          <FaClipboardList size={24} />
+                        </div>
+                        <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">No orders found for the given criteria</p>
                       </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <div className="flex items-center gap-2">
-                        <span className={`w-2 h-2 rounded-full ${o.paymentStatus === 'paid' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)] animate-pulse'}`} />
-                        <span className="font-black text-[11px] uppercase tracking-wider text-slate-600">{o.paymentStatus}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">{statusBadge(o.status)}</td>
-                    <td className="px-6 py-5">
-                      <div className="relative inline-block w-full max-w-[140px]">
-                        <select
-                          value={normalizeKey(o.status)}
-                          onChange={(e) => updateStatus(o.id, e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 cursor-pointer transition-all hover:bg-white"
-                        >
-                          {ORDER_STATUS_LIST.slice(
-                            ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status)) === -1
-                              ? 0
-                              : ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status))
-                          )
-                            .filter(s => {
-                              const current = normalizeKey(o.status);
-                              if (current === "outfordelivery" || current === "delivered") {
-                                return s.id !== "cancelled";
-                              }
-                              return true;
-                            })
-                            .map((s) => (
-                              <option key={s.id} value={s.id}>
-                                {s.label}
-                              </option>
-                            ))}
-                        </select>
-                      </div>
-                    </td>
-                    <td className="px-6 py-5">
-                      <button
-                        onClick={() => printOrder(o)}
-                        className="mx-auto flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.1em] hover:bg-cyan-600 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-slate-900/10"
-                      >
-                        <FaPrint className="text-cyan-400 group-hover/row:text-white" />
-                        Print Invite
-                      </button>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  paginatedOrders.map((o) => (
+                    <tr
+                      key={o.id}
+                      className="hover:bg-slate-50/80 transition-all duration-300 group/row"
+                    >
+                      <td
+                        onClick={() => navigate(`/admin/orders/${o.id}`)}
+                        className="px-6 py-5 font-black text-slate-400 group-hover/row:text-cyan-600 cursor-pointer transition-colors"
+                      >
+                        #{o.orderId}
+                      </td>
+                      <td
+                        onClick={() => navigate(`/admin/orders/${o.id}`)}
+                        className="px-6 py-5 cursor-pointer"
+                      >
+                        <div className="font-bold text-slate-800 tracking-tight group-hover/row:translate-x-1 transition-transform">{o.customerName || o.shippingName || "-"}</div>
+                        <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{o.shippingCity || "Local Order"}</div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex flex-col">
+                          <span className="font-black text-slate-900 leading-none">₹ {Number(o.total).toLocaleString("en-IN")}</span>
+                          <span className="text-[9px] text-slate-400 font-black mt-1 uppercase tracking-tight">{o.items?.length || 0} ITEMS</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${o.paymentStatus === 'paid' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.5)] animate-pulse'}`} />
+                          <span className="font-black text-[11px] uppercase tracking-wider text-slate-600">{o.paymentStatus}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">{statusBadge(o.status)}</td>
+                      <td className="px-6 py-5">
+                        <div className="relative inline-block w-full max-w-[140px]">
+                          <select
+                            value={normalizeKey(o.status)}
+                            onChange={(e) => updateStatus(o.id, e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 cursor-pointer transition-all hover:bg-white"
+                          >
+                            {ORDER_STATUS_LIST.slice(
+                              ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status)) === -1
+                                ? 0
+                                : ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status))
+                            )
+                              .filter(s => {
+                                const current = normalizeKey(o.status);
+                                if (current === "outfordelivery" || current === "delivered") {
+                                  return s.id !== "cancelled";
+                                }
+                                return true;
+                              })
+                              .map((s) => (
+                                <option key={s.id} value={s.id}>
+                                  {s.label}
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+                      </td>
+                      <td className="px-6 py-5">
+                        <button
+                          onClick={() => printOrder(o)}
+                          className="mx-auto flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-[0.1em] hover:bg-cyan-600 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-slate-900/10"
+                        >
+                          <FaPrint className="text-cyan-400 group-hover/row:text-white" />
+                          Print Invite
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -646,122 +659,129 @@ const AllOrders = () => {
 
       {/* ================= GRID VIEW ================= */}
       {view === "grid" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {paginatedOrders.map((o) => (
-            <div
-              key={o.id}
-              className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition space-y-3"
-            >
-              {/* HEADER */}
+        paginatedOrders.length === 0 ? (
+          <div className="bg-white rounded-lg p-24 text-center border-2 border-dashed border-gray-100">
+             <div className="flex justify-center mb-4 text-gray-300">
+               <FaClipboardList size={32} />
+             </div>
+             <p className="text-gray-400 font-black uppercase tracking-widest text-xs">No orders found for the given criteria</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {paginatedOrders.map((o) => (
               <div
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/admin/orders/${o.id}`);
-                }}
-                className="flex justify-between items-start cursor-pointer"
+                key={o.id}
+                className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition space-y-3"
               >
-                <div>
-                  <h3 className="font-bold text-gray-800">{o.orderId}</h3>
-                  <p className="text-xs text-gray-400">
-                    {o.createdAt?.toDate?.().toLocaleDateString("en-IN")}
-                  </p>
-                </div>
-
-                {statusBadge(o.status)}
-              </div>
-
-              {/* CUSTOMER */}
-              <p
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/admin/orders/${o.id}`);
-                }}
-                className="text-sm text-gray-600 cursor-pointer"
-              >
-                {o.customerName || o.shippingName || "-"}
-              </p>
-
-              {/* META ROW */}
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-500">
-                  {o.items?.length || 0} items
-                </span>
-
-
-              </div>
-
-              {/* TOTAL */}
-              <p
-                onClick={(e) => {
-                  e.stopPropagation();
-                  navigate(`/admin/orders/${o.id}`);
-                }}
-                className="font-semibold text-lg text-gray-900 cursor-pointer"
-              >
-                ₹ {Number(o.total).toLocaleString("en-IN")}
-              </p>
-
-              {/* PAYMENT CHIP */}
-              <div className="flex items-center justify-between">
-                <span
-                  className={`text-xs font-semibold px-2 py-0.5 rounded-full ${o.paymentStatus === "paid"
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-amber-100 text-amber-700"
-                    }`}
+                {/* HEADER */}
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/admin/orders/${o.id}`);
+                  }}
+                  className="flex justify-between items-start cursor-pointer"
                 >
-                  {o.paymentStatus}
-                </span>
+                  <div>
+                    <h3 className="font-bold text-gray-800">{o.orderId}</h3>
+                    <p className="text-xs text-gray-400">
+                      {o.createdAt?.toDate?.().toLocaleDateString("en-IN")}
+                    </p>
+                  </div>
 
-                <span className="text-xs text-gray-400">
-                  {o.paymentMethod || "COD"}
-                </span>
-              </div>
-
-              {/* ACTIONS */}
-              <div className="flex gap-2 justify-between">
-                <div>
-                  <select
-                    value={normalizeKey(o.status)}
-                    onChange={(e) => updateStatus(o.id, e.target.value)}
-                    className="bg-white border border-gray-300 rounded-lg px-2 py-1 text-xs w-full
-          focus:ring-2 focus:ring-blue-500 outline-none"
-                  >
-                    {ORDER_STATUS_LIST.slice(
-                      ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status)) === -1
-                        ? 0
-                        : ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status))
-                    )
-                      .filter(s => {
-                        const current = normalizeKey(o.status);
-                        if (current === "outfordelivery" || current === "delivered") {
-                          return s.id !== "cancelled";
-                        }
-                        return true;
-                      })
-                      .map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.label}
-                        </option>
-                      ))}
-                  </select>
+                  {statusBadge(o.status)}
                 </div>
 
+                {/* CUSTOMER */}
+                <p
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/admin/orders/${o.id}`);
+                  }}
+                  className="text-sm text-gray-600 cursor-pointer"
+                >
+                  {o.customerName || o.shippingName || "-"}
+                </p>
+
+                {/* META ROW */}
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-gray-500">
+                    {o.items?.length || 0} items
+                  </span>
 
 
-                <div>
-                  <button
-                    onClick={() => printOrder(o)}
-                    className="px-3 py-1 bg-gray-800 hover:bg-black text-white rounded-lg text-xs flex items-center gap-1 transition"
+                </div>
+
+                {/* TOTAL */}
+                <p
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/admin/orders/${o.id}`);
+                  }}
+                  className="font-semibold text-lg text-gray-900 cursor-pointer"
+                >
+                  ₹ {Number(o.total).toLocaleString("en-IN")}
+                </p>
+
+                {/* PAYMENT CHIP */}
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`text-xs font-semibold px-2 py-0.5 rounded-full ${o.paymentStatus === "paid"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-amber-100 text-amber-700"
+                      }`}
                   >
-                    <FaPrint />Print
-                  </button>
+                    {o.paymentStatus}
+                  </span>
+
+                  <span className="text-xs text-gray-400">
+                    {o.paymentMethod || "COD"}
+                  </span>
+                </div>
+
+                {/* ACTIONS */}
+                <div className="flex gap-2 justify-between">
+                  <div>
+                    <select
+                      value={normalizeKey(o.status)}
+                      onChange={(e) => updateStatus(o.id, e.target.value)}
+                      className="bg-white border border-gray-300 rounded-lg px-2 py-1 text-xs w-full
+            focus:ring-2 focus:ring-blue-500 outline-none"
+                    >
+                      {ORDER_STATUS_LIST.slice(
+                        ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status)) === -1
+                          ? 0
+                          : ORDER_STATUS_LIST.findIndex((s) => s.id === normalizeKey(o.status))
+                      )
+                        .filter(s => {
+                          const current = normalizeKey(o.status);
+                          if (current === "outfordelivery" || current === "delivered") {
+                            return s.id !== "cancelled";
+                          }
+                          return true;
+                        })
+                        .map((s) => (
+                          <option key={s.id} value={s.id}>
+                            {s.label}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+
+
+                  <div>
+                    <button
+                      onClick={() => printOrder(o)}
+                      className="px-3 py-1 bg-gray-800 hover:bg-black text-white rounded-lg text-xs flex items-center gap-1 transition"
+                    >
+                      <FaPrint />Print
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-
-
+            ))}
+          </div>
+        )
       )}
 
       {/* ================= PAGINATION ================= */}
