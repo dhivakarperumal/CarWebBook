@@ -190,20 +190,19 @@ export default function Services() {
   const currentMainList = mainTab === "all"
     ? searchedServices
     : (mainTab === "booked" ? searchedServices.filter(s => !s.addVehicle) : searchedServices.filter(s => s.addVehicle));
-  const assignedServices = currentMainList.filter(s => {
-    if (!s.assignedEmployeeId) return false;
-    if (isMechanic && (s.assignedEmployeeName || "").toLowerCase() !== (userProfile?.displayName || "").toLowerCase()) return false;
+  const listData = currentMainList.filter(s => {
+    if (isMechanic) {
+      if (!s.assignedEmployeeId) return false;
+      if ((s.assignedEmployeeName || "").toLowerCase() !== (userProfile?.displayName || "").toLowerCase()) return false;
+    }
     
-    // Hide completed items from the active board unless specifically filtering for them
+    // Hide 'Bill Completed' from 'All Status' view, show everything else
     if (statusFilter === "All Status") {
       const status = (s.serviceStatus || s.status || "").toLowerCase();
-      if (status.includes("bill completed") || status === "service completed") return false;
+      if (status.includes("bill completed")) return false;
     }
     return true;
   });
-  const unassignedServices = isMechanic ? [] : currentMainList.filter(s => !s.assignedEmployeeId);
-  // Focus strictly on assigned active protocols for the main board
-  const listData = assignedServices;
 
   const totalPages = Math.ceil(listData.length / itemsPerPage);
   const paginatedData = listData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
