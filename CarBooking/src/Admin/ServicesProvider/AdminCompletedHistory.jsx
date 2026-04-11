@@ -287,6 +287,7 @@ const AdminCompletedHistory = () => {
     try {
       const res = await api.get(`/all-services/${item.id}`);
       const fullData = res.data;
+      fullData.grandTotal = item.grandTotal; // Keep correctly mapped grandTotal
       setSelectedServiceDetail(fullData);
       setIssueEntries(fullData.issues || []);
       setPartsEntries(fullData.parts || []);
