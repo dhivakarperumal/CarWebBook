@@ -553,13 +553,14 @@ export default function EmpService() {
                     onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
                     className={`px-4 py-2 rounded-[1.5rem] text-[10px] font-black tracking-widest uppercase border text-center cursor-pointer outline-none focus:ring-4 focus:ring-black/5 ${getStatusColor(item.serviceStatus || item.status)}`}
                   >
+                    <option value="Cancelled" className="bg-white text-red-500 font-bold uppercase hidden">CANCELLED</option>
                     {(() => {
                       const currentStatus = getMappedStatus(item.serviceStatus || item.status);
                       const currentIndex = STATUS_STEPS.indexOf(currentStatus);
                       return STATUS_STEPS.map((status, idx) => {
-                        if (idx < currentIndex) return null;
+                        if (currentStatus !== "Cancelled" && idx < currentIndex) return null;
                         return (
-                          <option key={status} value={status} className="bg-white text-black font-bold">
+                          <option key={status} value={status} className="bg-white text-black font-bold uppercase">
                             {status.toUpperCase()}
                           </option>
                         );
@@ -694,13 +695,14 @@ export default function EmpService() {
                              onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
                              className={`px-4 py-2 rounded-full text-[9px] font-black tracking-widest uppercase border inline-block min-w-[150px] text-center cursor-pointer outline-none focus:ring-4 focus:ring-black/5 ${getStatusColor(item.serviceStatus || item.status)}`}
                            >
+                             <option value="Cancelled" className="bg-white text-red-500 font-bold uppercase hidden">CANCELLED</option>
                              {(() => {
                                const currentStatus = getMappedStatus(item.serviceStatus || item.status);
                                const currentIndex = STATUS_STEPS.indexOf(currentStatus);
                                return STATUS_STEPS.map((status, idx) => {
-                                 if (idx < currentIndex) return null;
+                                 if (currentStatus !== "Cancelled" && idx < currentIndex) return null;
                                  return (
-                                   <option key={status} value={status} className="bg-white text-black font-bold">
+                                   <option key={status} value={status} className="bg-white text-black font-bold uppercase">
                                      {status.toUpperCase()}
                                    </option>
                                  );
