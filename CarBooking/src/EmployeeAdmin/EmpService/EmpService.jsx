@@ -629,9 +629,9 @@ export default function EmpService() {
             {paginatedData.length === 0 && <div className="col-span-full py-20 text-center text-gray-400 font-black uppercase tracking-widest text-xs">No service protocols found for designated metrics</div>}
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-2xl shadow-blue-900/5 border border-gray-100 animate-fadeIn overflow-hidden">
+          <div className=" animate-fadeIn overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
+              <table className="w-full text-left text-sm whitespace-nowrap min-w-max">
                 <thead className="text-white">
                   <tr>
                     <th className="px-2 py-2 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>

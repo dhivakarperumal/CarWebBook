@@ -438,26 +438,26 @@ export default function Services() {
             {paginatedData.length === 0 && <div className="col-span-full py-20 text-center text-gray-400 font-black uppercase tracking-widest text-xs">No service protocols found for designated metrics</div>}
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-2xl shadow-blue-900/5 border border-gray-100 animate-fadeIn overflow-hidden">
+          <div className=" animate-fadeIn overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm whitespace-nowrap min-w-[1200px]">
+              <table className="w-full text-left text-sm whitespace-nowrap min-w-max">
                 <thead className="bg-[#020617] text-white">
                   <tr>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">S No</th>
                    
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Vehicle Spec</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Issues</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Mechanic</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Spare Status</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-center">Workflow</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-right">Actions</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Vehicle Spec</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Issues</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Mechanic</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Spare Status</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-center">Workflow</th>
+                    <th className="px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] opacity-90 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {paginatedData.length === 0 ? (
                     <tr>
-                      <td colSpan="8" className="px-8 py-24 text-center">
+                      <td colSpan="8" className="px-4 py-16 text-center">
                         <div className="flex flex-col items-center justify-center">
                           <div className="w-16 h-16 bg-gray-50 rounded-3xl flex items-center justify-center mb-4 border border-gray-100 text-gray-300">
                             <FaWrench size={24} />
@@ -469,14 +469,14 @@ export default function Services() {
                   ) : (
                     paginatedData.map((item, index) => (
                       <tr key={item.id} className="hover:bg-blue-50/30 transition-colors group">
-                        <td className="px-8 py-6"><span className="text-xs font-black text-gray-400">{(currentPage - 1) * itemsPerPage + index + 1}</span></td>
+                        <td className="px-4 py-4"><span className="text-xs font-black text-gray-400">{(currentPage - 1) * itemsPerPage + index + 1}</span></td>
 
-                        <td className="px-8 py-6"><span className="text-xs font-black text-blue-900">{item.bookingId || "SER-NEW"}</span><p className="text-sm font-black text-gray-900">{item.name}</p><p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">{item.phone}</p></td>
-                        <td className="px-8 py-6">
+                        <td className="px-4 py-4"><span className="text-xs font-black text-blue-900">{item.bookingId || "SER-NEW"}</span><p className="text-sm font-black text-gray-900">{item.name}</p><p className="text-[10px] font-black text-gray-400 mt-1 uppercase tracking-widest">{item.phone}</p></td>
+                        <td className="px-4 py-4">
                           <div className="flex items-center gap-2 mb-1"><p className="text-sm font-black text-gray-800">{item.brand} {item.model}</p></div>
                           <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest">{item.vehicleNumber || "UNSPECIFIED"}</p>
                         </td>
-                        <td className="px-8 py-6">
+                        <td className="px-4 py-4">
                           <div className="flex items-center gap-3 group/issue">
                             <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]" title={item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}>
                               {item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}
@@ -492,14 +492,14 @@ export default function Services() {
                             )}
                           </div>
                         </td>
-                        <td className="px-8 py-6">
+                        <td className="px-4 py-4">
                           {item.assignedEmployeeName ? (
                             <div className="flex items-center gap-3"><div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-[10px] font-black border border-blue-100 uppercase">{item.assignedEmployeeName.charAt(0)}</div><span className="text-xs font-black text-gray-700">{item.assignedEmployeeName}</span></div>
                           ) : (
                             <button onClick={() => { setSelectedBooking(item); setModalVisible(true); }} className="text-[9px] font-black text-amber-500 uppercase tracking-widest bg-amber-50 px-3 py-2 rounded-xl border border-amber-100">Pending Assignment</button>
                           )}
                         </td>
-                        <td className="px-8 py-6">
+                        <td className="px-4 py-4">
                            {(() => {
                              const ss = getSpareStatus(item.parts);
                              return <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border ${ss.color}`}>{ss.label}</span>;
@@ -511,7 +511,7 @@ export default function Services() {
                              </div>
                            )}
                         </td>
-                        <td className="px-8 py-6 text-center">
+                        <td className="px-4 py-4 text-center">
                            <select 
                              value={getMappedStatus(item.serviceStatus || item.status)}
                              onChange={(e) => handleUpdateStatus(item.id, e.target.value)}
@@ -531,7 +531,7 @@ export default function Services() {
                              })}
                            </select>
                         </td>
-                        <td className="px-8 py-6 text-left">
+                        <td className="px-4 py-4 text-left">
                           <div className="flex justify-end gap-2">
                         
                            
