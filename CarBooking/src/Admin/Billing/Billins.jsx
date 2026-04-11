@@ -202,7 +202,7 @@ const Billings = () => {
 
   const updateStatus = async (id, newStatus) => {
     try {
-      await api.patch(`/billings/${id}`, { paymentStatus: newStatus });
+      await api.patch(`/billings/${id}/payment-status`, { paymentStatus: newStatus });
       setBills((prev) =>
         prev.map((b) => (b.id === id ? { ...b, paymentStatus: newStatus } : b))
       );
