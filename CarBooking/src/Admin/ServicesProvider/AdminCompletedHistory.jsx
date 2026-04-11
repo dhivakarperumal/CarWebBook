@@ -75,7 +75,7 @@ const AdminCompletedHistory = () => {
 
       const filtered = (servRes.data || []).filter(s => {
           const sStat = (s.serviceStatus || s.status || "").toLowerCase();
-          const isDone = sStat.includes("completed") || sStat === "bill completed";
+          const isDone = sStat.includes("bill completed");
           return isDone;
       }).map(s => {
         // Try to find the bill amount using all available IDs
