@@ -427,10 +427,11 @@ const EmpAddBilling = () => {
       </label>
       <input
         type="number"
+        min="1"
         placeholder="Qty"
         className="border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-semibold outline-none focus:border-gray-300"
         value={newPart.qty}
-        onChange={e => setNewPart({ ...newPart, qty: Number(e.target.value) })}
+        onChange={e => setNewPart({ ...newPart, qty: e.target.value === '' ? '' : Math.max(1, Number(e.target.value)) })}
       />
     </div>
 
@@ -441,10 +442,11 @@ const EmpAddBilling = () => {
       </label>
       <input
         type="number"
+        min="0"
         placeholder="₹"
         className="border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-semibold outline-none focus:border-gray-300"
         value={newPart.price}
-        onChange={e => setNewPart({ ...newPart, price: Number(e.target.value) })}
+        onChange={e => setNewPart({ ...newPart, price: e.target.value === '' ? '' : Math.max(0, Number(e.target.value)) })}
       />
     </div>
 
@@ -511,9 +513,9 @@ const EmpAddBilling = () => {
             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Reconciliation</h3>
 
             <div className="space-y-4">
-              <CompactInput label="Service Workforce" value={labour} onChange={setLabour} suffix="₹" />
-              <CompactInput label="Tax Variable" value={gstPercent} onChange={setGstPercent} suffix="%" />
-              <CompactInput label="Loyalty Discount" value={discount} onChange={setDiscount} suffix="₹" highlight />
+              <CompactInput label="Service Workforce" value={labour} onChange={(v) => setLabour(v === '' ? '' : Math.max(0, Number(v)))} suffix="₹" />
+              <CompactInput label="Tax Variable" value={gstPercent} onChange={(v) => setGstPercent(v === '' ? '' : Math.max(0, Number(v)))} suffix="%" />
+              <CompactInput label="Loyalty Discount" value={discount} onChange={(v) => setDiscount(v === '' ? '' : Math.max(0, Number(v)))} suffix="₹" highlight />
             </div>
 
             <div className="space-y-3 pt-6 border-t border-gray-50">
@@ -581,6 +583,7 @@ const CompactInput = ({ label, value, onChange, suffix, highlight }) => (
     <div className="relative">
       <input
         type="number"
+        min="0"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={`w-full px-5 py-4 rounded-xl border font-black text-sm outline-none transition-all text-right pr-12 ${highlight ? 'bg-rose-50/20 border-rose-100 text-rose-600 focus:border-rose-300' : 'bg-white border-gray-100 text-gray-900 focus:border-black'}`}
