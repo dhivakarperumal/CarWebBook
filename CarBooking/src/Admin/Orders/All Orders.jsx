@@ -554,18 +554,18 @@ const AllOrders = () => {
 
       {/* ================= TABLE VIEW ================= */}
       {view === "table" && (
-        <div className="bg-white rounded-[2rem] shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden group/container">
+        <div className=" overflow-hidden group/container">
           <div className="overflow-x-auto">
             <table className="w-full text-sm whitespace-nowrap border-separate border-spacing-0">
               <thead className="bg-[#020617] text-white relative">
                 <tr className="relative z-10">
-                  <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90 first:rounded-tl-[2rem]">Order ID</th>
+                  <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Order ID</th>
                   <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Customer</th>
                   <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Amount</th>
                   <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Payment</th>
                   <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
                   <th className="px-6 py-5 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Update Status</th>
-                  <th className="px-6 py-5 text-center text-[10px] font-black uppercase tracking-[0.2em] opacity-90 last:rounded-tr-[2rem]">Action</th>
+                  <th className="px-6 py-5 text-center text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
