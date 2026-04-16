@@ -526,9 +526,7 @@ const AddEditStaff = () => {
           >
             <option value="">Select role</option>
             <option value="mechanic" className="text-black bg-white">Mechanic</option>
-            <option value="receptionist" className="text-black bg-white">Receptionist</option>
-            <option value="manager" className="text-black bg-white">Manager</option>
-            <option value="staff" className="text-black bg-white">General Staff</option>
+            <option value="user" className="text-black bg-white">User</option>
             <option value="admin" className="text-black bg-white">Admin</option>
           </select>
 
