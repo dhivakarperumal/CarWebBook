@@ -19,6 +19,7 @@ const MyOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [activeTab, setActiveTab] = useState("current");
   const { user } = useAuth();
   const location = useLocation();
 
@@ -51,15 +52,49 @@ const MyOrders = () => {
   }, [orders, location.state]);
 
   if (loading) return <p className="text-slate-400">Loading orders...</p>;
+  const filteredOrders = orders.filter((order) => {
+    const status = (order.status || "").toLowerCase();
+
+    if (activeTab === "delivered") {
+      return status === "delivered";
+    }
+
+    return status !== "delivered" && status !== "cancelled";
+  });
 
   return (
     <>
       <h2 className="text-2xl font-bold mb-6 text-sky-400">My Orders</h2>
-      {orders.length === 0 ? (
-        <p className="text-slate-400">No orders found.</p>
+      <div className="flex bg-slate-900 rounded-2xl p-1 mb-6">
+        <button
+          onClick={() => setActiveTab("current")}
+          className={`flex-1 py-3 rounded-2xl font-bold transition cursor-pointer ${activeTab === "current"
+              ? "bg-sky-400 text-black"
+              : "text-slate-400"
+            }`}
+        >
+          Current Orders
+        </button>
+
+        <button
+          onClick={() => setActiveTab("delivered")}
+          className={`flex-1 py-3 rounded-2xl font-bold transition cursor-pointer ${activeTab === "delivered"
+              ? "bg-sky-400 text-black"
+              : "text-slate-400"
+            }`}
+        >
+          Delivered Orders
+        </button>
+      </div>
+      {filteredOrders.length === 0 ? (
+        <p className="text-slate-400">
+          {activeTab === "current"
+            ? "No current orders found."
+            : "No delivered orders found."}
+        </p>
       ) : (
         <div className="space-y-4">
-          {orders.map((order) => {
+          {filteredOrders.map((order) => {
             const statusKey = (order.status || "orderplaced").toLowerCase();
             const statusLabel = STATUS_CONFIG[statusKey]?.label || "Order Placed";
             return (
@@ -76,12 +111,11 @@ const MyOrders = () => {
                     </p>
                   </div>
                   <div className="flex flex-col items-start md:items-end gap-2">
-                    <span className={`text-xs px-3 py-1 rounded-full font-semibold ${
-                      statusKey === "cancelled" ? "bg-red-900 text-red-400" :
-                      statusKey === "delivered" ? "bg-green-900 text-green-400" :
-                      statusKey === "outfordelivery" ? "bg-yellow-900 text-yellow-400" :
-                      "bg-sky-900 text-sky-400"
-                    }`}>
+                    <span className={`text-xs px-3 py-1 rounded-full font-semibold ${statusKey === "cancelled" ? "bg-red-900 text-red-400" :
+                        statusKey === "delivered" ? "bg-green-900 text-green-400" :
+                          statusKey === "outfordelivery" ? "bg-yellow-900 text-yellow-400" :
+                            "bg-sky-900 text-sky-400"
+                      }`}>
                       {statusLabel}
                     </span>
                     <p className="text-sky-400 font-bold">Total: ₹{order.total}</p>
@@ -120,7 +154,7 @@ const OrderModal = ({ order, onClose }) => {
         <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-white cursor-pointer">✕</button>
         <h3 className="text-xl font-bold text-sky-400 mb-2">Order ID: {order.orderId}</h3>
         <p className="text-slate-400 mb-6">Placed on: {new Date(order.createdAt).toLocaleString()}</p>
-        
+
         <div className="space-y-4 mb-6">
           {order.items?.map((item, i) => (
             <div key={i} className="flex gap-4 items-center border-b border-slate-700 pb-3">
@@ -169,9 +203,8 @@ const OrderModal = ({ order, onClose }) => {
                 <div className="flex justify-between items-start mb-4">
                   {STATUS_STEPS.map((step, index) => (
                     <div key={step} className="flex flex-col items-center flex-1">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        index <= currentStepIndex ? "bg-sky-400 text-black" : "bg-slate-700 text-slate-400"
-                      }`}>{index + 1}</div>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${index <= currentStepIndex ? "bg-sky-400 text-black" : "bg-slate-700 text-slate-400"
+                        }`}>{index + 1}</div>
                       <p className={`text-[10px] mt-2 text-center font-bold ${index <= currentStepIndex ? "text-sky-400" : "text-slate-500"}`}>{step}</p>
                     </div>
                   ))}
@@ -186,9 +219,8 @@ const OrderModal = ({ order, onClose }) => {
                 {STATUS_STEPS.map((step, index) => (
                   <div key={step} className="flex items-start gap-4">
                     <div className="flex flex-col items-center">
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
-                        index <= currentStepIndex ? "bg-sky-400 text-black" : "bg-slate-700 text-slate-400"
-                      }`}>{index + 1}</div>
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${index <= currentStepIndex ? "bg-sky-400 text-black" : "bg-slate-700 text-slate-400"
+                        }`}>{index + 1}</div>
                       {index !== STATUS_STEPS.length - 1 && <div className={`w-1 h-8 mt-1 ${index < currentStepIndex ? "bg-sky-400" : "bg-slate-700"}`} />}
                     </div>
                     <p className={`text-sm mt-1 ${index <= currentStepIndex ? "text-sky-400 font-bold" : "text-slate-400"}`}>{step}</p>
