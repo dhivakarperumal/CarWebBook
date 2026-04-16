@@ -44,7 +44,8 @@ exports.createOrder = async (req, res) => {
   const {
     orderId, uid, customerName, customerPhone, customerEmail,
     orderType, paymentMethod, paymentStatus, status,
-    shipping, subtotal, tax, shippingFee, total, items
+    shipping, subtotal, tax, shippingFee, total, items,
+    images // 📷 Added
   } = req.body;
 
   try {
@@ -54,14 +55,16 @@ exports.createOrder = async (req, res) => {
         orderType, paymentMethod, paymentStatus, status,
         shippingName, shippingPhone, shippingAddress, shippingCity,
         shippingState, shippingZip, shippingCountry,
-        subtotal, tax, shippingFee, total
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        subtotal, tax, shippingFee, total,
+        images -- 📷 Added
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
       uid, customerName, customerPhone, customerEmail,
       orderType, paymentMethod, paymentStatus || 'Pending', status || 'orderplaced',
       shipping?.name, shipping?.phone, shipping?.address, shipping?.city,
       shipping?.state, shipping?.zip, shipping?.country,
-      subtotal, tax, shippingFee, total
+      subtotal, tax, shippingFee, total,
+      images || null // 📷 Added
     ]);
 
     const order_internal_id = result.insertId;
@@ -73,9 +76,9 @@ exports.createOrder = async (req, res) => {
     if (items && items.length) {
       for (const i of items) {
         await db.query(`
-          INSERT INTO product_order_items (order_internal_id, productId, name, variant, sku, price, qty, total)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `, [order_internal_id, i.productId, i.name, i.variant || i.variantLabel, i.sku, i.price, i.qty || i.quantity, i.total]);
+          INSERT INTO product_order_items (order_internal_id, productId, name, variant, sku, price, qty, total, image)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [order_internal_id, i.productId, i.name, i.variant || i.variantLabel, i.sku, i.price, i.qty || i.quantity, i.total, i.image]);
       }
     }
 

@@ -240,6 +240,7 @@ const OrderDetails = () => {
       <thead className="bg-gradient-to-r from-black to-cyan-400 text-white text-left">
               <tr>
                 <th className="px-4 py-3 text-left">Product</th>
+                <th className="px-4 py-3 text-center">Image</th>
                 <th className="px-4 py-3 text-center">Variant</th>
                 <th className="px-4 py-3 text-center">Qty</th>
                 <th className="px-4 py-3 text-right">Price</th>
@@ -249,7 +250,19 @@ const OrderDetails = () => {
             <tbody>
               {order.items?.map((i, idx) => (
                 <tr key={idx} className="border-t border-gray-200">
-                  <td className="px-4 py-3">{i.name}</td>
+                  <td className="px-4 py-3">
+                    <p className="font-bold">{i.name}</p>
+                    <p className="text-[10px] text-gray-400">{i.sku}</p>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {i.image ? (
+                      <img src={i.image} className="w-12 h-12 object-cover rounded-lg mx-auto border border-gray-100 shadow-sm" alt="item" />
+                    ) : (
+                      <div className="w-12 h-12 bg-gray-50 rounded-lg flex items-center justify-center mx-auto">
+                        <FaBoxOpen className="text-gray-300" />
+                      </div>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-center">{i.variant}</td>
                   <td className="px-4 py-3 text-center">{i.qty}</td>
                   <td className="px-4 py-3 text-right">₹ {i.price}</td>
@@ -260,6 +273,38 @@ const OrderDetails = () => {
           </table>
         </div>
       </div>
+
+       {/* ================= REFERENCE IMAGES ================= */}
+      {order.images && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <h3 className="font-semibold mb-6 flex items-center gap-2 uppercase tracking-widest text-xs">
+            <FaClock className="text-cyan-500" /> Order Time Reference Images
+          </h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {(() => {
+              try {
+                const imgList = typeof order.images === 'string' ? JSON.parse(order.images) : order.images;
+                if (!Array.isArray(imgList)) return null;
+                return imgList.map((img, idx) => (
+                  <div key={idx} className="relative group aspect-square rounded-xl overflow-hidden border border-gray-100">
+                    <img 
+                      src={img} 
+                      className="w-full h-full object-cover cursor-zoom-in hover:scale-110 transition-transform duration-500" 
+                      alt="Ref"
+                      onClick={() => window.open(img, '_blank')}
+                    />
+                    <div className="absolute top-1 left-1 bg-black/60 text-[8px] text-white px-2 py-0.5 rounded-full font-black">
+                      #{idx}
+                    </div>
+                  </div>
+                ));
+              } catch (e) {
+                return <p className="text-xs text-gray-400">Unable to load images</p>;
+              }
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* ================= TOTAL ================= */}
       <div className="flex justify-end">

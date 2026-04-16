@@ -5,6 +5,7 @@ import PageContainer from "../Components/PageContainer";
 import toast from "react-hot-toast";
 import api from "../api";
 import { useAuth } from "../PrivateRouter/AuthContext";
+import { FaImage, FaBoxOpen } from "react-icons/fa";
 
 const indianStates = [
   "Tamil Nadu",
@@ -129,7 +130,7 @@ export default function Checkout() {
       s.src = "https://checkout.razorpay.com/v1/checkout.js";
       s.onload = () => resolve(true);
       s.onerror = () => resolve(false);
-      document.body.appendChild(s);
+    document.body.appendChild(s);
     });
 
   const placeOrder = async () => {
@@ -201,10 +202,26 @@ export default function Checkout() {
         shipping,
         subtotal,
         total,
-        items: items.map(i => ({
-          ...i,
-          variant: i.variant || "" 
-        }))
+        items: items.map(i => {
+          let itemImage = i.image; // Already base64 or url in cart
+          
+          // If images array exists (typical in Buy Now from product list), take index 0
+          if (!itemImage && i.images) {
+            try {
+              const imgs = typeof i.images === 'string' ? JSON.parse(i.images) : i.images;
+              if (Array.isArray(imgs) && imgs.length > 0) itemImage = imgs[0];
+              else if (typeof imgs === 'object' && Object.keys(imgs).length > 0) itemImage = Object.values(imgs)[0];
+            } catch (e) {
+              itemImage = i.images[0] || null;
+            }
+          }
+
+          return {
+            ...i,
+            variant: i.variant || "",
+            image: itemImage // 📷 Map image properly
+          };
+        }),
       };
 
       const res = await api.post("/orders", orderData);

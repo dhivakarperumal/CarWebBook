@@ -32,6 +32,7 @@ const migrate = async () => {
         total DECIMAL(10,2) DEFAULT 0,
         
         cancelledReason TEXT,
+        images JSON,
         orderTrack JSON, -- To store history steps
         
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -52,6 +53,7 @@ const migrate = async () => {
         price DECIMAL(10,2) DEFAULT 0,
         qty INT DEFAULT 1,
         total DECIMAL(10,2) DEFAULT 0,
+        image LONGTEXT,
         FOREIGN KEY (order_internal_id) REFERENCES product_orders(id) ON DELETE CASCADE
       )
     `);

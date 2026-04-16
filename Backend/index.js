@@ -144,12 +144,21 @@ async function initializeDatabase() {
         shippingFee DECIMAL(10,2) DEFAULT 0,
         total DECIMAL(10,2) DEFAULT 0,
         cancelledReason TEXT,
+        images JSON,
         orderTrack JSON,
         createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
     console.log('✓ product_orders table checked/created');
+
+    // Ensure images column exists in product_orders
+    try {
+      await db.query("ALTER TABLE product_orders ADD COLUMN IF NOT EXISTS images JSON AFTER cancelledReason");
+      console.log('✓ product_orders table schema synchronized');
+    } catch (err) {
+      console.log('Sync product_orders error:', err.message);
+    }
 
     await db.query(`
       CREATE TABLE IF NOT EXISTS product_order_items (
@@ -162,10 +171,19 @@ async function initializeDatabase() {
         price DECIMAL(10,2) DEFAULT 0,
         qty INT DEFAULT 1,
         total DECIMAL(10,2) DEFAULT 0,
+        image LONGTEXT,
         FOREIGN KEY (order_internal_id) REFERENCES product_orders(id) ON DELETE CASCADE
       )
     `);
     console.log('✓ product_order_items table checked/created');
+
+    // Ensure image column exists in product_order_items
+    try {
+      await db.query("ALTER TABLE product_order_items ADD COLUMN IF NOT EXISTS image LONGTEXT AFTER total");
+      console.log('✓ product_order_items table (image column) synchronized');
+    } catch (err) {
+      console.log('Sync product_order_items image error:', err.message);
+    }
 
     await db.query(`
       CREATE TABLE IF NOT EXISTS vehicle_bookings (
