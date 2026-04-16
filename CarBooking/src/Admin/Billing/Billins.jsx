@@ -415,7 +415,6 @@ const Billings = () => {
             >
               <option value="all">All Status</option>
               <option value="paid">Paid</option>
-              <option value="partial">Partial</option>
               <option value="pending">Pending</option>
             </select>
 
@@ -495,7 +494,6 @@ const Billings = () => {
                       }`}
                     >
                       <option value="pending" className="bg-white text-black">Pending</option>
-                      <option value="partial" className="bg-white text-black">Partial</option>
                       <option value="paid" className="bg-white text-black">Paid</option>
                     </select>
                   </td>

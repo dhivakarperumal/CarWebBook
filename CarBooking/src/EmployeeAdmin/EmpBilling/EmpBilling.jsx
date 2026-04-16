@@ -326,7 +326,6 @@ const EmpBilling = () => {
                 <option value="all">All Payment Status</option>
                 <option value="paid">Paid</option>
                 <option value="pending">Pending</option>
-                <option value="partial">Partial</option>
               </select>
             </div>
           </div>
@@ -384,7 +383,6 @@ const EmpBilling = () => {
                     }`}
                 >
                   <option value="pending" className="bg-white text-black">Pending</option>
-                  <option value="partial" className="bg-white text-black">Partial</option>
                   <option value="paid" className="bg-white text-black">Paid</option>
                 </select>
                 <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">INV: {bill.invoiceNo}</span>
@@ -480,7 +478,6 @@ const EmpBilling = () => {
                         }`}
                     >
                       <option value="pending" className="bg-white text-black">Pending</option>
-                      <option value="partial" className="bg-white text-black">Partial</option>
                       <option value="paid" className="bg-white text-black">Paid</option>
                     </select>
                   </td>
