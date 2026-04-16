@@ -69,8 +69,7 @@ const Billings = () => {
   const [bills, setBills] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [amountSort, setAmountSort] = useState("none");
-  const [dateFilter, setDateFilter] = useState("today"); // default → today
+  const [dateFilter, setDateFilter] = useState("today"); 
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -166,14 +165,8 @@ const Billings = () => {
       return matchSearch && matchStatus && matchDate;
     });
 
-    if (amountSort === "low") {
-      data.sort((a, b) => a.grandTotal - b.grandTotal);
-    } else if (amountSort === "high") {
-      data.sort((a, b) => b.grandTotal - a.grandTotal);
-    }
-
     return data;
-  }, [bills, search, statusFilter, amountSort]);
+  }, [bills, search, statusFilter]);
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
 
@@ -184,7 +177,7 @@ const Billings = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, statusFilter, amountSort, dateFilter, customFrom, customTo]);
+  }, [search, statusFilter, dateFilter, customFrom, customTo]);
 
   /* =========================
      DELETE & UPDATE
@@ -418,27 +411,7 @@ const Billings = () => {
               <option value="pending">Pending</option>
             </select>
 
-            <select
-              value={amountSort}
-              onChange={(e) => setAmountSort(e.target.value)}
-              className="
-          rounded-lg
-          border border-gray-200
-          px-4 py-3
-          text-sm
-          shadow-sm
-          focus:outline-none
-          focus:ring-2
-          focus:ring-gray-900/40
-          focus:border-gray-500
-          transition
-          bg-white
-        "
-            >
-              <option value="none">Amount Sort</option>
-              <option value="low">Low → High</option>
-              <option value="high">High → Low</option>
-            </select>
+
 
           </div>
 
