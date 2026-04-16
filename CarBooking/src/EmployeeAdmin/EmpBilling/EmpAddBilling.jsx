@@ -47,7 +47,7 @@ const EmpAddBilling = () => {
 
   const [generatedInv, setGeneratedInv] = useState("");
   const [labour, setLabour] = useState("");
-  const [gstPercent, setGstPercent] = useState(0); 
+  const [gstPercent, setGstPercent] = useState(0);
   const [discount, setDiscount] = useState(0);
 
   /* =======================
@@ -66,7 +66,7 @@ const EmpAddBilling = () => {
         setProducts(prodRes.data || []);
         const nextIdx = (billCountRes.data?.length || 0) + 1;
         setGeneratedInv(`INV${String(nextIdx).padStart(3, '0')}`);
-        
+
         const mechanicName = (userProfile?.displayName || "").toLowerCase().trim();
         const userRole = (userProfile?.role || "").toLowerCase();
         const isAdmin = userRole === "admin";
@@ -74,16 +74,16 @@ const EmpAddBilling = () => {
         const myServices = res.data.filter(s => {
           const assignedName = (s.assignedEmployeeName || "").toLowerCase().trim();
           const assignedMatch = isAdmin || assignedName === mechanicName || assignedName.includes(mechanicName);
-          
+
           const rawStatus = (s.serviceStatus || s.status || "").toString().trim().toLowerCase();
-          
+
           let isBillable = false;
           if (!rawStatus.includes("bill completed") && !rawStatus.includes("cancelled")) {
             if (rawStatus.includes("bill pending") || rawStatus.includes("completed")) {
               isBillable = true;
             }
           }
-          
+
           return assignedMatch && isBillable;
         });
 
@@ -111,7 +111,7 @@ const EmpAddBilling = () => {
           setLoading(true);
           const res = await api.get(`/billings/${location.state.editBill.id}`);
           const b = res.data;
-          
+
           setIsEditMode(true);
           setEditingBillId(b.id);
           setGeneratedInv(b.invoiceNo);
@@ -174,13 +174,13 @@ const EmpAddBilling = () => {
     }
   };
 
-   /* =======================
-      CALCULATIONS
-   ======================= */
-   const partsTotal = parts.reduce((sum, p) => Number(sum) + Number(p.total || 0), 0);
-   const issueTotal = issues.reduce((sum, i) => Number(sum) + Number(i.amount || 0), 0);
-   const labourAmount = Number(labour || 0);
-   const gst = Number(gstPercent || 0);
+  /* =======================
+     CALCULATIONS
+  ======================= */
+  const partsTotal = parts.reduce((sum, p) => Number(sum) + Number(p.total || 0), 0);
+  const issueTotal = issues.reduce((sum, i) => Number(sum) + Number(i.amount || 0), 0);
+  const labourAmount = Number(labour || 0);
+  const gst = Number(gstPercent || 0);
 
   const subTotal = partsTotal + issueTotal + labourAmount;
   const gstAmount = (subTotal * gst) / 100;
@@ -232,7 +232,7 @@ const EmpAddBilling = () => {
         uid: selectionMode === "online" ? selectedService.uid : null,
         customerName: selectionMode === "online" ? selectedService.name : manualCustomer.name,
         mobileNumber: selectionMode === "online" ? selectedService.phone : manualCustomer.phone,
-        car: selectionMode === "online" 
+        car: selectionMode === "online"
           ? `${selectedService.brand || ""} ${selectedService.model || ""}`.trim()
           : `${manualCustomer.brand || ""} ${manualCustomer.model || ""}`.trim(),
         parts,
@@ -280,9 +280,9 @@ const EmpAddBilling = () => {
       {/* 🚀 PREMIUM HEADER */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-6">
-         
+
           <div className="space-y-1">
-           
+
             <div className="flex items-center gap-3 pt-1">
               <span className="bg-black text-white text-[10px] font-black px-2.5 py-1.5 rounded-lg tracking-widest uppercase shadow-lg shadow-black/20">Invoice No</span>
               <span className="text-blue-600 font-black text-sm uppercase tracking-wider underline underline-offset-4 decoration-2">{generatedInv}</span>
@@ -321,17 +321,46 @@ const EmpAddBilling = () => {
 
               {selectionMode === 'online' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-slideUp">
-                  <div className="space-y-2">
+                  <div className="space-y-2 relative group z-50">
                     <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Quick Search</label>
-                    <div className="relative group">
+                    <div className="relative">
                       <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-colors w-5 h-5" />
                       <input
                         placeholder="Search Booking ID / Plate / Name..."
                         className="w-full pl-14 pr-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 font-bold text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
+                        onFocus={() => { if(!search) setSearch(" "); }}
                       />
                     </div>
+                    {search && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-3xl shadow-2xl overflow-hidden z-[999] max-h-72 overflow-y-auto">
+                        <div className="p-3 text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 bg-gray-50 border-b border-gray-100">Matching Billable Jobs</div>
+                        {services
+                          .filter(s => `${s.bookingId || `SER-${s.id}`} ${s.name || ""} ${s.phone || ""} ${s.brand || ""} ${s.model || ""} ${s.vehicleNumber || s.registrationNumber || s.carNumber || ""} ${s.car || ""} ${s.assignedEmployeeName || ""}`.toLowerCase().includes(search.toLowerCase().trim()))
+                          .map(s => {
+                            const st = (s.serviceStatus || s.status || "Completed");
+                            const stLow = st.toLowerCase();
+                            const stColor = stLow.includes("pending") ? "bg-orange-50 text-orange-600" : "bg-emerald-50 text-emerald-600";
+                            return (
+                              <div 
+                                key={s.id} 
+                                onClick={() => { selectService(s); setSearch(""); }}
+                                className="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 flex justify-between items-center transition-colors"
+                              >
+                                <div>
+                                  <p className="font-black text-gray-900">{s.bookingId || `SER-${s.id}`} <span className="text-gray-300 mx-1">|</span> {(s.name || "").toUpperCase()}</p>
+                                  <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-widest">{s.brand} {s.model} - <span className="text-blue-500">{(s.assignedEmployeeName || "Unassigned").toUpperCase()}</span></p>
+                                </div>
+                                <span className={`text-[9px] px-3 py-1.5 font-black rounded-xl uppercase tracking-widest border border-transparent ${stColor} ${stColor.includes('orange') ? 'border-orange-100' : 'border-emerald-100'}`}>{st}</span>
+                              </div>
+                            );
+                          })}
+                          {services.filter(s => `${s.bookingId || `SER-${s.id}`} ${s.name || ""} ${s.phone || ""} ${s.brand || ""} ${s.model || ""} ${s.vehicleNumber || s.registrationNumber || s.carNumber || ""} ${s.car || ""} ${s.assignedEmployeeName || ""}`.toLowerCase().includes(search.toLowerCase().trim())).length === 0 && (
+                            <div className="p-6 text-center text-xs font-bold text-gray-400 italic">No billable jobs found</div>
+                          )}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -347,7 +376,7 @@ const EmpAddBilling = () => {
                     >
                       <option value="" className="text-gray-400 italic">-- Select Verified Job --</option>
                       {services
-                        .filter(s => `${s.bookingId || `SER-${s.id}`} ${s.name || ""} ${s.phone || ""} ${s.brand || ""} ${s.model || ""} ${s.vehicleNumber || s.registrationNumber || s.carNumber || ""} ${s.car || ""} ${s.assignedEmployeeName || ""}`.toLowerCase().includes(search.toLowerCase()))
+                        .filter(s => `${s.bookingId || `SER-${s.id}`} ${s.name || ""} ${s.phone || ""} ${s.brand || ""} ${s.model || ""} ${s.vehicleNumber || s.registrationNumber || s.carNumber || ""} ${s.car || ""} ${s.assignedEmployeeName || ""}`.toLowerCase().includes(search.toLowerCase().trim()))
                         .map(s => (
                           <option key={s.id} value={s.id}>
                             {s.bookingId || `SER-${s.id}`} | {(s.name || "").toUpperCase()} - {(s.assignedEmployeeName || 'Unassigned').toUpperCase()}
@@ -381,97 +410,97 @@ const EmpAddBilling = () => {
 
           {/* 📦 INVENTORY MANAGEMENT CARD */}
           <div className="bg-white rounded-[2.5rem] shadow-2xl shadow-black/5 border border-gray-50 overflow-hidden">
-                        <div className="p-8 border-b border-gray-50">
-  
-  {/* Header */}
-  <div className="mb-4">
-    <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
-      Spare Parts Inventory
-    </h3>
-    <p className="text-[10px] text-gray-400 mt-1 font-bold">
-      List of components used in this service cycle
-    </p>
-  </div>
+            <div className="p-8 border-b border-gray-50">
 
-  {/* Inputs */}
-  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+              {/* Header */}
+              <div className="mb-4">
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
+                  Spare Parts Inventory
+                </h3>
+                <p className="text-[10px] text-gray-400 mt-1 font-bold">
+                  List of components used in this service cycle
+                </p>
+              </div>
 
-    {/* Part Name */}
-    <div className="flex flex-col sm:col-span-1">
-      <label className="text-[10px] font-bold text-gray-400 mb-1">
-        Component Name (Search or Type)
-      </label>
-      <div className="relative group">
-        <input
-          type="text"
-          placeholder="Type or select a spare part..."
-          list="spare-parts-list-emp"
-          className="w-full border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-semibold outline-none focus:border-gray-300 transition-all"
-          value={newPart.partName}
-          onChange={e => {
-            const val = e.target.value;
-            const matchedProduct = products.find(p => p.name === val);
-            if (matchedProduct) {
-              setNewPart({
-                ...newPart,
-                partName: val,
-                price: Number(matchedProduct.offerPrice || matchedProduct.mrp || 0)
-              });
-            } else {
-              setNewPart({ ...newPart, partName: val });
-            }
-          }}
-        />
-        <datalist id="spare-parts-list-emp">
-          {products.map(p => (
-            <option key={p.docId || p.id} value={p.name}>
-              ₹{p.offerPrice || p.mrp}
-            </option>
-          ))}
-        </datalist>
-      </div>
-    </div>
+              {/* Inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
 
-    {/* Quantity */}
-    <div className="flex flex-col">
-      <label className="text-[10px] font-bold text-gray-400 mb-1">
-        Quantity
-      </label>
-      <input
-        type="number"
-        min="1"
-        placeholder="Qty"
-        className="border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-semibold outline-none focus:border-gray-300"
-        value={newPart.qty}
-        onChange={e => setNewPart({ ...newPart, qty: e.target.value === '' ? '' : Math.max(1, Number(e.target.value)) })}
-      />
-    </div>
+                {/* Part Name */}
+                <div className="flex flex-col sm:col-span-1">
+                  <label className="text-[10px] font-bold text-gray-400 mb-1">
+                    Component Name (Search or Type)
+                  </label>
+                  <div className="relative group">
+                    <input
+                      type="text"
+                      placeholder="Type or select a spare part..."
+                      list="spare-parts-list-emp"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-semibold outline-none focus:border-gray-300 transition-all"
+                      value={newPart.partName}
+                      onChange={e => {
+                        const val = e.target.value;
+                        const matchedProduct = products.find(p => p.name === val);
+                        if (matchedProduct) {
+                          setNewPart({
+                            ...newPart,
+                            partName: val,
+                            price: Number(matchedProduct.offerPrice || matchedProduct.mrp || 0)
+                          });
+                        } else {
+                          setNewPart({ ...newPart, partName: val });
+                        }
+                      }}
+                    />
+                    <datalist id="spare-parts-list-emp">
+                      {products.map(p => (
+                        <option key={p.docId || p.id} value={p.name}>
+                          ₹{p.offerPrice || p.mrp}
+                        </option>
+                      ))}
+                    </datalist>
+                  </div>
+                </div>
 
-    {/* Price */}
-    <div className="flex flex-col">
-      <label className="text-[10px] font-bold text-gray-400 mb-1">
-        Unit Price (₹)
-      </label>
-      <input
-        type="number"
-        min="0"
-        placeholder="₹"
-        className="border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-semibold outline-none focus:border-gray-300"
-        value={newPart.price}
-        onChange={e => setNewPart({ ...newPart, price: e.target.value === '' ? '' : Math.max(0, Number(e.target.value)) })}
-      />
-    </div>
+                {/* Quantity */}
+                <div className="flex flex-col">
+                  <label className="text-[10px] font-bold text-gray-400 mb-1">
+                    Quantity
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="Qty"
+                    className="border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-semibold outline-none focus:border-gray-300"
+                    value={newPart.qty}
+                    onChange={e => setNewPart({ ...newPart, qty: e.target.value === '' ? '' : Math.max(1, Number(e.target.value)) })}
+                  />
+                </div>
 
-    {/* Button */}
-    <button
-      onClick={addManualPart}
-      className="bg-black text-white px-4 py-3 rounded-xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-black/20 text-xs font-bold h-fit"
-    >
-      + Add Part
-    </button>
+                {/* Price */}
+                <div className="flex flex-col">
+                  <label className="text-[10px] font-bold text-gray-400 mb-1">
+                    Unit Price (₹)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="₹"
+                    className="border border-gray-200 rounded-xl px-3 py-3 text-xs shadow-sm font-semibold outline-none focus:border-gray-300"
+                    value={newPart.price}
+                    onChange={e => setNewPart({ ...newPart, price: e.target.value === '' ? '' : Math.max(0, Number(e.target.value)) })}
+                  />
+                </div>
 
-  </div>
-</div>
+                {/* Button */}
+                <button
+                  onClick={addManualPart}
+                  className="bg-black text-white px-4 py-3 rounded-xl hover:scale-105 active:scale-95 transition-all shadow-lg shadow-black/20 text-xs font-bold h-fit"
+                >
+                  + Add Part
+                </button>
+
+              </div>
+            </div>
 
             <div className="overflow-hidden">
               <table className="min-w-full text-[11px] font-bold">
@@ -543,7 +572,7 @@ const EmpAddBilling = () => {
                 <span>Applied Discount</span>
                 <span>- ₹{discountAmount.toLocaleString()}</span>
               </div>
-              
+
               <div className="bg-gray-900 rounded-2xl p-6 mt-6 flex flex-col gap-1 shadow-xl shadow-black/10">
                 <span className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em]">Grand Final Total</span>
                 <span className="text-3xl font-black text-white tracking-tighter">₹{grandTotal.toLocaleString()}</span>

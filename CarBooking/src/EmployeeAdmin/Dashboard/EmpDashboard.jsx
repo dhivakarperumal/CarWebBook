@@ -427,12 +427,7 @@ const EmpDashboard = () => {
                 )}
               </button>
               
-              <button 
-                onClick={() => setShowAttendanceModal(false)}
-                className="mt-4 text-xs font-bold text-slate-400 hover:text-slate-600 tracking-wider uppercase"
-              >
-                Skip for now
-              </button>
+             
             </div>
           </div>
         </div>
