@@ -90,10 +90,21 @@ const AddBike = ({ defaultType = "Bike" }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    
+    setForm(prev => {
+      const updatedForm = {
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      };
+
+      // 🔟 Auto-calculate 10% advance if Expected Price changes
+      if (name === "expected_price") {
+        const price = parseFloat(value) || 0;
+        updatedForm.advance_amount_paid = (price * 0.1).toFixed(0);
+      }
+
+      return updatedForm;
+    });
   };
 
   const handleImageUpload = async (e, type) => {
