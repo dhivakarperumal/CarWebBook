@@ -75,7 +75,7 @@ const AdminCompletedHistory = () => {
 
       const filtered = (servRes.data || []).filter(s => {
           const sStat = (s.serviceStatus || s.status || "").toLowerCase();
-          const isDone = sStat.includes("bill completed");
+          const isDone = sStat.includes("bill completed") || sStat === "cancelled";
           return isDone;
       }).map(s => {
         // Try to find the bill amount using all available IDs
@@ -419,7 +419,13 @@ const AdminCompletedHistory = () => {
                     <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">{item.vehicleNumber || item.vehicle_number || "Registry Missing"}</p>
                   </td>
                   <td className="px-8 py-6">
-                    <span className="px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest border border-emerald-100">Completed</span>
+                    {(() => {
+                      const sStat = (item.serviceStatus || item.status || "").toLowerCase();
+                      if (sStat === "cancelled") {
+                        return <span className="px-4 py-1.5 rounded-full bg-red-50 text-red-600 text-[9px] font-black uppercase tracking-widest border border-red-100">Cancelled</span>;
+                      }
+                      return <span className="px-4 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase tracking-widest border border-emerald-100">Completed</span>;
+                    })()}
                   </td>
                   <td className="px-8 py-6 ">
                     <p className="text-xs font-black text-gray-500 flex items-center justify-start gap-2"><Clock size={12}/> {new Date(item.updatedAt || item.created_at).toLocaleDateString()}</p>
@@ -456,7 +462,13 @@ const AdminCompletedHistory = () => {
             <div key={item.id} className="bg-white rounded-[2rem] p-6 border border-gray-100 shadow-sm hover:shadow-xl transition-all border-b-4 border-b-emerald-500">
                <div className="flex justify-between items-start mb-4">
                   <span className="text-[9px] font-black text-gray-300 uppercase tracking-widest"># {item.bookingId || item.id}</span>
-                  <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center"><CheckCircle2 size={16}/></div>
+                  {(() => {
+                    const sStat = (item.serviceStatus || item.status || "").toLowerCase();
+                    if (sStat === "cancelled") {
+                      return <div className="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center"><X size={16}/></div>;
+                    }
+                    return <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center"><CheckCircle2 size={16}/></div>;
+                  })()}
                </div>
                <h3 className="text-lg font-black text-gray-800 uppercase leading-tight mb-1">{item.brand} {item.model}</h3>
                <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-6">{item.vehicleNumber || "NO PLATE"}</p>
@@ -466,10 +478,23 @@ const AdminCompletedHistory = () => {
                   <div className="flex items-center gap-3"><Clock size={14} className="text-gray-400"/><span className="text-xs font-bold text-gray-600">{new Date(item.updatedAt || item.created_at).toLocaleDateString()}</span></div>
                </div>
 
-               <div className="flex justify-between items-center bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
-                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Status</span>
-                  <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Completed</span>
-               </div>
+               {(() => {
+                  const sStat = (item.serviceStatus || item.status || "").toLowerCase();
+                  if (sStat === "cancelled") {
+                    return (
+                      <div className="flex justify-between items-center bg-red-50/50 p-3 rounded-xl border border-red-100">
+                        <span className="text-[9px] font-black text-red-400 uppercase tracking-widest">Status</span>
+                        <span className="text-[10px] font-black text-red-600 uppercase tracking-widest">Cancelled</span>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="flex justify-between items-center bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
+                        <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">Status</span>
+                        <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Completed</span>
+                    </div>
+                  );
+               })()}
             </div>
           ))}
         </div>

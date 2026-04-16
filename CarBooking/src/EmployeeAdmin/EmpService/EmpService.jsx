@@ -190,7 +190,7 @@ export default function EmpService() {
       const assignedName = (s.assignedEmployeeName || "").toLowerCase().trim();
       const isAssigned = isAdmin || assignedName === mechanicName || assignedName.includes(mechanicName);
       const statusValue = (s.serviceStatus || s.status || "").toLowerCase();
-      const isFinalized = statusValue === "bill completed";
+      const isFinalized = statusValue === "bill completed" || statusValue === "cancelled";
       
       // If a specific status filter is selected, respect it even if finalized
       if (statusFilter !== "All Status") return isAssigned;
