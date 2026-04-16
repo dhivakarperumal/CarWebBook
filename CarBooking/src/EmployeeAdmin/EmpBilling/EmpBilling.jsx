@@ -11,7 +11,7 @@ import {
   List,
   Plus,
   Trash,
-  History,
+  Eye,
   Filter,
   Pencil
 } from "lucide-react";
@@ -421,7 +421,7 @@ const EmpBilling = () => {
                   className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
                   title="View Detail"
                 >
-                  <History size={16} />
+                  <Eye size={16} />
                 </button>
                 <button
                   onClick={() => navigate('/employee/addbillings', { state: { editBill: bill } })}
@@ -488,7 +488,7 @@ const EmpBilling = () => {
                         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="View Details"
                       >
-                        <History size={16} />
+                        <Eye size={16} />
                       </button>
                       <button
                         onClick={() => fetchAndPrint(bill.id)}
