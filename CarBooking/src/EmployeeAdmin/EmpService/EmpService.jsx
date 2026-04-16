@@ -804,19 +804,15 @@ export default function EmpService() {
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">₹</span>
                           <input type="number" value={entry.issueAmount || ""} onChange={(e) => { const copy = [...issueEntries]; copy[idx] = { ...copy[idx], issueAmount: e.target.value }; setIssueEntries(copy); }} placeholder="Amt" className="w-full pl-6 pr-3 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black" />
                         </div>
-                        <select 
-                          value={entry.issueStatus || "pending"} 
-                          onChange={(e) => { 
-                            const copy = [...issueEntries]; 
-                            copy[idx] = { ...copy[idx], issueStatus: e.target.value }; 
-                            setIssueEntries(copy); 
-                          }}
-                          className={`text-[9px] font-black uppercase tracking-widest bg-transparent outline-none cursor-pointer border-b-2 border-transparent focus:border-black transition-all ${entry.issueStatus === "approved" ? "text-emerald-500" : entry.issueStatus === "rejected" ? "text-red-500" : "text-amber-500"}`}
+                        <span 
+                          className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border flex items-center justify-center min-w-[75px] ${
+                            (entry.issueStatus || "pending") === "approved" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : 
+                            (entry.issueStatus || "pending") === "rejected" ? "bg-red-50 text-red-600 border-red-100" : 
+                            "bg-amber-50 text-amber-600 border-amber-100"
+                          }`}
                         >
-                          <option value="pending">Pending</option>
-                          <option value="approved">Approved</option>
-                          <option value="rejected">Rejected</option>
-                        </select>
+                          {entry.issueStatus || "pending"}
+                        </span>
                         <button onClick={() => { const copy = [...issueEntries]; copy.splice(idx, 1); setIssueEntries(copy); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><FaTimes size={12} /></button>
                       </div>
                     ))}
@@ -861,19 +857,15 @@ export default function EmpService() {
                              <input type="number" value={part.price || ""} onChange={(e) => { const copy = [...editingParts]; copy[idx] = { ...copy[idx], price: e.target.value }; setEditingParts(copy); }} placeholder="Price" className="w-full pl-5 pr-2 py-2 bg-white border border-gray-100 rounded-lg text-xs font-black text-black outline-none focus:border-black" />
                            </div>
                         </div>
-                        <select 
-                          value={part.status || "pending"} 
-                          onChange={(e) => { 
-                            const copy = [...editingParts]; 
-                            copy[idx] = { ...copy[idx], status: e.target.value }; 
-                            setEditingParts(copy); 
-                          }}
-                          className={`text-[9px] font-black uppercase tracking-widest bg-transparent outline-none cursor-pointer border-b-2 border-transparent focus:border-black transition-all ${part.status === "approved" ? "text-emerald-500" : part.status === "rejected" ? "text-red-500" : "text-amber-500"}`}
+                        <span 
+                          className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border flex items-center justify-center min-w-[75px] ${
+                            (part.status || "pending") === "approved" ? "bg-emerald-50 text-emerald-600 border-emerald-100" : 
+                            (part.status || "pending") === "rejected" ? "bg-red-50 text-red-600 border-red-100" : 
+                            "bg-amber-50 text-amber-600 border-amber-100"
+                          }`}
                         >
-                          <option value="pending">Pending</option>
-                          <option value="approved">Approved</option>
-                          <option value="rejected">Rejected</option>
-                        </select>
+                          {part.status || "pending"}
+                        </span>
                         <button onClick={() => { const copy = [...editingParts]; copy.splice(idx, 1); setEditingParts(copy); }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all"><FaTimes size={12} /></button>
                       </div>
                     ))}
