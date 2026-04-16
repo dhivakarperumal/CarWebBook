@@ -43,10 +43,16 @@ exports.updateOrderStatus = async (req, res) => {
 exports.createOrder = async (req, res) => {
   const {
     orderId, uid, customerName, customerPhone, customerEmail,
+    customer, // 👤 Added to handle ProductBill.jsx payload
     orderType, paymentMethod, paymentStatus, status,
     shipping, subtotal, tax, shippingFee, total, items,
-    images // 📷 Added
+    images 
   } = req.body;
+
+  // Use values from nested customer object if available
+  const finalName = customerName || customer?.name;
+  const finalPhone = customerPhone || customer?.phone;
+  const finalEmail = customerEmail || customer?.email;
 
   try {
     const [result] = await db.query(`
@@ -59,7 +65,7 @@ exports.createOrder = async (req, res) => {
         images -- 📷 Added
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      uid, customerName, customerPhone, customerEmail,
+      uid, finalName, finalPhone, finalEmail,
       orderType, paymentMethod, paymentStatus || 'Pending', status || 'orderplaced',
       shipping?.name, shipping?.phone, shipping?.address, shipping?.city,
       shipping?.state, shipping?.zip, shipping?.country,

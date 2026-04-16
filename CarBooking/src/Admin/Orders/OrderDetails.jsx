@@ -63,6 +63,13 @@ const trackIcon = (status) => {
   return <FaClock />;
 };
 
+const getCustomerDetails = (o) => {
+  if (!o) return { name: "-", phone: "-" };
+  const name = o.customerName || o.customer_name || o.shippingName || o.shipping_name || o.customer?.name || o.shipping?.name || "-";
+  const phone = o.customerPhone || o.customer_phone || o.shippingPhone || o.shipping_phone || o.customer?.phone || o.shipping?.phone || "-";
+  return { name, phone };
+};
+
 /* ================= PAGE ================= */
 const OrderDetails = () => {
   const { id } = useParams();
@@ -194,11 +201,10 @@ const OrderDetails = () => {
             <FaUser /> Customer
           </h3>
 
-          <p>{order.shippingName || order.customerName || "-"}</p>
-
+          <p>{getCustomerDetails(order).name}</p>
           <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">
             <FaPhone />
-            {order.shippingPhone || order.customerPhone || "-"}
+            {getCustomerDetails(order).phone}
           </p>
 
           <p className="text-sm text-gray-500 flex items-center gap-2 mt-1">

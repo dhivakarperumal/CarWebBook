@@ -596,7 +596,7 @@ const AllOrders = () => {
                         onClick={() => navigate(`/admin/orders/${o.id}`)}
                         className="px-6 py-5 cursor-pointer"
                       >
-                        <div className="font-bold text-slate-800 tracking-tight group-hover/row:translate-x-1 transition-transform">{o.customerName || o.shippingName || "-"}</div>
+                        <div className="font-bold text-slate-800 tracking-tight group-hover/row:translate-x-1 transition-transform">{getCustomerDetails(o).name}</div>
                         <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{o.shippingCity || "Local Order"}</div>
                       </td>
                       <td className="px-6 py-5">
@@ -699,7 +699,7 @@ const AllOrders = () => {
                   }}
                   className="text-sm text-gray-600 cursor-pointer"
                 >
-                  {o.customerName || o.shippingName || "-"}
+                  {getCustomerDetails(o).name}
                 </p>
 
                 {/* META ROW */}

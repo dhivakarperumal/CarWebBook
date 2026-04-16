@@ -150,7 +150,9 @@ const ProductBilling = () => {
 
       const orderData = {
         orderId,
-        customer: isOnline ? shipping : customer,
+        customerName: isOnline ? shipping.name : customer.name,
+        customerPhone: isOnline ? shipping.phone : customer.phone,
+        customerEmail: isOnline ? shipping.email : "",
         orderType,
         shipping: isOnline ? shipping : null,
         items: cart,
