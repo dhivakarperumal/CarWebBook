@@ -21,7 +21,7 @@ export const STATUS_LABELS = {
   ASSIGNED: "Assigned",
 };
 
-/* ===== NORMALIZER (Firestore → Enum) ===== */
+/* ===== NORMALIZER ===== */
 export const STATUS_NORMALIZER = {
   Booked: "BOOKED",
   "Appointment Booked": "APPOINTMENT_BOOKED",
@@ -305,82 +305,94 @@ const ServiceStatus = () => {
       )} */}
 
       <div className="space-y-4">
-        {bookings.length > 0 ? (
-          bookings.map((booking) => {
-            // Find spare parts for this booking
-            const bookingSpares = spareParts.find(
-              (sp) => sp.serviceId === booking.id,
-            );
-            const hasPendingSpares = bookingSpares?.parts?.some(
-              (p) => p.status === "pending",
-            );
+        {bookings.filter(
+          (booking) =>
+            booking.normalizedStatus !== "SERVICE_COMPLETED" &&
+            booking.normalizedStatus !== "BILL_COMPLETED" &&
+            booking.normalizedStatus !== "CANCELLED"
+        ).length > 0 ? (
+          bookings
+            .filter(
+              (booking) =>
+                booking.normalizedStatus !== "SERVICE_COMPLETED" &&
+                booking.normalizedStatus !== "BILL_COMPLETED" &&
+                booking.normalizedStatus !== "CANCELLED"
+            )
+            .map((booking) => {
+              // Find spare parts for this booking
+              const bookingSpares = spareParts.find(
+                (sp) => sp.serviceId === booking.id,
+              );
+              const hasPendingSpares = bookingSpares?.parts?.some(
+                (p) => p.status === "pending",
+              );
 
-            return (
-              <div
-                key={booking.id}
-                onClick={() => setSelectedBooking(booking)}
-                className={`cursor-pointer bg-[#020617] border rounded-xl px-2 md:px-6 py-4 flex justify-between items-center hover:shadow-lg transition ${hasPendingSpares
+              return (
+                <div
+                  key={booking.id}
+                  onClick={() => setSelectedBooking(booking)}
+                  className={`cursor-pointer bg-[#020617] border rounded-xl px-2 md:px-6 py-4 flex justify-between items-center hover:shadow-lg transition ${hasPendingSpares
                     ? "border-orange-500/40 hover:shadow-orange-500/30"
                     : "border-sky-500/30 hover:shadow-sky-500/30"
-                  }`}
-              >
-                <div>
-                  <p className="text-white font-semibold">
-                    {booking.bookingId}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    {booking.name} • {booking.phone}
-                  </p>
+                    }`}
+                >
+                  <div>
+                    <p className="text-white font-semibold">
+                      {booking.bookingId}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {booking.name} • {booking.phone}
+                    </p>
 
-                  {/* Show spare parts summary */}
-                  {bookingSpares?.parts?.length > 0 && (
-                    <div className="mt-2 text-xs">
-                      <p className="text-gray-500">
-                        🔧 Spares: ₹
-                        {bookingSpares.parts
-                          .reduce((sum, p) => sum + Number(p.total), 0)
-                          .toFixed(2)}{" "}
-                        -
-                        <span
-                          className={`ml-1 font-bold ${hasPendingSpares
+                    {/* Show spare parts summary */}
+                    {bookingSpares?.parts?.length > 0 && (
+                      <div className="mt-2 text-xs">
+                        <p className="text-gray-500">
+                          🔧 Spares: ₹
+                          {bookingSpares.parts
+                            .reduce((sum, p) => sum + Number(p.total), 0)
+                            .toFixed(2)}{" "}
+                          -
+                          <span
+                            className={`ml-1 font-bold ${hasPendingSpares
                               ? "text-orange-400"
                               : bookingSpares.parts.every(
                                 (p) => p.status === "approved",
                               )
                                 ? "text-green-400"
                                 : "text-red-400"
-                            }`}
-                        >
-                          {bookingSpares.parts.filter(
-                            (p) => p.status === "pending",
-                          ).length
-                            ? "PENDING"
-                            : bookingSpares.parts.every(
-                              (p) => p.status === "approved",
-                            )
-                              ? "APPROVED"
-                              : "PARTIAL"}
-                        </span>
-                      </p>
-                    </div>
-                  )}
-                </div>
+                              }`}
+                          >
+                            {bookingSpares.parts.filter(
+                              (p) => p.status === "pending",
+                            ).length
+                              ? "PENDING"
+                              : bookingSpares.parts.every(
+                                (p) => p.status === "approved",
+                              )
+                                ? "APPROVED"
+                                : "PARTIAL"}
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
 
-                <span
-                  className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest border transition-all ${hasPendingSpares
+                  <span
+                    className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest border transition-all ${hasPendingSpares
                       ? "bg-orange-500/20 text-orange-400 border-orange-500/40"
                       : "bg-sky-500/20 text-sky-400 border-sky-500/40 shadow-lg shadow-sky-500/10"
-                    }`}
-                >
-                  {(
-                    STATUS_LABELS[booking.normalizedStatus] ||
-                    booking.status ||
-                    "PENDING"
-                  ).toUpperCase()}
-                </span>
-              </div>
-            );
-          })
+                      }`}
+                  >
+                    {(
+                      STATUS_LABELS[booking.normalizedStatus] ||
+                      booking.status ||
+                      "PENDING"
+                    ).toUpperCase()}
+                  </span>
+                </div>
+              );
+            })
         ) : (
           <div className="p-6 text-center text-gray-500">No bookings found</div>
         )}
@@ -426,10 +438,10 @@ const ServiceStatus = () => {
                             </div>
                             <span
                               className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ml-2 ${part.status === "pending"
-                                  ? "bg-yellow-500/20 text-yellow-400"
-                                  : part.status === "approved"
-                                    ? "bg-green-500/20 text-green-400"
-                                    : "bg-red-500/20 text-red-400"
+                                ? "bg-yellow-500/20 text-yellow-400"
+                                : part.status === "approved"
+                                  ? "bg-green-500/20 text-green-400"
+                                  : "bg-red-500/20 text-red-400"
                                 }`}
                             >
                               {(part.status || "pending").toUpperCase()}
