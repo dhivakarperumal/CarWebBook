@@ -138,7 +138,7 @@ exports.updateInvoiceStatus = async (req, res) => {
   } = req.body;
 
   try {
-    // 1. Update the main billing record
+    // 1. Update the main billing record — safe numeric defaults to avoid MySQL DECIMAL errors
     await db.query(`
       UPDATE billings SET
         invoiceNo = ?, serviceId = ?, bookingId = ?, customerName = ?, mobileNumber = ?,
@@ -147,10 +147,25 @@ exports.updateInvoiceStatus = async (req, res) => {
         paymentStatus = ?, paymentMode = ?, status = ?, billingType = ?
       WHERE id = ?
     `, [
-      invoiceNo, serviceId, bookingId, customerName, mobileNumber,
-      car, registrationNumber, partsTotal, issueTotal, labour,
-      gstPercent, gstAmount, discount, subTotal, grandTotal,
-      paymentStatus, paymentMode, status || 'Generated', billingType,
+      invoiceNo || null,
+      serviceId || null,
+      bookingId || null,
+      customerName || null,
+      mobileNumber || null,
+      car || null,
+      registrationNumber || null,
+      Number(partsTotal) || 0,
+      Number(issueTotal) || 0,
+      Number(labour) || 0,
+      Number(gstPercent) || 0,
+      Number(gstAmount) || 0,
+      Number(discount) || 0,
+      Number(subTotal) || 0,
+      Number(grandTotal) || 0,
+      paymentStatus || 'Pending',
+      paymentMode || null,
+      status || 'Generated',
+      billingType || 'manual',
       req.params.id
     ]);
 
@@ -160,7 +175,7 @@ exports.updateInvoiceStatus = async (req, res) => {
       for (const p of parts) {
         await db.query(
           'INSERT INTO billing_items (billing_id, partName, qty, price, total) VALUES (?, ?, ?, ?, ?)',
-          [req.params.id, p.partName, p.qty, p.price, p.total]
+          [req.params.id, p.partName, Number(p.qty) || 1, Number(p.price) || 0, Number(p.total) || 0]
         );
       }
     }
@@ -177,7 +192,7 @@ exports.updateInvoiceStatus = async (req, res) => {
 
     res.json({ message: 'Invoice updated successfully' });
   } catch (err) {
-    console.error(err);
+    console.error('updateInvoiceStatus error:', err);
     res.status(500).json({ error: err.message });
   }
 };
