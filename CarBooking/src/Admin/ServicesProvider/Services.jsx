@@ -307,7 +307,7 @@ export default function Services() {
     setEditingIssueId(item.id);
     let initialIssues = [...(item.issues || [])];
     if (initialIssues.length === 0) {
-      const mainIssueText = item.issue || item.otherIssue || item.carIssue || "Routine Checkup";
+      const mainIssueText = (item.issue?.toLowerCase() === 'others' && item.otherIssue ? `Others: ${item.otherIssue}` : item.issue) || item.otherIssue || item.carIssue || "Routine Checkup";
       initialIssues = [{
         issue: mainIssueText,
         issueAmount: item.issueAmount || 0,
@@ -422,7 +422,7 @@ export default function Services() {
                         <button onClick={() => handleOpenIssueModal(item)} className="text-[9px] font-black text-blue-600 uppercase hover:underline">Edit</button>
                       )}
                     </div>
-                    <div className="space-y-2">{item.issues?.slice(0, 2).map((iss, i) => <p key={i} className="text-xs font-bold text-gray-600 line-clamp-1 flex items-center gap-2"><span className="w-1 h-1 bg-blue-400 rounded-full" />{iss.issue}</p>) || <p className="text-xs italic text-gray-400">No log entries</p>}</div>
+                    <div className="space-y-2">{item.issues?.length > 0 ? item.issues.map((iss, i) => <p key={i} className="text-xs font-bold text-gray-600 flex items-start gap-2"><span className="w-1 h-1 bg-blue-400 rounded-full shrink-0 mt-1.5" /><span>{iss.issue}</span></p>) : <p className="text-xs italic text-gray-400">No log entries</p>}</div>
                   </div>
                 </div>
                 <div className="mt-6 pt-6 border-t border-gray-50 flex flex-wrap gap-2">
@@ -494,8 +494,8 @@ export default function Services() {
                         </td>
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3 group/issue">
-                            <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]" title={item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}>
-                              {item.issue || item.otherIssue || item.carIssue || "Routine Checkup"}
+                            <p className="text-xs font-bold text-gray-600 truncate max-w-[150px]" title={(item.issue?.toLowerCase() === 'others' && item.otherIssue ? `Others: ${item.otherIssue}` : item.issue) || item.otherIssue || item.carIssue || "Routine Checkup"}>
+                              {(item.issue?.toLowerCase() === 'others' && item.otherIssue ? `Others: ${item.otherIssue}` : item.issue) || item.otherIssue || item.carIssue || "Routine Checkup"}
                             </p>
                             {["Processing", "Waiting for Spare", "Service Going on"].includes(getMappedStatus(item.serviceStatus || item.status)) && (
                               <button
