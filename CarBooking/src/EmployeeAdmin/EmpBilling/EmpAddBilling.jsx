@@ -67,12 +67,24 @@ const EmpAddBilling = () => {
         const nextIdx = (billCountRes.data?.length || 0) + 1;
         setGeneratedInv(`INV${String(nextIdx).padStart(3, '0')}`);
         
-        const mechanicName = userProfile?.displayName || "";
+        const mechanicName = (userProfile?.displayName || "").toLowerCase().trim();
+        const userRole = (userProfile?.role || "").toLowerCase();
+        const isAdmin = userRole === "admin";
+
         const myServices = res.data.filter(s => {
-          const assignedMatch = (s.assignedEmployeeName || "").toLowerCase() === mechanicName.toLowerCase();
-          const status = (s.serviceStatus || s.status || "").toString().trim();
-          const isBillPending = status.toLowerCase() === "bill pending";
-          return assignedMatch && isBillPending;
+          const assignedName = (s.assignedEmployeeName || "").toLowerCase().trim();
+          const assignedMatch = isAdmin || assignedName === mechanicName || assignedName.includes(mechanicName);
+          
+          const rawStatus = (s.serviceStatus || s.status || "").toString().trim().toLowerCase();
+          
+          let isBillable = false;
+          if (!rawStatus.includes("bill completed") && !rawStatus.includes("cancelled")) {
+            if (rawStatus.includes("bill pending") || rawStatus.includes("completed")) {
+              isBillable = true;
+            }
+          }
+          
+          return assignedMatch && isBillable;
         });
 
         setServices(myServices);
@@ -335,10 +347,10 @@ const EmpAddBilling = () => {
                     >
                       <option value="" className="text-gray-400 italic">-- Select Verified Job --</option>
                       {services
-                        .filter(s => `${s.bookingId} ${s.name} ${s.phone} ${s.brand} ${s.model}`.toLowerCase().includes(search.toLowerCase()))
+                        .filter(s => `${s.bookingId || `SER-${s.id}`} ${s.name || ""} ${s.phone || ""} ${s.brand || ""} ${s.model || ""} ${s.vehicleNumber || s.registrationNumber || s.carNumber || ""} ${s.car || ""} ${s.assignedEmployeeName || ""}`.toLowerCase().includes(search.toLowerCase()))
                         .map(s => (
                           <option key={s.id} value={s.id}>
-                            {s.bookingId} | {s.name.toUpperCase()}
+                            {s.bookingId || `SER-${s.id}`} | {(s.name || "").toUpperCase()} - {(s.assignedEmployeeName || 'Unassigned').toUpperCase()}
                           </option>
                         ))
                       }

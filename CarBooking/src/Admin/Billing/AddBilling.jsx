@@ -56,7 +56,12 @@ const AddBillings = () => {
           api.get('/billings'),
           api.get('/products')
         ]);
-        setServices(servicesRes.data);
+        const filteredServices = servicesRes.data.filter(s => {
+          const rawStatus = (s.serviceStatus || s.status || "").toString().trim().toLowerCase();
+          if (rawStatus.includes("bill completed") || rawStatus.includes("cancelled")) return false;
+          return rawStatus.includes("bill pending") || rawStatus.includes("completed");
+        });
+        setServices(filteredServices);
         setProducts(productsRes.data || []);
 
         if (!isEditMode) {
@@ -317,42 +322,46 @@ const AddBillings = () => {
             <div className="p-8">
                {activeTab === "online" && !isEditMode ? (
                 <div className="space-y-6 animate-slideUp">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Quick Search</label>
-                      <div className="relative group">
-                        <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-colors" />
-                        <input
-                          placeholder="Search Booking ID / Phone / Customer..."
-                          className="w-full pl-14 pr-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 font-bold text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
-                          value={search}
-                          onChange={(e) => setSearch(e.target.value)}
-                        />
-                      </div>
+                  <div className="space-y-2 relative group w-full">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Quick Search & Select Client</label>
+                    <div className="relative">
+                      <FaSearch className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-black transition-colors" />
+                      <input
+                        placeholder="Search Booking ID / Phone / Customer to Select..."
+                        className="w-full pl-14 pr-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 font-bold text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        onFocus={() => { if(!search) setSearch(" "); }}
+                      />
                     </div>
-
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] ml-2">Verification Queue</label>
-                      <select
-                        className="w-full px-6 py-4 rounded-2xl border border-gray-100 bg-gray-50 font-black text-gray-800 outline-none focus:bg-white focus:ring-4 focus:ring-black/5 focus:border-black transition-all cursor-pointer appearance-none shadow-sm"
-                        value={selectedService?.id || ""}
-                        onChange={(e) => {
-                          const s = services.find(srv => String(srv.id) === String(e.target.value));
-                          if (s) selectService(s);
-                          else { setSelectedService(null); setParts([]); setIssues([]); }
-                        }}
-                      >
-                        <option value="" className="text-gray-400 italic">-- Select Assigned Job --</option>
+                    {search && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-3xl shadow-2xl overflow-hidden z-50 max-h-72 overflow-y-auto">
+                        <div className="p-3 text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 bg-gray-50 border-b border-gray-100">Matching Billable Jobs</div>
                         {services
-                          .filter(s => `${s.bookingId} ${s.name} ${s.phone} ${s.brand} ${s.model}`.toLowerCase().includes(search.toLowerCase()))
-                          .map(s => (
-                            <option key={s.id} value={s.id}>
-                              {s.bookingId} | {s.name.toUpperCase()}
-                            </option>
-                          ))
-                        }
-                      </select>
-                    </div>
+                          .filter(s => `${s.bookingId || `SER-${s.id}`} ${s.name || ""} ${s.phone || ""} ${s.brand || ""} ${s.model || ""} ${s.vehicleNumber || s.registrationNumber || s.carNumber || ""} ${s.car || ""} ${s.assignedEmployeeName || ""}`.toLowerCase().includes(search.toLowerCase().trim()))
+                          .map(s => {
+                            const st = (s.serviceStatus || s.status || "Completed");
+                            const stLow = st.toLowerCase();
+                            const stColor = stLow.includes("pending") ? "bg-orange-50 text-orange-600" : "bg-emerald-50 text-emerald-600";
+                            return (
+                              <div 
+                                key={s.id} 
+                                onClick={() => { selectService(s); setSearch(""); }}
+                                className="p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-50 last:border-0 flex justify-between items-center transition-colors"
+                              >
+                                <div>
+                                  <p className="font-black text-gray-900">{s.bookingId || `SER-${s.id}`} | {(s.name || "").toUpperCase()}</p>
+                                  <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-widest">{s.brand} {s.model} - {s.assignedEmployeeName || "Unassigned"}</p>
+                                </div>
+                                <span className={`text-[9px] px-3 py-1.5 font-black rounded-lg uppercase tracking-widest ${stColor}`}>{st}</span>
+                              </div>
+                            );
+                          })}
+                          {services.filter(s => `${s.bookingId || `SER-${s.id}`} ${s.name || ""} ${s.phone || ""} ${s.brand || ""} ${s.model || ""} ${s.vehicleNumber || s.registrationNumber || s.carNumber || ""} ${s.car || ""} ${s.assignedEmployeeName || ""}`.toLowerCase().includes(search.toLowerCase().trim())).length === 0 && (
+                            <div className="p-6 text-center text-xs font-bold text-gray-400 italic">No billable jobs found</div>
+                          )}
+                      </div>
+                    )}
                   </div>
 
                   {selectedService && (
@@ -606,7 +615,6 @@ const AddBillings = () => {
                   className="w-full px-6 py-4 rounded-2xl bg-gray-50 border border-gray-100 font-black text-sm text-gray-900 outline-none focus:border-black transition-all cursor-pointer"
                 >
                   <option value="Pending">Pending</option>
-                  <option value="partial">Partial</option>
                   <option value="paid">Paid</option>
                 </select>
               </div>
