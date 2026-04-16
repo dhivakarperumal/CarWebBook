@@ -44,6 +44,8 @@ const EmpBilling = () => {
   const [loading, setLoading] = useState(!cachedData.billingHistory);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("today");
+  const [dateRange, setDateRange] = useState({ start: "", end: "" });
   const [viewMode, setViewMode] = useState("table");
   const [page, setPage] = useState(1);
   const [selectedBillDetail, setSelectedBillDetail] = useState(null);
@@ -103,9 +105,47 @@ const EmpBilling = () => {
       const text = `${b.invoiceNo} ${b.customerName} ${b.carNumber} ${b.bookingId}`.toLowerCase();
       const matchesSearch = text.includes(search.toLowerCase());
       const matchesStatus = statusFilter === "all" || b.paymentStatus?.toLowerCase() === statusFilter;
-      return matchesSearch && matchesStatus;
+      
+      let matchesDate = true;
+      const bDateStr = b.createdAt || b.created_at;
+      if (dateFilter !== "all" && bDateStr) {
+        const bDate = new Date(bDateStr);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        if (dateFilter === "today") {
+          matchesDate = bDate.toDateString() === today.toDateString();
+        } else if (dateFilter === "yesterday") {
+          const yesterday = new Date(today);
+          yesterday.setDate(today.getDate() - 1);
+          matchesDate = bDate.toDateString() === yesterday.toDateString();
+        } else if (dateFilter === "week") {
+          const lastWeek = new Date(today);
+          lastWeek.setDate(today.getDate() - 7);
+          matchesDate = bDate >= lastWeek;
+        } else if (dateFilter === "month") {
+          const lastMonth = new Date(today);
+          lastMonth.setMonth(today.getMonth() - 1);
+          matchesDate = bDate >= lastMonth;
+        } else if (dateFilter === "custom") {
+          const start = dateRange.start ? new Date(dateRange.start) : null;
+          const end = dateRange.end ? new Date(dateRange.end) : null;
+          if (end) end.setHours(23, 59, 59, 999);
+          if (start && end) {
+            matchesDate = bDate >= start && bDate <= end;
+          } else if (start) {
+            matchesDate = bDate >= start;
+          } else if (end) {
+            matchesDate = bDate <= end;
+          }
+        }
+      } else if (dateFilter !== "all" && !bDateStr) {
+        matchesDate = false;
+      }
+
+      return matchesSearch && matchesStatus && matchesDate;
     });
-  }, [bills, search, statusFilter]);
+  }, [bills, search, statusFilter, dateFilter, dateRange]);
 
   const totalPages = Math.ceil(filteredBills.length / ITEMS_PER_PAGE);
   const paginatedBills = filteredBills.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
@@ -248,30 +288,72 @@ const EmpBilling = () => {
       </div>
 
       {/* FILTERS */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div className="relative w-full lg:w-80">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search invoice, customer or plate..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-gray-700"
-          />
+      <div className="flex flex-col space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="relative w-full lg:w-80">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search invoice, customer or plate..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-bold text-gray-700"
+            />
+          </div>
+          <div className="flex flex-col md:flex-row items-center gap-4 w-full lg:w-auto">
+            <div className="relative w-full md:w-48">
+              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <select
+                value={dateFilter}
+                onChange={(e) => { setDateFilter(e.target.value); setPage(1); }}
+                className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none appearance-none transition-all font-bold text-gray-700 cursor-pointer"
+              >
+                <option value="all">All Time</option>
+                <option value="today">Today</option>
+                <option value="yesterday">Yesterday</option>
+                <option value="week">Past Week</option>
+                <option value="month">Past Month</option>
+                <option value="custom">Custom Range</option>
+              </select>
+            </div>
+            <div className="relative w-full md:w-56">
+              <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+              <select
+                value={statusFilter}
+                onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+                className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none appearance-none transition-all font-bold text-gray-700 cursor-pointer"
+              >
+                <option value="all">All Payment Status</option>
+                <option value="paid">Paid</option>
+                <option value="pending">Pending</option>
+                <option value="partial">Partial</option>
+              </select>
+            </div>
+          </div>
         </div>
-        <div className="relative w-full md:w-64">
-          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <select
-            value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 outline-none appearance-none transition-all font-bold text-gray-700 cursor-pointer"
-          >
-            <option value="all">All Payment Status</option>
-            <option value="paid">Paid</option>
-            <option value="pending">Pending</option>
-            <option value="partial">Partial</option>
-          </select>
-        </div>
+        
+        {dateFilter === "custom" && (
+          <div className="flex flex-wrap items-center gap-4 bg-blue-50/50 p-6 rounded-3xl border border-blue-100 animate-fadeIn">
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+              <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1">Start Date</label>
+              <input 
+                type="date"
+                value={dateRange.start}
+                onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl font-bold text-gray-700 outline-none focus:ring-4 focus:ring-blue-500/10 cursor-pointer"
+              />
+            </div>
+            <div className="flex flex-col gap-1.5 flex-1 min-w-[200px]">
+              <label className="text-[10px] font-black text-blue-400 uppercase tracking-widest ml-1">End Date</label>
+              <input 
+                type="date"
+                value={dateRange.end}
+                onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                className="w-full px-4 py-3 bg-white border border-blue-100 rounded-xl font-bold text-gray-700 outline-none focus:ring-4 focus:ring-blue-500/10 cursor-pointer"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* LIST */}
