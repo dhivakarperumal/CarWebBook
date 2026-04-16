@@ -196,10 +196,10 @@ export default function Services() {
       if ((s.assignedEmployeeName || "").toLowerCase() !== (userProfile?.displayName || "").toLowerCase()) return false;
     }
 
-    // Hide 'Bill Completed' from 'All Status' view, show everything else
+    // Hide 'Bill Completed' and 'Cancelled' from 'All Status' view
     if (statusFilter === "All Status") {
       const status = (s.serviceStatus || s.status || "").toLowerCase();
-      if (status.includes("bill completed")) return false;
+      if (status.includes("bill completed") || status === "cancelled") return false;
     }
     return true;
   });
