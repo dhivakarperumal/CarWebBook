@@ -72,17 +72,36 @@ const ServiceStatus = () => {
 
       // 2. Fetch separate appointments
       console.log("📋 [ServiceStatus] Fetching separate appointments...");
-      const appointmentsRes = await api.get("/appointments/my", {
+      const appointmentsRes = await api.get("/appointments/all", {
         params: { uid: user.uid },
       });
-      const appointmentData = (appointmentsRes.data || []).map((apt) => ({
+
+      const userAppointments = (appointmentsRes.data || []).filter((apt) => {
+        const aptEmail = apt.email?.toLowerCase()?.trim();
+        const userEmail = user?.email?.toLowerCase()?.trim();
+
+        return (
+          apt.uid === user?.uid ||
+          apt.uid === user?.id ||
+          apt.userId === user?.uid ||
+          apt.userId === user?.id ||
+          aptEmail === userEmail
+        );
+      });
+
+      const appointmentData = userAppointments.map((apt) => ({
         ...apt,
-        bookingId: apt.appointmentId,
+        bookingId: apt.appointmentId || apt.bookingId,
         bookingType: "Appointment",
         normalizedStatus: STATUS_NORMALIZER[apt.status] || apt.status,
-        // Map common fields
+
         issue: apt.serviceType,
         vehicleNumber: apt.registrationNumber,
+        brand: apt.brand,
+        model: apt.model,
+        address: apt.address || apt.location,
+        preferredDate: apt.preferredDate,
+        assignedEmployeeName: apt.assignedEmployeeName,
       }));
 
       // Merge them
@@ -221,10 +240,10 @@ const ServiceStatus = () => {
             issueStatus: status,
             issues: prev.issues
               ? prev.issues.map((issue) =>
-                  issue.id === itemId
-                    ? { ...issue, issueStatus: status }
-                    : issue,
-                )
+                issue.id === itemId
+                  ? { ...issue, issueStatus: status }
+                  : issue,
+              )
               : prev.issues,
           };
         });
@@ -300,11 +319,10 @@ const ServiceStatus = () => {
               <div
                 key={booking.id}
                 onClick={() => setSelectedBooking(booking)}
-                className={`cursor-pointer bg-[#020617] border rounded-xl px-2 md:px-6 py-4 flex justify-between items-center hover:shadow-lg transition ${
-                  hasPendingSpares
+                className={`cursor-pointer bg-[#020617] border rounded-xl px-2 md:px-6 py-4 flex justify-between items-center hover:shadow-lg transition ${hasPendingSpares
                     ? "border-orange-500/40 hover:shadow-orange-500/30"
                     : "border-sky-500/30 hover:shadow-sky-500/30"
-                }`}
+                  }`}
               >
                 <div>
                   <p className="text-white font-semibold">
@@ -324,23 +342,22 @@ const ServiceStatus = () => {
                           .toFixed(2)}{" "}
                         -
                         <span
-                          className={`ml-1 font-bold ${
-                            hasPendingSpares
+                          className={`ml-1 font-bold ${hasPendingSpares
                               ? "text-orange-400"
                               : bookingSpares.parts.every(
-                                    (p) => p.status === "approved",
-                                  )
+                                (p) => p.status === "approved",
+                              )
                                 ? "text-green-400"
                                 : "text-red-400"
-                          }`}
+                            }`}
                         >
                           {bookingSpares.parts.filter(
                             (p) => p.status === "pending",
                           ).length
                             ? "PENDING"
                             : bookingSpares.parts.every(
-                                  (p) => p.status === "approved",
-                                )
+                              (p) => p.status === "approved",
+                            )
                               ? "APPROVED"
                               : "PARTIAL"}
                         </span>
@@ -350,11 +367,10 @@ const ServiceStatus = () => {
                 </div>
 
                 <span
-                  className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest border transition-all ${
-                    hasPendingSpares
+                  className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest border transition-all ${hasPendingSpares
                       ? "bg-orange-500/20 text-orange-400 border-orange-500/40"
                       : "bg-sky-500/20 text-sky-400 border-sky-500/40 shadow-lg shadow-sky-500/10"
-                  }`}
+                    }`}
                 >
                   {(
                     STATUS_LABELS[booking.normalizedStatus] ||
@@ -409,13 +425,12 @@ const ServiceStatus = () => {
                               </p>
                             </div>
                             <span
-                              className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ml-2 ${
-                                part.status === "pending"
+                              className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ml-2 ${part.status === "pending"
                                   ? "bg-yellow-500/20 text-yellow-400"
                                   : part.status === "approved"
                                     ? "bg-green-500/20 text-green-400"
                                     : "bg-red-500/20 text-red-400"
-                              }`}
+                                }`}
                             >
                               {(part.status || "pending").toUpperCase()}
                             </span>
