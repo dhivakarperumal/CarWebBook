@@ -132,7 +132,7 @@ const EmpAddBilling = () => {
             phone: b.mobileNumber || "",
             brand: (b.car || "").split(" ")[0] || "",
             model: (b.car || "").split(" ").slice(1).join(" ") || "",
-            regNo: b.carNumber || ""
+            regNo: b.registrationNumber || ""
           });
           setSelectionMode("manual");
         } catch (err) {
@@ -152,7 +152,6 @@ const EmpAddBilling = () => {
       const data = res.data;
 
       const partsData = (data.parts || [])
-        .filter((p) => (p.status || "").toLowerCase() === "approved")
         .map((p) => ({
           partName: p.partName,
           qty: Number(p.qty || 0),
@@ -403,7 +402,7 @@ const EmpAddBilling = () => {
                 <MetricBox label="Technician" val={userProfile?.displayName} />
                 <MetricBox label="Reference" val={selectedService.bookingId} />
                 <MetricBox label="Job Status" val="Awaiting Sync" />
-                <MetricBox label="Plate" val={selectedService.vehicleNumber || "N/A"} />
+                <MetricBox label="Plate" val={selectedService.registrationNumber || "N/A"} />
               </div>
             )}
           </div>
