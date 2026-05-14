@@ -55,22 +55,15 @@ const AdminCompletedHistory = () => {
         api.get("/billings")
       ]);
       
-      const mechanicName = (userProfile?.displayName || "").toLowerCase();
       const billings = billRes.data || [];
-      const billMap = {};
+      const billMapByBookingId = {};
+      const billMapByServiceId = {};
+      const billMapByAppointmentId = {};
 
       billings.forEach(b => {
-        // Create multiple entries for a single bill to increase hit rate
-        const keys = [
-          b.bookingId, 
-          b.appointmentId, 
-          b.serviceId, 
-          b.jobId,
-          b.id
-        ].filter(Boolean).map(k => k.toString());
-        
-        const amount = b.grandTotal || b.totalAmount || b.total_amount || 0;
-        keys.forEach(k => { billMap[k] = amount; });
+        if (b.bookingId) billMapByBookingId[b.bookingId.toString()] = b.grandTotal || 0;
+        if (b.serviceId) billMapByServiceId[b.serviceId.toString()] = b.grandTotal || 0;
+        if (b.appointmentId) billMapByAppointmentId[b.appointmentId.toString()] = b.grandTotal || 0;
       });
 
       const filtered = (servRes.data || []).filter(s => {
@@ -78,20 +71,14 @@ const AdminCompletedHistory = () => {
           const isDone = sStat.includes("bill completed") || sStat === "cancelled";
           return isDone;
       }).map(s => {
-        // Try to find the bill amount using all available IDs
-        const possibleIds = [
-          s.id, 
-          s.bookingId, 
-          s.appointmentId, 
-          s.serviceId
-        ].filter(Boolean).map(id => id.toString());
-        
         let foundAmount = 0;
-        for (let id of possibleIds) {
-          if (billMap[id] !== undefined) {
-            foundAmount = billMap[id];
-            break;
-          }
+
+        if (s.bookingId && billMapByBookingId[s.bookingId.toString()] !== undefined) {
+          foundAmount = billMapByBookingId[s.bookingId.toString()];
+        } else if (s.id && billMapByServiceId[s.id.toString()] !== undefined) {
+          foundAmount = billMapByServiceId[s.id.toString()];
+        } else if (s.appointmentId && billMapByAppointmentId[s.appointmentId.toString()] !== undefined) {
+          foundAmount = billMapByAppointmentId[s.appointmentId.toString()];
         }
 
         return {
