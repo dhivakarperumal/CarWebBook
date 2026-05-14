@@ -44,20 +44,62 @@ const History = () => {
 
       console.log(`✅ Found ${completed.length} completed services`);
 
-      // Fetch spare parts for each completed service
+      // Fetch billing records so the user history can show final bill/grand total
+      const billRes = await api.get("/billings");
+      const bills = billRes.data || [];
+      const billMapByBookingId = {};
+      const billMapByServiceId = {};
+      const billMapByAppointmentId = {};
+
+      bills.forEach((bill) => {
+        if (bill.bookingId) billMapByBookingId[bill.bookingId.toString()] = bill;
+        if (bill.serviceId) billMapByServiceId[bill.serviceId.toString()] = bill;
+        if (bill.appointmentId) billMapByAppointmentId[bill.appointmentId.toString()] = bill;
+      });
+
       const enrichedServices = await Promise.all(
         completed.map(async (service) => {
           try {
-            const partsRes = await api.get(`/all-services/${service.id}`);
+            const detailsRes = await api.get(`/all-services/${service.id}`);
+            const details = detailsRes.data || {};
+            let matchedBill = null;
+
+            if (service.bookingId && billMapByBookingId[service.bookingId.toString()]) {
+              matchedBill = billMapByBookingId[service.bookingId.toString()];
+            } else if (service.id && billMapByServiceId[service.id.toString()]) {
+              matchedBill = billMapByServiceId[service.id.toString()];
+            } else if (service.appointmentId && billMapByAppointmentId[service.appointmentId.toString()]) {
+              matchedBill = billMapByAppointmentId[service.appointmentId.toString()];
+            }
+
+            const parts = details.parts || [];
+            const issues = details.issues || [];
+            const totalSpareAmount = parts.reduce((sum, p) => sum + Number(p.total || 0), 0);
+            const totalIssueAmount = issues.reduce((sum, issue) => sum + Number(issue.issueAmount || 0), 0);
+            const labourAmount = Number(matchedBill?.labour ?? service.labour ?? service.labourAmount ?? 0);
+            const finalBill = Number(matchedBill?.grandTotal ?? totalSpareAmount + totalIssueAmount + labourAmount);
+
             return {
               ...service,
-              parts: partsRes.data?.parts || [],
+              ...details,
+              parts,
+              issues,
+              matchedBill,
+              totalSpareAmount,
+              totalIssueAmount,
+              labourAmount,
+              finalBill,
             };
           } catch (err) {
-            console.error(`Failed to fetch parts for service ${service.id}`, err);
+            console.error(`Failed to fetch service details for ${service.id}`, err);
             return {
               ...service,
               parts: [],
+              issues: [],
+              totalSpareAmount: 0,
+              totalIssueAmount: 0,
+              labourAmount: Number(service.labour ?? service.labourAmount ?? 0),
+              finalBill: Number(service.labour ?? service.labourAmount ?? 0),
             };
           }
         })
@@ -99,10 +141,15 @@ const History = () => {
       <div className="space-y-4">
         {completedServices.map((service) => {
           const isExpanded = expandedService === service.id;
-          const totalSpareAmount = service.parts?.reduce(
-            (sum, p) => sum + Number(p.total || 0),
-            0
-          ) || 0;
+          const totalSpareAmount = service.parts?.length > 0
+            ? service.parts.reduce((sum, p) => sum + Number(p.total || 0), 0)
+            : Number(service.partsTotal || 0);
+          const totalIssueAmount = service.issues?.length > 0
+            ? service.issues.reduce((sum, issue) => sum + Number(issue.issueAmount || 0), 0)
+            : Number(service.issueAmount || 0);
+          const labourAmount = Number(service.labourAmount ?? service.labour ?? 0);
+          const computedTotal = totalSpareAmount + totalIssueAmount + labourAmount;
+          const totalAmount = Number(service.finalBill ?? computedTotal);
 
           return (
             <div
@@ -148,7 +195,7 @@ const History = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-sky-400">
-                      ₹{totalSpareAmount.toFixed(2)}
+                      ₹{totalAmount.toFixed(2)}
                     </p>
                     <p className="text-xs text-gray-400">
                       {isExpanded ? "▼ Collapse" : "▶ Expand"}
@@ -227,11 +274,29 @@ const History = () => {
                           </div>
                         ))}
                       </div>
-                      <div className="mt-4 pt-4 border-t border-slate-600/50 flex justify-end">
-                        <div className="text-right">
+                      <div className="mt-4 pt-4 border-t border-slate-600/50 flex flex-col md:flex-row justify-between gap-4 items-end">
+                          <div className="text-right">
                           <p className="text-gray-400 text-sm">Total Spare Cost</p>
                           <p className="text-2xl font-bold text-orange-400">
                             ₹{totalSpareAmount.toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-gray-400 text-sm">Total Issue Cost</p>
+                          <p className="text-2xl font-bold text-amber-400">
+                            ₹{totalIssueAmount.toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-gray-400 text-sm">Labour Cost</p>
+                          <p className="text-2xl font-bold text-emerald-400">
+                            ₹{labourAmount.toFixed(2)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-gray-400 text-sm">Final Bill</p>
+                          <p className="text-2xl font-bold text-sky-400">
+                            ₹{totalAmount.toFixed(2)}
                           </p>
                         </div>
                       </div>
@@ -239,6 +304,41 @@ const History = () => {
                   ) : (
                     <div className="bg-slate-700/50 rounded-lg p-4 text-center text-gray-400">
                       <p>No spare parts recorded for this service</p>
+                    </div>
+                  )}
+
+                  {/* Issue Cost Section */}
+                  {service.issues && service.issues.length > 0 ? (
+                    <div className="bg-slate-700/50 rounded-lg p-4">
+                      <h4 className="font-semibold text-sky-300 mb-3">
+                        🧾 Issue Costs
+                      </h4>
+                      <div className="space-y-2">
+                        {service.issues.map((issue, idx) => (
+                          <div
+                            key={issue.id || idx}
+                            className="flex justify-between items-center p-3 bg-slate-600/30 rounded-lg border border-slate-600/50"
+                          >
+                            <div className="flex-1">
+                              <p className="text-white font-semibold">
+                                {issue.issue || issue.issueName || `Issue ${idx + 1}`}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                Status: {(issue.issueStatus || "completed").toUpperCase()}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-amber-400">
+                                ₹{Number(issue.issueAmount || 0).toFixed(2)}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-700/50 rounded-lg p-4 text-center text-gray-400">
+                      <p>No issue costs recorded for this service</p>
                     </div>
                   )}
 
