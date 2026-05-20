@@ -115,42 +115,31 @@ const Users = () => {
     }
   };
 
-  const toggleStatus = async (id, active) => {
+  const toggleStatus = async (id, active, username) => {
+    const action = active ? "deactivate" : "activate";
+    const confirmed = window.confirm(`Are you sure you want to ${action} ${username}'s account?`);
+    if (!confirmed) return;
+
     try {
       await api.put(`/auth/users/${id}/status`, { active: !active });
-      toast.success("Status updated");
+      toast.success(`User ${active ? "deactivated" : "activated"}`);
       loadUsers();
     } catch (err) {
       toast.error("Failed to update status");
     }
   };
 
-  const deleteUser = async (id) => {
-    if (window.confirm("Are you sure?")) {
+  const handleDelete = async (id) => {
+    if (window.confirm("Confirm delete?")) {
       try {
-        await api.delete(`/auth/auth/users/${id}`); // Wait, my router prefix is /api/auth but what about internal routes?
-        // Actually Backend/index.js uses: app.use('/api/auth', authRoutes);
-        // So it should be api.delete('/auth/users/id') if api instance uses baseurl with /api
+        await api.delete(`/auth/users/${id}`);
         toast.success("User deleted");
         loadUsers();
       } catch (err) {
-        toast.error("Failed to delete user");
+        toast.error("Delete failed");
       }
     }
   };
-  
-  /* FIXED DELETE PATH BELOW (Based on typical pattern) */
-  const handleDelete = async (id) => {
-    if (window.confirm("Confirm delete?")) {
-       try {
-         await api.delete(`/auth/users/${id}`);
-         toast.success("User deleted");
-         loadUsers();
-       } catch (err) {
-         toast.error("Delete failed");
-       }
-    }
-  }
 
   /* 📊 Stats */
   const totalUsers = users.length;
@@ -276,6 +265,7 @@ const Users = () => {
                 <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Contact Details</th>
                 <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Type</th>
                 <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Role</th>
+                <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Status</th>
                 <th className="px-4 py-4 text-left text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Orders / Bookings</th>
                 <th className="px-4 py-4 text-center text-[10px] font-black uppercase tracking-[0.2em] opacity-90">Actions</th>
               </tr>
@@ -323,13 +313,30 @@ const Users = () => {
                     </td>
 
                     <td className="px-4 py-4">
+                      <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${u.active ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        {u.active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4">
                         <div className="flex items-center gap-2">
                            <span className="text-xs font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded-md">{u.bookingsCount || 0}</span>
                            <span className="text-[10px] text-gray-400 font-medium">Bookings</span>
                         </div>
                     </td>
 
-                    <td className="px-4 py-4 text-center">
+                    <td className="px-4 py-4 text-center space-x-2">
+                       {u.type === 'registered' ? (
+                         <button
+                           onClick={() => toggleStatus(u.id, u.active, u.username || 'this user')}
+                           className={`inline-flex items-center justify-center rounded-full px-3 py-2 text-xs font-bold transition ${u.active ? 'bg-red-50 text-red-700 border border-red-200 hover:bg-red-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100'}`}
+                         >
+                           {u.active ? <FaToggleOff className="mr-1" /> : <FaToggleOn className="mr-1" />}
+                           {u.active ? 'Deactivate' : 'Activate'}
+                         </button>
+                       ) : (
+                         <span className="text-[10px] uppercase text-gray-500">Guest</span>
+                       )}
                        <button 
                         onClick={() => handleDelete(u.id)}
                         className="text-red-500 hover:text-red-700 transition"
@@ -341,7 +348,7 @@ const Users = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="text-center py-8 text-gray-500">
+                  <td colSpan="8" className="text-center py-8 text-gray-500">
                     No users found
                   </td>
                 </tr>
