@@ -53,7 +53,8 @@ useEffect(() => {
 
               <div>
                 <p className="text-blue-400 font-semibold">Call Us Anytime</p>
-                <p className="text-md font-bold mt-2">+91 98765 43210</p>
+                <p className="text-md font-bold mt-2">+91 965 9133 504</p>
+                <p className="text-md font-bold mt-1">+91 912 358 9879</p>
               </div>
 
               <div>
@@ -61,8 +62,8 @@ useEffect(() => {
                   Visit Our Location
                 </p>
                 <p className="text-gray-400 mt-2">
-                  17110 116th Ave SE Unit A <br />
-                  Renton, WA 98058-5055
+                  No.58 Vaitheeswaran Nagar<br />
+                  Tirupattur - 635 653
                 </p>
               </div>
             </div>

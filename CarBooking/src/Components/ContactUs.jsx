@@ -29,17 +29,22 @@ export default function Contact() {
                 {
                   icon: <Phone />,
                   title: "Phone",
-                  value: "+91 98765 43210",
+                  value: "+91 965 9133 504 / +91 912 358 9879",
                 },
                 {
                   icon: <MapPin />,
                   title: "Location",
-                  value: "17110 116th Ave SE Unit A, Renton, WA",
+                  value: "No.58 Vaitheeswaran Nagar, Tirupattur - 635 653",
                 },
                 {
                   icon: <Mail />,
                   title: "Email",
-                  value: "info@autobox.com",
+                  value: "info@qtechx.com",
+                },
+                {
+                  icon: <Mail />,
+                  title: "HR Email",
+                  value: "hr@qtechx.com",
                 },
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-5 group">
@@ -98,7 +103,7 @@ export default function Contact() {
         <div className="w-full h-[450px] border-t border-white/10">
           <iframe
             title="Google Map"
-            src="https://www.google.com/maps?q=Renton,%20WA&output=embed"
+            src="https://www.google.com/maps?q=No.58%20Vaitheeswaran%20Nagar%2C%20Tirupattur%20-%20635%20653&output=embed"
             className="w-full h-full border-0 grayscale brightness-75 contrast-125"
             loading="lazy"
           />
