@@ -53,8 +53,8 @@ useEffect(() => {
 
               <div>
                 <p className="text-blue-400 font-semibold">Call Us Anytime</p>
-                <p className="text-md font-bold mt-2">+91 965 9133 504</p>
-                <p className="text-md font-bold mt-1">+91 912 358 9879</p>
+                <p className="text-md font-bold mt-2">+91 9659133504</p>
+                <p className="text-md font-bold mt-1">+91 9123589879</p>
               </div>
 
               <div>

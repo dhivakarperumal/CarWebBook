@@ -29,7 +29,7 @@ export default function Contact() {
                 {
                   icon: <Phone />,
                   title: "Phone",
-                  value: "+91 965 9133 504 / +91 912 358 9879",
+                  value: "+91 9659133504 / +91 9123589879",
                 },
                 {
                   icon: <MapPin />,

@@ -44,8 +44,15 @@ export default function PrivacyPolicy() {
 
           <h2 className="text-2xl font-semibold text-blue-900">Contact Us</h2>
           <p>
-            If you have questions about this privacy policy or how we handle your information, please contact us through the website.
+            If you have questions about this privacy policy or how we handle your information, please contact us using the details below.
           </p>
+
+          <div className="space-y-3 text-gray-700">
+            <p><strong>Address:</strong> No.58 Vaitheeswaran Nagar, Tirupattur - 635 653</p>
+            <p><strong>Phone:</strong> +91 9659133504 / +91 9123589879</p>
+            <p><strong>Email:</strong> info@qtechx.com</p>
+            <p><strong>HR Email:</strong> hr@qtechx.com</p>
+          </div>
         </div>
       </div>
     </section>
