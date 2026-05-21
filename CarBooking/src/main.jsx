@@ -13,6 +13,7 @@ import Pricing from "./Components/Pricing.jsx";
 import Products from "./Components/Products.jsx";
 import ContactUs from "./Components/ContactUs.jsx";
 import Checkout from "./Components/Checkout.jsx";
+import PrivacyPolicy from "./Components/PrivacyPolicy.jsx";
 
 // // Admin
 import AdminPanel from "./Admin/AdminPanel.jsx";
@@ -99,6 +100,7 @@ const router = createBrowserRouter([
       { path: "/products/:slug", element: <ProductDetails /> },
       { path: "/services/:id", element: <ServiceDetails /> },
       { path: "/about", element: <About /> },
+      { path: "/privacy-policy", element: <PrivacyPolicy /> },
       { path: "/contact", element: <ContactUs /> },
       { path: "/buy-vehicles", element: <BuyVehicles /> },
       { path: "/cart", element: <Cart /> },

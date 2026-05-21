@@ -10,6 +10,7 @@ const links = [
   { label: "Pricing", path: "/pricing" },
   { label: "Services", path: "/services" },
   { label: "Products", path: "/products" },
+  { label: "Privacy Policy", path: "/privacy-policy" },
   { label: "Contact Us", path: "/contact" },
 ];
 
@@ -166,7 +167,10 @@ useEffect(() => {
 
             {/* SMALL INFO */}
             <div className="flex gap-6 text-gray-400 text-sm">
-              <span className="hover:text-blue-400 cursor-pointer transition">
+              <span
+                onClick={() => navigate("/privacy-policy")}
+                className="hover:text-blue-400 cursor-pointer transition"
+              >
                 Privacy Policy
               </span>
 
